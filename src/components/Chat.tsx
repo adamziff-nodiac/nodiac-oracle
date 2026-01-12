@@ -15,7 +15,7 @@ export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
   const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
-  const [isLoading, setIsLoading] = useState(false)
+  const [pendingPerspectives, setPendingPerspectives] = useState<Set<string>>(new Set())
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -51,6 +51,8 @@ export function Chat() {
     })
   }
 
+  const isLoading = pendingPerspectives.size > 0
+
   const sendMessage = async (content: string) => {
     if (selectedPerspectives.length === 0) return
 
@@ -62,15 +64,21 @@ export function Chat() {
     }
 
     setMessages(prev => [...prev, userMessage])
-    setIsLoading(true)
+
+    // Track which perspectives are pending
+    const pendingIds = new Set(selectedPerspectives.map(p => p.id))
+    setPendingPerspectives(pendingIds)
 
     // Build conversation history (excluding perspective-specific responses for clean context)
     const conversationHistory = [...messages, userMessage]
       .filter(m => m.role === 'user')
       .map(m => ({ role: m.role, content: m.content }))
 
-    // Make parallel API calls for each selected perspective
-    const perspectivePromises = selectedPerspectives.map(async (perspective) => {
+    // Track if we've spoken (for voice mode)
+    let hasSpoken = false
+
+    // Fire off all requests and handle each as it completes
+    const promises = selectedPerspectives.map(async (perspective) => {
       try {
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -85,49 +93,53 @@ export function Chat() {
 
         const data = await response.json()
 
-        if (data.error) {
-          return {
-            id: generateId(),
-            role: 'assistant' as const,
-            content: `Error: ${data.error}`,
-            perspective: perspective.id,
-            timestamp: new Date(),
-          }
-        }
-
-        return {
+        const assistantMessage: Message = {
           id: generateId(),
-          role: 'assistant' as const,
-          content: data.content,
+          role: 'assistant',
+          content: data.error ? `Error: ${data.error}` : data.content,
           perspective: perspective.id,
           timestamp: new Date(),
         }
+
+        // Add this response immediately
+        setMessages(prev => [...prev, assistantMessage])
+
+        // Remove from pending
+        setPendingPerspectives(prev => {
+          const next = new Set(prev)
+          next.delete(perspective.id)
+          return next
+        })
+
+        // In voice mode, speak the first successful response
+        if (isVoiceMode && !hasSpoken && !data.error) {
+          hasSpoken = true
+          try {
+            await speak(data.content)
+          } catch {
+            // Speech synthesis error - continue without speaking
+          }
+        }
       } catch (error) {
-        return {
+        const errorMessage: Message = {
           id: generateId(),
-          role: 'assistant' as const,
+          role: 'assistant',
           content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
           perspective: perspective.id,
           timestamp: new Date(),
         }
+
+        setMessages(prev => [...prev, errorMessage])
+        setPendingPerspectives(prev => {
+          const next = new Set(prev)
+          next.delete(perspective.id)
+          return next
+        })
       }
     })
 
-    try {
-      const responses = await Promise.all(perspectivePromises)
-      setMessages(prev => [...prev, ...responses])
-
-      // In voice mode, speak the first response
-      if (isVoiceMode && responses.length > 0 && responses[0].content && !responses[0].content.startsWith('Error:')) {
-        try {
-          await speak(responses[0].content)
-        } catch {
-          // Speech synthesis error - continue without speaking
-        }
-      }
-    } finally {
-      setIsLoading(false)
-    }
+    // Wait for all to complete (they update state as they finish)
+    await Promise.all(promises)
   }
 
   const clearChat = () => {
@@ -198,7 +210,7 @@ export function Chat() {
               {messages.map((message) => (
                 <ChatMessage key={message.id} message={message} />
               ))}
-              {isLoading && (
+              {pendingPerspectives.size > 0 && (
                 <div className="flex justify-start mb-4">
                   <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2">
@@ -208,7 +220,9 @@ export function Chat() {
                         <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                       <span className="text-xs text-gray-500">
-                        Getting {selectedPerspectives.length} perspective{selectedPerspectives.length > 1 ? 's' : ''}...
+                        Waiting for {Array.from(pendingPerspectives).map(id =>
+                          PERSPECTIVES.find(p => p.id === id)?.name.split(' ')[0]
+                        ).join(', ')}...
                       </span>
                     </div>
                   </div>
