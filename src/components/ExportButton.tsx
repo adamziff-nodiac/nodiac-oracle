@@ -140,14 +140,133 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         }
       }
 
+      // Parse a markdown table row into cells
+      const parseTableRow = (row: string): string[] => {
+        return row
+          .split('|')
+          .slice(1, -1) // Remove empty first and last from split
+          .map(cell => cell.trim())
+      }
+
+      // Check if a line is a table separator (|---|---|)
+      const isTableSeparator = (line: string): boolean => {
+        return /^\|[\s-:|]+\|$/.test(line)
+      }
+
+      // Check if a line is a table row
+      const isTableRow = (line: string): boolean => {
+        return line.startsWith('|') && line.endsWith('|')
+      }
+
+      // Render a table
+      const renderTable = (tableLines: string[], headerColor: [number, number, number]) => {
+        const rows: string[][] = []
+        let hasHeader = false
+
+        for (let i = 0; i < tableLines.length; i++) {
+          if (isTableSeparator(tableLines[i])) {
+            hasHeader = true
+            continue
+          }
+          rows.push(parseTableRow(tableLines[i]))
+        }
+
+        if (rows.length === 0) return
+
+        const numCols = rows[0].length
+        const colWidth = (contentWidth - 4) / numCols
+        const cellPadding = 2
+        const rowHeight = 6
+
+        // Check if table fits on page
+        checkPage(rows.length * rowHeight + 4)
+
+        const tableX = margin + 2
+        let tableY = y
+
+        doc.setFontSize(8)
+        doc.setLineWidth(0.3)
+
+        for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+          const row = rows[rowIdx]
+          const isHeaderRow = hasHeader && rowIdx === 0
+
+          // Background for header
+          if (isHeaderRow) {
+            doc.setFillColor(headerColor[0], headerColor[1], headerColor[2])
+            doc.rect(tableX, tableY, contentWidth - 4, rowHeight, 'F')
+          }
+
+          // Draw cells
+          for (let colIdx = 0; colIdx < numCols; colIdx++) {
+            const cellX = tableX + colIdx * colWidth
+            const cellText = row[colIdx] || ''
+
+            // Cell border
+            doc.setDrawColor(180, 180, 180)
+            doc.rect(cellX, tableY, colWidth, rowHeight, 'S')
+
+            // Cell text
+            if (isHeaderRow) {
+              doc.setFont('helvetica', 'bold')
+              doc.setTextColor(255, 255, 255)
+            } else {
+              doc.setFont('helvetica', 'normal')
+              doc.setTextColor(40, 40, 40)
+            }
+
+            // Truncate text if too long
+            const maxWidth = colWidth - cellPadding * 2
+            let displayText = cellText
+            while (doc.getTextWidth(displayText) > maxWidth && displayText.length > 0) {
+              displayText = displayText.slice(0, -1)
+            }
+            if (displayText !== cellText && displayText.length > 2) {
+              displayText = displayText.slice(0, -2) + '..'
+            }
+
+            doc.text(displayText, cellX + cellPadding, tableY + rowHeight - 2)
+          }
+
+          tableY += rowHeight
+        }
+
+        y = tableY + 3
+      }
+
       // Write markdown content with proper formatting
       const writeMarkdown = (content: string, xOffset: number, baseColor: [number, number, number] = [30, 30, 30], headerColor: [number, number, number] = [0, 102, 204]) => {
         const lines = content.split('\n')
         const lineHeight = 4.5
         const textWidth = contentWidth - xOffset
 
-        for (const line of lines) {
+        let i = 0
+        while (i < lines.length) {
+          const line = lines[i]
+
+          // Check for table
+          if (isTableRow(line)) {
+            const tableLines: string[] = []
+            while (i < lines.length && (isTableRow(lines[i]) || isTableSeparator(lines[i]))) {
+              tableLines.push(lines[i])
+              i++
+            }
+            renderTable(tableLines, headerColor)
+            continue
+          }
+
           checkPage(lineHeight + 2)
+
+          // Horizontal rule (---)
+          if (line.trim() === '---' || line.trim() === '***') {
+            y += 2
+            doc.setDrawColor(200, 200, 200)
+            doc.setLineWidth(0.3)
+            doc.line(margin + xOffset, y, margin + xOffset + textWidth, y)
+            y += 4
+            i++
+            continue
+          }
 
           // Headers
           if (line.startsWith('## ')) {
@@ -157,6 +276,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             doc.setTextColor(...headerColor)
             doc.text(line.slice(3), margin + xOffset, y)
             y += lineHeight + 1
+            i++
             continue
           }
 
@@ -167,6 +287,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             doc.setTextColor(...headerColor)
             doc.text(line.slice(2), margin + xOffset, y)
             y += lineHeight + 2
+            i++
             continue
           }
 
@@ -174,17 +295,18 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
           if (line.match(/^[-*]\s+/)) {
             const listText = line.replace(/^[-*]\s+/, '')
             const wrappedLines = doc.splitTextToSize(listText, textWidth - 6)
-            for (let i = 0; i < wrappedLines.length; i++) {
+            for (let j = 0; j < wrappedLines.length; j++) {
               checkPage(lineHeight)
-              if (i === 0) {
+              if (j === 0) {
                 doc.setFont('helvetica', 'normal')
                 doc.setFontSize(9)
                 doc.setTextColor(...baseColor)
                 doc.text('•', margin + xOffset, y)
               }
-              writeFormattedLine(wrappedLines[i], margin + xOffset + 4, 9, baseColor)
+              writeFormattedLine(wrappedLines[j], margin + xOffset + 4, 9, baseColor)
               y += lineHeight
             }
+            i++
             continue
           }
 
@@ -195,17 +317,18 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
               const num = match[1]
               const listText = match[2]
               const wrappedLines = doc.splitTextToSize(listText, textWidth - 8)
-              for (let i = 0; i < wrappedLines.length; i++) {
+              for (let j = 0; j < wrappedLines.length; j++) {
                 checkPage(lineHeight)
-                if (i === 0) {
+                if (j === 0) {
                   doc.setFont('helvetica', 'normal')
                   doc.setFontSize(9)
                   doc.setTextColor(...baseColor)
                   doc.text(`${num}.`, margin + xOffset, y)
                 }
-                writeFormattedLine(wrappedLines[i], margin + xOffset + 6, 9, baseColor)
+                writeFormattedLine(wrappedLines[j], margin + xOffset + 6, 9, baseColor)
                 y += lineHeight
               }
+              i++
               continue
             }
           }
@@ -213,6 +336,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
           // Empty line
           if (line.trim() === '') {
             y += 2
+            i++
             continue
           }
 
@@ -226,6 +350,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             writeFormattedLine(wrappedLine, margin + xOffset, 9, baseColor)
             y += lineHeight
           }
+          i++
         }
       }
 
