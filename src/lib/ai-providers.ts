@@ -59,9 +59,9 @@ export async function callOpenAIAPI(request: ChatRequest): Promise<ChatResponse>
 }
 
 export async function callGoogleAPI(request: ChatRequest): Promise<ChatResponse> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
-    return { content: '', error: 'GOOGLE_AI_API_KEY is not configured' }
+    return { content: '', error: 'GEMINI_API_KEY is not configured' }
   }
 
   try {
