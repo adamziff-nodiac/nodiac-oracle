@@ -51,22 +51,41 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
       const htmlContent = buildHTMLContent(messages, summary, selectedModel)
 
       // Import html2pdf dynamically (client-side only)
-      const html2pdf = (await import('html2pdf.js')).default
+      const html2pdfModule = await import('html2pdf.js')
+      const html2pdf = html2pdfModule.default
 
-      // Create a temporary container
+      // Create a temporary container - must be visible for html2canvas to work
       const container = document.createElement('div')
       container.innerHTML = htmlContent
-      container.style.position = 'absolute'
-      container.style.left = '-9999px'
+      container.style.position = 'fixed'
+      container.style.top = '0'
+      container.style.left = '0'
+      container.style.width = '210mm' // A4 width
+      container.style.padding = '20px'
+      container.style.backgroundColor = 'white'
+      container.style.zIndex = '-1'
+      container.style.opacity = '0'
+      container.style.pointerEvents = 'none'
       document.body.appendChild(container)
+
+      // Wait a frame for the DOM to update
+      await new Promise(resolve => requestAnimationFrame(resolve))
+
+      // Make visible briefly for html2canvas
+      container.style.opacity = '1'
 
       // Generate PDF
       await html2pdf()
         .set({
-          margin: [15, 15, 15, 15],
+          margin: 10,
           filename: `nodiac-oracle-${new Date().toISOString().split('T')[0]}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
+          html2canvas: {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            windowWidth: 794, // A4 width in px at 96dpi
+          },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
         })
         .from(container)
@@ -128,9 +147,9 @@ function buildHTMLContent(messages: Message[], summary: string, model: AIModel):
       if (isUser) {
         return `
           <div style="margin-bottom: 16px; text-align: right;">
-            <div style="display: inline-block; max-width: 80%; background: #0066CC; color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; text-align: left;">
-              <div style="font-size: 14px;">${contentHTML}</div>
-              <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-top: 8px;">
+            <div style="display: inline-block; max-width: 80%; background-color: #0066CC; color: white; padding: 12px 16px; border-radius: 16px 16px 4px 16px; text-align: left;">
+              <div style="font-size: 13px; line-height: 1.5;">${contentHTML}</div>
+              <div style="font-size: 10px; color: rgba(255,255,255,0.7); margin-top: 8px;">
                 ${formatDate(m.timestamp)}
               </div>
             </div>
@@ -139,16 +158,16 @@ function buildHTMLContent(messages: Message[], summary: string, model: AIModel):
       } else {
         return `
           <div style="margin-bottom: 16px;">
-            <div style="display: inline-block; max-width: 80%; background: #f3f4f6; padding: 12px 16px; border-radius: 16px 16px 16px 4px;">
+            <div style="display: inline-block; max-width: 80%; background-color: #f3f4f6; padding: 12px 16px; border-radius: 16px 16px 16px 4px;">
               ${
                 perspective
-                  ? `<div style="font-size: 12px; color: #6b7280; margin-bottom: 8px;">
+                  ? `<div style="font-size: 11px; color: #6b7280; margin-bottom: 8px;">
                       ${perspectiveIcons[perspective.id] || ''} ${perspective.name}
                     </div>`
                   : ''
               }
-              <div style="font-size: 14px; color: #111827;">${contentHTML}</div>
-              <div style="font-size: 11px; color: #9ca3af; margin-top: 8px;">
+              <div style="font-size: 13px; color: #111827; line-height: 1.5;">${contentHTML}</div>
+              <div style="font-size: 10px; color: #9ca3af; margin-top: 8px;">
                 ${formatDate(m.timestamp)}
               </div>
             </div>
@@ -159,93 +178,107 @@ function buildHTMLContent(messages: Message[], summary: string, model: AIModel):
     .join('')
 
   return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          line-height: 1.5;
-          color: #111827;
-        }
-        h1, h2, h3 { margin-top: 16px; margin-bottom: 8px; }
-        h1 { font-size: 20px; }
-        h2 { font-size: 16px; }
-        h3 { font-size: 14px; }
-        p { margin: 8px 0; }
-        ul, ol { margin: 8px 0; padding-left: 24px; }
-        li { margin: 4px 0; }
-        code { background: #e5e7eb; padding: 2px 4px; border-radius: 4px; font-size: 12px; }
-        pre { background: #1f2937; color: #f3f4f6; padding: 12px; border-radius: 8px; overflow-x: auto; }
-        blockquote { border-left: 4px solid #d1d5db; padding-left: 16px; margin: 8px 0; color: #6b7280; font-style: italic; }
-        table { border-collapse: collapse; width: 100%; margin: 8px 0; }
-        th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
-        th { background: #f3f4f6; }
-        strong { font-weight: 600; }
-        em { font-style: italic; }
-      </style>
-    </head>
-    <body>
-      <div style="border-bottom: 2px solid #0066CC; padding-bottom: 16px; margin-bottom: 24px;">
-        <h1 style="margin: 0; color: #0066CC; font-size: 24px;">Nodiac Oracle</h1>
-        <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Multi-perspective AI Advisor</p>
+    <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #111827; background: white; max-width: 100%;">
+      <div style="border-bottom: 3px solid #0066CC; padding-bottom: 16px; margin-bottom: 20px;">
+        <div style="font-size: 28px; font-weight: bold; color: #0066CC; margin: 0;">Nodiac Oracle</div>
+        <div style="color: #6b7280; font-size: 14px; margin-top: 4px;">Multi-perspective AI Advisor</div>
       </div>
 
-      <div style="background: #f0f9ff; border: 1px solid #0066CC; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
-        <h2 style="margin: 0 0 8px 0; color: #0066CC; font-size: 14px;">Summary</h2>
-        <p style="margin: 0; font-size: 14px; color: #374151;">${summary}</p>
+      <div style="background-color: #eff6ff; border: 2px solid #0066CC; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-weight: bold; color: #0066CC; font-size: 14px; margin-bottom: 8px;">Summary</div>
+        <div style="font-size: 13px; color: #374151; line-height: 1.5;">${summary}</div>
       </div>
 
-      <div style="margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb;">
-        <span style="font-size: 12px; color: #6b7280;">Model: ${model.name}</span>
-        <span style="font-size: 12px; color: #6b7280; margin-left: 16px;">Exported: ${new Date().toLocaleDateString()}</span>
+      <div style="margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; font-size: 11px; color: #6b7280;">
+        <span>Model: ${model.name}</span>
+        <span style="margin-left: 20px;">Exported: ${new Date().toLocaleDateString()}</span>
       </div>
 
-      ${messagesHTML}
-
-      <div style="margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
-        <p style="font-size: 11px; color: #9ca3af;">
-          Generated by Nodiac Oracle | nodiac.ai
-        </p>
+      <div style="margin-bottom: 20px;">
+        ${messagesHTML}
       </div>
-    </body>
-    </html>
+
+      <div style="margin-top: 30px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
+        <div style="font-size: 10px; color: #9ca3af;">
+          Generated by Nodiac Oracle • nodiac.ai
+        </div>
+      </div>
+    </div>
   `
 }
 
 function convertMarkdownToHTML(markdown: string): string {
   let html = markdown
-    // Escape HTML
+    // Escape HTML first
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    // Headers
-    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    // Bold
-    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+
+  // Process line by line for better control
+  const lines = html.split('\n')
+  const processedLines: string[] = []
+  let inCodeBlock = false
+  let codeBlockContent: string[] = []
+
+  for (const line of lines) {
     // Code blocks
-    .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-    // Inline code
-    .replace(/`(.*?)`/g, '<code>$1</code>')
-    // Unordered lists
-    .replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>')
-    // Ordered lists
-    .replace(/^\s*\d+\.\s+(.*$)/gim, '<li>$1</li>')
+    if (line.startsWith('```')) {
+      if (inCodeBlock) {
+        processedLines.push(`<pre style="background: #1f2937; color: #f3f4f6; padding: 12px; border-radius: 6px; overflow-x: auto; font-size: 12px; margin: 8px 0;"><code>${codeBlockContent.join('\n')}</code></pre>`)
+        codeBlockContent = []
+        inCodeBlock = false
+      } else {
+        inCodeBlock = true
+      }
+      continue
+    }
+
+    if (inCodeBlock) {
+      codeBlockContent.push(line)
+      continue
+    }
+
+    let processedLine = line
+
+    // Headers
+    if (processedLine.startsWith('### ')) {
+      processedLine = `<div style="font-size: 14px; font-weight: 600; margin: 12px 0 6px 0;">${processedLine.slice(4)}</div>`
+    } else if (processedLine.startsWith('## ')) {
+      processedLine = `<div style="font-size: 15px; font-weight: 600; margin: 14px 0 6px 0;">${processedLine.slice(3)}</div>`
+    } else if (processedLine.startsWith('# ')) {
+      processedLine = `<div style="font-size: 16px; font-weight: 700; margin: 16px 0 8px 0;">${processedLine.slice(2)}</div>`
+    }
+    // List items
+    else if (processedLine.match(/^\s*[-*]\s+/)) {
+      processedLine = `<div style="margin: 4px 0; padding-left: 16px;">• ${processedLine.replace(/^\s*[-*]\s+/, '')}</div>`
+    }
+    else if (processedLine.match(/^\s*\d+\.\s+/)) {
+      const num = processedLine.match(/^\s*(\d+)\./)?.[1] || '1'
+      processedLine = `<div style="margin: 4px 0; padding-left: 16px;">${num}. ${processedLine.replace(/^\s*\d+\.\s+/, '')}</div>`
+    }
     // Blockquotes
-    .replace(/^>\s*(.*$)/gim, '<blockquote>$1</blockquote>')
-    // Line breaks
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>')
+    else if (processedLine.startsWith('&gt; ')) {
+      processedLine = `<div style="border-left: 3px solid #d1d5db; padding-left: 12px; margin: 8px 0; color: #6b7280; font-style: italic;">${processedLine.slice(5)}</div>`
+    }
+    // Empty lines become spacing
+    else if (processedLine.trim() === '') {
+      processedLine = '<div style="height: 8px;"></div>'
+    }
+    // Regular paragraphs
+    else {
+      processedLine = `<div style="margin: 4px 0;">${processedLine}</div>`
+    }
 
-  // Wrap consecutive li items in ul
-  html = html.replace(/(<li>.*?<\/li>)(\s*<li>)/g, '$1$2')
-  html = html.replace(/(<li>.*?<\/li>)+/g, '<ul>$&</ul>')
+    // Inline formatting
+    processedLine = processedLine
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/`([^`]+)`/g, '<code style="background: #e5e7eb; padding: 1px 4px; border-radius: 3px; font-size: 12px;">$1</code>')
 
-  return `<p>${html}</p>`
+    processedLines.push(processedLine)
+  }
+
+  return processedLines.join('')
 }
 
 function formatDate(date: Date): string {
