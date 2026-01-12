@@ -41,7 +41,7 @@ export async function callOpenAIAPI(request: ChatRequest): Promise<ChatResponse>
 
     const response = await client.chat.completions.create({
       model: request.model,
-      max_tokens: 4096,
+      max_completion_tokens: 4096,
       messages: [
         { role: 'system', content: request.systemPrompt },
         ...request.messages.map(m => ({
