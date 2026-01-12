@@ -13,7 +13,7 @@ import { ExportButton } from './ExportButton'
 import { ThemeToggle } from './ThemeToggle'
 import { AuthButton } from './auth/AuthButton'
 import { ChatHistory } from './ChatHistory'
-import { RotateCcw, Menu, X } from 'lucide-react'
+import { Plus, Menu, X } from 'lucide-react'
 
 export function Chat() {
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
@@ -153,9 +153,6 @@ export function Chat() {
     await Promise.all(promises)
   }
 
-  const clearChat = () => {
-    newChat()
-  }
 
   return (
     <div className="flex h-dvh bg-gray-50 dark:bg-gray-900">
@@ -225,13 +222,13 @@ export function Chat() {
             disabled={isLoading}
           />
           <button
-            data-testid="clear-chat"
-            onClick={clearChat}
-            disabled={isLoading || messages.length === 0}
+            data-testid="new-chat"
+            onClick={newChat}
+            disabled={isLoading}
             className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <RotateCcw className="w-4 h-4" />
-            Clear Chat
+            <Plus className="w-4 h-4" />
+            New Chat
           </button>
         </div>
       </div>

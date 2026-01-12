@@ -17,10 +17,29 @@ describe('PerspectiveSelector', () => {
     })
   })
 
-  it('should display the label with multi-select hint', () => {
+  it('should display the label with selection count', () => {
     render(<PerspectiveSelector {...defaultProps} />)
     expect(screen.getByText('Perspectives')).toBeInTheDocument()
-    expect(screen.getByText('(select one or more)')).toBeInTheDocument()
+    expect(screen.getByText('(1 selected)')).toBeInTheDocument()
+  })
+
+  it('should toggle collapse state', () => {
+    render(<PerspectiveSelector {...defaultProps} />)
+
+    // Initially expanded
+    expect(screen.getByTestId('perspective-hyperscaler')).toBeInTheDocument()
+
+    // Click to collapse
+    fireEvent.click(screen.getByText('Perspectives'))
+
+    // Should hide perspectives
+    expect(screen.queryByTestId('perspective-hyperscaler')).not.toBeInTheDocument()
+
+    // Click to expand
+    fireEvent.click(screen.getByText('Perspectives'))
+
+    // Should show perspectives again
+    expect(screen.getByTestId('perspective-hyperscaler')).toBeInTheDocument()
   })
 
   it('should show perspective names', () => {
