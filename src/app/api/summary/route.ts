@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Summarize this conversation in one sentence. Focus on the main topic and key insight.
+          content: `Summarize this conversation as exactly 3 bullet points. Each bullet must be under 10 words. No intro text, just the bullets.
 
 Conversation:
 ${conversation}`,
@@ -34,7 +34,7 @@ ${conversation}`,
       ],
       model: lightweightModel.id,
       provider: lightweightModel.provider,
-      systemPrompt: 'You are a helpful assistant that summarizes conversations concisely. Always respond with exactly one sentence.',
+      systemPrompt: 'You summarize conversations as exactly 3 bullet points. Each bullet is under 10 words. Format: "• Point one\\n• Point two\\n• Point three". No other text.',
     })
 
     if (response.error) {
