@@ -141,7 +141,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
       }
 
       // Write markdown content with proper formatting
-      const writeMarkdown = (content: string, xOffset: number, baseColor: [number, number, number] = [30, 30, 30]) => {
+      const writeMarkdown = (content: string, xOffset: number, baseColor: [number, number, number] = [30, 30, 30], headerColor: [number, number, number] = [0, 102, 204]) => {
         const lines = content.split('\n')
         const lineHeight = 4.5
         const textWidth = contentWidth - xOffset
@@ -154,7 +154,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             y += 2
             doc.setFontSize(11)
             doc.setFont('helvetica', 'bold')
-            doc.setTextColor(0, 102, 204)
+            doc.setTextColor(...headerColor)
             doc.text(line.slice(3), margin + xOffset, y)
             y += lineHeight + 1
             continue
@@ -164,7 +164,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             y += 2
             doc.setFontSize(12)
             doc.setFont('helvetica', 'bold')
-            doc.setTextColor(0, 102, 204)
+            doc.setTextColor(...headerColor)
             doc.text(line.slice(2), margin + xOffset, y)
             y += lineHeight + 2
             continue
@@ -325,8 +325,8 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
               doc.text(perspective.name, margin + 4, y + 5)
               y += 10
 
-              // Response content
-              writeMarkdown(response.content, 0, [40, 40, 40])
+              // Response content - headers use perspective color
+              writeMarkdown(response.content, 0, [40, 40, 40], color)
 
               y += 8
             }
