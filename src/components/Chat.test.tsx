@@ -74,16 +74,10 @@ describe('Chat', () => {
     expect(screen.getByTestId('chat-input')).toBeInTheDocument()
   })
 
-  it('should render clear chat button', () => {
+  it('should render new chat button', () => {
     render(<Chat />)
 
-    expect(screen.getByTestId('clear-chat')).toBeInTheDocument()
-  })
-
-  it('should disable clear chat when no messages', () => {
-    render(<Chat />)
-
-    expect(screen.getByTestId('clear-chat')).toBeDisabled()
+    expect(screen.getByTestId('new-chat')).toBeInTheDocument()
   })
 
   it('should send message and show in chat', async () => {
@@ -143,7 +137,7 @@ describe('Chat', () => {
     })
   })
 
-  it('should clear chat when clear button is clicked', async () => {
+  it('should start new chat when new chat button is clicked', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce({
       json: async () => ({ content: 'Response' }),
     } as Response)
@@ -159,8 +153,8 @@ describe('Chat', () => {
       expect(screen.getByText('Hello')).toBeInTheDocument()
     })
 
-    // Clear the chat
-    fireEvent.click(screen.getByTestId('clear-chat'))
+    // Start new chat
+    fireEvent.click(screen.getByTestId('new-chat'))
 
     expect(screen.queryByText('Hello')).not.toBeInTheDocument()
     expect(screen.getByText('Welcome to Nodiac Oracle')).toBeInTheDocument()

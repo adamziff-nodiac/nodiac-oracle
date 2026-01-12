@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { Perspective, PERSPECTIVES } from '@/types'
 import { cn } from '@/lib/utils'
-import { Check } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp } from 'lucide-react'
 
 type PerspectiveSelectorProps = {
   selectedPerspectives: Perspective[]
@@ -22,15 +23,27 @@ export function PerspectiveSelector({
   onPerspectiveToggle,
   disabled,
 }: PerspectiveSelectorProps) {
+  const [isExpanded, setIsExpanded] = useState(true)
+
   const isSelected = (perspective: Perspective) =>
     selectedPerspectives.some(p => p.id === perspective.id)
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        Perspectives <span className="text-gray-400 dark:text-gray-500 font-normal">(select one or more)</span>
-      </label>
-      <div className="space-y-2">
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="flex items-center justify-between w-full text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-2"
+      >
+        <span>
+          Perspectives <span className="text-gray-400 dark:text-gray-500 font-normal">({selectedPerspectives.length} selected)</span>
+        </span>
+        {isExpanded ? (
+          <ChevronUp className="w-4 h-4" />
+        ) : (
+          <ChevronDown className="w-4 h-4" />
+        )}
+      </button>
+      {isExpanded && <div className="space-y-2">
         {PERSPECTIVES.map((perspective) => {
           const selected = isSelected(perspective)
           return (
@@ -70,7 +83,7 @@ export function PerspectiveSelector({
             </button>
           )
         })}
-      </div>
+      </div>}
     </div>
   )
 }
