@@ -1,10 +1,24 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useContextPrompts, ContextPrompt } from '@/hooks/useContextPrompts'
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+// Portal wrapper to render modals at document body level
+function Portal({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
+
+  if (!mounted) return null
+  return createPortal(children, document.body)
+}
 
 type EditModalProps = {
   prompt: ContextPrompt
@@ -159,7 +173,7 @@ type PromptItemProps = {
 
 function PromptItem({ prompt, onToggle, onEdit, onDelete }: PromptItemProps) {
   return (
-    <div className="flex items-center gap-2 py-1.5 group">
+    <div className="flex items-center gap-2 py-1.5">
       <input
         type="checkbox"
         checked={prompt.is_enabled}
@@ -178,17 +192,17 @@ function PromptItem({ prompt, onToggle, onEdit, onDelete }: PromptItemProps) {
       <button
         onClick={() => onEdit(prompt)}
         title={`Edit ${prompt.name}`}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+        className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
       >
-        <Pencil className="w-3 h-3 text-gray-500" />
+        <Pencil className="w-3 h-3" />
       </button>
       {onDelete && (
         <button
           onClick={() => onDelete(prompt.id)}
           title={`Delete ${prompt.name}`}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30"
+          className="p-1 rounded hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-400 hover:text-red-500"
         >
-          <Trash2 className="w-3 h-3 text-red-500" />
+          <Trash2 className="w-3 h-3" />
         </button>
       )}
     </div>
@@ -313,21 +327,25 @@ export function NodiacContext() {
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit Modal - rendered via portal to escape sidebar transform */}
       {editingPrompt && (
-        <EditModal
-          prompt={editingPrompt}
-          onSave={handleSaveEdit}
-          onClose={() => setEditingPrompt(null)}
-        />
+        <Portal>
+          <EditModal
+            prompt={editingPrompt}
+            onSave={handleSaveEdit}
+            onClose={() => setEditingPrompt(null)}
+          />
+        </Portal>
       )}
 
-      {/* Add Prompt Modal */}
+      {/* Add Prompt Modal - rendered via portal to escape sidebar transform */}
       {isAddingPrompt && (
-        <AddPromptModal
-          onAdd={handleAddPrompt}
-          onClose={() => setIsAddingPrompt(false)}
-        />
+        <Portal>
+          <AddPromptModal
+            onAdd={handleAddPrompt}
+            onClose={() => setIsAddingPrompt(false)}
+          />
+        </Portal>
       )}
     </div>
   )
