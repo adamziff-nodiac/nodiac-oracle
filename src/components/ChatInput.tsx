@@ -88,7 +88,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="border-t border-gray-200 bg-white p-4">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
       <div className="flex items-end gap-2">
         <div className="flex-1 relative">
           <textarea
@@ -101,11 +101,12 @@ export function ChatInput({
             placeholder={isListening ? 'Listening... speak now' : 'Type your message...'}
             rows={1}
             className={cn(
-              'w-full resize-none rounded-2xl border border-gray-300 px-4 py-3 pr-12',
-              'text-sm text-gray-900 placeholder-gray-400',
+              'w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 px-4 py-3 pr-12',
+              'text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
+              'bg-white dark:bg-gray-700',
               'focus:border-nodiac-primary focus:ring-1 focus:ring-nodiac-primary',
-              'disabled:bg-gray-100 disabled:cursor-not-allowed',
-              isListening && 'border-red-400 bg-red-50 animate-pulse'
+              'disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed',
+              isListening && 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse'
             )}
           />
         </div>
@@ -120,7 +121,7 @@ export function ChatInput({
               'flex-shrink-0 p-2.5 rounded-full transition-colors',
               isListening
                 ? 'bg-red-500 text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
             title={isListening ? 'Stop recording' : 'Start voice input'}
@@ -141,7 +142,7 @@ export function ChatInput({
                 ? 'bg-orange-500 text-white animate-pulse'
                 : isVoiceMode
                   ? 'bg-nodiac-primary text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
             title={isSpeaking ? 'Stop speaking' : isVoiceMode ? 'Disable read aloud' : 'Enable read aloud'}
@@ -167,14 +168,14 @@ export function ChatInput({
       </div>
 
       {isListening && (
-        <div className="mt-2 text-center text-sm text-red-500">
-          🎤 Recording... click mic or stop talking to send
+        <div className="mt-2 text-center text-sm text-red-500 dark:text-red-400">
+          Recording... click mic or stop talking to send
         </div>
       )}
 
       {isVoiceSupported && !isListening && (
-        <div className="mt-2 text-center text-xs text-gray-400">
-          🎤 Click mic to speak • 🔊 {isVoiceMode ? 'Responses will be read aloud' : 'Click speaker to enable read aloud'}
+        <div className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+          Click mic to speak {isVoiceMode ? '| Responses will be read aloud' : '| Click speaker to enable read aloud'}
         </div>
       )}
     </div>

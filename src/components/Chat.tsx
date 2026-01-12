@@ -9,7 +9,8 @@ import { PerspectiveSelector } from './PerspectiveSelector'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { ExportButton } from './ExportButton'
-import { RotateCcw } from 'lucide-react'
+import { ThemeToggle } from './ThemeToggle'
+import { RotateCcw, Menu, X } from 'lucide-react'
 
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
@@ -17,6 +18,7 @@ export function Chat() {
   const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
   const [pendingPerspectives, setPendingPerspectives] = useState<Set<string>>(new Set())
   const [isVoiceMode, setIsVoiceMode] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const {
@@ -55,6 +57,9 @@ export function Chat() {
 
   const sendMessage = async (content: string) => {
     if (selectedPerspectives.length === 0) return
+
+    // Close sidebar on mobile when sending a message
+    setIsSidebarOpen(false)
 
     const userMessage: Message = {
       id: generateId(),
@@ -147,12 +152,41 @@ export function Chat() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-700"
+        aria-label="Toggle menu"
+      >
+        {isSidebarOpen ? (
+          <X className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        ) : (
+          <Menu className="w-5 h-5 text-gray-700 dark:text-gray-300" />
+        )}
+      </button>
+
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Nodiac Oracle</h1>
-          <p className="text-sm text-gray-500 mt-1">Multi-perspective AI advisor</p>
+      <div className={`
+        fixed lg:relative inset-y-0 left-0 z-40
+        w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col
+        transform transition-transform duration-200 ease-in-out
+        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Nodiac Oracle</h1>
+            <ThemeToggle />
+          </div>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Multi-perspective AI advisor</p>
         </div>
 
         <div className="flex-1 p-4 space-y-6 overflow-y-auto">
@@ -169,7 +203,7 @@ export function Chat() {
           />
         </div>
 
-        <div className="p-4 border-t border-gray-200 space-y-2">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
           <ExportButton
             messages={messages}
             selectedModel={selectedModel}
@@ -179,7 +213,7 @@ export function Chat() {
             data-testid="clear-chat"
             onClick={clearChat}
             disabled={isLoading || messages.length === 0}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <RotateCcw className="w-4 h-4" />
             Clear Chat
@@ -188,19 +222,19 @@ export function Chat() {
       </div>
 
       {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col lg:ml-0">
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 pt-16 lg:pt-4">
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
-              <div className="text-center max-w-md">
-                <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              <div className="text-center max-w-md px-4">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-2">
                   Welcome to Nodiac Oracle
                 </h2>
-                <p className="text-gray-500 mb-4">
+                <p className="text-gray-500 dark:text-gray-400 mb-4">
                   Get insights from different industry perspectives on data centers and clean energy.
                 </p>
-                <div className="text-sm text-gray-400">
+                <div className="text-sm text-gray-400 dark:text-gray-500">
                   Select a model and one or more perspectives, then ask your question.
                 </div>
               </div>
@@ -212,14 +246,14 @@ export function Chat() {
               ))}
               {pendingPerspectives.size > 0 && (
                 <div className="flex justify-start mb-4">
-                  <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl rounded-bl-md px-4 py-3">
                     <div className="flex items-center gap-2">
                       <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
-                      <span className="text-xs text-gray-500">
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
                         Waiting for {Array.from(pendingPerspectives).map(id =>
                           PERSPECTIVES.find(p => p.id === id)?.name.split(' ')[0]
                         ).join(', ')}...
