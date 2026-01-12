@@ -1,19 +1,21 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Message, AIModel, Perspective, AI_MODELS, PERSPECTIVES } from '@/types'
-import { generateId } from '@/lib/utils'
+import { AIModel, Perspective, AI_MODELS, PERSPECTIVES } from '@/types'
 import { useVoice } from '@/lib/useVoice'
+import { useAuth } from '@/contexts/AuthContext'
+import { useChatPersistence } from '@/hooks/useChatPersistence'
 import { ModelSelector } from './ModelSelector'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { ExportButton } from './ExportButton'
 import { ThemeToggle } from './ThemeToggle'
+import { AuthButton } from './auth/AuthButton'
+import { ChatHistory } from './ChatHistory'
 import { RotateCcw, Menu, X } from 'lucide-react'
 
 export function Chat() {
-  const [messages, setMessages] = useState<Message[]>([])
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
   const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
   const [pendingPerspectives, setPendingPerspectives] = useState<Set<string>>(new Set())
@@ -21,6 +23,18 @@ export function Chat() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
+
+  const { isGuest } = useAuth()
+  const {
+    chatId,
+    messages,
+    addMessage,
+    loadChat,
+    newChat,
+  } = useChatPersistence({
+    modelId: selectedModel.id,
+    perspectives: selectedPerspectives.map(p => p.id),
+  })
 
   const {
     isListening,
@@ -59,14 +73,11 @@ export function Chat() {
     // Close sidebar on mobile when sending a message
     setIsSidebarOpen(false)
 
-    const userMessage: Message = {
-      id: generateId(),
+    // Add user message (auto-saves if logged in)
+    const userMessage = await addMessage({
       role: 'user',
       content,
-      timestamp: new Date(),
-    }
-
-    setMessages(prev => [...prev, userMessage])
+    })
 
     // Scroll to bottom when user sends a message
     setTimeout(() => scrollToBottom(), 50)
@@ -99,16 +110,12 @@ export function Chat() {
 
         const data = await response.json()
 
-        const assistantMessage: Message = {
-          id: generateId(),
+        // Add assistant message (auto-saves if logged in)
+        await addMessage({
           role: 'assistant',
           content: data.error ? `Error: ${data.error}` : data.content,
           perspective: perspective.id,
-          timestamp: new Date(),
-        }
-
-        // Add this response immediately
-        setMessages(prev => [...prev, assistantMessage])
+        })
 
         // Remove from pending
         setPendingPerspectives(prev => {
@@ -127,15 +134,13 @@ export function Chat() {
           }
         }
       } catch (error) {
-        const errorMessage: Message = {
-          id: generateId(),
+        // Add error message (auto-saves if logged in)
+        await addMessage({
           role: 'assistant',
           content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
           perspective: perspective.id,
-          timestamp: new Date(),
-        }
+        })
 
-        setMessages(prev => [...prev, errorMessage])
         setPendingPerspectives(prev => {
           const next = new Set(prev)
           next.delete(perspective.id)
@@ -149,7 +154,7 @@ export function Chat() {
   }
 
   const clearChat = () => {
-    setMessages([])
+    newChat()
   }
 
   return (
@@ -188,6 +193,9 @@ export function Chat() {
             <ThemeToggle />
           </div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Multi-perspective AI advisor</p>
+          <div className="mt-3">
+            <AuthButton />
+          </div>
         </div>
 
         <div className="flex-1 p-4 space-y-6 overflow-y-auto">
@@ -201,6 +209,12 @@ export function Chat() {
             selectedPerspectives={selectedPerspectives}
             onPerspectiveToggle={togglePerspective}
             disabled={isLoading}
+          />
+
+          <ChatHistory
+            currentChatId={chatId}
+            onSelectChat={loadChat}
+            onNewChat={newChat}
           />
         </div>
 
