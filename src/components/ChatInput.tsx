@@ -33,12 +33,27 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const lastTranscriptRef = useRef('')
 
+  // Update input with transcript while listening
   useEffect(() => {
-    if (transcript && isVoiceMode) {
+    if (transcript && isListening) {
       setInput(transcript)
+      lastTranscriptRef.current = transcript
     }
-  }, [transcript, isVoiceMode])
+  }, [transcript, isListening])
+
+  // Auto-submit when listening stops and we have content
+  useEffect(() => {
+    if (!isListening && lastTranscriptRef.current) {
+      const trimmed = lastTranscriptRef.current.trim()
+      if (trimmed && !disabled) {
+        onSubmit(trimmed)
+        setInput('')
+      }
+      lastTranscriptRef.current = ''
+    }
+  }, [isListening, disabled, onSubmit])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -65,10 +80,9 @@ export function ChatInput({
   const handleMicClick = () => {
     if (isListening) {
       onStopListening()
-      if (input.trim()) {
-        handleSubmit()
-      }
     } else {
+      setInput('')
+      lastTranscriptRef.current = ''
       onStartListening()
     }
   }
@@ -76,24 +90,6 @@ export function ChatInput({
   return (
     <div className="border-t border-gray-200 bg-white p-4">
       <div className="flex items-end gap-2">
-        {isVoiceSupported && (
-          <button
-            data-testid="voice-mode-toggle"
-            onClick={onVoiceModeToggle}
-            disabled={disabled}
-            className={cn(
-              'flex-shrink-0 p-2.5 rounded-full transition-colors',
-              isVoiceMode
-                ? 'bg-nodiac-primary text-white'
-                : 'bg-gray-100 text-gray-500 hover:bg-gray-200',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-            title={isVoiceMode ? 'Disable voice mode' : 'Enable voice mode'}
-          >
-            {isVoiceMode ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-          </button>
-        )}
-
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -101,67 +97,84 @@ export function ChatInput({
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            disabled={disabled}
-            placeholder={isListening ? 'Listening...' : 'Type your message...'}
+            disabled={disabled || isListening}
+            placeholder={isListening ? 'Listening... speak now' : 'Type your message...'}
             rows={1}
             className={cn(
               'w-full resize-none rounded-2xl border border-gray-300 px-4 py-3 pr-12',
               'text-sm text-gray-900 placeholder-gray-400',
               'focus:border-nodiac-primary focus:ring-1 focus:ring-nodiac-primary',
               'disabled:bg-gray-100 disabled:cursor-not-allowed',
-              isListening && 'border-red-400 bg-red-50'
+              isListening && 'border-red-400 bg-red-50 animate-pulse'
             )}
           />
         </div>
 
-        {isVoiceMode && isVoiceSupported ? (
-          <div className="flex gap-2">
-            {isSpeaking && (
-              <button
-                data-testid="stop-speaking"
-                onClick={onStopSpeaking}
-                className="flex-shrink-0 p-2.5 rounded-full bg-orange-500 text-white hover:bg-orange-600"
-                title="Stop speaking"
-              >
-                <VolumeX className="w-5 h-5" />
-              </button>
-            )}
-            <button
-              data-testid="mic-button"
-              onClick={handleMicClick}
-              disabled={disabled || isSpeaking}
-              className={cn(
-                'flex-shrink-0 p-2.5 rounded-full transition-colors',
-                isListening
-                  ? 'bg-red-500 text-white animate-pulse'
-                  : 'bg-nodiac-primary text-white hover:bg-nodiac-primary/90',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
-              )}
-              title={isListening ? 'Stop listening' : 'Start listening'}
-            >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-            </button>
-          </div>
-        ) : (
+        {/* Mic button - always visible if supported */}
+        {isVoiceSupported && (
           <button
-            data-testid="send-button"
-            onClick={handleSubmit}
-            disabled={disabled || !input.trim()}
+            data-testid="mic-button"
+            onClick={handleMicClick}
+            disabled={disabled || isSpeaking}
             className={cn(
-              'flex-shrink-0 p-2.5 rounded-full',
-              'bg-nodiac-primary text-white hover:bg-nodiac-primary/90',
+              'flex-shrink-0 p-2.5 rounded-full transition-colors',
+              isListening
+                ? 'bg-red-500 text-white'
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
               'disabled:opacity-50 disabled:cursor-not-allowed'
             )}
-            title="Send message"
+            title={isListening ? 'Stop recording' : 'Start voice input'}
           >
-            <Send className="w-5 h-5" />
+            {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
           </button>
         )}
+
+        {/* TTS toggle - for reading responses aloud */}
+        {isVoiceSupported && (
+          <button
+            data-testid="voice-mode-toggle"
+            onClick={isSpeaking ? onStopSpeaking : onVoiceModeToggle}
+            disabled={disabled}
+            className={cn(
+              'flex-shrink-0 p-2.5 rounded-full transition-colors',
+              isSpeaking
+                ? 'bg-orange-500 text-white animate-pulse'
+                : isVoiceMode
+                  ? 'bg-nodiac-primary text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+            title={isSpeaking ? 'Stop speaking' : isVoiceMode ? 'Disable read aloud' : 'Enable read aloud'}
+          >
+            {isVoiceMode || isSpeaking ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+          </button>
+        )}
+
+        {/* Send button */}
+        <button
+          data-testid="send-button"
+          onClick={handleSubmit}
+          disabled={disabled || !input.trim() || isListening}
+          className={cn(
+            'flex-shrink-0 p-2.5 rounded-full',
+            'bg-nodiac-primary text-white hover:bg-nodiac-primary/90',
+            'disabled:opacity-50 disabled:cursor-not-allowed'
+          )}
+          title="Send message"
+        >
+          <Send className="w-5 h-5" />
+        </button>
       </div>
 
-      {isVoiceMode && isListening && (
-        <div className="mt-2 text-center text-sm text-red-500 animate-pulse">
-          Listening... Speak now
+      {isListening && (
+        <div className="mt-2 text-center text-sm text-red-500">
+          🎤 Recording... click mic or stop talking to send
+        </div>
+      )}
+
+      {isVoiceSupported && !isListening && (
+        <div className="mt-2 text-center text-xs text-gray-400">
+          🎤 Click mic to speak • 🔊 {isVoiceMode ? 'Responses will be read aloud' : 'Click speaker to enable read aloud'}
         </div>
       )}
     </div>

@@ -21,7 +21,7 @@ describe('ChatInput', () => {
     expect(screen.getByTestId('chat-input')).toBeInTheDocument()
   })
 
-  it('should render the send button when not in voice mode', () => {
+  it('should render the send button', () => {
     render(<ChatInput {...defaultProps} />)
     expect(screen.getByTestId('send-button')).toBeInTheDocument()
   })
@@ -29,6 +29,11 @@ describe('ChatInput', () => {
   it('should render the voice mode toggle', () => {
     render(<ChatInput {...defaultProps} />)
     expect(screen.getByTestId('voice-mode-toggle')).toBeInTheDocument()
+  })
+
+  it('should render the mic button when voice is supported', () => {
+    render(<ChatInput {...defaultProps} />)
+    expect(screen.getByTestId('mic-button')).toBeInTheDocument()
   })
 
   it('should call onSubmit when send button is clicked', () => {
@@ -99,40 +104,50 @@ describe('ChatInput', () => {
     expect(onVoiceModeToggle).toHaveBeenCalled()
   })
 
-  it('should show mic button when in voice mode', () => {
-    render(<ChatInput {...defaultProps} isVoiceMode />)
-
-    expect(screen.getByTestId('mic-button')).toBeInTheDocument()
-    expect(screen.queryByTestId('send-button')).not.toBeInTheDocument()
-  })
-
   it('should call onStartListening when mic button is clicked', () => {
     const onStartListening = vi.fn()
-    render(<ChatInput {...defaultProps} isVoiceMode onStartListening={onStartListening} />)
+    render(<ChatInput {...defaultProps} onStartListening={onStartListening} />)
 
     fireEvent.click(screen.getByTestId('mic-button'))
 
     expect(onStartListening).toHaveBeenCalled()
   })
 
-  it('should show stop speaking button when speaking', () => {
-    render(<ChatInput {...defaultProps} isVoiceMode isSpeaking />)
+  it('should call onStopListening when mic button is clicked while listening', () => {
+    const onStopListening = vi.fn()
+    render(<ChatInput {...defaultProps} isListening onStopListening={onStopListening} />)
 
-    expect(screen.getByTestId('stop-speaking')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('mic-button'))
+
+    expect(onStopListening).toHaveBeenCalled()
   })
 
-  it('should update input with transcript', () => {
-    const { rerender } = render(<ChatInput {...defaultProps} isVoiceMode />)
+  it('should call onStopSpeaking when voice toggle is clicked while speaking', () => {
+    const onStopSpeaking = vi.fn()
+    render(<ChatInput {...defaultProps} isSpeaking onStopSpeaking={onStopSpeaking} />)
 
-    rerender(<ChatInput {...defaultProps} isVoiceMode transcript="Hello world" />)
+    fireEvent.click(screen.getByTestId('voice-mode-toggle'))
+
+    expect(onStopSpeaking).toHaveBeenCalled()
+  })
+
+  it('should update input with transcript while listening', () => {
+    render(<ChatInput {...defaultProps} isListening transcript="Hello world" />)
 
     const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
     expect(input.value).toBe('Hello world')
   })
 
-  it('should not show voice toggle when voice is not supported', () => {
+  it('should not show voice controls when voice is not supported', () => {
     render(<ChatInput {...defaultProps} isVoiceSupported={false} />)
 
     expect(screen.queryByTestId('voice-mode-toggle')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('mic-button')).not.toBeInTheDocument()
+  })
+
+  it('should disable input while listening', () => {
+    render(<ChatInput {...defaultProps} isListening />)
+
+    expect(screen.getByTestId('chat-input')).toBeDisabled()
   })
 })
