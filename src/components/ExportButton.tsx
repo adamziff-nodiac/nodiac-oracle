@@ -14,6 +14,7 @@ type ExportButtonProps = {
 type TextSegment = {
   text: string
   bold: boolean
+  italic: boolean
 }
 
 // Group messages into rounds: each user message + following assistant responses
@@ -45,6 +46,34 @@ const perspectiveColors: Record<string, [number, number, number]> = {
   techvc: [124, 58, 237],        // Purple
   utility: [234, 88, 12],        // Orange
   renewables: [22, 163, 74],     // Green
+}
+
+// Strip emojis and other unicode symbols that jsPDF can't render
+function stripEmojis(text: string): string {
+  return text
+    .replace(/[\u{1F600}-\u{1F64F}]/gu, '') // Emoticons
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, '') // Misc Symbols and Pictographs
+    .replace(/[\u{1F680}-\u{1F6FF}]/gu, '') // Transport and Map
+    .replace(/[\u{1F700}-\u{1F77F}]/gu, '') // Alchemical Symbols
+    .replace(/[\u{1F780}-\u{1F7FF}]/gu, '') // Geometric Shapes Extended
+    .replace(/[\u{1F800}-\u{1F8FF}]/gu, '') // Supplemental Arrows-C
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, '') // Supplemental Symbols and Pictographs
+    .replace(/[\u{1FA00}-\u{1FA6F}]/gu, '') // Chess Symbols
+    .replace(/[\u{1FA70}-\u{1FAFF}]/gu, '') // Symbols and Pictographs Extended-A
+    .replace(/[\u{2600}-\u{26FF}]/gu, '')   // Misc symbols
+    .replace(/[\u{2700}-\u{27BF}]/gu, '')   // Dingbats
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, '')   // Variation Selectors
+    .replace(/[\u{1F000}-\u{1F02F}]/gu, '') // Mahjong Tiles
+    .replace(/[\u{1F0A0}-\u{1F0FF}]/gu, '') // Playing Cards
+    .trim()
+}
+
+// Strip bold and italic markdown and return clean text
+function stripFormatting(text: string): string {
+  return text
+    .replace(/\*\*\*(.+?)\*\*\*/g, '$1')  // bold+italic
+    .replace(/\*\*(.+?)\*\*/g, '$1')       // bold
+    .replace(/\*([^*]+?)\*/g, '$1')        // italic
 }
 
 export function ExportButton({ messages, selectedModel, disabled }: ExportButtonProps) {
@@ -104,39 +133,59 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         }
       }
 
-      // Parse markdown bold syntax into segments
-      const parseBold = (text: string): TextSegment[] => {
+      // Parse markdown bold and italic syntax into segments
+      const parseFormatting = (text: string): TextSegment[] => {
         const segments: TextSegment[] = []
-        const regex = /\*\*(.+?)\*\*/g
+        // Match **bold**, *italic*, or ***bold+italic***
+        const regex = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|\*([^*]+?)\*)/g
         let lastIndex = 0
         let match
 
         while ((match = regex.exec(text)) !== null) {
           if (match.index > lastIndex) {
-            segments.push({ text: text.slice(lastIndex, match.index), bold: false })
+            segments.push({ text: text.slice(lastIndex, match.index), bold: false, italic: false })
           }
-          segments.push({ text: match[1], bold: true })
+          if (match[2]) {
+            // ***bold+italic***
+            segments.push({ text: match[2], bold: true, italic: true })
+          } else if (match[3]) {
+            // **bold**
+            segments.push({ text: match[3], bold: true, italic: false })
+          } else if (match[4]) {
+            // *italic*
+            segments.push({ text: match[4], bold: false, italic: true })
+          }
           lastIndex = regex.lastIndex
         }
 
         if (lastIndex < text.length) {
-          segments.push({ text: text.slice(lastIndex), bold: false })
+          segments.push({ text: text.slice(lastIndex), bold: false, italic: false })
         }
 
-        return segments.length > 0 ? segments : [{ text, bold: false }]
+        return segments.length > 0 ? segments : [{ text, bold: false, italic: false }]
       }
 
-      // Write a line with mixed bold/normal text
+      // Write a line with mixed bold/italic/normal text
       const writeFormattedLine = (text: string, x: number, fontSize: number, baseColor: [number, number, number]) => {
-        const segments = parseBold(text)
+        const segments = parseFormatting(text)
         doc.setFontSize(fontSize)
         doc.setTextColor(...baseColor)
 
         let currentX = x
         for (const segment of segments) {
-          doc.setFont('helvetica', segment.bold ? 'bold' : 'normal')
-          doc.text(segment.text, currentX, y)
-          currentX += doc.getTextWidth(segment.text)
+          // Determine font style: bold, italic, bolditalic, or normal
+          let fontStyle: string = 'normal'
+          if (segment.bold && segment.italic) {
+            fontStyle = 'bolditalic'
+          } else if (segment.bold) {
+            fontStyle = 'bold'
+          } else if (segment.italic) {
+            fontStyle = 'italic'
+          }
+          doc.setFont('helvetica', fontStyle)
+          const cleanText = stripEmojis(segment.text)
+          doc.text(cleanText, currentX, y)
+          currentX += doc.getTextWidth(cleanText)
         }
       }
 
@@ -215,13 +264,16 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
               doc.setTextColor(40, 40, 40)
             }
 
+            // Clean text: strip emojis and formatting markdown
+            const cleanText = stripEmojis(stripFormatting(cellText))
+
             // Truncate text if too long
             const maxWidth = colWidth - cellPadding * 2
-            let displayText = cellText
+            let displayText = cleanText
             while (doc.getTextWidth(displayText) > maxWidth && displayText.length > 0) {
               displayText = displayText.slice(0, -1)
             }
-            if (displayText !== cellText && displayText.length > 2) {
+            if (displayText !== cleanText && displayText.length > 2) {
               displayText = displayText.slice(0, -2) + '..'
             }
 
@@ -274,7 +326,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             doc.setFontSize(11)
             doc.setFont('helvetica', 'bold')
             doc.setTextColor(...headerColor)
-            doc.text(line.slice(3), margin + xOffset, y)
+            doc.text(stripEmojis(line.slice(3)), margin + xOffset, y)
             y += lineHeight + 1
             i++
             continue
@@ -285,7 +337,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
             doc.setFontSize(12)
             doc.setFont('helvetica', 'bold')
             doc.setTextColor(...headerColor)
-            doc.text(line.slice(2), margin + xOffset, y)
+            doc.text(stripEmojis(line.slice(2)), margin + xOffset, y)
             y += lineHeight + 2
             i++
             continue

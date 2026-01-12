@@ -1,6 +1,8 @@
 export { Chat } from './Chat'
 export { ChatInput } from './ChatInput'
 export { ChatMessage } from './ChatMessage'
+export { ConversationHistory } from './ConversationHistory'
 export { ExportButton } from './ExportButton'
 export { ModelSelector } from './ModelSelector'
 export { PerspectiveSelector } from './PerspectiveSelector'
+export { ThemeToggle } from './ThemeToggle'

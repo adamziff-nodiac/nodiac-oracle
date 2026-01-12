@@ -26,7 +26,7 @@ export function ModelSelector({ selectedModel, onModelChange, disabled }: ModelS
 
   return (
     <div className="relative">
-      <label htmlFor="model-selector" className="block text-sm font-medium text-gray-700 mb-1">
+      <label htmlFor="model-selector" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
         AI Model
       </label>
       <select
@@ -39,9 +39,9 @@ export function ModelSelector({ selectedModel, onModelChange, disabled }: ModelS
         }}
         disabled={disabled}
         className={cn(
-          'block w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5',
-          'text-sm text-gray-900 focus:border-nodiac-primary focus:ring-nodiac-primary',
-          'disabled:bg-gray-100 disabled:cursor-not-allowed',
+          'block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5',
+          'text-sm text-gray-900 dark:text-gray-100 focus:border-nodiac-primary focus:ring-nodiac-primary',
+          'disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed',
           'cursor-pointer appearance-none'
         )}
       >
@@ -56,7 +56,7 @@ export function ModelSelector({ selectedModel, onModelChange, disabled }: ModelS
         ))}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 top-6 flex items-center px-3">
-        <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
