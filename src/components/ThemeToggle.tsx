@@ -12,9 +12,15 @@ export function ThemeToggle() {
     setMounted(true)
     // Check localStorage or system preference
     const stored = localStorage.getItem('theme')
-    if (stored === 'dark' || (!stored && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+
+    if (stored === 'dark' || (!stored && prefersDark)) {
       setIsDark(true)
       document.documentElement.classList.add('dark')
+    } else {
+      // Explicitly remove dark class for light mode
+      setIsDark(false)
+      document.documentElement.classList.remove('dark')
     }
   }, [])
 

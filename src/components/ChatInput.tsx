@@ -35,6 +35,8 @@ export function ChatInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const lastTranscriptRef = useRef('')
 
+  const hasInput = input.trim().length > 0
+
   // Update input with transcript while listening
   useEffect(() => {
     if (transcript && isListening) {
@@ -89,7 +91,8 @@ export function ChatInput({
 
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
-      <div className="flex items-end gap-2">
+      {/* Desktop layout - buttons outside */}
+      <div className="hidden sm:flex items-end gap-2">
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -101,17 +104,17 @@ export function ChatInput({
             placeholder={isListening ? 'Listening... speak now' : 'Type your message...'}
             rows={1}
             className={cn(
-              'w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 px-4 py-3 pr-12',
+              'w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 px-4 py-3',
               'text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
               'bg-white dark:bg-gray-700',
-              'focus:border-nodiac-primary focus:ring-1 focus:ring-nodiac-primary',
+              'focus:border-nodiac-primary focus:ring-1 focus:ring-nodiac-primary focus:outline-none',
               'disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed',
               isListening && 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse'
             )}
           />
         </div>
 
-        {/* Mic button - always visible if supported */}
+        {/* Mic button */}
         {isVoiceSupported && (
           <button
             data-testid="mic-button"
@@ -130,7 +133,7 @@ export function ChatInput({
           </button>
         )}
 
-        {/* TTS toggle - for reading responses aloud */}
+        {/* TTS toggle */}
         {isVoiceSupported && (
           <button
             data-testid="voice-mode-toggle"
@@ -167,6 +170,87 @@ export function ChatInput({
         </button>
       </div>
 
+      {/* Mobile layout - buttons inside textbox */}
+      <div className="sm:hidden relative">
+        <textarea
+          ref={textareaRef}
+          data-testid="chat-input-mobile"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          disabled={disabled || isListening}
+          placeholder={isListening ? 'Listening...' : 'Type your message...'}
+          rows={1}
+          className={cn(
+            'w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 pl-4 pr-28 py-3',
+            'text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
+            'bg-white dark:bg-gray-700',
+            'focus:border-nodiac-primary focus:ring-1 focus:ring-nodiac-primary focus:outline-none',
+            'disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed',
+            isListening && 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse',
+            // Reduce right padding when typing (only send button visible)
+            hasInput && 'pr-14'
+          )}
+        />
+
+        {/* Buttons inside the textbox */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+          {/* Mic button - hidden when typing */}
+          {isVoiceSupported && !hasInput && (
+            <button
+              onClick={handleMicClick}
+              disabled={disabled || isSpeaking}
+              className={cn(
+                'p-2 rounded-full transition-all',
+                isListening
+                  ? 'bg-red-500 text-white'
+                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+              title={isListening ? 'Stop recording' : 'Start voice input'}
+            >
+              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+            </button>
+          )}
+
+          {/* TTS toggle - hidden when typing */}
+          {isVoiceSupported && !hasInput && (
+            <button
+              onClick={isSpeaking ? onStopSpeaking : onVoiceModeToggle}
+              disabled={disabled}
+              className={cn(
+                'p-2 rounded-full transition-all',
+                isSpeaking
+                  ? 'bg-orange-500 text-white animate-pulse'
+                  : isVoiceMode
+                    ? 'text-nodiac-primary'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+              title={isSpeaking ? 'Stop speaking' : isVoiceMode ? 'Disable read aloud' : 'Enable read aloud'}
+            >
+              {isVoiceMode || isSpeaking ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            </button>
+          )}
+
+          {/* Send button - always visible */}
+          <button
+            onClick={handleSubmit}
+            disabled={disabled || !input.trim() || isListening}
+            className={cn(
+              'p-2 rounded-full transition-all',
+              hasInput
+                ? 'bg-nodiac-primary text-white'
+                : 'text-gray-400 dark:text-gray-500',
+              'disabled:opacity-50 disabled:cursor-not-allowed'
+            )}
+            title="Send message"
+          >
+            <Send className="w-5 h-5" />
+          </button>
+        </div>
+      </div>
+
       {isListening && (
         <div className="mt-2 text-center text-sm text-red-500 dark:text-red-400">
           Recording... click mic or stop talking to send
@@ -174,7 +258,7 @@ export function ChatInput({
       )}
 
       {isVoiceSupported && !isListening && (
-        <div className="mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
+        <div className="hidden sm:block mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
           Click mic to speak {isVoiceMode ? '| Responses will be read aloud' : '| Click speaker to enable read aloud'}
         </div>
       )}
