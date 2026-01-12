@@ -135,13 +135,18 @@ describe('Chat', () => {
     expect(screen.getByText('Welcome to Nodiac Oracle')).toBeInTheDocument()
   })
 
-  it('should change perspective when clicked', () => {
+  it('should toggle perspective when clicked', () => {
     render(<Chat />)
 
+    // Initially hyperscaler is selected
+    expect(screen.getByTestId('perspective-hyperscaler')).toHaveClass('border-nodiac-primary')
+
+    // Click techvc to add it
     fireEvent.click(screen.getByTestId('perspective-techvc'))
 
-    const button = screen.getByTestId('perspective-techvc')
-    expect(button).toHaveClass('border-nodiac-primary')
+    // Both should now be selected
+    expect(screen.getByTestId('perspective-hyperscaler')).toHaveClass('border-nodiac-primary')
+    expect(screen.getByTestId('perspective-techvc')).toHaveClass('border-nodiac-primary')
   })
 
   it('should disable inputs while loading', async () => {

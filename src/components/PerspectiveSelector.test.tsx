@@ -5,8 +5,8 @@ import { PERSPECTIVES } from '@/types'
 
 describe('PerspectiveSelector', () => {
   const defaultProps = {
-    selectedPerspective: PERSPECTIVES[0],
-    onPerspectiveChange: vi.fn(),
+    selectedPerspectives: [PERSPECTIVES[0]],
+    onPerspectiveToggle: vi.fn(),
   }
 
   it('should render all four perspectives', () => {
@@ -17,9 +17,10 @@ describe('PerspectiveSelector', () => {
     })
   })
 
-  it('should display the label', () => {
+  it('should display the label with multi-select hint', () => {
     render(<PerspectiveSelector {...defaultProps} />)
-    expect(screen.getByText('Perspective')).toBeInTheDocument()
+    expect(screen.getByText('Perspectives')).toBeInTheDocument()
+    expect(screen.getByText('(select one or more)')).toBeInTheDocument()
   })
 
   it('should show perspective names', () => {
@@ -38,20 +39,25 @@ describe('PerspectiveSelector', () => {
     })
   })
 
-  it('should call onPerspectiveChange when a perspective is clicked', () => {
-    const onPerspectiveChange = vi.fn()
-    render(<PerspectiveSelector {...defaultProps} onPerspectiveChange={onPerspectiveChange} />)
+  it('should call onPerspectiveToggle when a perspective is clicked', () => {
+    const onPerspectiveToggle = vi.fn()
+    render(<PerspectiveSelector {...defaultProps} onPerspectiveToggle={onPerspectiveToggle} />)
 
     fireEvent.click(screen.getByTestId('perspective-techvc'))
 
-    expect(onPerspectiveChange).toHaveBeenCalledWith(PERSPECTIVES[1])
+    expect(onPerspectiveToggle).toHaveBeenCalledWith(PERSPECTIVES[1])
   })
 
-  it('should highlight the selected perspective', () => {
-    render(<PerspectiveSelector {...defaultProps} selectedPerspective={PERSPECTIVES[1]} />)
+  it('should highlight selected perspectives', () => {
+    render(<PerspectiveSelector {...defaultProps} selectedPerspectives={[PERSPECTIVES[0], PERSPECTIVES[1]]} />)
 
-    const selectedButton = screen.getByTestId('perspective-techvc')
-    expect(selectedButton).toHaveClass('border-nodiac-primary')
+    const hyperscalerButton = screen.getByTestId('perspective-hyperscaler')
+    const techvcButton = screen.getByTestId('perspective-techvc')
+    const utilityButton = screen.getByTestId('perspective-utility')
+
+    expect(hyperscalerButton).toHaveClass('border-nodiac-primary')
+    expect(techvcButton).toHaveClass('border-nodiac-primary')
+    expect(utilityButton).not.toHaveClass('border-nodiac-primary')
   })
 
   it('should be disabled when disabled prop is true', () => {
@@ -61,5 +67,13 @@ describe('PerspectiveSelector', () => {
       const button = screen.getByTestId(`perspective-${perspective.id}`)
       expect(button).toBeDisabled()
     })
+  })
+
+  it('should show checkmark for selected perspectives', () => {
+    render(<PerspectiveSelector {...defaultProps} selectedPerspectives={[PERSPECTIVES[0]]} />)
+
+    // The checkbox for the selected perspective should have the check mark styling
+    const hyperscalerButton = screen.getByTestId('perspective-hyperscaler')
+    expect(hyperscalerButton.querySelector('.bg-nodiac-primary')).toBeInTheDocument()
   })
 })

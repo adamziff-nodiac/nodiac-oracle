@@ -13,7 +13,7 @@ import { RotateCcw } from 'lucide-react'
 export function Chat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
-  const [selectedPerspective, setSelectedPerspective] = useState<Perspective>(PERSPECTIVES[0])
+  const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
   const [isLoading, setIsLoading] = useState(false)
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -37,7 +37,22 @@ export function Chat() {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
+  const togglePerspective = (perspective: Perspective) => {
+    setSelectedPerspectives(prev => {
+      const isSelected = prev.some(p => p.id === perspective.id)
+      if (isSelected) {
+        // Don't allow deselecting the last one
+        if (prev.length === 1) return prev
+        return prev.filter(p => p.id !== perspective.id)
+      } else {
+        return [...prev, perspective]
+      }
+    })
+  }
+
   const sendMessage = async (content: string) => {
+    if (selectedPerspectives.length === 0) return
+
     const userMessage: Message = {
       id: generateId(),
       role: 'user',
@@ -48,53 +63,67 @@ export function Chat() {
     setMessages(prev => [...prev, userMessage])
     setIsLoading(true)
 
+    // Build conversation history (excluding perspective-specific responses for clean context)
+    const conversationHistory = [...messages, userMessage]
+      .filter(m => m.role === 'user')
+      .map(m => ({ role: m.role, content: m.content }))
+
+    // Make parallel API calls for each selected perspective
+    const perspectivePromises = selectedPerspectives.map(async (perspective) => {
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: conversationHistory,
+            model: selectedModel.id,
+            provider: selectedModel.provider,
+            systemPrompt: perspective.systemPrompt,
+          }),
+        })
+
+        const data = await response.json()
+
+        if (data.error) {
+          return {
+            id: generateId(),
+            role: 'assistant' as const,
+            content: `Error: ${data.error}`,
+            perspective: perspective.id,
+            timestamp: new Date(),
+          }
+        }
+
+        return {
+          id: generateId(),
+          role: 'assistant' as const,
+          content: data.content,
+          perspective: perspective.id,
+          timestamp: new Date(),
+        }
+      } catch (error) {
+        return {
+          id: generateId(),
+          role: 'assistant' as const,
+          content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
+          perspective: perspective.id,
+          timestamp: new Date(),
+        }
+      }
+    })
+
     try {
-      const response = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: [...messages, userMessage].map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-          model: selectedModel.id,
-          provider: selectedModel.provider,
-          systemPrompt: selectedPerspective.systemPrompt,
-        }),
-      })
+      const responses = await Promise.all(perspectivePromises)
+      setMessages(prev => [...prev, ...responses])
 
-      const data = await response.json()
-
-      if (data.error) {
-        throw new Error(data.error)
-      }
-
-      const assistantMessage: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: data.content,
-        perspective: selectedPerspective.id,
-        timestamp: new Date(),
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
-
-      if (isVoiceMode && data.content) {
+      // In voice mode, speak the first response
+      if (isVoiceMode && responses.length > 0 && responses[0].content && !responses[0].content.startsWith('Error:')) {
         try {
-          await speak(data.content)
+          await speak(responses[0].content)
         } catch {
           // Speech synthesis error - continue without speaking
         }
       }
-    } catch (error) {
-      const errorMessage: Message = {
-        id: generateId(),
-        role: 'assistant',
-        content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
-        perspective: selectedPerspective.id,
-        timestamp: new Date(),
-      }
-      setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
@@ -121,8 +150,8 @@ export function Chat() {
           />
 
           <PerspectiveSelector
-            selectedPerspective={selectedPerspective}
-            onPerspectiveChange={setSelectedPerspective}
+            selectedPerspectives={selectedPerspectives}
+            onPerspectiveToggle={togglePerspective}
             disabled={isLoading}
           />
         </div>
@@ -154,7 +183,7 @@ export function Chat() {
                   Get insights from different industry perspectives on data centers and clean energy.
                 </p>
                 <div className="text-sm text-gray-400">
-                  Select a model and perspective, then ask your question.
+                  Select a model and one or more perspectives, then ask your question.
                 </div>
               </div>
             </div>
@@ -166,10 +195,15 @@ export function Chat() {
               {isLoading && (
                 <div className="flex justify-start mb-4">
                   <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      <span className="text-xs text-gray-500">
+                        Getting {selectedPerspectives.length} perspective{selectedPerspectives.length > 1 ? 's' : ''}...
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -182,7 +216,7 @@ export function Chat() {
         {/* Input */}
         <ChatInput
           onSubmit={sendMessage}
-          disabled={isLoading}
+          disabled={isLoading || selectedPerspectives.length === 0}
           isVoiceMode={isVoiceMode}
           onVoiceModeToggle={() => setIsVoiceMode(!isVoiceMode)}
           isListening={isListening}

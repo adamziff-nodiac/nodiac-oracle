@@ -7,12 +7,13 @@ export type AIModel = {
 }
 
 export const AI_MODELS: AIModel[] = [
-  { id: 'claude-opus-4-5-20250514', name: 'Claude Opus 4.5', provider: 'anthropic' },
-  { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic' },
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai' },
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai' },
-  { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash', provider: 'google' },
-  { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro', provider: 'google' },
+  { id: 'claude-opus-4-5-20251101', name: 'Claude Opus 4.5', provider: 'anthropic' },
+  { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', provider: 'anthropic' },
+  { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'anthropic' },
+  { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'openai' },
+  { id: 'gpt-5.2-pro-2025-12-11', name: 'GPT-5.2 Pro', provider: 'openai' },
+  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', provider: 'google' },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'google' },
 ]
 
 export type Perspective = {
