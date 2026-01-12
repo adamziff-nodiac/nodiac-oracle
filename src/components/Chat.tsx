@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Message, AIModel, Perspective, AI_MODELS, PERSPECTIVES } from '@/types'
 import { generateId } from '@/lib/utils'
 import { useVoice } from '@/lib/useVoice'
@@ -20,6 +20,7 @@ export function Chat() {
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const {
     isListening,
@@ -32,13 +33,10 @@ export function Chat() {
     stopSpeaking,
   } = useVoice()
 
+  // Only scroll to bottom when user sends a message, not when receiving
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages, scrollToBottom])
 
   const togglePerspective = (perspective: Perspective) => {
     setSelectedPerspectives(prev => {
@@ -69,6 +67,9 @@ export function Chat() {
     }
 
     setMessages(prev => [...prev, userMessage])
+
+    // Scroll to bottom when user sends a message
+    setTimeout(() => scrollToBottom(), 50)
 
     // Track which perspectives are pending
     const pendingIds = new Set(selectedPerspectives.map(p => p.id))
@@ -152,7 +153,7 @@ export function Chat() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-dvh bg-gray-50 dark:bg-gray-900">
       {/* Mobile menu button */}
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -224,7 +225,7 @@ export function Chat() {
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 pt-16 lg:pt-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 pt-16 lg:pt-4">
           {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <div className="text-center max-w-md px-4">

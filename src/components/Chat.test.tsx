@@ -26,11 +26,17 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// Track scrollIntoView calls
+const scrollIntoViewMock = vi.fn()
+
 describe('Chat', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.mocked(global.fetch).mockReset()
     localStorageMock.getItem.mockReturnValue(null)
+    // Reset scroll mock
+    scrollIntoViewMock.mockClear()
+    Element.prototype.scrollIntoView = scrollIntoViewMock
   })
 
   it('should render the chat interface', () => {
@@ -190,6 +196,74 @@ describe('Chat', () => {
     await waitFor(() => {
       expect(screen.getByTestId('chat-input')).toBeDisabled()
       expect(screen.getByTestId('model-selector')).toBeDisabled()
+    })
+  })
+
+  describe('scroll behavior', () => {
+    it('should scroll to bottom when user sends a message', async () => {
+      vi.mocked(global.fetch).mockResolvedValueOnce({
+        json: async () => ({ content: 'AI response' }),
+      } as Response)
+
+      render(<Chat />)
+
+      // Clear any initial scroll calls
+      scrollIntoViewMock.mockClear()
+
+      const input = screen.getByTestId('chat-input')
+      fireEvent.change(input, { target: { value: 'Hello' } })
+      fireEvent.click(screen.getByTestId('send-button'))
+
+      // Should scroll when user sends
+      await waitFor(() => {
+        expect(scrollIntoViewMock).toHaveBeenCalled()
+      })
+    })
+
+    it('should NOT auto-scroll when receiving AI response', async () => {
+      let resolveResponse: (value: Response) => void
+      const responsePromise = new Promise<Response>(resolve => {
+        resolveResponse = resolve
+      })
+
+      vi.mocked(global.fetch).mockReturnValueOnce(responsePromise)
+
+      render(<Chat />)
+
+      const input = screen.getByTestId('chat-input')
+      fireEvent.change(input, { target: { value: 'Hello' } })
+      fireEvent.click(screen.getByTestId('send-button'))
+
+      // Wait for user message to appear and scroll to be called
+      await waitFor(() => {
+        expect(screen.getByText('Hello')).toBeInTheDocument()
+      })
+
+      // Clear the scroll calls from sending
+      scrollIntoViewMock.mockClear()
+
+      // Now resolve the AI response
+      resolveResponse!({
+        json: async () => ({ content: 'AI response' }),
+      } as Response)
+
+      // Wait for AI response to appear
+      await waitFor(() => {
+        expect(screen.getByText('AI response')).toBeInTheDocument()
+      })
+
+      // Scroll should NOT have been called again when receiving
+      expect(scrollIntoViewMock).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('viewport and mobile', () => {
+    it('should use dynamic viewport height class', () => {
+      render(<Chat />)
+
+      // The main container should use h-dvh for proper mobile viewport
+      const container = document.querySelector('.h-dvh')
+      expect(container).toBeInTheDocument()
     })
   })
 })
