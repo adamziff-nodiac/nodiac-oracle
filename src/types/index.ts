@@ -11,7 +11,7 @@ export const AI_MODELS: AIModel[] = [
   { id: 'claude-sonnet-4-5-20250929', name: 'Claude Sonnet 4.5', provider: 'anthropic' },
   { id: 'claude-haiku-4-5-20251001', name: 'Claude Haiku 4.5', provider: 'anthropic' },
   { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'openai' },
-  { id: 'gpt-5.2-pro-2025-12-11', name: 'GPT-5.2 Pro', provider: 'openai' },
+  { id: 'gpt-5.2-chat-latest', name: 'GPT-5.2 Instant', provider: 'openai' },
   { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro', provider: 'google' },
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'google' },
 ]
@@ -134,9 +134,9 @@ export const LIGHTWEIGHT_MODEL_MAP: Record<string, { id: string; provider: AIPro
   'claude-opus-4-5-20251101': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' },
   'claude-sonnet-4-5-20250929': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' },
   'claude-haiku-4-5-20251001': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' },
-  // OpenAI: all map to mini/instant
-  'gpt-5.2': { id: 'gpt-4o-mini', provider: 'openai' },
-  'gpt-5.2-pro-2025-12-11': { id: 'gpt-4o-mini', provider: 'openai' },
+  // OpenAI: all map to instant
+  'gpt-5.2': { id: 'gpt-5.2-chat-latest', provider: 'openai' },
+  'gpt-5.2-chat-latest': { id: 'gpt-5.2-chat-latest', provider: 'openai' },
   // Google: all map to Flash
   'gemini-3-pro-preview': { id: 'gemini-3-flash-preview', provider: 'google' },
   'gemini-3-flash-preview': { id: 'gemini-3-flash-preview', provider: 'google' },
