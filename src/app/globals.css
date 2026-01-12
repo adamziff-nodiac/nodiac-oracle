@@ -1,6 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  --color-nodiac-primary: #0066CC;
+  --color-nodiac-secondary: #00A3E0;
+  --color-nodiac-dark: #1a1a2e;
+  --color-nodiac-light: #f5f5f7;
+}
 
 :root {
   --background: #f5f5f7;

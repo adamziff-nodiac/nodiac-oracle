@@ -1,21 +1,37 @@
 import '@testing-library/jest-dom'
 import { vi } from 'vitest'
 
-// Mock Web Speech API
-const mockSpeechRecognition = vi.fn().mockImplementation(() => ({
-  start: vi.fn(),
-  stop: vi.fn(),
-  abort: vi.fn(),
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  continuous: false,
-  interimResults: false,
-  lang: 'en-US',
-  onresult: null,
-  onerror: null,
-  onend: null,
-  onstart: null,
-}))
+// Mock Web Speech API with proper constructor
+class MockSpeechRecognition {
+  continuous = false
+  interimResults = false
+  lang = 'en-US'
+  onresult: ((event: unknown) => void) | null = null
+  onerror: ((event: unknown) => void) | null = null
+  onend: (() => void) | null = null
+  onstart: (() => void) | null = null
+
+  start = vi.fn()
+  stop = vi.fn()
+  abort = vi.fn()
+  addEventListener = vi.fn()
+  removeEventListener = vi.fn()
+}
+
+class MockSpeechSynthesisUtterance {
+  text: string
+  lang = 'en-US'
+  voice = null
+  volume = 1
+  rate = 1
+  pitch = 1
+  onend: (() => void) | null = null
+  onerror: ((event: unknown) => void) | null = null
+
+  constructor(text: string = '') {
+    this.text = text
+  }
+}
 
 const mockSpeechSynthesis = {
   speak: vi.fn(),
@@ -31,12 +47,12 @@ const mockSpeechSynthesis = {
 
 Object.defineProperty(window, 'SpeechRecognition', {
   writable: true,
-  value: mockSpeechRecognition,
+  value: MockSpeechRecognition,
 })
 
 Object.defineProperty(window, 'webkitSpeechRecognition', {
   writable: true,
-  value: mockSpeechRecognition,
+  value: MockSpeechRecognition,
 })
 
 Object.defineProperty(window, 'speechSynthesis', {
@@ -46,16 +62,7 @@ Object.defineProperty(window, 'speechSynthesis', {
 
 Object.defineProperty(window, 'SpeechSynthesisUtterance', {
   writable: true,
-  value: vi.fn().mockImplementation((text: string) => ({
-    text,
-    lang: 'en-US',
-    voice: null,
-    volume: 1,
-    rate: 1,
-    pitch: 1,
-    onend: null,
-    onerror: null,
-  })),
+  value: MockSpeechSynthesisUtterance,
 })
 
 // Mock fetch for API tests
