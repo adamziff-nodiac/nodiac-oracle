@@ -97,6 +97,12 @@ export function useContextPrompts() {
     promptId: string,
     updates: Partial<Pick<ContextPrompt, 'name' | 'content' | 'is_enabled' | 'position'>>
   ) => {
+    // Optimistic update
+    const updateList = (list: ContextPrompt[]) =>
+      list.map(p => p.id === promptId ? { ...p, ...updates, updated_at: new Date().toISOString() } : p)
+    setGlobalPrompts(updateList)
+    setPersonalPrompts(updateList)
+
     const supabase = createClient()
     const { error } = await supabase
       .from('context_prompts')
@@ -105,9 +111,11 @@ export function useContextPrompts() {
 
     if (error) {
       console.error('Error updating prompt:', error)
+      // Revert on error
+      fetchPrompts()
       throw error
     }
-  }, [])
+  }, [fetchPrompts])
 
   // Toggle prompt enabled state
   const togglePrompt = useCallback(async (promptId: string, enabled: boolean) => {
@@ -117,6 +125,21 @@ export function useContextPrompts() {
   // Add a personal prompt
   const addPersonalPrompt = useCallback(async (name: string, content: string) => {
     if (!user) return null
+
+    // Optimistic update with temp ID
+    const tempId = `temp-${Date.now()}`
+    const tempPrompt: ContextPrompt = {
+      id: tempId,
+      name,
+      content,
+      is_global: false,
+      user_id: user.id,
+      is_enabled: true,
+      position: personalPrompts.length,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }
+    setPersonalPrompts(prev => [...prev, tempPrompt])
 
     const supabase = createClient()
     const { data, error } = await supabase
@@ -134,14 +157,25 @@ export function useContextPrompts() {
 
     if (error) {
       console.error('Error adding personal prompt:', error)
+      // Revert on error
+      setPersonalPrompts(prev => prev.filter(p => p.id !== tempId))
       throw error
     }
+
+    // Replace temp with real data
+    setPersonalPrompts(prev => prev.map(p => p.id === tempId ? data : p))
 
     return data
   }, [user, personalPrompts.length])
 
   // Delete a prompt (only personal prompts can be deleted by users)
   const deletePrompt = useCallback(async (promptId: string) => {
+    // Store for potential revert
+    const deletedPrompt = personalPrompts.find(p => p.id === promptId)
+
+    // Optimistic delete
+    setPersonalPrompts(prev => prev.filter(p => p.id !== promptId))
+
     const supabase = createClient()
     const { error } = await supabase
       .from('context_prompts')
@@ -150,9 +184,13 @@ export function useContextPrompts() {
 
     if (error) {
       console.error('Error deleting prompt:', error)
+      // Revert on error
+      if (deletedPrompt) {
+        setPersonalPrompts(prev => [...prev, deletedPrompt])
+      }
       throw error
     }
-  }, [])
+  }, [personalPrompts])
 
   // Get combined enabled context for system prompt
   const getEnabledContext = useCallback(() => {
