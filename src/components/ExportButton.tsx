@@ -47,13 +47,6 @@ const perspectiveColors: Record<string, [number, number, number]> = {
   renewables: [22, 163, 74],     // Green
 }
 
-const perspectiveIcons: Record<string, string> = {
-  hyperscaler: '🏢',
-  techvc: '💰',
-  utility: '⚡',
-  renewables: '🌱',
-}
-
 export function ExportButton({ messages, selectedModel, disabled }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false)
 
@@ -321,7 +314,6 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
 
             if (perspective) {
               const color = perspectiveColors[perspective.id] || [80, 80, 80]
-              const icon = perspectiveIcons[perspective.id] || ''
 
               // Perspective label bar
               doc.setFillColor(color[0], color[1], color[2])
@@ -330,19 +322,22 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
               doc.setFontSize(9)
               doc.setFont('helvetica', 'bold')
               doc.setTextColor(255, 255, 255)
-              doc.text(`${icon} ${perspective.name}`, margin + 4, y + 5)
+              doc.text(perspective.name, margin + 4, y + 5)
               y += 10
 
               // Response content with left border
               const startY = y
-              writeMarkdown(response.content, 3, [40, 40, 40])
 
-              // Draw colored left border for this response
-              doc.setDrawColor(...color)
-              doc.setLineWidth(1)
-              doc.line(margin, startY - 2, margin, y)
+              // Draw colored left border BEFORE content (thicker)
+              doc.setDrawColor(color[0], color[1], color[2])
+              doc.setLineWidth(2)
 
-              y += 6
+              writeMarkdown(response.content, 5, [40, 40, 40])
+
+              // Draw the left border line spanning the content
+              doc.line(margin + 1, startY - 2, margin + 1, y + 2)
+
+              y += 8
             }
           }
         }
