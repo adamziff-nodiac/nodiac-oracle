@@ -325,17 +325,8 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
               doc.text(perspective.name, margin + 4, y + 5)
               y += 10
 
-              // Response content with left border
-              const startY = y
-
-              // Draw colored left border BEFORE content (thicker)
-              doc.setDrawColor(color[0], color[1], color[2])
-              doc.setLineWidth(2)
-
-              writeMarkdown(response.content, 5, [40, 40, 40])
-
-              // Draw the left border line spanning the content
-              doc.line(margin + 1, startY - 2, margin + 1, y + 2)
+              // Response content
+              writeMarkdown(response.content, 0, [40, 40, 40])
 
               y += 8
             }
