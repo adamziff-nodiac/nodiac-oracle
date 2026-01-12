@@ -19,6 +19,7 @@ export function Chat() {
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
   const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
   const [pendingPerspectives, setPendingPerspectives] = useState<Set<string>>(new Set())
+  const [streamingMessageIds, setStreamingMessageIds] = useState<Set<string>>(new Set())
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -94,7 +95,7 @@ export function Chat() {
     })
   }
 
-  const isLoading = pendingPerspectives.size > 0
+  const isLoading = pendingPerspectives.size > 0 || streamingMessageIds.size > 0
 
   const sendMessage = async (content: string) => {
     if (selectedPerspectives.length === 0) return
@@ -108,7 +109,7 @@ export function Chat() {
 
     setMessages(prev => [...prev, userMessage])
 
-    // Track which perspectives are pending
+    // Track which perspectives are pending/streaming
     const pendingIds = new Set(selectedPerspectives.map(p => p.id))
     setPendingPerspectives(pendingIds)
 
@@ -120,10 +121,36 @@ export function Chat() {
     // Track if we've spoken (for voice mode)
     let hasSpoken = false
 
-    // Fire off all requests and handle each as it completes
+    // Track message IDs for streaming updates
+    const streamingMessageIds: Record<string, string> = {}
+
+    // Fire off all requests with streaming and handle each as it streams
     const promises = selectedPerspectives.map(async (perspective) => {
+      const messageId = generateId()
+      streamingMessageIds[perspective.id] = messageId
+
+      // Create initial empty message for this perspective
+      const initialMessage: Message = {
+        id: messageId,
+        role: 'assistant',
+        content: '',
+        perspective: perspective.id,
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, initialMessage])
+
+      // Track as streaming
+      setStreamingMessageIds(prev => new Set(prev).add(messageId))
+
+      // Remove from pending (it's now streaming)
+      setPendingPerspectives(prev => {
+        const next = new Set(prev)
+        next.delete(perspective.id)
+        return next
+      })
+
       try {
-        const response = await fetch('/api/chat', {
+        const response = await fetch('/api/chat/stream', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -134,54 +161,100 @@ export function Chat() {
           }),
         })
 
-        const data = await response.json()
-
-        const assistantMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: data.error ? `Error: ${data.error}` : data.content,
-          perspective: perspective.id,
-          timestamp: new Date(),
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Failed to get response' }))
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === messageId
+                ? { ...m, content: `Error: ${errorData.error || 'Failed to get response'}` }
+                : m
+            )
+          )
+          return
         }
 
-        // Add this response immediately
-        setMessages(prev => [...prev, assistantMessage])
+        const reader = response.body?.getReader()
+        if (!reader) {
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === messageId ? { ...m, content: 'Error: No response stream' } : m
+            )
+          )
+          return
+        }
 
-        // Remove from pending
-        setPendingPerspectives(prev => {
-          const next = new Set(prev)
-          next.delete(perspective.id)
-          return next
-        })
+        const decoder = new TextDecoder()
+        let accumulatedContent = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = chunk.split('\n')
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+              if (data === '[DONE]') continue
+
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.error) {
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === messageId ? { ...m, content: `Error: ${parsed.error}` } : m
+                    )
+                  )
+                } else if (parsed.content) {
+                  accumulatedContent += parsed.content
+                  setMessages(prev =>
+                    prev.map(m =>
+                      m.id === messageId ? { ...m, content: accumulatedContent } : m
+                    )
+                  )
+                }
+              } catch {
+                // Skip malformed JSON
+              }
+            }
+          }
+        }
 
         // In voice mode, speak the first successful response
-        if (isVoiceMode && !hasSpoken && !data.error) {
+        if (isVoiceMode && !hasSpoken && accumulatedContent) {
           hasSpoken = true
           try {
-            await speak(data.content)
+            await speak(accumulatedContent)
           } catch {
             // Speech synthesis error - continue without speaking
           }
         }
-      } catch (error) {
-        const errorMessage: Message = {
-          id: generateId(),
-          role: 'assistant',
-          content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
-          perspective: perspective.id,
-          timestamp: new Date(),
-        }
 
-        setMessages(prev => [...prev, errorMessage])
-        setPendingPerspectives(prev => {
+        // Remove from streaming
+        setStreamingMessageIds(prev => {
           const next = new Set(prev)
-          next.delete(perspective.id)
+          next.delete(messageId)
+          return next
+        })
+      } catch (error) {
+        setMessages(prev =>
+          prev.map(m =>
+            m.id === messageId
+              ? { ...m, content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}` }
+              : m
+          )
+        )
+        // Remove from streaming on error
+        setStreamingMessageIds(prev => {
+          const next = new Set(prev)
+          next.delete(messageId)
           return next
         })
       }
     })
 
-    // Wait for all to complete (they update state as they finish)
+    // Wait for all to complete (they update state as they stream)
     await Promise.all(promises)
   }
 
@@ -290,7 +363,11 @@ export function Chat() {
           ) : (
             <>
               {messages.map((message) => (
-                <ChatMessage key={message.id} message={message} />
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isStreaming={streamingMessageIds.has(message.id)}
+                />
               ))}
               {pendingPerspectives.size > 0 && (
                 <div className="flex justify-start mb-4">

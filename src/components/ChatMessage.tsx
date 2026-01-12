@@ -10,6 +10,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react'
 type ChatMessageProps = {
   message: Message
   defaultCollapsed?: boolean
+  isStreaming?: boolean
 }
 
 const perspectiveIcons: Record<string, string> = {
@@ -25,7 +26,7 @@ const perspectiveIcons: Record<string, string> = {
   equipmentsupplier: '⚙️',
 }
 
-export function ChatMessage({ message, defaultCollapsed = false }: ChatMessageProps) {
+export function ChatMessage({ message, defaultCollapsed = false, isStreaming = false }: ChatMessageProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
   const isUser = message.role === 'user'
   const perspective = message.perspective
@@ -33,6 +34,9 @@ export function ChatMessage({ message, defaultCollapsed = false }: ChatMessagePr
     : null
 
   const toggleCollapse = () => setIsCollapsed(!isCollapsed)
+
+  // Don't allow collapsing while streaming
+  const canCollapse = !isStreaming
 
   // Get preview text (first line or first 100 chars)
   const getPreview = () => {
@@ -59,16 +63,24 @@ export function ChatMessage({ message, defaultCollapsed = false }: ChatMessagePr
       >
         {!isUser && perspective && (
           <button
-            onClick={toggleCollapse}
-            className="flex items-center gap-1.5 mb-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors w-full"
+            onClick={canCollapse ? toggleCollapse : undefined}
+            className={cn(
+              "flex items-center gap-1.5 mb-1.5 text-xs text-gray-500 dark:text-gray-400 transition-colors w-full",
+              canCollapse && "hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer",
+              !canCollapse && "cursor-default"
+            )}
           >
-            {isCollapsed ? (
+            {canCollapse && (isCollapsed ? (
               <ChevronRight className="w-3 h-3" />
             ) : (
               <ChevronDown className="w-3 h-3" />
+            ))}
+            {isStreaming && (
+              <span className="w-2 h-2 bg-nodiac-primary rounded-full animate-pulse" />
             )}
             <span>{perspectiveIcons[perspective.id]}</span>
             <span className="font-medium">{perspective.name}</span>
+            {isStreaming && <span className="text-nodiac-primary ml-1">streaming...</span>}
           </button>
         )}
 
