@@ -57,7 +57,7 @@ describe('callGoogleAPI', () => {
       ...mockRequest,
       provider: 'google',
     })
-    expect(response.error).toContain('GOOGLE_AI_API_KEY')
+    expect(response.error).toContain('GEMINI_API_KEY')
     expect(response.content).toBe('')
   })
 })

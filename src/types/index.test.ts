@@ -37,16 +37,24 @@ describe('AI_MODELS', () => {
 })
 
 describe('PERSPECTIVES', () => {
-  it('should have exactly four perspectives', () => {
-    expect(PERSPECTIVES.length).toBe(4)
+  it('should have ten perspectives', () => {
+    expect(PERSPECTIVES.length).toBe(10)
   })
 
   it('should have the required perspectives', () => {
     const ids = PERSPECTIVES.map(p => p.id)
+    // Original 4
     expect(ids).toContain('hyperscaler')
     expect(ids).toContain('techvc')
     expect(ids).toContain('utility')
     expect(ids).toContain('renewables')
+    // New 6
+    expect(ids).toContain('gridoperator')
+    expect(ids).toContain('aiinfrastructure')
+    expect(ids).toContain('dcdeveloper')
+    expect(ids).toContain('energypolicy')
+    expect(ids).toContain('siteselection')
+    expect(ids).toContain('equipmentsupplier')
   })
 
   it('should have unique perspective ids', () => {
