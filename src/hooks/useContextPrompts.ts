@@ -12,8 +12,8 @@ export type ContextPrompt = {
   user_id: string | null
   is_enabled: boolean
   position: number
-  created_at?: string
-  updated_at?: string
+  created_at: string | null
+  updated_at: string | null
 }
 
 export function useContextPrompts() {
