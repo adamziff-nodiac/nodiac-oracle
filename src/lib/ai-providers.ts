@@ -39,15 +39,26 @@ export async function callOpenAIAPI(request: ChatRequest): Promise<ChatResponse>
   try {
     const client = new OpenAI({ apiKey })
 
+    // Prepend persona context to the first user message for stronger adherence
+    const messagesWithPersona = request.messages.map((m, i) => {
+      if (i === 0 && m.role === 'user') {
+        return {
+          role: m.role as 'user' | 'assistant',
+          content: `[IMPORTANT: You must respond as the following persona throughout this conversation]\n\n${request.systemPrompt}\n\n---\n\nUser question: ${m.content}`,
+        }
+      }
+      return {
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+      }
+    })
+
     const response = await client.chat.completions.create({
       model: request.model,
       max_completion_tokens: 4096,
       messages: [
         { role: 'system', content: request.systemPrompt },
-        ...request.messages.map(m => ({
-          role: m.role as 'user' | 'assistant',
-          content: m.content,
-        })),
+        ...messagesWithPersona,
       ],
     })
 
@@ -71,14 +82,25 @@ export async function callGoogleAPI(request: ChatRequest): Promise<ChatResponse>
       systemInstruction: request.systemPrompt,
     })
 
+    // Prepend persona context to the first user message for stronger adherence
+    const messagesWithPersona = request.messages.map((m, i) => {
+      if (i === 0 && m.role === 'user') {
+        return {
+          ...m,
+          content: `[IMPORTANT: You must respond as the following persona throughout this conversation]\n\n${request.systemPrompt}\n\n---\n\nUser question: ${m.content}`,
+        }
+      }
+      return m
+    })
+
     const chat = model.startChat({
-      history: request.messages.slice(0, -1).map(m => ({
+      history: messagesWithPersona.slice(0, -1).map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }],
       })),
     })
 
-    const lastMessage = request.messages[request.messages.length - 1]
+    const lastMessage = messagesWithPersona[messagesWithPersona.length - 1]
     const result = await chat.sendMessage(lastMessage.content)
     const response = await result.response
 
