@@ -61,6 +61,9 @@ Object.defineProperty(window, 'SpeechSynthesisUtterance', {
 // Mock fetch for API tests
 global.fetch = vi.fn()
 
+// Mock Element.scrollIntoView
+Element.prototype.scrollIntoView = vi.fn()
+
 // Mock MediaDevices for voice recording
 Object.defineProperty(navigator, 'mediaDevices', {
   writable: true,
