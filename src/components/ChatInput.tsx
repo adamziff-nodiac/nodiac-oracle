@@ -170,7 +170,7 @@ export function ChatInput({
         </button>
       </div>
 
-      {/* Mobile layout - buttons inside textbox */}
+      {/* Mobile layout - single button inside textbox for clean UI */}
       <div className="sm:hidden relative">
         <textarea
           ref={textareaRef}
@@ -182,72 +182,64 @@ export function ChatInput({
           placeholder={isListening ? 'Listening...' : 'Type your message...'}
           rows={1}
           className={cn(
-            'w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 pl-4 pr-28 py-3',
+            'w-full resize-none rounded-2xl border border-gray-300 dark:border-gray-600 pl-4 pr-14 py-3',
             'text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500',
             'bg-white dark:bg-gray-700',
             'focus:border-nodiac-primary focus:ring-1 focus:ring-nodiac-primary focus:outline-none',
             'disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed',
-            isListening && 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse',
-            // Reduce right padding when typing (only send button visible)
-            hasInput && 'pr-14'
+            isListening && 'border-red-400 dark:border-red-500 bg-red-50 dark:bg-red-900/20 animate-pulse'
           )}
         />
 
-        {/* Buttons inside the textbox */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-          {/* Mic button - hidden when typing */}
-          {isVoiceSupported && !hasInput && (
+        {/* Single button inside textbox - mic when empty, send when typing */}
+        <div className="absolute right-2 top-1/2 -translate-y-1/2">
+          {hasInput ? (
+            /* Send button when user has typed something */
+            <button
+              onClick={handleSubmit}
+              disabled={disabled || isListening}
+              className={cn(
+                'p-2 rounded-full transition-all',
+                'bg-nodiac-primary text-white',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+              title="Send message"
+            >
+              <Send className="w-5 h-5" />
+            </button>
+          ) : isListening ? (
+            /* Stop button when recording */
+            <button
+              onClick={handleMicClick}
+              className="p-2 rounded-full bg-red-500 text-white"
+              title="Stop recording"
+            >
+              <MicOff className="w-5 h-5" />
+            </button>
+          ) : isVoiceSupported ? (
+            /* Mic button when empty and voice supported */
             <button
               onClick={handleMicClick}
               disabled={disabled || isSpeaking}
               className={cn(
                 'p-2 rounded-full transition-all',
-                isListening
-                  ? 'bg-red-500 text-white'
-                  : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300',
+                'bg-nodiac-primary/10 text-nodiac-primary hover:bg-nodiac-primary/20',
                 'disabled:opacity-50 disabled:cursor-not-allowed'
               )}
-              title={isListening ? 'Stop recording' : 'Start voice input'}
+              title="Start voice input"
             >
-              {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+              <Mic className="w-5 h-5" />
             </button>
-          )}
-
-          {/* TTS toggle - hidden when typing */}
-          {isVoiceSupported && !hasInput && (
+          ) : (
+            /* Disabled send button when empty and no voice */
             <button
-              onClick={isSpeaking ? onStopSpeaking : onVoiceModeToggle}
-              disabled={disabled}
-              className={cn(
-                'p-2 rounded-full transition-all',
-                isSpeaking
-                  ? 'bg-orange-500 text-white animate-pulse'
-                  : isVoiceMode
-                    ? 'text-nodiac-primary'
-                    : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
-              )}
-              title={isSpeaking ? 'Stop speaking' : isVoiceMode ? 'Disable read aloud' : 'Enable read aloud'}
+              disabled
+              className="p-2 rounded-full text-gray-400 dark:text-gray-500 opacity-50 cursor-not-allowed"
+              title="Send message"
             >
-              {isVoiceMode || isSpeaking ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+              <Send className="w-5 h-5" />
             </button>
           )}
-
-          {/* Send button - always visible */}
-          <button
-            onClick={handleSubmit}
-            disabled={disabled || !input.trim() || isListening}
-            className={cn(
-              'p-2 rounded-full transition-all',
-              hasInput
-                ? 'bg-nodiac-primary text-white'
-                : 'text-gray-400 dark:text-gray-500',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
-            )}
-            title="Send message"
-          >
-            <Send className="w-5 h-5" />
-          </button>
         </div>
       </div>
 
