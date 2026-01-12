@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: 'user',
-          content: `Please provide a 2-sentence summary of the following conversation. Focus on the main topic discussed and key insights provided. Be concise and informative.
+          content: `Summarize this conversation in one sentence. Focus on the main topic and key insight.
 
 Conversation:
 ${conversation}`,
@@ -34,7 +34,7 @@ ${conversation}`,
       ],
       model: lightweightModel.id,
       provider: lightweightModel.provider,
-      systemPrompt: 'You are a helpful assistant that summarizes conversations concisely. Always respond with exactly 2 sentences.',
+      systemPrompt: 'You are a helpful assistant that summarizes conversations concisely. Always respond with exactly one sentence.',
     })
 
     if (response.error) {
