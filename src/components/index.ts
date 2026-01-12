@@ -1,5 +1,6 @@
 export { Chat } from './Chat'
 export { ChatInput } from './ChatInput'
 export { ChatMessage } from './ChatMessage'
+export { ExportButton } from './ExportButton'
 export { ModelSelector } from './ModelSelector'
 export { PerspectiveSelector } from './PerspectiveSelector'

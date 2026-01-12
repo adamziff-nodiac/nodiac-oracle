@@ -127,3 +127,21 @@ export type ChatResponse = {
   content: string
   error?: string
 }
+
+// Map full models to their lightweight counterparts for summary generation
+export const LIGHTWEIGHT_MODEL_MAP: Record<string, { id: string; provider: AIProvider }> = {
+  // Anthropic: all map to Haiku
+  'claude-opus-4-5-20251101': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' },
+  'claude-sonnet-4-5-20250929': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' },
+  'claude-haiku-4-5-20251001': { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' },
+  // OpenAI: all map to mini/instant
+  'gpt-5.2': { id: 'gpt-4o-mini', provider: 'openai' },
+  'gpt-5.2-pro-2025-12-11': { id: 'gpt-4o-mini', provider: 'openai' },
+  // Google: all map to Flash
+  'gemini-3-pro-preview': { id: 'gemini-3-flash-preview', provider: 'google' },
+  'gemini-3-flash-preview': { id: 'gemini-3-flash-preview', provider: 'google' },
+}
+
+export function getLightweightModel(modelId: string): { id: string; provider: AIProvider } {
+  return LIGHTWEIGHT_MODEL_MAP[modelId] || { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' }
+}

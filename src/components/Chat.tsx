@@ -8,6 +8,7 @@ import { ModelSelector } from './ModelSelector'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
+import { ExportButton } from './ExportButton'
 import { RotateCcw } from 'lucide-react'
 
 export function Chat() {
@@ -156,7 +157,12 @@ export function Chat() {
           />
         </div>
 
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 space-y-2">
+          <ExportButton
+            messages={messages}
+            selectedModel={selectedModel}
+            disabled={isLoading}
+          />
           <button
             data-testid="clear-chat"
             onClick={clearChat}

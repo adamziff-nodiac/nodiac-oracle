@@ -54,13 +54,14 @@ describe('ChatMessage', () => {
     expect(assistantContainer).toHaveClass('justify-start')
   })
 
-  it('should preserve whitespace in message content', () => {
-    const multilineMessage: Message = {
+  it('should render markdown content with prose styling', () => {
+    const markdownMessage: Message = {
       ...userMessage,
-      content: 'Line 1\nLine 2\nLine 3',
+      content: '**Bold text** and *italic text*',
     }
-    render(<ChatMessage message={multilineMessage} />)
-    const content = screen.getByText(/Line 1/)
-    expect(content).toHaveClass('whitespace-pre-wrap')
+    render(<ChatMessage message={markdownMessage} />)
+    // Check that the content container has prose styling
+    const container = screen.getByTestId('message-msg-1')
+    expect(container.querySelector('.prose')).toBeInTheDocument()
   })
 })
