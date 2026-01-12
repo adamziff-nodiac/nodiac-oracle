@@ -5,6 +5,7 @@ import { AIModel, Perspective, AI_MODELS, PERSPECTIVES } from '@/types'
 import { useVoice } from '@/lib/useVoice'
 import { useAuth } from '@/contexts/AuthContext'
 import { useChatPersistence } from '@/hooks/useChatPersistence'
+import { useContextPrompts } from '@/hooks/useContextPrompts'
 import { ModelSelector } from './ModelSelector'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { ChatMessage } from './ChatMessage'
@@ -13,6 +14,7 @@ import { ExportButton } from './ExportButton'
 import { ThemeToggle } from './ThemeToggle'
 import { AuthButton } from './auth/AuthButton'
 import { ChatHistory } from './ChatHistory'
+import { NodiacContext } from './NodiacContext'
 import { Plus, Menu, X } from 'lucide-react'
 
 export function Chat() {
@@ -35,6 +37,7 @@ export function Chat() {
     modelId: selectedModel.id,
     perspectives: selectedPerspectives.map(p => p.id),
   })
+  const { getEnabledContext } = useContextPrompts()
 
   const {
     isListening,
@@ -94,9 +97,17 @@ export function Chat() {
     // Track if we've spoken (for voice mode)
     let hasSpoken = false
 
+    // Get enabled context to prepend to system prompts
+    const nodiacContext = getEnabledContext()
+
     // Fire off all requests and handle each as it completes
     const promises = selectedPerspectives.map(async (perspective) => {
       try {
+        // Combine Nodiac context with perspective system prompt
+        const fullSystemPrompt = nodiacContext
+          ? `${nodiacContext}\n\n---\n\n${perspective.systemPrompt}`
+          : perspective.systemPrompt
+
         const response = await fetch('/api/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -104,7 +115,7 @@ export function Chat() {
             messages: conversationHistory,
             model: selectedModel.id,
             provider: selectedModel.provider,
-            systemPrompt: perspective.systemPrompt,
+            systemPrompt: fullSystemPrompt,
           }),
         })
 
@@ -207,6 +218,8 @@ export function Chat() {
             onPerspectiveToggle={togglePerspective}
             disabled={isLoading}
           />
+
+          <NodiacContext />
 
           <ChatHistory
             currentChatId={chatId}
