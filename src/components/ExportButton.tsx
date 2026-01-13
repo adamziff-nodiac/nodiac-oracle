@@ -112,6 +112,10 @@ function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): 
     return parseMarkdownTable(match, perspectiveColor)
   })
 
+  // Handle horizontal rules BEFORE other transformations (need clean lines)
+  html = html.replace(/^-{3,}$/gm, '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">')
+  html = html.replace(/^\*{3,}$/gm, '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">')
+
   html = html
     // Headers - color coded by perspective
     .replace(/^### (.+)$/gm, `<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0; color: ${perspectiveColor};">$1</h3>`)
@@ -123,8 +127,6 @@ function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): 
     .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
     // Code inline
     .replace(/`([^`]+)`/g, '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 11px;">$1</code>')
-    // Horizontal rule
-    .replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;">')
     // Blockquotes
     .replace(/^> (.+)$/gm, '<blockquote style="border-left: 3px solid #e5e7eb; padding-left: 12px; margin: 8px 0; color: #6b7280; font-style: italic;">$1</blockquote>')
     // Unordered list items
@@ -287,6 +289,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
 
       // Calculate how many pages we need
       const totalPages = Math.ceil(imgHeight / pageHeight)
+      const pageTopMargin = 10 // mm margin at top of continuation pages
 
       // For each page, create a slice of the canvas
       for (let page = 0; page < totalPages; page++) {
@@ -323,7 +326,9 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         const pageImgData = pageCanvas.toDataURL('image/png')
         const sliceHeight = (sourceHeight * imgWidth) / canvas.width
 
-        doc.addImage(pageImgData, 'PNG', 0, 0, imgWidth, sliceHeight)
+        // Add top margin for pages after the first
+        const yOffset = page > 0 ? pageTopMargin : 0
+        doc.addImage(pageImgData, 'PNG', 0, yOffset, imgWidth, sliceHeight)
       }
 
       doc.save(`nodiac-oracle-${new Date().toISOString().split('T')[0]}.pdf`)
