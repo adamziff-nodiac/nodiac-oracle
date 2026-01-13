@@ -42,42 +42,53 @@ const perspectiveColors: Record<string, string> = {
   renewables: '#16a34a',
 }
 
+// Check if a line is a markdown table separator (|---|---|)
+function isTableSeparator(line: string): boolean {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) return false
+  // Remove all pipes and check if only dashes, colons, and spaces remain
+  const inner = trimmed.slice(1, -1)
+  return /^[\s\-:|]+$/.test(inner) && inner.includes('-')
+}
+
 // Parse a markdown table into HTML
 function parseMarkdownTable(tableText: string, perspectiveColor: string): string {
-  const lines = tableText.trim().split('\n')
+  const lines = tableText.trim().split('\n').filter(l => l.trim())
   if (lines.length < 2) return tableText
 
   const rows: string[][] = []
-  let headerRowIndex = -1
+  let hasHeader = false
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim()
     if (!line.startsWith('|') || !line.endsWith('|')) continue
 
-    // Check if this is a separator row (|---|---|)
-    if (/^\|[\s\-:]+\|$/.test(line.replace(/\|/g, '|').replace(/[^|\-:\s]/g, ''))) {
-      headerRowIndex = rows.length - 1
+    // Skip separator rows but mark that we have a header
+    if (isTableSeparator(line)) {
+      hasHeader = true
       continue
     }
 
-    // Parse cells
+    // Parse cells - split by | and remove empty first/last
     const cells = line.split('|').slice(1, -1).map(c => c.trim())
-    rows.push(cells)
+    if (cells.length > 0) {
+      rows.push(cells)
+    }
   }
 
-  if (rows.length === 0) return tableText
+  if (rows.length === 0) return ''
 
-  // Build HTML table
-  let html = '<table style="border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 11px;">'
+  // Build HTML table with proper styling
+  let html = '<table style="border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 11px; table-layout: auto;">'
 
   rows.forEach((row, idx) => {
-    const isHeader = idx === headerRowIndex || (headerRowIndex === -1 && idx === 0)
+    const isHeader = hasHeader && idx === 0
     html += '<tr>'
     row.forEach(cell => {
       const tag = isHeader ? 'th' : 'td'
       const style = isHeader
-        ? `background: ${perspectiveColor}; color: white; font-weight: bold; padding: 8px 10px; border: 1px solid ${perspectiveColor}; text-align: left;`
-        : 'padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top;'
+        ? `background: ${perspectiveColor}; color: white; font-weight: bold; padding: 6px 8px; border: 1px solid ${perspectiveColor}; text-align: left; white-space: nowrap;`
+        : 'padding: 6px 8px; border: 1px solid #d1d5db; vertical-align: top;'
       html += `<${tag} style="${style}">${cell}</${tag}>`
     })
     html += '</tr>'
