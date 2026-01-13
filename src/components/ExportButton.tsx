@@ -43,16 +43,16 @@ const perspectiveColors: Record<string, string> = {
 }
 
 // Convert markdown to HTML for rendering
-function markdownToHtml(content: string): string {
+function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): string {
   let html = content
     // Escape HTML
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    // Headers
-    .replace(/^### (.+)$/gm, '<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0;">$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0;">$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1 style="font-size: 18px; font-weight: bold; margin: 16px 0 10px 0;">$1</h1>')
+    // Headers - color coded by perspective
+    .replace(/^### (.+)$/gm, `<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0; color: ${perspectiveColor};">$1</h3>`)
+    .replace(/^## (.+)$/gm, `<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0; color: ${perspectiveColor};">$1</h2>`)
+    .replace(/^# (.+)$/gm, `<h1 style="font-size: 18px; font-weight: bold; margin: 16px 0 10px 0; color: ${perspectiveColor};">$1</h1>`)
     // Bold
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     // Italic
@@ -154,8 +154,8 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
       // Build HTML content
       let html = `
         <div style="margin-bottom: 24px;">
-          <h1 style="font-size: 28px; font-weight: bold; color: #0066cc; margin: 0;">Nodiac Oracle</h1>
-          <p style="color: #6b7280; margin: 4px 0 0 0;">Multi-perspective AI Advisor</p>
+          <h1 style="font-size: 28px; font-weight: bold; color: #0066cc; margin: 0; letter-spacing: 0.5px;">Nodiac Oracle</h1>
+          <p style="color: #6b7280; margin: 8px 0 0 0;">Multi-perspective AI Advisor</p>
         </div>
 
         <div style="background: #f0f7ff; border: 1px solid #0066cc; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
@@ -196,7 +196,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
                   ${perspective.name}
                 </div>
                 <div style="padding-left: 4px;">
-                  ${markdownToHtml(response.content)}
+                  ${markdownToHtml(response.content, color)}
                 </div>
               </div>
             `
@@ -231,8 +231,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
       // Remove container
       document.body.removeChild(container)
 
-      // Create PDF from canvas
-      const imgData = canvas.toDataURL('image/png')
+      // Create PDF from canvas - handle multi-page properly
       const imgWidth = 210 // A4 width in mm
       const pageHeight = 297 // A4 height in mm
       const imgHeight = (canvas.height * imgWidth) / canvas.width
@@ -243,19 +242,45 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         format: 'a4',
       })
 
-      let heightLeft = imgHeight
-      let position = 0
+      // Calculate how many pages we need
+      const totalPages = Math.ceil(imgHeight / pageHeight)
 
-      // Add first page
-      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-      heightLeft -= pageHeight
+      // For each page, create a slice of the canvas
+      for (let page = 0; page < totalPages; page++) {
+        if (page > 0) {
+          doc.addPage()
+        }
 
-      // Add additional pages if needed
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight
-        doc.addPage()
-        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
-        heightLeft -= pageHeight
+        // Calculate the portion of the canvas for this page
+        const sourceY = (page * pageHeight * canvas.width) / imgWidth
+        const sourceHeight = Math.min(
+          (pageHeight * canvas.width) / imgWidth,
+          canvas.height - sourceY
+        )
+
+        // Create a temporary canvas for this page slice
+        const pageCanvas = document.createElement('canvas')
+        pageCanvas.width = canvas.width
+        pageCanvas.height = sourceHeight
+
+        const ctx = pageCanvas.getContext('2d')
+        if (ctx) {
+          // Fill with white background
+          ctx.fillStyle = '#ffffff'
+          ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height)
+
+          // Draw the slice from the original canvas
+          ctx.drawImage(
+            canvas,
+            0, sourceY, canvas.width, sourceHeight,
+            0, 0, canvas.width, sourceHeight
+          )
+        }
+
+        const pageImgData = pageCanvas.toDataURL('image/png')
+        const sliceHeight = (sourceHeight * imgWidth) / canvas.width
+
+        doc.addImage(pageImgData, 'PNG', 0, 0, imgWidth, sliceHeight)
       }
 
       doc.save(`nodiac-oracle-${new Date().toISOString().split('T')[0]}.pdf`)
