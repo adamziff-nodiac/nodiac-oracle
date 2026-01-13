@@ -19,6 +19,8 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
 
   // Use ref to track the chat ID being created to avoid race conditions
   const pendingChatIdRef = useRef<Promise<string | null> | null>(null)
+  // Use ref to store chatId immediately (not waiting for React state update)
+  const chatIdRef = useRef<string | null>(null)
 
   // Create a new chat in the database
   const createChat = useCallback(
@@ -47,6 +49,7 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
             .single()
 
           if (error) throw error
+          chatIdRef.current = data.id  // Store immediately in ref
           setChatId(data.id)
           return data.id
         } catch (error) {
@@ -107,7 +110,8 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
 
       // Persist if logged in
       if (!isGuest && user) {
-        let currentChatId = chatId
+        // Use ref for immediate access (React state may not have updated yet)
+        let currentChatId = chatIdRef.current
 
         // Create chat if this is the first user message
         if (!currentChatId && messageData.role === 'user') {
@@ -121,7 +125,7 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
 
       return newMessage
     },
-    [chatId, isGuest, user, createChat, saveMessage]
+    [isGuest, user, createChat, saveMessage]
   )
 
   // Load a specific chat from the database
@@ -148,6 +152,7 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
         }))
 
         setMessages(loadedMessages)
+        chatIdRef.current = loadChatId  // Store immediately in ref
         setChatId(loadChatId)
       } catch (error) {
         console.error('Error loading chat:', error)
@@ -158,6 +163,7 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
 
   // Start a new chat (clear current)
   const newChat = useCallback(() => {
+    chatIdRef.current = null  // Clear ref immediately
     setChatId(null)
     setMessages([])
     pendingChatIdRef.current = null
