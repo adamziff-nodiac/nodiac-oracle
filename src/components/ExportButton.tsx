@@ -117,10 +117,10 @@ function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): 
   html = html.replace(/^\*{3,}$/gm, '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;">')
 
   html = html
-    // Headers - color coded by perspective
-    .replace(/^### (.+)$/gm, `<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0; color: ${perspectiveColor};">$1</h3>`)
-    .replace(/^## (.+)$/gm, `<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0; color: ${perspectiveColor};">$1</h2>`)
-    .replace(/^# (.+)$/gm, `<h1 style="font-size: 18px; font-weight: bold; margin: 16px 0 10px 0; color: ${perspectiveColor};">$1</h1>`)
+    // Headers - color coded by perspective (allow leading whitespace, match any content including emoji)
+    .replace(/^\s*###\s+(.+)$/gm, `<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0; color: ${perspectiveColor};">$1</h3>`)
+    .replace(/^\s*##\s+(.+)$/gm, `<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0; color: ${perspectiveColor};">$1</h2>`)
+    .replace(/^\s*#\s+(.+)$/gm, `<h1 style="font-size: 18px; font-weight: bold; margin: 16px 0 10px 0; color: ${perspectiveColor};">$1</h1>`)
     // Bold
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     // Italic (but not if it's part of a list item marker)
@@ -287,9 +287,13 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         format: 'a4',
       })
 
-      // Calculate how many pages we need
-      const totalPages = Math.ceil(imgHeight / pageHeight)
+      // Page margins
       const pageTopMargin = 10 // mm margin at top of continuation pages
+      const pageBottomMargin = 15 // mm margin at bottom to avoid cutting content
+      const usablePageHeight = pageHeight - pageBottomMargin
+
+      // Calculate how many pages we need (using reduced page height)
+      const totalPages = Math.ceil(imgHeight / usablePageHeight)
 
       // For each page, create a slice of the canvas
       for (let page = 0; page < totalPages; page++) {
@@ -297,12 +301,14 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
           doc.addPage()
         }
 
-        // Calculate the portion of the canvas for this page
-        const sourceY = (page * pageHeight * canvas.width) / imgWidth
+        // Calculate the portion of the canvas for this page (using usable height)
+        const sourceY = (page * usablePageHeight * canvas.width) / imgWidth
         const sourceHeight = Math.min(
-          (pageHeight * canvas.width) / imgWidth,
+          (usablePageHeight * canvas.width) / imgWidth,
           canvas.height - sourceY
         )
+
+        if (sourceHeight <= 0) continue
 
         // Create a temporary canvas for this page slice
         const pageCanvas = document.createElement('canvas')
