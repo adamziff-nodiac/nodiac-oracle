@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Download, Loader2 } from 'lucide-react'
 import { Message, AIModel, PERSPECTIVES } from '@/types'
 import { cn } from '@/lib/utils'
@@ -9,11 +9,6 @@ type ExportButtonProps = {
   messages: Message[]
   selectedModel: AIModel
   disabled?: boolean
-}
-
-type TextSegment = {
-  text: string
-  bold: boolean
 }
 
 // Group messages into rounds: each user message + following assistant responses
@@ -40,15 +35,70 @@ function groupMessagesIntoRounds(messages: Message[]): Message[][] {
 }
 
 // Perspective colors for visual distinction
-const perspectiveColors: Record<string, [number, number, number]> = {
-  hyperscaler: [0, 102, 204],    // Blue
-  techvc: [124, 58, 237],        // Purple
-  utility: [234, 88, 12],        // Orange
-  renewables: [22, 163, 74],     // Green
+const perspectiveColors: Record<string, string> = {
+  hyperscaler: '#0066cc',
+  techvc: '#7c3aed',
+  utility: '#ea580c',
+  renewables: '#16a34a',
+}
+
+// Convert markdown to HTML for rendering
+function markdownToHtml(content: string): string {
+  let html = content
+    // Escape HTML
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    // Headers
+    .replace(/^### (.+)$/gm, '<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0;">$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0;">$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1 style="font-size: 18px; font-weight: bold; margin: 16px 0 10px 0;">$1</h1>')
+    // Bold
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Italic
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Code inline
+    .replace(/`([^`]+)`/g, '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>')
+    // Horizontal rule
+    .replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;">')
+    // Unordered list items
+    .replace(/^[-*] (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+    // Ordered list items
+    .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+    // Paragraphs (double newlines)
+    .replace(/\n\n/g, '</p><p style="margin: 8px 0;">')
+    // Single newlines to <br>
+    .replace(/\n/g, '<br>')
+
+  // Handle markdown tables
+  html = html.replace(/\|(.+)\|/g, (match) => {
+    const cells = match.split('|').filter(c => c.trim())
+    if (cells.every(c => /^[\s-:]+$/.test(c))) {
+      return '' // Skip separator rows
+    }
+    const isHeader = cells.some(c => c.includes('**'))
+    const cellHtml = cells.map(c => {
+      const content = c.trim().replace(/\*\*/g, '')
+      const tag = isHeader ? 'th' : 'td'
+      const style = isHeader
+        ? 'background: #f3f4f6; font-weight: bold; padding: 8px; border: 1px solid #e5e7eb; text-align: left;'
+        : 'padding: 8px; border: 1px solid #e5e7eb;'
+      return `<${tag} style="${style}">${content}</${tag}>`
+    }).join('')
+    return `<tr>${cellHtml}</tr>`
+  })
+
+  // Wrap table rows in table tags
+  if (html.includes('<tr>')) {
+    html = html.replace(/(<tr>[\s\S]*?<\/tr>)+/g, '<table style="border-collapse: collapse; width: 100%; margin: 12px 0;">$&</table>')
+  }
+
+  return `<p style="margin: 8px 0;">${html}</p>`
 }
 
 export function ExportButton({ messages, selectedModel, disabled }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   const generatePDF = async () => {
     if (messages.length === 0) return
@@ -83,321 +133,40 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         summary = 'Summary could not be generated.'
       }
 
-      // Import jsPDF dynamically
-      const { jsPDF } = await import('jspdf')
-
-      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-      const pageWidth = doc.internal.pageSize.getWidth()
-      const pageHeight = doc.internal.pageSize.getHeight()
-      const margin = 15
-      const contentWidth = pageWidth - margin * 2
-      let y = margin
-
-      const addPage = () => {
-        doc.addPage()
-        y = margin
-      }
-
-      const checkPage = (needed: number) => {
-        if (y + needed > pageHeight - margin) {
-          addPage()
-        }
-      }
-
-      // Parse markdown bold syntax into segments
-      const parseBold = (text: string): TextSegment[] => {
-        const segments: TextSegment[] = []
-        const regex = /\*\*(.+?)\*\*/g
-        let lastIndex = 0
-        let match
-
-        while ((match = regex.exec(text)) !== null) {
-          if (match.index > lastIndex) {
-            segments.push({ text: text.slice(lastIndex, match.index), bold: false })
-          }
-          segments.push({ text: match[1], bold: true })
-          lastIndex = regex.lastIndex
-        }
-
-        if (lastIndex < text.length) {
-          segments.push({ text: text.slice(lastIndex), bold: false })
-        }
-
-        return segments.length > 0 ? segments : [{ text, bold: false }]
-      }
-
-      // Write a line with mixed bold/normal text
-      const writeFormattedLine = (text: string, x: number, fontSize: number, baseColor: [number, number, number]) => {
-        const segments = parseBold(text)
-        doc.setFontSize(fontSize)
-        doc.setTextColor(...baseColor)
-
-        let currentX = x
-        for (const segment of segments) {
-          doc.setFont('helvetica', segment.bold ? 'bold' : 'normal')
-          doc.text(segment.text, currentX, y)
-          currentX += doc.getTextWidth(segment.text)
-        }
-      }
-
-      // Parse a markdown table row into cells
-      const parseTableRow = (row: string): string[] => {
-        return row
-          .split('|')
-          .slice(1, -1) // Remove empty first and last from split
-          .map(cell => cell.trim())
-      }
-
-      // Check if a line is a table separator (|---|---|)
-      const isTableSeparator = (line: string): boolean => {
-        return /^\|[\s-:|]+\|$/.test(line)
-      }
-
-      // Check if a line is a table row
-      const isTableRow = (line: string): boolean => {
-        return line.startsWith('|') && line.endsWith('|')
-      }
-
-      // Render a table
-      const renderTable = (tableLines: string[], headerColor: [number, number, number]) => {
-        const rows: string[][] = []
-        let hasHeader = false
-
-        for (let i = 0; i < tableLines.length; i++) {
-          if (isTableSeparator(tableLines[i])) {
-            hasHeader = true
-            continue
-          }
-          rows.push(parseTableRow(tableLines[i]))
-        }
-
-        if (rows.length === 0) return
-
-        const numCols = rows[0].length
-        const colWidth = (contentWidth - 4) / numCols
-        const cellPadding = 2
-        const rowHeight = 6
-
-        // Check if table fits on page
-        checkPage(rows.length * rowHeight + 4)
-
-        const tableX = margin + 2
-        let tableY = y
-
-        doc.setFontSize(8)
-        doc.setLineWidth(0.3)
-
-        for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
-          const row = rows[rowIdx]
-          const isHeaderRow = hasHeader && rowIdx === 0
-
-          // Background for header
-          if (isHeaderRow) {
-            doc.setFillColor(headerColor[0], headerColor[1], headerColor[2])
-            doc.rect(tableX, tableY, contentWidth - 4, rowHeight, 'F')
-          }
-
-          // Draw cells
-          for (let colIdx = 0; colIdx < numCols; colIdx++) {
-            const cellX = tableX + colIdx * colWidth
-            const cellText = row[colIdx] || ''
-
-            // Cell border
-            doc.setDrawColor(180, 180, 180)
-            doc.rect(cellX, tableY, colWidth, rowHeight, 'S')
-
-            // Cell text
-            if (isHeaderRow) {
-              doc.setFont('helvetica', 'bold')
-              doc.setTextColor(255, 255, 255)
-            } else {
-              doc.setFont('helvetica', 'normal')
-              doc.setTextColor(40, 40, 40)
-            }
-
-            // Truncate text if too long
-            const maxWidth = colWidth - cellPadding * 2
-            let displayText = cellText
-            while (doc.getTextWidth(displayText) > maxWidth && displayText.length > 0) {
-              displayText = displayText.slice(0, -1)
-            }
-            if (displayText !== cellText && displayText.length > 2) {
-              displayText = displayText.slice(0, -2) + '..'
-            }
-
-            doc.text(displayText, cellX + cellPadding, tableY + rowHeight - 2)
-          }
-
-          tableY += rowHeight
-        }
-
-        y = tableY + 3
-      }
-
-      // Write markdown content with proper formatting
-      const writeMarkdown = (content: string, xOffset: number, baseColor: [number, number, number] = [30, 30, 30], headerColor: [number, number, number] = [0, 102, 204]) => {
-        const lines = content.split('\n')
-        const lineHeight = 4.5
-        const textWidth = contentWidth - xOffset
-
-        let i = 0
-        while (i < lines.length) {
-          const line = lines[i]
-
-          // Check for table
-          if (isTableRow(line)) {
-            const tableLines: string[] = []
-            while (i < lines.length && (isTableRow(lines[i]) || isTableSeparator(lines[i]))) {
-              tableLines.push(lines[i])
-              i++
-            }
-            renderTable(tableLines, headerColor)
-            continue
-          }
-
-          checkPage(lineHeight + 2)
-
-          // Horizontal rule (---)
-          if (line.trim() === '---' || line.trim() === '***') {
-            y += 2
-            doc.setDrawColor(200, 200, 200)
-            doc.setLineWidth(0.3)
-            doc.line(margin + xOffset, y, margin + xOffset + textWidth, y)
-            y += 4
-            i++
-            continue
-          }
-
-          // Headers
-          if (line.startsWith('## ')) {
-            y += 2
-            doc.setFontSize(11)
-            doc.setFont('helvetica', 'bold')
-            doc.setTextColor(...headerColor)
-            doc.text(line.slice(3), margin + xOffset, y)
-            y += lineHeight + 1
-            i++
-            continue
-          }
-
-          if (line.startsWith('# ')) {
-            y += 2
-            doc.setFontSize(12)
-            doc.setFont('helvetica', 'bold')
-            doc.setTextColor(...headerColor)
-            doc.text(line.slice(2), margin + xOffset, y)
-            y += lineHeight + 2
-            i++
-            continue
-          }
-
-          // List items (unordered)
-          if (line.match(/^[-*]\s+/)) {
-            const listText = line.replace(/^[-*]\s+/, '')
-            const wrappedLines = doc.splitTextToSize(listText, textWidth - 6)
-            for (let j = 0; j < wrappedLines.length; j++) {
-              checkPage(lineHeight)
-              if (j === 0) {
-                doc.setFont('helvetica', 'normal')
-                doc.setFontSize(9)
-                doc.setTextColor(...baseColor)
-                doc.text('•', margin + xOffset, y)
-              }
-              writeFormattedLine(wrappedLines[j], margin + xOffset + 4, 9, baseColor)
-              y += lineHeight
-            }
-            i++
-            continue
-          }
-
-          // Numbered list items
-          if (line.match(/^\d+\.\s+/)) {
-            const match = line.match(/^(\d+)\.\s+(.*)/)
-            if (match) {
-              const num = match[1]
-              const listText = match[2]
-              const wrappedLines = doc.splitTextToSize(listText, textWidth - 8)
-              for (let j = 0; j < wrappedLines.length; j++) {
-                checkPage(lineHeight)
-                if (j === 0) {
-                  doc.setFont('helvetica', 'normal')
-                  doc.setFontSize(9)
-                  doc.setTextColor(...baseColor)
-                  doc.text(`${num}.`, margin + xOffset, y)
-                }
-                writeFormattedLine(wrappedLines[j], margin + xOffset + 6, 9, baseColor)
-                y += lineHeight
-              }
-              i++
-              continue
-            }
-          }
-
-          // Empty line
-          if (line.trim() === '') {
-            y += 2
-            i++
-            continue
-          }
-
-          // Regular paragraph with potential bold text
-          const cleanLine = line.replace(/`([^`]+)`/g, '$1')
-          const wrappedLines = doc.splitTextToSize(cleanLine, textWidth)
-          doc.setFontSize(9)
-
-          for (const wrappedLine of wrappedLines) {
-            checkPage(lineHeight)
-            writeFormattedLine(wrappedLine, margin + xOffset, 9, baseColor)
-            y += lineHeight
-          }
-          i++
-        }
-      }
-
-      // Header
-      doc.setFontSize(20)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(0, 102, 204)
-      doc.text('Nodiac Oracle', margin, y)
-      y += 6
-
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(100, 100, 100)
-      doc.text('Multi-perspective AI Advisor', margin, y)
-      y += 6
-
-      // Summary box
-      doc.setFillColor(240, 247, 255)
-      doc.setDrawColor(0, 102, 204)
-      const summaryLines = doc.splitTextToSize(summary, contentWidth - 10)
-      const summaryBoxHeight = summaryLines.length * 4.5 + 12
-      doc.roundedRect(margin, y, contentWidth, summaryBoxHeight, 2, 2, 'FD')
-
-      y += 6
-      doc.setFontSize(10)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor(0, 102, 204)
-      doc.text('Summary', margin + 5, y)
-      y += 5
-
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(50, 50, 50)
-      for (const line of summaryLines) {
-        doc.text(line, margin + 5, y)
-        y += 4.5
-      }
-      y += 4
-
-      // Meta info
-      doc.setFontSize(8)
-      doc.setTextColor(120, 120, 120)
-      doc.text(`Model: ${selectedModel.name}  |  Exported: ${new Date().toLocaleDateString()}`, margin, y)
-      y += 8
-
       // Group messages into rounds
       const rounds = groupMessagesIntoRounds(messages)
+
+      // Create hidden container for rendering
+      const container = document.createElement('div')
+      container.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 800px;
+        background: white;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-size: 12px;
+        line-height: 1.5;
+        color: #1f2937;
+        padding: 40px;
+      `
+
+      // Build HTML content
+      let html = `
+        <div style="margin-bottom: 24px;">
+          <h1 style="font-size: 28px; font-weight: bold; color: #0066cc; margin: 0;">Nodiac Oracle</h1>
+          <p style="color: #6b7280; margin: 4px 0 0 0;">Multi-perspective AI Advisor</p>
+        </div>
+
+        <div style="background: #f0f7ff; border: 1px solid #0066cc; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <h2 style="font-size: 14px; font-weight: bold; color: #0066cc; margin: 0 0 8px 0;">Summary</h2>
+          <p style="margin: 0; color: #374151;">${summary}</p>
+        </div>
+
+        <p style="font-size: 10px; color: #9ca3af; margin-bottom: 24px;">
+          Model: ${selectedModel.name} | Exported: ${new Date().toLocaleDateString()}
+        </p>
+      `
 
       // Render each round
       for (let roundIndex = 0; roundIndex < rounds.length; roundIndex++) {
@@ -405,78 +174,89 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         const userMessage = round[0]
         const aiResponses = round.slice(1)
 
-        checkPage(25)
+        html += `
+          <div style="background: #0066cc; color: white; padding: 8px 16px; border-radius: 6px; font-weight: bold; margin-top: ${roundIndex > 0 ? '24px' : '0'};">
+            Question ${roundIndex + 1}
+          </div>
+          <div style="padding: 12px 0; border-bottom: 1px solid #e5e7eb;">
+            ${userMessage.content}
+          </div>
+        `
 
-        // Round header with Q number
-        doc.setFillColor(0, 102, 204)
-        doc.roundedRect(margin, y, contentWidth, 8, 1, 1, 'F')
-        doc.setFontSize(10)
-        doc.setFont('helvetica', 'bold')
-        doc.setTextColor(255, 255, 255)
-        doc.text(`Question ${roundIndex + 1}`, margin + 4, y + 5.5)
-        y += 12
+        for (const response of aiResponses) {
+          const perspective = response.perspective
+            ? PERSPECTIVES.find((p) => p.id === response.perspective)
+            : null
 
-        // User message
-        doc.setFontSize(9)
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor(30, 30, 30)
-        const userLines = doc.splitTextToSize(userMessage.content, contentWidth)
-        for (const line of userLines) {
-          checkPage(5)
-          doc.text(line, margin, y)
-          y += 4.5
-        }
-        y += 4
-
-        // AI Responses
-        if (aiResponses.length > 0) {
-          for (const response of aiResponses) {
-            checkPage(20)
-
-            const perspective = response.perspective
-              ? PERSPECTIVES.find((p) => p.id === response.perspective)
-              : null
-
-            if (perspective) {
-              const color = perspectiveColors[perspective.id] || [80, 80, 80]
-
-              // Perspective label bar
-              doc.setFillColor(color[0], color[1], color[2])
-              doc.roundedRect(margin, y, contentWidth, 7, 1, 1, 'F')
-
-              doc.setFontSize(9)
-              doc.setFont('helvetica', 'bold')
-              doc.setTextColor(255, 255, 255)
-              doc.text(perspective.name, margin + 4, y + 5)
-              y += 10
-
-              // Response content - headers use perspective color
-              writeMarkdown(response.content, 0, [40, 40, 40], color)
-
-              y += 8
-            }
+          if (perspective) {
+            const color = perspectiveColors[perspective.id] || '#6b7280'
+            html += `
+              <div style="margin-top: 16px;">
+                <div style="background: ${color}; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 8px;">
+                  ${perspective.name}
+                </div>
+                <div style="padding-left: 4px;">
+                  ${markdownToHtml(response.content)}
+                </div>
+              </div>
+            `
           }
-        }
-
-        // Separator between rounds
-        if (roundIndex < rounds.length - 1) {
-          checkPage(10)
-          doc.setDrawColor(220, 220, 220)
-          doc.setLineWidth(0.5)
-          doc.line(margin + 20, y, pageWidth - margin - 20, y)
-          y += 10
         }
       }
 
       // Footer
-      checkPage(20)
-      y = pageHeight - 12
-      doc.setDrawColor(200, 200, 200)
-      doc.setLineWidth(0.3)
-      doc.line(margin, y - 3, pageWidth - margin, y - 3)
-      doc.setFontSize(8)
-      doc.setTextColor(150, 150, 150)
-      doc.text('Generated by Nodiac Oracle', pageWidth / 2, y, { align: 'center' })
+      html += `
+        <div style="margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; text-align: center;">
+          <p style="font-size: 10px; color: #9ca3af; margin: 0;">Generated by Nodiac Oracle</p>
+        </div>
+      `
+
+      container.innerHTML = html
+      document.body.appendChild(container)
+
+      // Import libraries dynamically
+      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
+        import('html2canvas-pro'),
+        import('jspdf')
+      ])
+
+      // Render to canvas with html2canvas
+      const canvas = await html2canvas(container, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+      })
+
+      // Remove container
+      document.body.removeChild(container)
+
+      // Create PDF from canvas
+      const imgData = canvas.toDataURL('image/png')
+      const imgWidth = 210 // A4 width in mm
+      const pageHeight = 297 // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4',
+      })
+
+      let heightLeft = imgHeight
+      let position = 0
+
+      // Add first page
+      doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+      heightLeft -= pageHeight
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight
+        doc.addPage()
+        doc.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+      }
 
       doc.save(`nodiac-oracle-${new Date().toISOString().split('T')[0]}.pdf`)
     } catch (error) {
@@ -488,26 +268,29 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
   }
 
   return (
-    <button
-      onClick={generatePDF}
-      disabled={disabled || isExporting || messages.length === 0}
-      className={cn(
-        'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm',
-        'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700',
-        'disabled:opacity-50 disabled:cursor-not-allowed'
-      )}
-    >
-      {isExporting ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin" />
-          Exporting...
-        </>
-      ) : (
-        <>
-          <Download className="w-4 h-4" />
-          Export PDF
-        </>
-      )}
-    </button>
+    <>
+      <div ref={containerRef} style={{ display: 'none' }} />
+      <button
+        onClick={generatePDF}
+        disabled={disabled || isExporting || messages.length === 0}
+        className={cn(
+          'w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm',
+          'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700',
+          'disabled:opacity-50 disabled:cursor-not-allowed'
+        )}
+      >
+        {isExporting ? (
+          <>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            Exporting...
+          </>
+        ) : (
+          <>
+            <Download className="w-4 h-4" />
+            Export PDF
+          </>
+        )}
+      </button>
+    </>
   )
 }
