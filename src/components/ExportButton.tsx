@@ -44,11 +44,17 @@ const perspectiveColors: Record<string, string> = {
 
 // Convert markdown to HTML for rendering
 function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): string {
-  let html = content
-    // Escape HTML
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+  // First, handle code blocks (``` ... ```) - convert to styled callout boxes
+  let html = content.replace(/```[\s\S]*?```/g, (match) => {
+    const inner = match.slice(3, -3).trim()
+    return `<div style="background: linear-gradient(135deg, ${perspectiveColor}15, ${perspectiveColor}08); border-left: 4px solid ${perspectiveColor}; padding: 12px 16px; margin: 12px 0; border-radius: 4px;">${inner}</div>`
+  })
+
+  html = html
+    // Escape HTML (but not our div tags we just added)
+    .replace(/&(?!amp;|lt;|gt;)/g, '&amp;')
+    .replace(/<(?!\/?(div|strong|em|code|h[123]|p|br|hr|li|tr|td|th|table|ul|ol)[^>]*>)/g, '&lt;')
+    .replace(/>(?![^<]*<\/(div|strong|em|code|h[123]|p|br|hr|li|tr|td|th|table|ul|ol)>)/g, '&gt;')
     // Headers - color coded by perspective
     .replace(/^### (.+)$/gm, `<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0; color: ${perspectiveColor};">$1</h3>`)
     .replace(/^## (.+)$/gm, `<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0; color: ${perspectiveColor};">$1</h2>`)
