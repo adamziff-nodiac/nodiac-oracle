@@ -42,6 +42,51 @@ const perspectiveColors: Record<string, string> = {
   renewables: '#16a34a',
 }
 
+// Parse a markdown table into HTML
+function parseMarkdownTable(tableText: string, perspectiveColor: string): string {
+  const lines = tableText.trim().split('\n')
+  if (lines.length < 2) return tableText
+
+  const rows: string[][] = []
+  let headerRowIndex = -1
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim()
+    if (!line.startsWith('|') || !line.endsWith('|')) continue
+
+    // Check if this is a separator row (|---|---|)
+    if (/^\|[\s\-:]+\|$/.test(line.replace(/\|/g, '|').replace(/[^|\-:\s]/g, ''))) {
+      headerRowIndex = rows.length - 1
+      continue
+    }
+
+    // Parse cells
+    const cells = line.split('|').slice(1, -1).map(c => c.trim())
+    rows.push(cells)
+  }
+
+  if (rows.length === 0) return tableText
+
+  // Build HTML table
+  let html = '<table style="border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 11px;">'
+
+  rows.forEach((row, idx) => {
+    const isHeader = idx === headerRowIndex || (headerRowIndex === -1 && idx === 0)
+    html += '<tr>'
+    row.forEach(cell => {
+      const tag = isHeader ? 'th' : 'td'
+      const style = isHeader
+        ? `background: ${perspectiveColor}; color: white; font-weight: bold; padding: 8px 10px; border: 1px solid ${perspectiveColor}; text-align: left;`
+        : 'padding: 8px 10px; border: 1px solid #e5e7eb; vertical-align: top;'
+      html += `<${tag} style="${style}">${cell}</${tag}>`
+    })
+    html += '</tr>'
+  })
+
+  html += '</table>'
+  return html
+}
+
 // Convert markdown to HTML for rendering
 function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): string {
   // First, handle code blocks (``` ... ```) - convert to styled callout boxes
@@ -50,56 +95,37 @@ function markdownToHtml(content: string, perspectiveColor: string = '#1f2937'): 
     return `<div style="background: linear-gradient(135deg, ${perspectiveColor}15, ${perspectiveColor}08); border-left: 4px solid ${perspectiveColor}; padding: 12px 16px; margin: 12px 0; border-radius: 4px;">${inner}</div>`
   })
 
+  // Handle tables BEFORE other transformations (they need newlines intact)
+  // Match table blocks: lines starting and ending with |
+  html = html.replace(/(\|.+\|[\r\n]+)+/g, (match) => {
+    return parseMarkdownTable(match, perspectiveColor)
+  })
+
   html = html
-    // Escape HTML (but not our div tags we just added)
-    .replace(/&(?!amp;|lt;|gt;)/g, '&amp;')
-    .replace(/<(?!\/?(div|strong|em|code|h[123]|p|br|hr|li|tr|td|th|table|ul|ol)[^>]*>)/g, '&lt;')
-    .replace(/>(?![^<]*<\/(div|strong|em|code|h[123]|p|br|hr|li|tr|td|th|table|ul|ol)>)/g, '&gt;')
     // Headers - color coded by perspective
     .replace(/^### (.+)$/gm, `<h3 style="font-size: 14px; font-weight: bold; margin: 12px 0 6px 0; color: ${perspectiveColor};">$1</h3>`)
     .replace(/^## (.+)$/gm, `<h2 style="font-size: 16px; font-weight: bold; margin: 14px 0 8px 0; color: ${perspectiveColor};">$1</h2>`)
     .replace(/^# (.+)$/gm, `<h1 style="font-size: 18px; font-weight: bold; margin: 16px 0 10px 0; color: ${perspectiveColor};">$1</h1>`)
     // Bold
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    // Italic
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    // Italic (but not if it's part of a list item marker)
+    .replace(/(?<!\*)\*([^*]+)\*(?!\*)/g, '<em>$1</em>')
     // Code inline
-    .replace(/`([^`]+)`/g, '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>')
+    .replace(/`([^`]+)`/g, '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace; font-size: 11px;">$1</code>')
     // Horizontal rule
     .replace(/^---$/gm, '<hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;">')
+    // Blockquotes
+    .replace(/^> (.+)$/gm, '<blockquote style="border-left: 3px solid #e5e7eb; padding-left: 12px; margin: 8px 0; color: #6b7280; font-style: italic;">$1</blockquote>')
     // Unordered list items
-    .replace(/^[-*] (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+    .replace(/^[-*] (.+)$/gm, '<div style="margin-left: 16px; margin-bottom: 4px;">• $1</div>')
     // Ordered list items
-    .replace(/^\d+\. (.+)$/gm, '<li style="margin-left: 20px;">$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm, '<div style="margin-left: 16px; margin-bottom: 4px;">$1. $2</div>')
     // Paragraphs (double newlines)
     .replace(/\n\n/g, '</p><p style="margin: 8px 0;">')
     // Single newlines to <br>
     .replace(/\n/g, '<br>')
 
-  // Handle markdown tables
-  html = html.replace(/\|(.+)\|/g, (match) => {
-    const cells = match.split('|').filter(c => c.trim())
-    if (cells.every(c => /^[\s-:]+$/.test(c))) {
-      return '' // Skip separator rows
-    }
-    const isHeader = cells.some(c => c.includes('**'))
-    const cellHtml = cells.map(c => {
-      const content = c.trim().replace(/\*\*/g, '')
-      const tag = isHeader ? 'th' : 'td'
-      const style = isHeader
-        ? 'background: #f3f4f6; font-weight: bold; padding: 8px; border: 1px solid #e5e7eb; text-align: left;'
-        : 'padding: 8px; border: 1px solid #e5e7eb;'
-      return `<${tag} style="${style}">${content}</${tag}>`
-    }).join('')
-    return `<tr>${cellHtml}</tr>`
-  })
-
-  // Wrap table rows in table tags
-  if (html.includes('<tr>')) {
-    html = html.replace(/(<tr>[\s\S]*?<\/tr>)+/g, '<table style="border-collapse: collapse; width: 100%; margin: 12px 0;">$&</table>')
-  }
-
-  return `<p style="margin: 8px 0;">${html}</p>`
+  return `<div style="margin: 8px 0;">${html}</div>`
 }
 
 export function ExportButton({ messages, selectedModel, disabled }: ExportButtonProps) {
