@@ -16,6 +16,13 @@ type TextSegment = {
   bold: boolean
 }
 
+// Strip emoji from text to avoid PDF rendering issues
+const stripEmoji = (text: string): string => {
+  return text
+    .replace(/\p{Emoji_Presentation}|\p{Extended_Pictographic}/gu, '')
+    .replace(/[^\S\n]+/g, ' ')  // Collapse spaces but preserve newlines
+}
+
 // Group messages into rounds: each user message + following assistant responses
 function groupMessagesIntoRounds(messages: Message[]): Message[][] {
   const rounds: Message[][] = []
@@ -370,7 +377,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
       // Summary box
       doc.setFillColor(240, 247, 255)
       doc.setDrawColor(0, 102, 204)
-      const summaryLines = doc.splitTextToSize(summary, contentWidth - 10)
+      const summaryLines = doc.splitTextToSize(stripEmoji(summary), contentWidth - 10)
       const summaryBoxHeight = summaryLines.length * 4.5 + 12
       doc.roundedRect(margin, y, contentWidth, summaryBoxHeight, 2, 2, 'FD')
 
@@ -420,7 +427,7 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
         doc.setFontSize(9)
         doc.setFont('helvetica', 'normal')
         doc.setTextColor(30, 30, 30)
-        const userLines = doc.splitTextToSize(userMessage.content, contentWidth)
+        const userLines = doc.splitTextToSize(stripEmoji(userMessage.content), contentWidth)
         for (const line of userLines) {
           checkPage(5)
           doc.text(line, margin, y)
@@ -450,8 +457,8 @@ export function ExportButton({ messages, selectedModel, disabled }: ExportButton
               doc.text(perspective.name, margin + 4, y + 5)
               y += 10
 
-              // Response content - headers use perspective color
-              writeMarkdown(response.content, 0, [40, 40, 40], color)
+              // Response content - headers use perspective color (strip emoji)
+              writeMarkdown(stripEmoji(response.content), 0, [40, 40, 40], color)
 
               y += 8
             }
