@@ -4,12 +4,15 @@ import { ChatMessage } from './ChatMessage'
 import { Message } from '@/types'
 import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { TTSProvider } from '@/contexts/TTSContext'
 
 // Wrapper component that provides required context
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <PerspectivesProvider>{children}</PerspectivesProvider>
+      <PerspectivesProvider>
+        <TTSProvider>{children}</TTSProvider>
+      </PerspectivesProvider>
     </AuthProvider>
   )
 }
@@ -60,7 +63,15 @@ describe('ChatMessage', () => {
     const userContainer = screen.getByTestId('message-msg-1')
     expect(userContainer).toHaveClass('justify-end')
 
-    rerender(<ChatMessage message={assistantMessage} />)
+    rerender(
+      <AuthProvider>
+        <PerspectivesProvider>
+          <TTSProvider>
+            <ChatMessage message={assistantMessage} />
+          </TTSProvider>
+        </PerspectivesProvider>
+      </AuthProvider>
+    )
     const assistantContainer = screen.getByTestId('message-msg-2')
     expect(assistantContainer).toHaveClass('justify-start')
   })

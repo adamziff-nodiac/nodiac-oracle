@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
+import { TTSProvider } from '@/contexts/TTSContext'
 
 export const metadata: Metadata = {
   title: 'Nodiac Oracle - Multi-Perspective AI Advisor',
@@ -44,7 +45,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          <PerspectivesProvider>{children}</PerspectivesProvider>
+          <PerspectivesProvider>
+            <TTSProvider>{children}</TTSProvider>
+          </PerspectivesProvider>
         </AuthProvider>
       </body>
     </html>

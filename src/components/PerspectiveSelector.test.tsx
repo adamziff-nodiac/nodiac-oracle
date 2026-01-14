@@ -3,13 +3,16 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { TTSProvider } from '@/contexts/TTSContext'
 import { FALLBACK_PERSPECTIVES } from '@/types'
 
 // Wrapper component that provides required context
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <PerspectivesProvider>{children}</PerspectivesProvider>
+      <PerspectivesProvider>
+        <TTSProvider>{children}</TTSProvider>
+      </PerspectivesProvider>
     </AuthProvider>
   )
 }

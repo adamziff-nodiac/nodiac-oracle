@@ -1,44 +1,46 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { ChatInput } from './ChatInput'
+import { TTSProvider } from '@/contexts/TTSContext'
+
+// Wrapper component for TTS context
+const renderWithTTS = (ui: React.ReactElement) => {
+  return render(<TTSProvider>{ui}</TTSProvider>)
+}
 
 describe('ChatInput', () => {
   const defaultProps = {
     onSubmit: vi.fn(),
-    isVoiceMode: false,
-    onVoiceModeToggle: vi.fn(),
     isListening: false,
-    isSpeaking: false,
     onStartListening: vi.fn(),
     onStopListening: vi.fn(),
-    onStopSpeaking: vi.fn(),
     transcript: '',
     isVoiceSupported: true,
   }
 
   it('should render the text input', () => {
-    render(<ChatInput {...defaultProps} />)
+    renderWithTTS(<ChatInput {...defaultProps} />)
     expect(screen.getByTestId('chat-input')).toBeInTheDocument()
   })
 
   it('should render the send button', () => {
-    render(<ChatInput {...defaultProps} />)
+    renderWithTTS(<ChatInput {...defaultProps} />)
     expect(screen.getByTestId('send-button')).toBeInTheDocument()
   })
 
-  it('should render the voice mode toggle', () => {
-    render(<ChatInput {...defaultProps} />)
-    expect(screen.getByTestId('voice-mode-toggle')).toBeInTheDocument()
+  it('should render the auto-read toggle', () => {
+    renderWithTTS(<ChatInput {...defaultProps} />)
+    expect(screen.getByTestId('auto-read-toggle')).toBeInTheDocument()
   })
 
   it('should render the mic button when voice is supported', () => {
-    render(<ChatInput {...defaultProps} />)
+    renderWithTTS(<ChatInput {...defaultProps} />)
     expect(screen.getByTestId('mic-button')).toBeInTheDocument()
   })
 
   it('should call onSubmit when send button is clicked', () => {
     const onSubmit = vi.fn()
-    render(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
+    renderWithTTS(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -49,7 +51,7 @@ describe('ChatInput', () => {
 
   it('should call onSubmit when Enter is pressed', () => {
     const onSubmit = vi.fn()
-    render(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
+    renderWithTTS(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -60,7 +62,7 @@ describe('ChatInput', () => {
 
   it('should not submit on Shift+Enter', () => {
     const onSubmit = vi.fn()
-    render(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
+    renderWithTTS(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -71,7 +73,7 @@ describe('ChatInput', () => {
 
   it('should not submit empty message', () => {
     const onSubmit = vi.fn()
-    render(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
+    renderWithTTS(<ChatInput {...defaultProps} onSubmit={onSubmit} />)
 
     fireEvent.click(screen.getByTestId('send-button'))
 
@@ -79,7 +81,7 @@ describe('ChatInput', () => {
   })
 
   it('should clear input after submit', () => {
-    render(<ChatInput {...defaultProps} />)
+    renderWithTTS(<ChatInput {...defaultProps} />)
 
     const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
     fireEvent.change(input, { target: { value: 'Test message' } })
@@ -89,24 +91,15 @@ describe('ChatInput', () => {
   })
 
   it('should be disabled when disabled prop is true', () => {
-    render(<ChatInput {...defaultProps} disabled />)
+    renderWithTTS(<ChatInput {...defaultProps} disabled />)
 
     expect(screen.getByTestId('chat-input')).toBeDisabled()
     expect(screen.getByTestId('send-button')).toBeDisabled()
   })
 
-  it('should toggle voice mode when button is clicked', () => {
-    const onVoiceModeToggle = vi.fn()
-    render(<ChatInput {...defaultProps} onVoiceModeToggle={onVoiceModeToggle} />)
-
-    fireEvent.click(screen.getByTestId('voice-mode-toggle'))
-
-    expect(onVoiceModeToggle).toHaveBeenCalled()
-  })
-
   it('should call onStartListening when mic button is clicked', () => {
     const onStartListening = vi.fn()
-    render(<ChatInput {...defaultProps} onStartListening={onStartListening} />)
+    renderWithTTS(<ChatInput {...defaultProps} onStartListening={onStartListening} />)
 
     fireEvent.click(screen.getByTestId('mic-button'))
 
@@ -115,39 +108,103 @@ describe('ChatInput', () => {
 
   it('should call onStopListening when mic button is clicked while listening', () => {
     const onStopListening = vi.fn()
-    render(<ChatInput {...defaultProps} isListening onStopListening={onStopListening} />)
+    renderWithTTS(<ChatInput {...defaultProps} isListening onStopListening={onStopListening} />)
 
     fireEvent.click(screen.getByTestId('mic-button'))
 
     expect(onStopListening).toHaveBeenCalled()
   })
 
-  it('should call onStopSpeaking when voice toggle is clicked while speaking', () => {
-    const onStopSpeaking = vi.fn()
-    render(<ChatInput {...defaultProps} isSpeaking onStopSpeaking={onStopSpeaking} />)
-
-    fireEvent.click(screen.getByTestId('voice-mode-toggle'))
-
-    expect(onStopSpeaking).toHaveBeenCalled()
-  })
-
   it('should update input with transcript while listening', () => {
-    render(<ChatInput {...defaultProps} isListening transcript="Hello world" />)
+    renderWithTTS(<ChatInput {...defaultProps} isListening transcript="Hello world" />)
 
     const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
     expect(input.value).toBe('Hello world')
   })
 
   it('should not show voice controls when voice is not supported', () => {
-    render(<ChatInput {...defaultProps} isVoiceSupported={false} />)
+    renderWithTTS(<ChatInput {...defaultProps} isVoiceSupported={false} />)
 
-    expect(screen.queryByTestId('voice-mode-toggle')).not.toBeInTheDocument()
     expect(screen.queryByTestId('mic-button')).not.toBeInTheDocument()
   })
 
   it('should disable input while listening', () => {
-    render(<ChatInput {...defaultProps} isListening />)
+    renderWithTTS(<ChatInput {...defaultProps} isListening />)
 
     expect(screen.getByTestId('chat-input')).toBeDisabled()
+  })
+
+  it('should keep transcript in input after listening stops (no auto-submit)', () => {
+    const onSubmit = vi.fn()
+    const { rerender } = render(
+      <TTSProvider>
+        <ChatInput {...defaultProps} onSubmit={onSubmit} isListening transcript="Hello world" />
+      </TTSProvider>
+    )
+
+    // Verify transcript is in input while listening
+    const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
+    expect(input.value).toBe('Hello world')
+
+    // Simulate listening stopping
+    rerender(
+      <TTSProvider>
+        <ChatInput {...defaultProps} onSubmit={onSubmit} isListening={false} transcript="Hello world" />
+      </TTSProvider>
+    )
+
+    // Transcript should still be in input
+    expect(input.value).toBe('Hello world')
+    // Should NOT auto-submit
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('should enable send button after listening stops with transcript', () => {
+    const { rerender } = render(
+      <TTSProvider>
+        <ChatInput {...defaultProps} isListening transcript="Hello world" />
+      </TTSProvider>
+    )
+
+    // Send button should be disabled while listening
+    expect(screen.getByTestId('send-button')).toBeDisabled()
+
+    // Simulate listening stopping
+    rerender(
+      <TTSProvider>
+        <ChatInput {...defaultProps} isListening={false} transcript="Hello world" />
+      </TTSProvider>
+    )
+
+    // Send button should now be enabled
+    expect(screen.getByTestId('send-button')).not.toBeDisabled()
+  })
+
+  it('should concatenate transcript to existing text when starting recording', () => {
+    const onStartListening = vi.fn()
+    const { rerender } = render(
+      <TTSProvider>
+        <ChatInput {...defaultProps} onStartListening={onStartListening} />
+      </TTSProvider>
+    )
+
+    // Type some text first
+    const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
+    fireEvent.change(input, { target: { value: 'Hello' } })
+    expect(input.value).toBe('Hello')
+
+    // Click mic to start recording
+    fireEvent.click(screen.getByTestId('mic-button'))
+    expect(onStartListening).toHaveBeenCalled()
+
+    // Simulate listening with transcript - should concatenate
+    rerender(
+      <TTSProvider>
+        <ChatInput {...defaultProps} onStartListening={onStartListening} isListening transcript="world" />
+      </TTSProvider>
+    )
+
+    // Should have original text + space + transcript
+    expect(input.value).toBe('Hello world')
   })
 })

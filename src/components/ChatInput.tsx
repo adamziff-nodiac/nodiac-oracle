@@ -1,19 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Mic, MicOff, Send, Volume2, VolumeX } from 'lucide-react'
+import { Mic, MicOff, Send, Volume2, VolumeX, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTTS } from '@/contexts/TTSContext'
 
 type ChatInputProps = {
   onSubmit: (message: string) => void
   disabled?: boolean
-  isVoiceMode: boolean
-  onVoiceModeToggle: () => void
   isListening: boolean
-  isSpeaking: boolean
   onStartListening: () => void
   onStopListening: () => void
-  onStopSpeaking: () => void
   transcript: string
   isVoiceSupported: boolean
 }
@@ -21,41 +18,35 @@ type ChatInputProps = {
 export function ChatInput({
   onSubmit,
   disabled,
-  isVoiceMode,
-  onVoiceModeToggle,
   isListening,
-  isSpeaking,
   onStartListening,
   onStopListening,
-  onStopSpeaking,
   transcript,
   isVoiceSupported,
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const lastTranscriptRef = useRef('')
+  const prefixTextRef = useRef('')  // Text that was in input before recording started
+
+  const { autoReadEnabled, toggleAutoRead, isSpeaking, stopSpeaking, isSupported: isTTSSupported } = useTTS()
 
   const hasInput = input.trim().length > 0
 
-  // Update input with transcript while listening
+  // Update input with prefix + transcript while listening
   useEffect(() => {
-    if (transcript && isListening) {
-      setInput(transcript)
-      lastTranscriptRef.current = transcript
+    if (isListening) {
+      const prefix = prefixTextRef.current
+      const separator = prefix && transcript ? ' ' : ''
+      setInput(prefix + separator + transcript)
     }
   }, [transcript, isListening])
 
-  // Auto-submit when listening stops and we have content
+  // When listening stops, clear the prefix ref (text is now in input)
   useEffect(() => {
-    if (!isListening && lastTranscriptRef.current) {
-      const trimmed = lastTranscriptRef.current.trim()
-      if (trimmed && !disabled) {
-        onSubmit(trimmed)
-        setInput('')
-      }
-      lastTranscriptRef.current = ''
+    if (!isListening) {
+      prefixTextRef.current = ''
     }
-  }, [isListening, disabled, onSubmit])
+  }, [isListening])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -83,9 +74,17 @@ export function ChatInput({
     if (isListening) {
       onStopListening()
     } else {
-      setInput('')
-      lastTranscriptRef.current = ''
+      // Store existing text to concatenate with new speech
+      prefixTextRef.current = input.trim()
       onStartListening()
+    }
+  }
+
+  const handleAutoReadToggle = () => {
+    if (isSpeaking) {
+      stopSpeaking()
+    } else {
+      toggleAutoRead()
     }
   }
 
@@ -119,7 +118,7 @@ export function ChatInput({
           <button
             data-testid="mic-button"
             onClick={handleMicClick}
-            disabled={disabled || isSpeaking}
+            disabled={disabled}
             className={cn(
               'flex-shrink-0 p-2.5 rounded-full transition-colors',
               isListening
@@ -133,24 +132,28 @@ export function ChatInput({
           </button>
         )}
 
-        {/* TTS toggle */}
-        {isVoiceSupported && (
+        {/* Auto-read toggle */}
+        {isTTSSupported && (
           <button
-            data-testid="voice-mode-toggle"
-            onClick={isSpeaking ? onStopSpeaking : onVoiceModeToggle}
-            disabled={disabled}
+            data-testid="auto-read-toggle"
+            onClick={handleAutoReadToggle}
             className={cn(
               'flex-shrink-0 p-2.5 rounded-full transition-colors',
               isSpeaking
                 ? 'bg-orange-500 text-white animate-pulse'
-                : isVoiceMode
+                : autoReadEnabled
                   ? 'bg-nodiac-primary text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             )}
-            title={isSpeaking ? 'Stop speaking' : isVoiceMode ? 'Disable read aloud' : 'Enable read aloud'}
+            title={isSpeaking ? 'Stop speaking' : autoReadEnabled ? 'Auto-read ON (click to turn off)' : 'Auto-read OFF (click to turn on)'}
           >
-            {isVoiceMode || isSpeaking ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            {isSpeaking ? (
+              <Square className="w-5 h-5 fill-current" />
+            ) : autoReadEnabled ? (
+              <Volume2 className="w-5 h-5" />
+            ) : (
+              <VolumeX className="w-5 h-5" />
+            )}
           </button>
         )}
 
@@ -220,7 +223,7 @@ export function ChatInput({
             /* Mic button when empty and voice supported */
             <button
               onClick={handleMicClick}
-              disabled={disabled || isSpeaking}
+              disabled={disabled}
               className={cn(
                 'p-2 rounded-full transition-all',
                 'bg-nodiac-primary/10 text-nodiac-primary hover:bg-nodiac-primary/20',
@@ -245,13 +248,13 @@ export function ChatInput({
 
       {isListening && (
         <div className="mt-2 text-center text-sm text-red-500 dark:text-red-400">
-          Recording... click mic or stop talking to send
+          Recording... click mic when done
         </div>
       )}
 
       {isVoiceSupported && !isListening && (
         <div className="hidden sm:block mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
-          Click mic to speak {isVoiceMode ? '| Responses will be read aloud' : '| Click speaker to enable read aloud'}
+          Click mic to speak | Hover over responses to read them aloud{autoReadEnabled ? ' | Auto-read is ON' : ''}
         </div>
       )}
     </div>

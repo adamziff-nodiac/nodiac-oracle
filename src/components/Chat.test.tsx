@@ -3,12 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { Chat } from './Chat'
 import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { TTSProvider } from '@/contexts/TTSContext'
 
 // Wrapper component that provides required context
 function TestWrapper({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <PerspectivesProvider>{children}</PerspectivesProvider>
+      <PerspectivesProvider>
+        <TTSProvider>{children}</TTSProvider>
+      </PerspectivesProvider>
     </AuthProvider>
   )
 }
