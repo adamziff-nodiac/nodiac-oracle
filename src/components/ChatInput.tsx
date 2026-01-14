@@ -33,29 +33,25 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const lastTranscriptRef = useRef('')
+  const prefixTextRef = useRef('')  // Text that was in input before recording started
 
   const hasInput = input.trim().length > 0
 
-  // Update input with transcript while listening
+  // Update input with prefix + transcript while listening
   useEffect(() => {
-    if (transcript && isListening) {
-      setInput(transcript)
-      lastTranscriptRef.current = transcript
+    if (isListening) {
+      const prefix = prefixTextRef.current
+      const separator = prefix && transcript ? ' ' : ''
+      setInput(prefix + separator + transcript)
     }
   }, [transcript, isListening])
 
-  // Auto-submit when listening stops and we have content
+  // When listening stops, clear the prefix ref (text is now in input)
   useEffect(() => {
-    if (!isListening && lastTranscriptRef.current) {
-      const trimmed = lastTranscriptRef.current.trim()
-      if (trimmed && !disabled) {
-        onSubmit(trimmed)
-        setInput('')
-      }
-      lastTranscriptRef.current = ''
+    if (!isListening) {
+      prefixTextRef.current = ''
     }
-  }, [isListening, disabled, onSubmit])
+  }, [isListening])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -83,8 +79,8 @@ export function ChatInput({
     if (isListening) {
       onStopListening()
     } else {
-      setInput('')
-      lastTranscriptRef.current = ''
+      // Store existing text to concatenate with new speech
+      prefixTextRef.current = input.trim()
       onStartListening()
     }
   }
@@ -245,7 +241,7 @@ export function ChatInput({
 
       {isListening && (
         <div className="mt-2 text-center text-sm text-red-500 dark:text-red-400">
-          Recording... click mic or stop talking to send
+          Recording... click mic when done
         </div>
       )}
 
