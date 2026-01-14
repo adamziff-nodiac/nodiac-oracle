@@ -5,7 +5,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Message, PERSPECTIVES } from '@/types'
 import { cn, formatTimestamp } from '@/lib/utils'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Volume2, Square } from 'lucide-react'
+import { useTTS } from '@/contexts/TTSContext'
 
 type ChatMessageProps = {
   message: Message
@@ -21,12 +22,32 @@ const perspectiveIcons: Record<string, string> = {
 
 export function ChatMessage({ message, defaultCollapsed = false }: ChatMessageProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
+  const { isSpeaking, speakingMessageId, isSupported, speakMessage, stopSpeaking } = useTTS()
+
   const isUser = message.role === 'user'
   const perspective = message.perspective
     ? PERSPECTIVES.find(p => p.id === message.perspective)
     : null
 
+  const isThisMessageSpeaking = speakingMessageId === message.id
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed)
+
+  const handleTTSClick = async () => {
+    if (isThisMessageSpeaking) {
+      stopSpeaking()
+    } else {
+      // Stop any other message that might be speaking
+      if (isSpeaking) {
+        stopSpeaking()
+      }
+      try {
+        await speakMessage(message.id, message.content)
+      } catch {
+        // Silently handle TTS errors
+      }
+    }
+  }
 
   // Get preview text (first line or first 100 chars)
   const getPreview = () => {
@@ -39,18 +60,44 @@ export function ChatMessage({ message, defaultCollapsed = false }: ChatMessagePr
     <div
       data-testid={`message-${message.id}`}
       className={cn(
-        'flex w-full mb-4',
+        'flex w-full mb-4 group',
         isUser ? 'justify-end' : 'justify-start'
       )}
     >
       <div
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-3',
+          'max-w-[80%] rounded-2xl px-4 py-3 relative',
           isUser
             ? 'bg-nodiac-primary text-white rounded-br-md'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
+            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md',
+          isThisMessageSpeaking && !isUser && 'ring-2 ring-nodiac-primary ring-offset-2 dark:ring-offset-gray-900'
         )}
       >
+        {/* TTS Button for assistant messages */}
+        {!isUser && isSupported && (
+          <button
+            onClick={handleTTSClick}
+            className={cn(
+              'absolute -right-2 -top-2 p-1.5 rounded-full shadow-md transition-all',
+              'border border-gray-200 dark:border-gray-600',
+              isThisMessageSpeaking
+                ? 'bg-nodiac-primary text-white opacity-100'
+                : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 opacity-0 group-hover:opacity-100 hover:text-nodiac-primary dark:hover:text-nodiac-primary',
+              // Always visible on touch devices
+              'sm:opacity-0 sm:group-hover:opacity-100',
+              isThisMessageSpeaking && 'sm:opacity-100'
+            )}
+            title={isThisMessageSpeaking ? 'Stop reading' : 'Read aloud'}
+            aria-label={isThisMessageSpeaking ? 'Stop reading' : 'Read aloud'}
+          >
+            {isThisMessageSpeaking ? (
+              <Square className="w-4 h-4 fill-current" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </button>
+        )}
+
         {!isUser && perspective && (
           <button
             onClick={toggleCollapse}
