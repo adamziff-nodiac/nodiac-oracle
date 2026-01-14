@@ -42,26 +42,33 @@ describe('PERSPECTIVES', () => {
   })
 
   it('should have the required perspectives', () => {
-    const ids = PERSPECTIVES.map(p => p.id)
-    expect(ids).toContain('hyperscaler')
-    expect(ids).toContain('techvc')
-    expect(ids).toContain('utility')
-    expect(ids).toContain('renewables')
+    // Use slug field for perspective identification (backwards compat)
+    const slugs = PERSPECTIVES.map(p => p.slug)
+    expect(slugs).toContain('hyperscaler')
+    expect(slugs).toContain('techvc')
+    expect(slugs).toContain('utility')
+    expect(slugs).toContain('renewables')
   })
 
   it('should have unique perspective ids', () => {
-    const ids = PERSPECTIVES.map(p => p.id)
-    const uniqueIds = new Set(ids)
-    expect(uniqueIds.size).toBe(ids.length)
+    const slugs = PERSPECTIVES.map(p => p.slug)
+    const uniqueSlugs = new Set(slugs)
+    expect(uniqueSlugs.size).toBe(slugs.length)
   })
 
   it('should have valid perspective structure', () => {
     PERSPECTIVES.forEach(perspective => {
       expect(perspective).toHaveProperty('id')
+      expect(perspective).toHaveProperty('slug')
       expect(perspective).toHaveProperty('name')
       expect(perspective).toHaveProperty('description')
       expect(perspective).toHaveProperty('systemPrompt')
+      expect(perspective).toHaveProperty('icon')
+      expect(perspective).toHaveProperty('isGlobal')
+      expect(perspective).toHaveProperty('isEnabled')
+      expect(perspective).toHaveProperty('position')
       expect(typeof perspective.id).toBe('string')
+      expect(typeof perspective.slug).toBe('string')
       expect(typeof perspective.name).toBe('string')
       expect(typeof perspective.description).toBe('string')
       expect(typeof perspective.systemPrompt).toBe('string')

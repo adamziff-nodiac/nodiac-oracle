@@ -1,19 +1,20 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { PerspectiveSelector } from './PerspectiveSelector'
-import { PERSPECTIVES } from '@/types'
+import { FALLBACK_PERSPECTIVES } from '@/types'
 
 describe('PerspectiveSelector', () => {
   const defaultProps = {
-    selectedPerspectives: [PERSPECTIVES[0]],
+    selectedPerspectives: [FALLBACK_PERSPECTIVES[0]],
     onPerspectiveToggle: vi.fn(),
   }
 
   it('should render all four perspectives', () => {
     render(<PerspectiveSelector {...defaultProps} />)
 
-    PERSPECTIVES.forEach(perspective => {
-      expect(screen.getByTestId(`perspective-${perspective.id}`)).toBeInTheDocument()
+    // Perspectives are rendered by slug for test IDs
+    FALLBACK_PERSPECTIVES.forEach(perspective => {
+      expect(screen.getByTestId(`perspective-${perspective.slug}`)).toBeInTheDocument()
     })
   })
 
@@ -45,7 +46,7 @@ describe('PerspectiveSelector', () => {
   it('should show perspective names', () => {
     render(<PerspectiveSelector {...defaultProps} />)
 
-    PERSPECTIVES.forEach(perspective => {
+    FALLBACK_PERSPECTIVES.forEach(perspective => {
       expect(screen.getByText(perspective.name)).toBeInTheDocument()
     })
   })
@@ -53,7 +54,7 @@ describe('PerspectiveSelector', () => {
   it('should show perspective descriptions', () => {
     render(<PerspectiveSelector {...defaultProps} />)
 
-    PERSPECTIVES.forEach(perspective => {
+    FALLBACK_PERSPECTIVES.forEach(perspective => {
       expect(screen.getByText(perspective.description)).toBeInTheDocument()
     })
   })
@@ -64,11 +65,11 @@ describe('PerspectiveSelector', () => {
 
     fireEvent.click(screen.getByTestId('perspective-techvc'))
 
-    expect(onPerspectiveToggle).toHaveBeenCalledWith(PERSPECTIVES[1])
+    expect(onPerspectiveToggle).toHaveBeenCalledWith(FALLBACK_PERSPECTIVES[1])
   })
 
   it('should highlight selected perspectives', () => {
-    render(<PerspectiveSelector {...defaultProps} selectedPerspectives={[PERSPECTIVES[0], PERSPECTIVES[1]]} />)
+    render(<PerspectiveSelector {...defaultProps} selectedPerspectives={[FALLBACK_PERSPECTIVES[0], FALLBACK_PERSPECTIVES[1]]} />)
 
     const hyperscalerButton = screen.getByTestId('perspective-hyperscaler')
     const techvcButton = screen.getByTestId('perspective-techvc')
@@ -82,14 +83,14 @@ describe('PerspectiveSelector', () => {
   it('should be disabled when disabled prop is true', () => {
     render(<PerspectiveSelector {...defaultProps} disabled />)
 
-    PERSPECTIVES.forEach(perspective => {
-      const button = screen.getByTestId(`perspective-${perspective.id}`)
+    FALLBACK_PERSPECTIVES.forEach(perspective => {
+      const button = screen.getByTestId(`perspective-${perspective.slug}`)
       expect(button).toBeDisabled()
     })
   })
 
   it('should show checkmark for selected perspectives', () => {
-    render(<PerspectiveSelector {...defaultProps} selectedPerspectives={[PERSPECTIVES[0]]} />)
+    render(<PerspectiveSelector {...defaultProps} selectedPerspectives={[FALLBACK_PERSPECTIVES[0]]} />)
 
     // The checkbox for the selected perspective should have the check mark styling
     const hyperscalerButton = screen.getByTestId('perspective-hyperscaler')

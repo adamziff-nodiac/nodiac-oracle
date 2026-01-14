@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
-import { AIModel, Perspective, AI_MODELS, PERSPECTIVES } from '@/types'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { AIModel, Perspective, AI_MODELS } from '@/types'
 import { useVoice } from '@/lib/useVoice'
 import { useAuth } from '@/contexts/AuthContext'
 import { useChatPersistence } from '@/hooks/useChatPersistence'
 import { useContextPrompts } from '@/hooks/useContextPrompts'
+import { usePerspectives } from '@/hooks/usePerspectives'
 import { ModelSelector } from './ModelSelector'
 import { PerspectiveSelector } from './PerspectiveSelector'
+import { PerspectiveManager } from './PerspectiveManager'
 import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { ExportButton } from './ExportButton'
@@ -19,14 +21,27 @@ import { Plus, Menu, X } from 'lucide-react'
 
 export function Chat() {
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
-  const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
+  const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([])
   const [pendingPerspectives, setPendingPerspectives] = useState<Set<string>>(new Set())
   const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [perspectivesInitialized, setPerspectivesInitialized] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const { isGuest } = useAuth()
+  const { getEnabledPerspectives, getPerspectiveBySlug, isLoading: perspectivesLoading } = usePerspectives()
+
+  // Initialize selected perspectives once they're loaded
+  useEffect(() => {
+    if (!perspectivesLoading && !perspectivesInitialized) {
+      const enabled = getEnabledPerspectives()
+      if (enabled.length > 0) {
+        setSelectedPerspectives([enabled[0]])
+        setPerspectivesInitialized(true)
+      }
+    }
+  }, [perspectivesLoading, perspectivesInitialized, getEnabledPerspectives])
   const {
     chatId,
     messages,
@@ -38,7 +53,7 @@ export function Chat() {
     newChat,
   } = useChatPersistence({
     modelId: selectedModel.id,
-    perspectives: selectedPerspectives.map(p => p.id),
+    perspectives: selectedPerspectives.map(p => p.slug),
   })
   const { getEnabledContext } = useContextPrompts()
 
@@ -60,11 +75,11 @@ export function Chat() {
 
   const togglePerspective = (perspective: Perspective) => {
     setSelectedPerspectives(prev => {
-      const isSelected = prev.some(p => p.id === perspective.id)
+      const isSelected = prev.some(p => p.slug === perspective.slug)
       if (isSelected) {
         // Don't allow deselecting the last one
         if (prev.length === 1) return prev
-        return prev.filter(p => p.id !== perspective.id)
+        return prev.filter(p => p.slug !== perspective.slug)
       } else {
         return [...prev, perspective]
       }
@@ -88,9 +103,9 @@ export function Chat() {
     // Scroll to bottom when user sends a message
     setTimeout(() => scrollToBottom(), 50)
 
-    // Track which perspectives are pending
-    const pendingIds = new Set(selectedPerspectives.map(p => p.id))
-    setPendingPerspectives(pendingIds)
+    // Track which perspectives are pending (using slug for backwards compat)
+    const pendingSlugs = new Set(selectedPerspectives.map(p => p.slug))
+    setPendingPerspectives(pendingSlugs)
 
     // Build conversation history (excluding perspective-specific responses for clean context)
     const conversationHistory = [...messages, userMessage]
@@ -111,9 +126,9 @@ export function Chat() {
           ? `${nodiacContext}\n\n---\n\n${perspective.systemPrompt}`
           : perspective.systemPrompt
 
-        // Create a placeholder message for streaming
+        // Create a placeholder message for streaming (use slug for backwards compat)
         const streamingMessage = await addStreamingMessage({
-          perspective: perspective.id,
+          perspective: perspective.slug,
         })
 
         const response = await fetch('/api/chat', {
@@ -132,7 +147,7 @@ export function Chat() {
           updateMessage(streamingMessage.id, `Error: ${errorData.error || 'Request failed'}`)
           setPendingPerspectives(prev => {
             const next = new Set(prev)
-            next.delete(perspective.id)
+            next.delete(perspective.slug)
             return next
           })
           return
@@ -144,7 +159,7 @@ export function Chat() {
           updateMessage(streamingMessage.id, 'Error: No response stream available')
           setPendingPerspectives(prev => {
             const next = new Set(prev)
-            next.delete(perspective.id)
+            next.delete(perspective.slug)
             return next
           })
           return
@@ -190,12 +205,12 @@ export function Chat() {
         }
 
         // Finalize the message (save to database)
-        await finalizeMessage(streamingMessage.id, accumulatedContent, perspective.id)
+        await finalizeMessage(streamingMessage.id, accumulatedContent, perspective.slug)
 
         // Remove from pending
         setPendingPerspectives(prev => {
           const next = new Set(prev)
-          next.delete(perspective.id)
+          next.delete(perspective.slug)
           return next
         })
 
@@ -213,12 +228,12 @@ export function Chat() {
         await addMessage({
           role: 'assistant',
           content: `Error: ${error instanceof Error ? error.message : 'Failed to get response'}`,
-          perspective: perspective.id,
+          perspective: perspective.slug,
         })
 
         setPendingPerspectives(prev => {
           const next = new Set(prev)
-          next.delete(perspective.id)
+          next.delete(perspective.slug)
           return next
         })
       }
@@ -283,6 +298,8 @@ export function Chat() {
             disabled={isLoading}
           />
 
+          <PerspectiveManager />
+
           <NodiacContext />
 
           <ChatHistory
@@ -343,8 +360,8 @@ export function Chat() {
                         <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </div>
                       <span className="text-xs text-gray-500 dark:text-gray-400">
-                        Waiting for {Array.from(pendingPerspectives).map(id =>
-                          PERSPECTIVES.find(p => p.id === id)?.name.split(' ')[0]
+                        Waiting for {Array.from(pendingPerspectives).map(slug =>
+                          getPerspectiveBySlug(slug)?.name.split(' ')[0]
                         ).join(', ')}...
                       </span>
                     </div>
