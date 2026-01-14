@@ -128,6 +128,64 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
     [isGuest, user, createChat, saveMessage]
   )
 
+  // Update an existing message's content (for streaming)
+  const updateMessage = useCallback(
+    (messageId: string, content: string) => {
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId ? { ...m, content } : m
+        )
+      )
+    },
+    []
+  )
+
+  // Finalize a message (save to database after streaming completes)
+  const finalizeMessage = useCallback(
+    async (messageId: string, content: string, perspective?: string) => {
+      // Update the message content one final time
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === messageId ? { ...m, content } : m
+        )
+      )
+
+      // Persist if logged in
+      if (!isGuest && user) {
+        const currentChatId = chatIdRef.current
+        if (currentChatId) {
+          await saveMessage(currentChatId, {
+            role: 'assistant',
+            content,
+            perspective,
+          })
+        }
+      }
+    },
+    [isGuest, user, saveMessage]
+  )
+
+  // Add a placeholder message for streaming (doesn't save to DB yet)
+  const addStreamingMessage = useCallback(
+    async (messageData: {
+      perspective?: string
+    }): Promise<Message> => {
+      const newMessage: Message = {
+        id: generateId(),
+        role: 'assistant',
+        content: '',
+        perspective: messageData.perspective,
+        timestamp: new Date(),
+      }
+
+      // Add to UI with empty content
+      setMessages((prev) => [...prev, newMessage])
+
+      return newMessage
+    },
+    []
+  )
+
   // Load a specific chat from the database
   const loadChat = useCallback(
     async (loadChatId: string) => {
@@ -192,6 +250,9 @@ export function useChatPersistence(options: ChatPersistenceOptions) {
     messages,
     setMessages,
     addMessage,
+    updateMessage,
+    finalizeMessage,
+    addStreamingMessage,
     loadChat,
     newChat,
     isCreatingChat,
