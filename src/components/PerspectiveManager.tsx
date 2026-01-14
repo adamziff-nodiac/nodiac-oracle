@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { usePerspectives } from '@/hooks/usePerspectives'
+import { usePerspectives } from '@/contexts/PerspectivesContext'
 import { Perspective } from '@/types'
 import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -127,11 +127,12 @@ function EditModal({ perspective, onSave, onClose }: EditModalProps) {
 }
 
 type AddModalProps = {
+  title: string
   onAdd: (data: { slug: string; name: string; description: string; systemPrompt: string; icon: string }) => Promise<void>
   onClose: () => void
 }
 
-function AddModal({ onAdd, onClose }: AddModalProps) {
+function AddModal({ title, onAdd, onClose }: AddModalProps) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [systemPrompt, setSystemPrompt] = useState('')
@@ -169,7 +170,7 @@ function AddModal({ onAdd, onClose }: AddModalProps) {
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Add Personal Perspective</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -302,13 +303,16 @@ export function PerspectiveManager() {
     isLoading,
     updatePerspective,
     togglePerspective,
+    addGlobalPerspective,
     addPersonalPerspective,
-    deletePerspective,
+    deleteGlobalPerspective,
+    deletePersonalPerspective,
   } = usePerspectives()
 
   const [isExpanded, setIsExpanded] = useState(false)
   const [editingPerspective, setEditingPerspective] = useState<Perspective | null>(null)
-  const [isAddingPerspective, setIsAddingPerspective] = useState(false)
+  const [isAddingGlobal, setIsAddingGlobal] = useState(false)
+  const [isAddingPersonal, setIsAddingPersonal] = useState(false)
 
   // Don't render for guests
   if (isGuest) {
@@ -323,13 +327,22 @@ export function PerspectiveManager() {
     await updatePerspective(editingPerspective.id, updates)
   }
 
-  const handleAddPerspective = async (data: { slug: string; name: string; description: string; systemPrompt: string; icon: string }) => {
+  const handleAddGlobalPerspective = async (data: { slug: string; name: string; description: string; systemPrompt: string; icon: string }) => {
+    await addGlobalPerspective(data)
+  }
+
+  const handleAddPersonalPerspective = async (data: { slug: string; name: string; description: string; systemPrompt: string; icon: string }) => {
     await addPersonalPerspective(data)
   }
 
-  const handleDelete = async (perspectiveId: string) => {
+  const handleDeleteGlobal = async (perspectiveId: string) => {
+    if (!confirm('Delete this global perspective? This will affect all users.')) return
+    await deleteGlobalPerspective(perspectiveId)
+  }
+
+  const handleDeletePersonal = async (perspectiveId: string) => {
     if (!confirm('Delete this perspective?')) return
-    await deletePerspective(perspectiveId)
+    await deletePersonalPerspective(perspectiveId)
   }
 
   return (
@@ -357,11 +370,24 @@ export function PerspectiveManager() {
           ) : (
             <>
               {/* Global Perspectives */}
-              {globalPerspectives.length > 0 && (
-                <div>
-                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                     Global
                   </div>
+                  <button
+                    onClick={() => setIsAddingGlobal(true)}
+                    title="Add global perspective"
+                    className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+                {globalPerspectives.length === 0 ? (
+                  <div className="text-xs text-gray-400 dark:text-gray-500 py-1">
+                    No global perspectives yet
+                  </div>
+                ) : (
                   <div className="space-y-0.5">
                     {globalPerspectives.map((perspective) => (
                       <PerspectiveItem
@@ -369,11 +395,12 @@ export function PerspectiveManager() {
                         perspective={perspective}
                         onToggle={togglePerspective}
                         onEdit={setEditingPerspective}
+                        onDelete={handleDeleteGlobal}
                       />
                     ))}
                   </div>
-                </div>
-              )}
+                )}
+              </div>
 
               {/* Personal Perspectives */}
               <div>
@@ -382,7 +409,7 @@ export function PerspectiveManager() {
                     Personal
                   </div>
                   <button
-                    onClick={() => setIsAddingPerspective(true)}
+                    onClick={() => setIsAddingPersonal(true)}
                     title="Add personal perspective"
                     className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
                   >
@@ -401,7 +428,7 @@ export function PerspectiveManager() {
                         perspective={perspective}
                         onToggle={togglePerspective}
                         onEdit={setEditingPerspective}
-                        onDelete={handleDelete}
+                        onDelete={handleDeletePersonal}
                       />
                     ))}
                   </div>
@@ -423,12 +450,24 @@ export function PerspectiveManager() {
         </Portal>
       )}
 
-      {/* Add Modal - rendered via portal to escape sidebar transform */}
-      {isAddingPerspective && (
+      {/* Add Global Modal - rendered via portal to escape sidebar transform */}
+      {isAddingGlobal && (
         <Portal>
           <AddModal
-            onAdd={handleAddPerspective}
-            onClose={() => setIsAddingPerspective(false)}
+            title="Add Global Perspective"
+            onAdd={handleAddGlobalPerspective}
+            onClose={() => setIsAddingGlobal(false)}
+          />
+        </Portal>
+      )}
+
+      {/* Add Personal Modal - rendered via portal to escape sidebar transform */}
+      {isAddingPersonal && (
+        <Portal>
+          <AddModal
+            title="Add Personal Perspective"
+            onAdd={handleAddPersonalPerspective}
+            onClose={() => setIsAddingPersonal(false)}
           />
         </Portal>
       )}

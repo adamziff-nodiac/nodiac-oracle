@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 
 export const metadata: Metadata = {
   title: 'Nodiac Oracle - Multi-Perspective AI Advisor',
@@ -42,7 +43,9 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <PerspectivesProvider>{children}</PerspectivesProvider>
+        </AuthProvider>
       </body>
     </html>
   )

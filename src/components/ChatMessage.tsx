@@ -4,7 +4,7 @@ import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Message } from '@/types'
-import { usePerspectives } from '@/hooks/usePerspectives'
+import { usePerspectives } from '@/contexts/PerspectivesContext'
 import { cn, formatTimestamp } from '@/lib/utils'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 

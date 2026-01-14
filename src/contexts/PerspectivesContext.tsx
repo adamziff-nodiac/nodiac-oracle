@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
 import { Perspective, FALLBACK_PERSPECTIVES } from '@/types'
@@ -37,7 +37,25 @@ function dbToAppPerspective(db: DbPerspective): Perspective {
   }
 }
 
-export function usePerspectives() {
+type PerspectivesContextType = {
+  globalPerspectives: Perspective[]
+  personalPerspectives: Perspective[]
+  isLoading: boolean
+  updatePerspective: (perspectiveId: string, updates: Partial<Pick<Perspective, 'name' | 'description' | 'systemPrompt' | 'icon' | 'isEnabled' | 'position'>>) => Promise<void>
+  togglePerspective: (perspectiveId: string, enabled: boolean) => Promise<void>
+  addGlobalPerspective: (data: Pick<Perspective, 'slug' | 'name' | 'description' | 'systemPrompt' | 'icon'>) => Promise<Perspective | null>
+  addPersonalPerspective: (data: Pick<Perspective, 'slug' | 'name' | 'description' | 'systemPrompt' | 'icon'>) => Promise<Perspective | null>
+  deleteGlobalPerspective: (perspectiveId: string) => Promise<void>
+  deletePersonalPerspective: (perspectiveId: string) => Promise<void>
+  getEnabledPerspectives: () => Perspective[]
+  getPerspectiveBySlug: (slug: string) => Perspective | undefined
+  getPerspectiveById: (id: string) => Perspective | undefined
+  refetch: () => Promise<void>
+}
+
+const PerspectivesContext = createContext<PerspectivesContextType | null>(null)
+
+export function PerspectivesProvider({ children }: { children: ReactNode }) {
   const { user, isGuest } = useAuth()
   const [globalPerspectives, setGlobalPerspectives] = useState<Perspective[]>([])
   const [personalPerspectives, setPersonalPerspectives] = useState<Perspective[]>([])
@@ -157,6 +175,59 @@ export function usePerspectives() {
     await updatePerspective(perspectiveId, { isEnabled: enabled })
   }, [updatePerspective])
 
+  // Add a global perspective
+  const addGlobalPerspective = useCallback(async (
+    data: Pick<Perspective, 'slug' | 'name' | 'description' | 'systemPrompt' | 'icon'>
+  ) => {
+    if (!user) return null
+
+    // Optimistic update with temp ID
+    const tempId = `temp-${Date.now()}`
+    const tempPerspective: Perspective = {
+      id: tempId,
+      slug: data.slug,
+      name: data.name,
+      description: data.description,
+      systemPrompt: data.systemPrompt,
+      icon: data.icon,
+      isGlobal: true,
+      userId: null,
+      isEnabled: true,
+      position: globalPerspectives.length,
+    }
+    setGlobalPerspectives(prev => [...prev, tempPerspective])
+
+    const supabase = createClient()
+    const { data: newData, error } = await supabase
+      .from('perspectives')
+      .insert({
+        slug: data.slug,
+        name: data.name,
+        description: data.description,
+        system_prompt: data.systemPrompt,
+        icon: data.icon,
+        is_global: true,
+        user_id: null,
+        is_enabled: true,
+        position: globalPerspectives.length,
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error adding global perspective:', error)
+      setGlobalPerspectives(prev => prev.filter(p => p.id !== tempId))
+      throw error
+    }
+
+    // Replace temp with real data
+    setGlobalPerspectives(prev => prev.map(p =>
+      p.id === tempId ? dbToAppPerspective(newData) : p
+    ))
+
+    return dbToAppPerspective(newData)
+  }, [user, globalPerspectives.length])
+
   // Add a personal perspective
   const addPersonalPerspective = useCallback(async (
     data: Pick<Perspective, 'slug' | 'name' | 'description' | 'systemPrompt' | 'icon'>
@@ -210,8 +281,29 @@ export function usePerspectives() {
     return dbToAppPerspective(newData)
   }, [user, personalPerspectives.length])
 
-  // Delete a perspective (only personal perspectives can be deleted)
-  const deletePerspective = useCallback(async (perspectiveId: string) => {
+  // Delete a global perspective
+  const deleteGlobalPerspective = useCallback(async (perspectiveId: string) => {
+    const deletedPerspective = globalPerspectives.find(p => p.id === perspectiveId)
+
+    setGlobalPerspectives(prev => prev.filter(p => p.id !== perspectiveId))
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from('perspectives')
+      .delete()
+      .eq('id', perspectiveId)
+
+    if (error) {
+      console.error('Error deleting global perspective:', error)
+      if (deletedPerspective) {
+        setGlobalPerspectives(prev => [...prev, deletedPerspective])
+      }
+      throw error
+    }
+  }, [globalPerspectives])
+
+  // Delete a personal perspective
+  const deletePersonalPerspective = useCallback(async (perspectiveId: string) => {
     const deletedPerspective = personalPerspectives.find(p => p.id === perspectiveId)
 
     setPersonalPerspectives(prev => prev.filter(p => p.id !== perspectiveId))
@@ -223,7 +315,7 @@ export function usePerspectives() {
       .eq('id', perspectiveId)
 
     if (error) {
-      console.error('Error deleting perspective:', error)
+      console.error('Error deleting personal perspective:', error)
       if (deletedPerspective) {
         setPersonalPerspectives(prev => [...prev, deletedPerspective])
       }
@@ -249,17 +341,31 @@ export function usePerspectives() {
     return [...globalPerspectives, ...personalPerspectives].find(p => p.id === id)
   }, [globalPerspectives, personalPerspectives])
 
-  return {
-    globalPerspectives,
-    personalPerspectives,
-    isLoading,
-    updatePerspective,
-    togglePerspective,
-    addPersonalPerspective,
-    deletePerspective,
-    getEnabledPerspectives,
-    getPerspectiveBySlug,
-    getPerspectiveById,
-    refetch: fetchPerspectives,
+  return (
+    <PerspectivesContext.Provider value={{
+      globalPerspectives,
+      personalPerspectives,
+      isLoading,
+      updatePerspective,
+      togglePerspective,
+      addGlobalPerspective,
+      addPersonalPerspective,
+      deleteGlobalPerspective,
+      deletePersonalPerspective,
+      getEnabledPerspectives,
+      getPerspectiveBySlug,
+      getPerspectiveById,
+      refetch: fetchPerspectives,
+    }}>
+      {children}
+    </PerspectivesContext.Provider>
+  )
+}
+
+export function usePerspectives() {
+  const context = useContext(PerspectivesContext)
+  if (!context) {
+    throw new Error('usePerspectives must be used within a PerspectivesProvider')
   }
+  return context
 }

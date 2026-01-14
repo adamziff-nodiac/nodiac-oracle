@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Perspective } from '@/types'
-import { usePerspectives } from '@/hooks/usePerspectives'
+import { usePerspectives } from '@/contexts/PerspectivesContext'
 import { cn } from '@/lib/utils'
 import { Check, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 
