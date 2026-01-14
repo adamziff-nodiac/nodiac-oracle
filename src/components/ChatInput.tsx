@@ -1,19 +1,16 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Mic, MicOff, Send, Volume2, VolumeX } from 'lucide-react'
+import { Mic, MicOff, Send, Volume2, VolumeX, Square } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useTTS } from '@/contexts/TTSContext'
 
 type ChatInputProps = {
   onSubmit: (message: string) => void
   disabled?: boolean
-  isVoiceMode: boolean
-  onVoiceModeToggle: () => void
   isListening: boolean
-  isSpeaking: boolean
   onStartListening: () => void
   onStopListening: () => void
-  onStopSpeaking: () => void
   transcript: string
   isVoiceSupported: boolean
 }
@@ -21,19 +18,17 @@ type ChatInputProps = {
 export function ChatInput({
   onSubmit,
   disabled,
-  isVoiceMode,
-  onVoiceModeToggle,
   isListening,
-  isSpeaking,
   onStartListening,
   onStopListening,
-  onStopSpeaking,
   transcript,
   isVoiceSupported,
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const prefixTextRef = useRef('')  // Text that was in input before recording started
+
+  const { autoReadEnabled, toggleAutoRead, isSpeaking, stopSpeaking, isSupported: isTTSSupported } = useTTS()
 
   const hasInput = input.trim().length > 0
 
@@ -85,6 +80,14 @@ export function ChatInput({
     }
   }
 
+  const handleAutoReadToggle = () => {
+    if (isSpeaking) {
+      stopSpeaking()
+    } else {
+      toggleAutoRead()
+    }
+  }
+
   return (
     <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
       {/* Desktop layout - buttons outside */}
@@ -115,7 +118,7 @@ export function ChatInput({
           <button
             data-testid="mic-button"
             onClick={handleMicClick}
-            disabled={disabled || isSpeaking}
+            disabled={disabled}
             className={cn(
               'flex-shrink-0 p-2.5 rounded-full transition-colors',
               isListening
@@ -129,24 +132,28 @@ export function ChatInput({
           </button>
         )}
 
-        {/* TTS toggle */}
-        {isVoiceSupported && (
+        {/* Auto-read toggle */}
+        {isTTSSupported && (
           <button
-            data-testid="voice-mode-toggle"
-            onClick={isSpeaking ? onStopSpeaking : onVoiceModeToggle}
-            disabled={disabled}
+            data-testid="auto-read-toggle"
+            onClick={handleAutoReadToggle}
             className={cn(
               'flex-shrink-0 p-2.5 rounded-full transition-colors',
               isSpeaking
                 ? 'bg-orange-500 text-white animate-pulse'
-                : isVoiceMode
+                : autoReadEnabled
                   ? 'bg-nodiac-primary text-white'
-                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600',
-              'disabled:opacity-50 disabled:cursor-not-allowed'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             )}
-            title={isSpeaking ? 'Stop speaking' : isVoiceMode ? 'Disable read aloud' : 'Enable read aloud'}
+            title={isSpeaking ? 'Stop speaking' : autoReadEnabled ? 'Auto-read ON (click to turn off)' : 'Auto-read OFF (click to turn on)'}
           >
-            {isVoiceMode || isSpeaking ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+            {isSpeaking ? (
+              <Square className="w-5 h-5 fill-current" />
+            ) : autoReadEnabled ? (
+              <Volume2 className="w-5 h-5" />
+            ) : (
+              <VolumeX className="w-5 h-5" />
+            )}
           </button>
         )}
 
@@ -216,7 +223,7 @@ export function ChatInput({
             /* Mic button when empty and voice supported */
             <button
               onClick={handleMicClick}
-              disabled={disabled || isSpeaking}
+              disabled={disabled}
               className={cn(
                 'p-2 rounded-full transition-all',
                 'bg-nodiac-primary/10 text-nodiac-primary hover:bg-nodiac-primary/20',
@@ -247,7 +254,7 @@ export function ChatInput({
 
       {isVoiceSupported && !isListening && (
         <div className="hidden sm:block mt-2 text-center text-xs text-gray-400 dark:text-gray-500">
-          Click mic to speak {isVoiceMode ? '| Responses will be read aloud' : '| Click speaker to enable read aloud'}
+          Click mic to speak | Hover over responses to read them aloud{autoReadEnabled ? ' | Auto-read is ON' : ''}
         </div>
       )}
     </div>

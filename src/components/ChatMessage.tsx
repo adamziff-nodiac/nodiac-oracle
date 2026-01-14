@@ -5,7 +5,8 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Message, PERSPECTIVES } from '@/types'
 import { cn, formatTimestamp } from '@/lib/utils'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Volume2, Square } from 'lucide-react'
+import { useTTS } from '@/contexts/TTSContext'
 
 type ChatMessageProps = {
   message: Message
@@ -21,12 +22,32 @@ const perspectiveIcons: Record<string, string> = {
 
 export function ChatMessage({ message, defaultCollapsed = false }: ChatMessageProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
+  const { isSpeaking, speakingMessageId, isSupported, speakMessage, stopSpeaking } = useTTS()
+
   const isUser = message.role === 'user'
   const perspective = message.perspective
     ? PERSPECTIVES.find(p => p.id === message.perspective)
     : null
 
+  const isThisMessageSpeaking = speakingMessageId === message.id
+
   const toggleCollapse = () => setIsCollapsed(!isCollapsed)
+
+  const handleTTSClick = async () => {
+    if (isThisMessageSpeaking) {
+      stopSpeaking()
+    } else {
+      // Stop any other message that might be speaking
+      if (isSpeaking) {
+        stopSpeaking()
+      }
+      try {
+        await speakMessage(message.id, message.content)
+      } catch {
+        // Silently handle TTS errors
+      }
+    }
+  }
 
   // Get preview text (first line or first 100 chars)
   const getPreview = () => {
@@ -48,7 +69,8 @@ export function ChatMessage({ message, defaultCollapsed = false }: ChatMessagePr
           'max-w-[80%] rounded-2xl px-4 py-3',
           isUser
             ? 'bg-nodiac-primary text-white rounded-br-md'
-            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md'
+            : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-bl-md',
+          isThisMessageSpeaking && !isUser && 'ring-2 ring-nodiac-primary ring-offset-2 dark:ring-offset-gray-900'
         )}
       >
         {!isUser && perspective && (
@@ -95,15 +117,40 @@ export function ChatMessage({ message, defaultCollapsed = false }: ChatMessagePr
 
         <div
           className={cn(
-            'text-xs mt-1.5 flex items-center justify-between',
+            'text-xs mt-1.5 flex items-center gap-3',
             isUser ? 'text-white/70' : 'text-gray-400 dark:text-gray-500'
           )}
         >
           <span>{formatTimestamp(message.timestamp)}</span>
+          {!isUser && isSupported && (
+            <button
+              onClick={handleTTSClick}
+              className={cn(
+                'flex items-center gap-1 transition-colors',
+                isThisMessageSpeaking
+                  ? 'text-nodiac-primary dark:text-nodiac-primary'
+                  : 'hover:text-gray-600 dark:hover:text-gray-300'
+              )}
+              title={isThisMessageSpeaking ? 'Stop reading' : 'Read aloud'}
+              aria-label={isThisMessageSpeaking ? 'Stop reading' : 'Read aloud'}
+            >
+              {isThisMessageSpeaking ? (
+                <>
+                  <Square className="w-3.5 h-3.5 fill-current" />
+                  <span>Stop</span>
+                </>
+              ) : (
+                <>
+                  <Volume2 className="w-3.5 h-3.5" />
+                  <span>Read</span>
+                </>
+              )}
+            </button>
+          )}
           {!isUser && !isCollapsed && message.content.length > 200 && (
             <button
               onClick={toggleCollapse}
-              className="text-xs hover:underline"
+              className="hover:underline ml-auto"
             >
               Collapse
             </button>

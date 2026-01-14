@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { Chat } from './Chat'
+import { TTSProvider } from '@/contexts/TTSContext'
 
 // Mock localStorage
 const localStorageMock = {
@@ -28,6 +29,11 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Track scrollIntoView calls
 const scrollIntoViewMock = vi.fn()
+
+// Wrapper component for TTS context
+const renderWithTTS = (ui: React.ReactElement) => {
+  return render(<TTSProvider>{ui}</TTSProvider>)
+}
 
 // Helper to create a mock streaming response
 function createStreamingResponse(content: string) {
@@ -101,27 +107,27 @@ describe('Chat', () => {
   })
 
   it('should render the chat interface', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     expect(screen.getByText('Nodiac Oracle')).toBeInTheDocument()
     expect(screen.getByText('Multi-perspective AI advisor')).toBeInTheDocument()
   })
 
   it('should show welcome message when no messages', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     expect(screen.getByText('Welcome to Nodiac Oracle')).toBeInTheDocument()
     expect(screen.getByText(/Get insights from different industry perspectives/)).toBeInTheDocument()
   })
 
   it('should render model selector', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     expect(screen.getByTestId('model-selector')).toBeInTheDocument()
   })
 
   it('should render all perspective buttons', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     expect(screen.getByTestId('perspective-hyperscaler')).toBeInTheDocument()
     expect(screen.getByTestId('perspective-techvc')).toBeInTheDocument()
@@ -130,13 +136,13 @@ describe('Chat', () => {
   })
 
   it('should render chat input', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     expect(screen.getByTestId('chat-input')).toBeInTheDocument()
   })
 
   it('should render new chat button', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     expect(screen.getByTestId('new-chat')).toBeInTheDocument()
   })
@@ -144,7 +150,7 @@ describe('Chat', () => {
   it('should send message and show in chat', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(createStreamingResponse('AI response'))
 
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Hello AI' } })
@@ -164,7 +170,7 @@ describe('Chat', () => {
       new Promise(resolve => setTimeout(() => resolve(createStreamingResponse('Response')), 100))
     )
 
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Hello' } })
@@ -181,7 +187,7 @@ describe('Chat', () => {
   it('should handle API errors gracefully', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(createErrorResponse('API Error'))
 
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Hello' } })
@@ -195,7 +201,7 @@ describe('Chat', () => {
   it('should start new chat when new chat button is clicked', async () => {
     vi.mocked(global.fetch).mockResolvedValueOnce(createStreamingResponse('Response'))
 
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     // Send a message first
     const input = screen.getByTestId('chat-input')
@@ -214,7 +220,7 @@ describe('Chat', () => {
   })
 
   it('should toggle perspective when clicked', () => {
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     // Initially hyperscaler is selected
     expect(screen.getByTestId('perspective-hyperscaler')).toHaveClass('border-nodiac-primary')
@@ -232,7 +238,7 @@ describe('Chat', () => {
       new Promise(resolve => setTimeout(() => resolve(createDelayedStreamingResponse('Response', 100)), 100))
     )
 
-    render(<Chat />)
+    renderWithTTS(<Chat />)
 
     const input = screen.getByTestId('chat-input')
     fireEvent.change(input, { target: { value: 'Hello' } })
@@ -248,7 +254,7 @@ describe('Chat', () => {
     it('should scroll to bottom when user sends a message', async () => {
       vi.mocked(global.fetch).mockResolvedValueOnce(createStreamingResponse('AI response'))
 
-      render(<Chat />)
+      renderWithTTS(<Chat />)
 
       // Clear any initial scroll calls
       scrollIntoViewMock.mockClear()
@@ -271,7 +277,7 @@ describe('Chat', () => {
 
       vi.mocked(global.fetch).mockReturnValueOnce(responsePromise)
 
-      render(<Chat />)
+      renderWithTTS(<Chat />)
 
       const input = screen.getByTestId('chat-input')
       fireEvent.change(input, { target: { value: 'Hello' } })
@@ -300,7 +306,7 @@ describe('Chat', () => {
 
   describe('viewport and mobile', () => {
     it('should use dynamic viewport height class', () => {
-      render(<Chat />)
+      renderWithTTS(<Chat />)
 
       // The main container should use h-dvh for proper mobile viewport
       const container = document.querySelector('.h-dvh')

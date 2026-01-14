@@ -6,6 +6,7 @@ import { useVoice } from '@/lib/useVoice'
 import { useAuth } from '@/contexts/AuthContext'
 import { useChatPersistence } from '@/hooks/useChatPersistence'
 import { useContextPrompts } from '@/hooks/useContextPrompts'
+import { useTTS } from '@/contexts/TTSContext'
 import { ModelSelector } from './ModelSelector'
 import { PerspectiveSelector } from './PerspectiveSelector'
 import { ChatMessage } from './ChatMessage'
@@ -21,7 +22,6 @@ export function Chat() {
   const [selectedModel, setSelectedModel] = useState<AIModel>(AI_MODELS[0])
   const [selectedPerspectives, setSelectedPerspectives] = useState<Perspective[]>([PERSPECTIVES[0]])
   const [pendingPerspectives, setPendingPerspectives] = useState<Set<string>>(new Set())
-  const [isVoiceMode, setIsVoiceMode] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const messagesContainerRef = useRef<HTMLDivElement>(null)
@@ -42,16 +42,17 @@ export function Chat() {
   })
   const { getEnabledContext } = useContextPrompts()
 
+  // Voice input (speech-to-text)
   const {
     isListening,
-    isSpeaking,
     transcript,
     isSupported: isVoiceSupported,
     startListening,
     stopListening,
-    speak,
-    stopSpeaking,
   } = useVoice()
+
+  // TTS context for auto-read
+  const { autoReadEnabled, speakMessage } = useTTS()
 
   // Only scroll to bottom when user sends a message, not when receiving
   const scrollToBottom = useCallback(() => {
@@ -199,11 +200,12 @@ export function Chat() {
           return next
         })
 
-        // In voice mode, speak the first successful response
-        if (isVoiceMode && !hasSpoken && accumulatedContent && !accumulatedContent.startsWith('Error:')) {
+        // Auto-read first successful response if enabled
+        if (autoReadEnabled && !hasSpoken && accumulatedContent && !accumulatedContent.startsWith('Error:')) {
           hasSpoken = true
+          const messageId = `auto-${perspective.id}-${Date.now()}`
           try {
-            await speak(accumulatedContent)
+            await speakMessage(messageId, accumulatedContent)
           } catch {
             // Speech synthesis error - continue without speaking
           }
@@ -360,13 +362,9 @@ export function Chat() {
         <ChatInput
           onSubmit={sendMessage}
           disabled={isLoading || selectedPerspectives.length === 0}
-          isVoiceMode={isVoiceMode}
-          onVoiceModeToggle={() => setIsVoiceMode(!isVoiceMode)}
           isListening={isListening}
-          isSpeaking={isSpeaking}
           onStartListening={startListening}
           onStopListening={stopListening}
-          onStopSpeaking={stopSpeaking}
           transcript={transcript}
           isVoiceSupported={isVoiceSupported}
         />
