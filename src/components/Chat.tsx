@@ -31,6 +31,9 @@ export function Chat() {
     chatId,
     messages,
     addMessage,
+    updateMessage,
+    finalizeMessage,
+    addStreamingMessage,
     loadChat,
     newChat,
   } = useChatPersistence({
@@ -49,7 +52,7 @@ export function Chat() {
   } = useVoice()
 
   // TTS context for auto-read
-  const { autoReadEnabled, speakMessage, isSpeaking } = useTTS()
+  const { autoReadEnabled, speakMessage } = useTTS()
 
   // Only scroll to bottom when user sends a message, not when receiving
   const scrollToBottom = useCallback(() => {
@@ -101,13 +104,18 @@ export function Chat() {
     // Get enabled context to prepend to system prompts
     const nodiacContext = getEnabledContext()
 
-    // Fire off all requests and handle each as it completes
+    // Fire off all requests and handle each as it completes with streaming
     const promises = selectedPerspectives.map(async (perspective) => {
       try {
         // Combine Nodiac context with perspective system prompt
         const fullSystemPrompt = nodiacContext
           ? `${nodiacContext}\n\n---\n\n${perspective.systemPrompt}`
           : perspective.systemPrompt
+
+        // Create a placeholder message for streaming
+        const streamingMessage = await addStreamingMessage({
+          perspective: perspective.id,
+        })
 
         const response = await fetch('/api/chat', {
           method: 'POST',
@@ -120,14 +128,70 @@ export function Chat() {
           }),
         })
 
-        const data = await response.json()
+        if (!response.ok) {
+          const errorData = await response.json()
+          updateMessage(streamingMessage.id, `Error: ${errorData.error || 'Request failed'}`)
+          setPendingPerspectives(prev => {
+            const next = new Set(prev)
+            next.delete(perspective.id)
+            return next
+          })
+          return
+        }
 
-        // Add assistant message (auto-saves if logged in)
-        await addMessage({
-          role: 'assistant',
-          content: data.error ? `Error: ${data.error}` : data.content,
-          perspective: perspective.id,
-        })
+        // Handle streaming response
+        const reader = response.body?.getReader()
+        if (!reader) {
+          updateMessage(streamingMessage.id, 'Error: No response stream available')
+          setPendingPerspectives(prev => {
+            const next = new Set(prev)
+            next.delete(perspective.id)
+            return next
+          })
+          return
+        }
+
+        const decoder = new TextDecoder()
+        let accumulatedContent = ''
+        let buffer = ''
+
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+
+          buffer += decoder.decode(value, { stream: true })
+
+          // Process complete SSE events from buffer
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || '' // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6)
+
+              if (data === '[DONE]') {
+                // Streaming complete
+                break
+              }
+
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.token) {
+                  accumulatedContent += parsed.token
+                  updateMessage(streamingMessage.id, accumulatedContent)
+                } else if (parsed.error) {
+                  accumulatedContent = `Error: ${parsed.error}`
+                  updateMessage(streamingMessage.id, accumulatedContent)
+                }
+              } catch {
+                // Ignore JSON parse errors for incomplete data
+              }
+            }
+          }
+        }
+
+        // Finalize the message (save to database)
+        await finalizeMessage(streamingMessage.id, accumulatedContent, perspective.id)
 
         // Remove from pending
         setPendingPerspectives(prev => {
@@ -137,12 +201,11 @@ export function Chat() {
         })
 
         // Auto-read first successful response if enabled
-        if (autoReadEnabled && !hasSpoken && !data.error) {
+        if (autoReadEnabled && !hasSpoken && accumulatedContent && !accumulatedContent.startsWith('Error:')) {
           hasSpoken = true
-          // Get the message ID that was just added - we'll use the perspective as an identifier
           const messageId = `auto-${perspective.id}-${Date.now()}`
           try {
-            await speakMessage(messageId, data.content)
+            await speakMessage(messageId, accumulatedContent)
           } catch {
             // Speech synthesis error - continue without speaking
           }

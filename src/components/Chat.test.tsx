@@ -35,6 +35,67 @@ const renderWithTTS = (ui: React.ReactElement) => {
   return render(<TTSProvider>{ui}</TTSProvider>)
 }
 
+// Helper to create a mock streaming response
+function createStreamingResponse(content: string) {
+  const encoder = new TextEncoder()
+  const chunks = [
+    `data: ${JSON.stringify({ token: content })}\n\n`,
+    `data: [DONE]\n\n`
+  ]
+  let chunkIndex = 0
+
+  return {
+    ok: true,
+    body: {
+      getReader: () => ({
+        read: async () => {
+          if (chunkIndex >= chunks.length) {
+            return { done: true, value: undefined }
+          }
+          const chunk = chunks[chunkIndex++]
+          return { done: false, value: encoder.encode(chunk) }
+        }
+      })
+    }
+  } as unknown as Response
+}
+
+// Helper to create a mock error response
+function createErrorResponse(error: string) {
+  return {
+    ok: false,
+    json: async () => ({ error }),
+  } as Response
+}
+
+// Helper to create a delayed streaming response
+function createDelayedStreamingResponse(content: string, delay: number) {
+  const encoder = new TextEncoder()
+  const chunks = [
+    `data: ${JSON.stringify({ token: content })}\n\n`,
+    `data: [DONE]\n\n`
+  ]
+  let chunkIndex = 0
+
+  return {
+    ok: true,
+    body: {
+      getReader: () => ({
+        read: async () => {
+          if (chunkIndex === 0) {
+            await new Promise(resolve => setTimeout(resolve, delay))
+          }
+          if (chunkIndex >= chunks.length) {
+            return { done: true, value: undefined }
+          }
+          const chunk = chunks[chunkIndex++]
+          return { done: false, value: encoder.encode(chunk) }
+        }
+      })
+    }
+  } as unknown as Response
+}
+
 describe('Chat', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -87,9 +148,7 @@ describe('Chat', () => {
   })
 
   it('should send message and show in chat', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      json: async () => ({ content: 'AI response' }),
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(createStreamingResponse('AI response'))
 
     renderWithTTS(<Chat />)
 
@@ -108,9 +167,7 @@ describe('Chat', () => {
 
   it('should show loading indicator while waiting for response', async () => {
     vi.mocked(global.fetch).mockImplementation(() =>
-      new Promise(resolve => setTimeout(() => resolve({
-        json: async () => ({ content: 'Response' }),
-      } as Response), 100))
+      new Promise(resolve => setTimeout(() => resolve(createStreamingResponse('Response')), 100))
     )
 
     renderWithTTS(<Chat />)
@@ -128,9 +185,7 @@ describe('Chat', () => {
   })
 
   it('should handle API errors gracefully', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      json: async () => ({ error: 'API Error' }),
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(createErrorResponse('API Error'))
 
     renderWithTTS(<Chat />)
 
@@ -144,9 +199,7 @@ describe('Chat', () => {
   })
 
   it('should start new chat when new chat button is clicked', async () => {
-    vi.mocked(global.fetch).mockResolvedValueOnce({
-      json: async () => ({ content: 'Response' }),
-    } as Response)
+    vi.mocked(global.fetch).mockResolvedValueOnce(createStreamingResponse('Response'))
 
     renderWithTTS(<Chat />)
 
@@ -182,9 +235,7 @@ describe('Chat', () => {
 
   it('should disable inputs while loading', async () => {
     vi.mocked(global.fetch).mockImplementation(() =>
-      new Promise(resolve => setTimeout(() => resolve({
-        json: async () => ({ content: 'Response' }),
-      } as Response), 200))
+      new Promise(resolve => setTimeout(() => resolve(createDelayedStreamingResponse('Response', 100)), 100))
     )
 
     renderWithTTS(<Chat />)
@@ -201,9 +252,7 @@ describe('Chat', () => {
 
   describe('scroll behavior', () => {
     it('should scroll to bottom when user sends a message', async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
-        json: async () => ({ content: 'AI response' }),
-      } as Response)
+      vi.mocked(global.fetch).mockResolvedValueOnce(createStreamingResponse('AI response'))
 
       renderWithTTS(<Chat />)
 
@@ -243,9 +292,7 @@ describe('Chat', () => {
       scrollIntoViewMock.mockClear()
 
       // Now resolve the AI response
-      resolveResponse!({
-        json: async () => ({ content: 'AI response' }),
-      } as Response)
+      resolveResponse!(createStreamingResponse('AI response'))
 
       // Wait for AI response to appear
       await waitFor(() => {
