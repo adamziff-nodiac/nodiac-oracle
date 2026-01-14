@@ -150,4 +150,42 @@ describe('ChatInput', () => {
 
     expect(screen.getByTestId('chat-input')).toBeDisabled()
   })
+
+  it('should keep transcript in input after listening stops (no auto-submit)', () => {
+    const onSubmit = vi.fn()
+    const { rerender } = render(
+      <ChatInput {...defaultProps} onSubmit={onSubmit} isListening transcript="Hello world" />
+    )
+
+    // Verify transcript is in input while listening
+    const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
+    expect(input.value).toBe('Hello world')
+
+    // Simulate listening stopping
+    rerender(
+      <ChatInput {...defaultProps} onSubmit={onSubmit} isListening={false} transcript="Hello world" />
+    )
+
+    // Transcript should still be in input
+    expect(input.value).toBe('Hello world')
+    // Should NOT auto-submit
+    expect(onSubmit).not.toHaveBeenCalled()
+  })
+
+  it('should enable send button after listening stops with transcript', () => {
+    const { rerender } = render(
+      <ChatInput {...defaultProps} isListening transcript="Hello world" />
+    )
+
+    // Send button should be disabled while listening
+    expect(screen.getByTestId('send-button')).toBeDisabled()
+
+    // Simulate listening stopping
+    rerender(
+      <ChatInput {...defaultProps} isListening={false} transcript="Hello world" />
+    )
+
+    // Send button should now be enabled
+    expect(screen.getByTestId('send-button')).not.toBeDisabled()
+  })
 })

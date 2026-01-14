@@ -45,17 +45,14 @@ export function ChatInput({
     }
   }, [transcript, isListening])
 
-  // Auto-submit when listening stops and we have content
+  // Sync final transcript to input when listening stops (user sends manually)
   useEffect(() => {
     if (!isListening && lastTranscriptRef.current) {
-      const trimmed = lastTranscriptRef.current.trim()
-      if (trimmed && !disabled) {
-        onSubmit(trimmed)
-        setInput('')
-      }
+      // Ensure the final transcript is in the input field
+      setInput(lastTranscriptRef.current)
       lastTranscriptRef.current = ''
     }
-  }, [isListening, disabled, onSubmit])
+  }, [isListening])
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -245,7 +242,7 @@ export function ChatInput({
 
       {isListening && (
         <div className="mt-2 text-center text-sm text-red-500 dark:text-red-400">
-          Recording... click mic or stop talking to send
+          Recording... click mic when done
         </div>
       )}
 
