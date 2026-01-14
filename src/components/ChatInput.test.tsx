@@ -188,4 +188,28 @@ describe('ChatInput', () => {
     // Send button should now be enabled
     expect(screen.getByTestId('send-button')).not.toBeDisabled()
   })
+
+  it('should concatenate transcript to existing text when starting recording', () => {
+    const onStartListening = vi.fn()
+    const { rerender } = render(
+      <ChatInput {...defaultProps} onStartListening={onStartListening} />
+    )
+
+    // Type some text first
+    const input = screen.getByTestId('chat-input') as HTMLTextAreaElement
+    fireEvent.change(input, { target: { value: 'Hello' } })
+    expect(input.value).toBe('Hello')
+
+    // Click mic to start recording
+    fireEvent.click(screen.getByTestId('mic-button'))
+    expect(onStartListening).toHaveBeenCalled()
+
+    // Simulate listening with transcript - should concatenate
+    rerender(
+      <ChatInput {...defaultProps} onStartListening={onStartListening} isListening transcript="world" />
+    )
+
+    // Should have original text + space + transcript
+    expect(input.value).toBe('Hello world')
+  })
 })

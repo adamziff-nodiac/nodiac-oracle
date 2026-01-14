@@ -33,24 +33,23 @@ export function ChatInput({
 }: ChatInputProps) {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const lastTranscriptRef = useRef('')
+  const prefixTextRef = useRef('')  // Text that was in input before recording started
 
   const hasInput = input.trim().length > 0
 
-  // Update input with transcript while listening
+  // Update input with prefix + transcript while listening
   useEffect(() => {
-    if (transcript && isListening) {
-      setInput(transcript)
-      lastTranscriptRef.current = transcript
+    if (isListening) {
+      const prefix = prefixTextRef.current
+      const separator = prefix && transcript ? ' ' : ''
+      setInput(prefix + separator + transcript)
     }
   }, [transcript, isListening])
 
-  // Sync final transcript to input when listening stops (user sends manually)
+  // When listening stops, clear the prefix ref (text is now in input)
   useEffect(() => {
-    if (!isListening && lastTranscriptRef.current) {
-      // Ensure the final transcript is in the input field
-      setInput(lastTranscriptRef.current)
-      lastTranscriptRef.current = ''
+    if (!isListening) {
+      prefixTextRef.current = ''
     }
   }, [isListening])
 
@@ -80,8 +79,8 @@ export function ChatInput({
     if (isListening) {
       onStopListening()
     } else {
-      setInput('')
-      lastTranscriptRef.current = ''
+      // Store existing text to concatenate with new speech
+      prefixTextRef.current = input.trim()
       onStartListening()
     }
   }
