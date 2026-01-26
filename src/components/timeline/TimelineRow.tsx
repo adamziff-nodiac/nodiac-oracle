@@ -116,6 +116,20 @@ export function TimelineRow({
   const barEnd = dragBarEnd !== null ? dragBarEnd : baseBarEnd
   const barWidth = Math.max(barEnd - barStart, 1)
 
+  // Find milestone at end position (end milestone)
+  const endMilestone = useMemo(() => {
+    return row.milestones.find((m) => {
+      const milestonePos = dateToPosition(m.date, startYear, endYear)
+      return Math.abs(milestonePos - baseBarEnd) < 0.5 // Within 0.5% tolerance
+    })
+  }, [row.milestones, baseBarEnd, startYear, endYear])
+
+  // Filter out end milestone from regular milestones
+  const regularMilestones = useMemo(() => {
+    if (!endMilestone) return row.milestones
+    return row.milestones.filter((m) => m.id !== endMilestone.id)
+  }, [row.milestones, endMilestone])
+
   // Snap to quarter boundaries or quarter midpoints (half-quarter intervals)
   const snapToHalfQuarter = useCallback((percent: number) => {
     const totalQuarters = (endYear - startYear + 1) * 4
@@ -313,24 +327,45 @@ export function TimelineRow({
           onMouseDown={(e) => handleMouseDown(e, 'start')}
         />
 
-        {/* End handle - visible in exports */}
+        {/* End handle - diamond shape with optional milestone label */}
         <div
-          className={cn(
-            'absolute top-1/2 rounded-full border-2 border-white/70 cursor-ew-resize z-10 hover:scale-125 transition-transform',
-            dragType === 'end' && 'scale-125'
+          className="absolute top-0 bottom-0 flex flex-col items-center"
+          style={{ left: `${barEnd}%`, zIndex: 15 }}
+        >
+          {/* End milestone label (if exists) */}
+          {endMilestone && (
+            <div
+              className="absolute bottom-1/2 mb-4 whitespace-nowrap"
+              style={{ transform: 'translateX(-50%)' }}
+            >
+              <EditableText
+                value={endMilestone.label}
+                onChange={(label) => onUpdateMilestone(endMilestone.id, { label })}
+                className="font-semibold text-white px-1.5 py-0.5 bg-slate-800/90 rounded"
+                inputClassName="font-semibold text-white bg-slate-700 rounded px-1.5"
+                style={{ fontSize: sizing.labelFontSize * 0.8 }}
+              />
+            </div>
           )}
-          style={{
-            left: `${barEnd}%`,
-            width: sizing.handleSize,
-            height: sizing.handleSize,
-            backgroundColor: row.color,
-            transform: 'translate(-50%, -50%)',
-          }}
-          onMouseDown={(e) => handleMouseDown(e, 'end')}
-        />
 
-        {/* Milestones */}
-        {row.milestones.map((milestone, index) => (
+          {/* Diamond handle */}
+          <div
+            className={cn(
+              'absolute top-1/2 border-2 border-white cursor-ew-resize z-10 shadow-lg hover:scale-125 transition-transform',
+              dragType === 'end' && 'scale-125'
+            )}
+            style={{
+              width: sizing.handleSize,
+              height: sizing.handleSize,
+              backgroundColor: row.color,
+              transform: 'translate(-50%, -50%) rotate(45deg)',
+            }}
+            onMouseDown={(e) => handleMouseDown(e, 'end')}
+          />
+        </div>
+
+        {/* Milestones (excluding end milestone) */}
+        {regularMilestones.map((milestone, index) => (
           <TimelineMilestone
             key={milestone.id}
             milestone={milestone}
