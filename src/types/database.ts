@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       chats: {
@@ -145,6 +120,236 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      perspectives: {
+        Row: {
+          created_at: string | null
+          description: string
+          icon: string | null
+          id: string
+          is_enabled: boolean
+          is_global: boolean
+          name: string
+          position: number
+          slug: string
+          system_prompt: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          icon?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_global?: boolean
+          name: string
+          position?: number
+          slug: string
+          system_prompt: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          icon?: string | null
+          id?: string
+          is_enabled?: boolean
+          is_global?: boolean
+          name?: string
+          position?: number
+          slug?: string
+          system_prompt?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      timeline_annotations: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          label: string
+          row_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          label: string
+          row_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          label?: string
+          row_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_annotations_row_id_fkey"
+            columns: ["row_id"]
+            isOneToOne: false
+            referencedRelation: "timeline_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timeline_milestones: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          label: string
+          position: number
+          row_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          label: string
+          position?: number
+          row_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          label?: string
+          position?: number
+          row_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_milestones_row_id_fkey"
+            columns: ["row_id"]
+            isOneToOne: false
+            referencedRelation: "timeline_rows"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timeline_phases: {
+        Row: {
+          created_at: string | null
+          date: string
+          id: string
+          label: string
+          position: number
+          timeline_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          id?: string
+          label: string
+          position?: number
+          timeline_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          id?: string
+          label?: string
+          position?: number
+          timeline_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_phases_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "timelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timeline_rows: {
+        Row: {
+          color: string
+          created_at: string | null
+          end_date: string
+          id: string
+          label: string
+          position: number
+          start_date: string
+          timeline_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string
+          created_at?: string | null
+          end_date: string
+          id?: string
+          label: string
+          position?: number
+          start_date: string
+          timeline_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          end_date?: string
+          id?: string
+          label?: string
+          position?: number
+          start_date?: string
+          timeline_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "timeline_rows_timeline_id_fkey"
+            columns: ["timeline_id"]
+            isOneToOne: false
+            referencedRelation: "timelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      timelines: {
+        Row: {
+          created_at: string | null
+          end_year: number
+          id: string
+          start_year: number
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_year?: number
+          id?: string
+          start_year?: number
+          title?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          end_year?: number
+          id?: string
+          start_year?: number
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -280,9 +485,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

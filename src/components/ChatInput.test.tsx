@@ -137,7 +137,9 @@ describe('ChatInput', () => {
   it('should keep transcript in input after listening stops (no auto-submit)', () => {
     const onSubmit = vi.fn()
     const { rerender } = render(
-      <ChatInput {...defaultProps} onSubmit={onSubmit} isListening transcript="Hello world" />
+      <TTSProvider>
+        <ChatInput {...defaultProps} onSubmit={onSubmit} isListening transcript="Hello world" />
+      </TTSProvider>
     )
 
     // Verify transcript is in input while listening
@@ -146,7 +148,9 @@ describe('ChatInput', () => {
 
     // Simulate listening stopping
     rerender(
-      <ChatInput {...defaultProps} onSubmit={onSubmit} isListening={false} transcript="Hello world" />
+      <TTSProvider>
+        <ChatInput {...defaultProps} onSubmit={onSubmit} isListening={false} transcript="Hello world" />
+      </TTSProvider>
     )
 
     // Transcript should still be in input
@@ -157,7 +161,9 @@ describe('ChatInput', () => {
 
   it('should enable send button after listening stops with transcript', () => {
     const { rerender } = render(
-      <ChatInput {...defaultProps} isListening transcript="Hello world" />
+      <TTSProvider>
+        <ChatInput {...defaultProps} isListening transcript="Hello world" />
+      </TTSProvider>
     )
 
     // Send button should be disabled while listening
@@ -165,7 +171,9 @@ describe('ChatInput', () => {
 
     // Simulate listening stopping
     rerender(
-      <ChatInput {...defaultProps} isListening={false} transcript="Hello world" />
+      <TTSProvider>
+        <ChatInput {...defaultProps} isListening={false} transcript="Hello world" />
+      </TTSProvider>
     )
 
     // Send button should now be enabled
@@ -175,7 +183,9 @@ describe('ChatInput', () => {
   it('should concatenate transcript to existing text when starting recording', () => {
     const onStartListening = vi.fn()
     const { rerender } = render(
-      <ChatInput {...defaultProps} onStartListening={onStartListening} />
+      <TTSProvider>
+        <ChatInput {...defaultProps} onStartListening={onStartListening} />
+      </TTSProvider>
     )
 
     // Type some text first
@@ -189,7 +199,9 @@ describe('ChatInput', () => {
 
     // Simulate listening with transcript - should concatenate
     rerender(
-      <ChatInput {...defaultProps} onStartListening={onStartListening} isListening transcript="world" />
+      <TTSProvider>
+        <ChatInput {...defaultProps} onStartListening={onStartListening} isListening transcript="world" />
+      </TTSProvider>
     )
 
     // Should have original text + space + transcript

@@ -1,0 +1,42 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { MessageSquare, BarChart3, Home } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const navItems = [
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/chat', label: 'Oracle', icon: MessageSquare },
+  { href: '/timeline', label: 'Timelines', icon: BarChart3 },
+]
+
+export function Navigation() {
+  const pathname = usePathname()
+
+  return (
+    <nav className="flex items-center gap-1 bg-nodiac-dark/50 backdrop-blur-sm rounded-full px-2 py-1 border border-white/10">
+      {navItems.map((item) => {
+        const isActive = pathname === item.href ||
+          (item.href !== '/' && pathname.startsWith(item.href))
+        const Icon = item.icon
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
+              isActive
+                ? 'bg-nodiac-primary text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            )}
+          >
+            <Icon className="w-4 h-4" />
+            <span className="hidden sm:inline">{item.label}</span>
+          </Link>
+        )
+      })}
+    </nav>
+  )
+}

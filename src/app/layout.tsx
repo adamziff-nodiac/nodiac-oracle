@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 import { TTSProvider } from '@/contexts/TTSContext'
 
 export const metadata: Metadata = {
@@ -44,7 +45,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          <TTSProvider>{children}</TTSProvider>
+          <PerspectivesProvider>
+            <TTSProvider>{children}</TTSProvider>
+          </PerspectivesProvider>
         </AuthProvider>
       </body>
     </html>

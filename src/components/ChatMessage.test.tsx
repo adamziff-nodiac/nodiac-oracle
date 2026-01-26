@@ -2,11 +2,19 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { ChatMessage } from './ChatMessage'
 import { Message } from '@/types'
+import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
+import { AuthProvider } from '@/contexts/AuthContext'
 import { TTSProvider } from '@/contexts/TTSContext'
 
-// Wrapper component for TTS context
-const renderWithTTS = (ui: React.ReactElement) => {
-  return render(<TTSProvider>{ui}</TTSProvider>)
+// Wrapper component that provides required context
+function TestWrapper({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <PerspectivesProvider>
+        <TTSProvider>{children}</TTSProvider>
+      </PerspectivesProvider>
+    </AuthProvider>
+  )
 }
 
 describe('ChatMessage', () => {
@@ -26,36 +34,44 @@ describe('ChatMessage', () => {
   }
 
   it('should render user message', () => {
-    renderWithTTS(<ChatMessage message={userMessage} />)
+    render(<ChatMessage message={userMessage} />, { wrapper: TestWrapper })
     expect(screen.getByText('Hello, how are you?')).toBeInTheDocument()
   })
 
   it('should render assistant message', () => {
-    renderWithTTS(<ChatMessage message={assistantMessage} />)
+    render(<ChatMessage message={assistantMessage} />, { wrapper: TestWrapper })
     expect(screen.getByText('I am doing well, thank you!')).toBeInTheDocument()
   })
 
   it('should display timestamp', () => {
-    renderWithTTS(<ChatMessage message={userMessage} />)
+    render(<ChatMessage message={userMessage} />, { wrapper: TestWrapper })
     expect(screen.getByText(/10:30/i)).toBeInTheDocument()
   })
 
   it('should show perspective for assistant messages', () => {
-    renderWithTTS(<ChatMessage message={assistantMessage} />)
+    render(<ChatMessage message={assistantMessage} />, { wrapper: TestWrapper })
     expect(screen.getByText('Hyperscaler Data Center Executive')).toBeInTheDocument()
   })
 
   it('should not show perspective for user messages', () => {
-    renderWithTTS(<ChatMessage message={userMessage} />)
+    render(<ChatMessage message={userMessage} />, { wrapper: TestWrapper })
     expect(screen.queryByText(/Executive/)).not.toBeInTheDocument()
   })
 
   it('should have different styling for user vs assistant', () => {
-    const { rerender } = renderWithTTS(<ChatMessage message={userMessage} />)
+    const { rerender } = render(<ChatMessage message={userMessage} />, { wrapper: TestWrapper })
     const userContainer = screen.getByTestId('message-msg-1')
     expect(userContainer).toHaveClass('justify-end')
 
-    rerender(<TTSProvider><ChatMessage message={assistantMessage} /></TTSProvider>)
+    rerender(
+      <AuthProvider>
+        <PerspectivesProvider>
+          <TTSProvider>
+            <ChatMessage message={assistantMessage} />
+          </TTSProvider>
+        </PerspectivesProvider>
+      </AuthProvider>
+    )
     const assistantContainer = screen.getByTestId('message-msg-2')
     expect(assistantContainer).toHaveClass('justify-start')
   })
@@ -65,7 +81,7 @@ describe('ChatMessage', () => {
       ...userMessage,
       content: '**Bold text** and *italic text*',
     }
-    renderWithTTS(<ChatMessage message={markdownMessage} />)
+    render(<ChatMessage message={markdownMessage} />, { wrapper: TestWrapper })
     // Check that the content container has prose styling
     const container = screen.getByTestId('message-msg-1')
     expect(container.querySelector('.prose')).toBeInTheDocument()

@@ -1,21 +1,15 @@
 'use client'
 
 import { useState } from 'react'
-import { Perspective, PERSPECTIVES } from '@/types'
+import { Perspective } from '@/types'
+import { usePerspectives } from '@/contexts/PerspectivesContext'
 import { cn } from '@/lib/utils'
-import { Check, ChevronDown, ChevronUp } from 'lucide-react'
+import { Check, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 
 type PerspectiveSelectorProps = {
   selectedPerspectives: Perspective[]
   onPerspectiveToggle: (perspective: Perspective) => void
   disabled?: boolean
-}
-
-const perspectiveIcons: Record<string, string> = {
-  hyperscaler: '🏢',
-  techvc: '💰',
-  utility: '⚡',
-  renewables: '🌱',
 }
 
 export function PerspectiveSelector({
@@ -24,9 +18,12 @@ export function PerspectiveSelector({
   disabled,
 }: PerspectiveSelectorProps) {
   const [isExpanded, setIsExpanded] = useState(true)
+  const { getEnabledPerspectives, isLoading } = usePerspectives()
+
+  const enabledPerspectives = getEnabledPerspectives()
 
   const isSelected = (perspective: Perspective) =>
-    selectedPerspectives.some(p => p.id === perspective.id)
+    selectedPerspectives.some(p => p.slug === perspective.slug)
 
   return (
     <div>
@@ -43,47 +40,55 @@ export function PerspectiveSelector({
           <ChevronDown className="w-4 h-4" />
         )}
       </button>
-      {isExpanded && <div className="space-y-2">
-        {PERSPECTIVES.map((perspective) => {
-          const selected = isSelected(perspective)
-          return (
-            <button
-              key={perspective.id}
-              data-testid={`perspective-${perspective.id}`}
-              onClick={() => onPerspectiveToggle(perspective)}
-              disabled={disabled}
-              className={cn(
-                'w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-all',
-                'text-left text-sm',
-                selected
-                  ? 'border-nodiac-primary bg-nodiac-primary/5 dark:bg-nodiac-primary/10'
-                  : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
-              )}
-            >
-              <div
-                className={cn(
-                  'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5',
-                  selected
-                    ? 'bg-nodiac-primary border-nodiac-primary'
-                    : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'
-                )}
-              >
-                {selected && <Check className="w-3 h-3 text-white" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">{perspectiveIcons[perspective.id]}</span>
-                  <span className={cn('font-medium', selected ? 'text-nodiac-primary' : 'text-gray-700 dark:text-gray-200')}>
-                    {perspective.name}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">{perspective.description}</span>
-              </div>
-            </button>
-          )
-        })}
-      </div>}
+      {isExpanded && (
+        <div className="space-y-2">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-4">
+              <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+            </div>
+          ) : (
+            enabledPerspectives.map((perspective) => {
+              const selected = isSelected(perspective)
+              return (
+                <button
+                  key={perspective.id}
+                  data-testid={`perspective-${perspective.slug}`}
+                  onClick={() => onPerspectiveToggle(perspective)}
+                  disabled={disabled}
+                  className={cn(
+                    'w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-all',
+                    'text-left text-sm',
+                    selected
+                      ? 'border-nodiac-primary bg-nodiac-primary/5 dark:bg-nodiac-primary/10'
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500',
+                    'disabled:opacity-50 disabled:cursor-not-allowed'
+                  )}
+                >
+                  <div
+                    className={cn(
+                      'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5',
+                      selected
+                        ? 'bg-nodiac-primary border-nodiac-primary'
+                        : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'
+                    )}
+                  >
+                    {selected && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{perspective.icon}</span>
+                      <span className={cn('font-medium', selected ? 'text-nodiac-primary' : 'text-gray-700 dark:text-gray-200')}>
+                        {perspective.name}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">{perspective.description}</span>
+                  </div>
+                </button>
+              )
+            })
+          )}
+        </div>
+      )}
     </div>
   )
 }

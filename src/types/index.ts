@@ -16,16 +16,25 @@ export const AI_MODELS: AIModel[] = [
   { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash', provider: 'google' },
 ]
 
+// Perspective type matching database schema
 export type Perspective = {
-  id: string
+  id: string           // UUID from database
+  slug: string         // String identifier for backwards compatibility
   name: string
   description: string
   systemPrompt: string
+  icon?: string | null
+  isGlobal: boolean
+  userId?: string | null
+  isEnabled: boolean
+  position: number
 }
 
-export const PERSPECTIVES: Perspective[] = [
+// Fallback perspectives for guests or database errors
+export const FALLBACK_PERSPECTIVES: Perspective[] = [
   {
-    id: 'hyperscaler',
+    id: 'fallback-hyperscaler',
+    slug: 'hyperscaler',
     name: 'Hyperscaler Data Center Executive',
     description: 'Large-scale cloud infrastructure perspective',
     systemPrompt: `You are a senior executive at a major hyperscaler (like AWS, Google Cloud, or Microsoft Azure). Your perspective focuses on:
@@ -40,9 +49,14 @@ export const PERSPECTIVES: Perspective[] = [
 When responding, consider the unique challenges and opportunities of operating infrastructure at hyperscale. Reference industry trends, real-world constraints, and strategic considerations relevant to major cloud providers. You're focused on long-term contracts (10-15+ year PPAs), massive capital deployments, and maintaining competitive advantage.
 
 Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecting data center developers with clean energy solutions.`,
+    icon: '🏢',
+    isGlobal: true,
+    isEnabled: true,
+    position: 0,
   },
   {
-    id: 'techvc',
+    id: 'fallback-techvc',
+    slug: 'techvc',
     name: 'Tech VC',
     description: 'Venture capital investment perspective',
     systemPrompt: `You are a partner at a top-tier technology venture capital firm specializing in climate tech, energy, and infrastructure investments. Your perspective focuses on:
@@ -58,9 +72,14 @@ Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecti
 When responding, think like an investor evaluating opportunities, market dynamics, and strategic positioning. Reference comparable companies, recent deals, and market trends. You're looking for 10x+ returns and companies that can define or dominate categories.
 
 Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecting data center developers with clean energy solutions.`,
+    icon: '💰',
+    isGlobal: true,
+    isEnabled: true,
+    position: 1,
   },
   {
-    id: 'utility',
+    id: 'fallback-utility',
+    slug: 'utility',
     name: 'Power Utility Executive',
     description: 'Traditional utility company perspective',
     systemPrompt: `You are a senior executive at a major investor-owned utility (IOU) or independent system operator (ISO). Your perspective focuses on:
@@ -76,9 +95,14 @@ Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecti
 When responding, consider the complex regulatory environment, infrastructure constraints, and stakeholder management required in utility operations. Reference real grid challenges, interconnection queues, and the balance between reliability and sustainability goals.
 
 Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecting data center developers with clean energy solutions.`,
+    icon: '⚡',
+    isGlobal: true,
+    isEnabled: true,
+    position: 2,
   },
   {
-    id: 'renewables',
+    id: 'fallback-renewables',
+    slug: 'renewables',
     name: 'Renewables IPP Executive',
     description: 'Independent power producer perspective',
     systemPrompt: `You are a senior executive at a major renewable energy Independent Power Producer (IPP). Your perspective focuses on:
@@ -95,8 +119,15 @@ Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecti
 When responding, consider the development lifecycle, financing requirements, and market dynamics of renewable energy projects. Reference real project economics, PPA pricing trends, and the competitive landscape for clean energy development.
 
 Context: This is related to Nodiac (https://www.nodiac.ai/), a platform connecting data center developers with clean energy solutions.`,
+    icon: '🌱',
+    isGlobal: true,
+    isEnabled: true,
+    position: 3,
   },
 ]
+
+// Deprecated: Use FALLBACK_PERSPECTIVES or usePerspectives hook
+export const PERSPECTIVES = FALLBACK_PERSPECTIVES
 
 export type Message = {
   id: string
@@ -145,3 +176,6 @@ export const LIGHTWEIGHT_MODEL_MAP: Record<string, { id: string; provider: AIPro
 export function getLightweightModel(modelId: string): { id: string; provider: AIProvider } {
   return LIGHTWEIGHT_MODEL_MAP[modelId] || { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' }
 }
+
+// Timeline types
+export * from './timeline'

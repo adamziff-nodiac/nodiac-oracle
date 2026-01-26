@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Message, PERSPECTIVES } from '@/types'
+import { Message } from '@/types'
+import { usePerspectives } from '@/contexts/PerspectivesContext'
 import { cn, formatTimestamp } from '@/lib/utils'
 import { ChevronDown, ChevronRight, Volume2, Square } from 'lucide-react'
 import { useTTS } from '@/contexts/TTSContext'
@@ -13,20 +14,14 @@ type ChatMessageProps = {
   defaultCollapsed?: boolean
 }
 
-const perspectiveIcons: Record<string, string> = {
-  hyperscaler: '🏢',
-  techvc: '💰',
-  utility: '⚡',
-  renewables: '🌱',
-}
-
 export function ChatMessage({ message, defaultCollapsed = false }: ChatMessageProps) {
   const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed)
+  const { getPerspectiveBySlug } = usePerspectives()
   const { isSpeaking, speakingMessageId, isSupported, speakMessage, stopSpeaking } = useTTS()
 
   const isUser = message.role === 'user'
   const perspective = message.perspective
-    ? PERSPECTIVES.find(p => p.id === message.perspective)
+    ? getPerspectiveBySlug(message.perspective)
     : null
 
   const isThisMessageSpeaking = speakingMessageId === message.id
@@ -83,7 +78,7 @@ export function ChatMessage({ message, defaultCollapsed = false }: ChatMessagePr
             ) : (
               <ChevronDown className="w-3 h-3" />
             )}
-            <span>{perspectiveIcons[perspective.id]}</span>
+            <span>{perspective.icon}</span>
             <span className="font-medium">{perspective.name}</span>
           </button>
         )}
