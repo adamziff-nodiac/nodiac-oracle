@@ -231,6 +231,23 @@ const timelines: TimelineData[] = [
   },
 ]
 
+// Ensure each row's last milestone is at the row's end date (for end-of-row diamond milestone feature)
+function normalizeEndMilestones(data: TimelineData[]): TimelineData[] {
+  return data.map((timeline) => ({
+    ...timeline,
+    rows: timeline.rows.map((row) => {
+      if (row.milestones.length === 0) return row
+      const milestones = [...row.milestones]
+      // Set the last milestone's quarter to match the row's end quarter
+      milestones[milestones.length - 1] = {
+        ...milestones[milestones.length - 1],
+        quarter: row.endQuarter,
+      }
+      return { ...row, milestones }
+    }),
+  }))
+}
+
 async function seed() {
   console.log('Finding user adam.ziff@nodiac.ai...')
 
@@ -268,8 +285,11 @@ async function seed() {
   console.log('Deleting existing timelines...')
   await supabase.from('timelines').delete().eq('user_id', userId)
 
+  // Normalize timelines to ensure last milestone matches row end date
+  const normalizedTimelines = normalizeEndMilestones(timelines)
+
   // Create each timeline
-  for (const timeline of timelines) {
+  for (const timeline of normalizedTimelines) {
     console.log(`Creating timeline: ${timeline.title}`)
 
     // Create timeline
