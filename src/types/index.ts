@@ -176,3 +176,6 @@ export const LIGHTWEIGHT_MODEL_MAP: Record<string, { id: string; provider: AIPro
 export function getLightweightModel(modelId: string): { id: string; provider: AIProvider } {
   return LIGHTWEIGHT_MODEL_MAP[modelId] || { id: 'claude-haiku-4-5-20251001', provider: 'anthropic' }
 }
+
+// Timeline types
+export * from './timeline'
