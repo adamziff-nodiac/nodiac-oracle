@@ -21,31 +21,31 @@ interface TimelineMilestoneProps {
   rowCount?: number
 }
 
-// Dynamic sizing based on row count - increased sizes
+// Dynamic sizing based on row count - larger sizes for better visibility
 function getMilestoneSizing(rowCount: number) {
   if (rowCount <= 2) {
     return {
-      markerSize: 20,
-      labelFontSize: 18,
-      deleteIconSize: 16,
+      markerSize: 26,
+      labelFontSize: 22,
+      deleteIconSize: 18,
     }
   } else if (rowCount <= 4) {
     return {
-      markerSize: 18,
-      labelFontSize: 16,
-      deleteIconSize: 14,
+      markerSize: 24,
+      labelFontSize: 20,
+      deleteIconSize: 16,
     }
   } else if (rowCount <= 6) {
     return {
-      markerSize: 16,
-      labelFontSize: 15,
-      deleteIconSize: 12,
+      markerSize: 22,
+      labelFontSize: 18,
+      deleteIconSize: 14,
     }
   } else {
     return {
-      markerSize: 14,
-      labelFontSize: 14,
-      deleteIconSize: 12,
+      markerSize: 20,
+      labelFontSize: 16,
+      deleteIconSize: 14,
     }
   }
 }

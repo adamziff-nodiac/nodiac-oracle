@@ -24,47 +24,47 @@ interface TimelineRowProps {
   rowCount?: number
 }
 
-// Dynamic sizing based on row count - increased base sizes
+// Dynamic sizing based on row count - larger sizes for better visibility
 function getSizing(rowCount: number) {
   if (rowCount <= 2) {
     return {
+      barHeight: 32,
+      handleSize: 36,
+      containerHeight: 120,
+      labelWidth: 130,
+      labelFontSize: 28,
+      gripSize: 28,
+      controlSize: 28,
+    }
+  } else if (rowCount <= 4) {
+    return {
+      barHeight: 28,
+      handleSize: 32,
+      containerHeight: 100,
+      labelWidth: 120,
+      labelFontSize: 26,
+      gripSize: 26,
+      controlSize: 26,
+    }
+  } else if (rowCount <= 6) {
+    return {
       barHeight: 24,
       handleSize: 28,
-      containerHeight: 100,
+      containerHeight: 90,
       labelWidth: 110,
-      labelFontSize: 22,
+      labelFontSize: 24,
       gripSize: 24,
       controlSize: 24,
     }
-  } else if (rowCount <= 4) {
+  } else {
     return {
       barHeight: 20,
       handleSize: 24,
       containerHeight: 80,
       labelWidth: 100,
-      labelFontSize: 20,
+      labelFontSize: 22,
       gripSize: 22,
       controlSize: 22,
-    }
-  } else if (rowCount <= 6) {
-    return {
-      barHeight: 16,
-      handleSize: 20,
-      containerHeight: 70,
-      labelWidth: 90,
-      labelFontSize: 18,
-      gripSize: 20,
-      controlSize: 20,
-    }
-  } else {
-    return {
-      barHeight: 14,
-      handleSize: 18,
-      containerHeight: 60,
-      labelWidth: 80,
-      labelFontSize: 16,
-      gripSize: 18,
-      controlSize: 18,
     }
   }
 }

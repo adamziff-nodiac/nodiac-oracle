@@ -17,31 +17,31 @@ interface TimelineCanvasProps {
   onDeletePhase: (phaseId: string) => void
 }
 
-// Dynamic sizing based on row count for the canvas - increased sizes
+// Dynamic sizing based on row count for the canvas - larger sizes for better visibility
 function getCanvasSizing(rowCount: number) {
   if (rowCount <= 2) {
+    return {
+      yearFontSize: 26,
+      quarterFontSize: 18,
+      leftMargin: 160,
+    }
+  } else if (rowCount <= 4) {
+    return {
+      yearFontSize: 24,
+      quarterFontSize: 17,
+      leftMargin: 150,
+    }
+  } else if (rowCount <= 6) {
     return {
       yearFontSize: 22,
       quarterFontSize: 16,
       leftMargin: 140,
     }
-  } else if (rowCount <= 4) {
+  } else {
     return {
       yearFontSize: 20,
       quarterFontSize: 15,
       leftMargin: 130,
-    }
-  } else if (rowCount <= 6) {
-    return {
-      yearFontSize: 18,
-      quarterFontSize: 14,
-      leftMargin: 120,
-    }
-  } else {
-    return {
-      yearFontSize: 16,
-      quarterFontSize: 13,
-      leftMargin: 110,
     }
   }
 }

@@ -19,31 +19,31 @@ interface TimelinePhaseProps {
   containerRef?: React.RefObject<HTMLDivElement | null>
 }
 
-// Dynamic sizing based on row count - increased sizes
+// Dynamic sizing based on row count - larger sizes for better visibility
 function getPhaseSizing(rowCount: number) {
   if (rowCount <= 2) {
     return {
-      labelFontSize: 20,
-      controlFontSize: 16,
-      deleteIconSize: 16,
+      labelFontSize: 24,
+      controlFontSize: 18,
+      deleteIconSize: 18,
     }
   } else if (rowCount <= 4) {
+    return {
+      labelFontSize: 22,
+      controlFontSize: 17,
+      deleteIconSize: 16,
+    }
+  } else if (rowCount <= 6) {
+    return {
+      labelFontSize: 20,
+      controlFontSize: 16,
+      deleteIconSize: 14,
+    }
+  } else {
     return {
       labelFontSize: 18,
       controlFontSize: 15,
       deleteIconSize: 14,
-    }
-  } else if (rowCount <= 6) {
-    return {
-      labelFontSize: 16,
-      controlFontSize: 14,
-      deleteIconSize: 12,
-    }
-  } else {
-    return {
-      labelFontSize: 15,
-      controlFontSize: 13,
-      deleteIconSize: 12,
     }
   }
 }
