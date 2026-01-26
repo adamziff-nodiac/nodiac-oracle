@@ -7,6 +7,10 @@ import { TTSProvider } from '@/contexts/TTSContext'
 export const metadata: Metadata = {
   title: 'Nodiac Oracle - Multi-Perspective AI Advisor',
   description: 'Get insights from different industry perspectives on data centers and clean energy',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/favicon.svg',
+  },
 }
 
 export const viewport: Viewport = {
@@ -16,6 +20,7 @@ export const viewport: Viewport = {
   userScalable: false,
   viewportFit: 'cover',
   interactiveWidget: 'resizes-content',
+  themeColor: '#490f42',
 }
 
 // Script to set theme before hydration to prevent flash

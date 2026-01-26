@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useCallback, useEffect } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import { X } from 'lucide-react'
 import { EditableText } from './EditableText'
 import { DatePicker } from './DatePicker'
@@ -15,8 +15,6 @@ interface TimelinePhaseProps {
   onUpdate: (updates: { label?: string; date?: Date }) => void
   onDelete: () => void
   rowCount?: number
-  leftMargin?: number
-  containerRef?: React.RefObject<HTMLDivElement | null>
 }
 
 // Dynamic sizing based on row count - larger sizes for better visibility
@@ -55,8 +53,6 @@ export function TimelinePhase({
   onUpdate,
   onDelete,
   rowCount = 5,
-  leftMargin = 96,
-  containerRef,
 }: TimelinePhaseProps) {
   const [showControls, setShowControls] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -64,6 +60,7 @@ export function TimelinePhase({
   const [originalPosition, setOriginalPosition] = useState(0)
   const [dragPosition, setDragPosition] = useState<number | null>(null)
   const [hasMoved, setHasMoved] = useState(false)
+  const phaseRef = useRef<HTMLDivElement>(null)
 
   const basePosition = dateToPosition(phase.date, startYear, endYear)
   // Use drag position during drag, otherwise use the actual position
@@ -92,12 +89,10 @@ export function TimelinePhase({
 
   // Handle drag move - only update local visual state
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging || !containerRef?.current) return
+    if (!isDragging || !phaseRef.current?.parentElement) return
 
-    const rect = containerRef.current.getBoundingClientRect()
-    // Account for leftMargin in the calculation
-    const effectiveWidth = rect.width - leftMargin
-    const deltaPercent = ((e.clientX - dragStartX) / effectiveWidth) * 100
+    const rect = phaseRef.current.parentElement.getBoundingClientRect()
+    const deltaPercent = ((e.clientX - dragStartX) / rect.width) * 100
     let newPosition = snapToHalfQuarter(originalPosition + deltaPercent)
     newPosition = Math.max(0, Math.min(100, newPosition))
 
@@ -106,7 +101,7 @@ export function TimelinePhase({
       setHasMoved(true)
     }
     setDragPosition(newPosition)
-  }, [isDragging, dragStartX, originalPosition, snapToHalfQuarter, containerRef, leftMargin])
+  }, [isDragging, dragStartX, originalPosition, snapToHalfQuarter])
 
   // Handle drag end - only write to DB if position changed
   const handleMouseUp = useCallback(() => {
@@ -139,11 +134,12 @@ export function TimelinePhase({
 
   return (
     <div
+      ref={phaseRef}
       className={cn(
         "absolute top-0 bottom-0 z-20 group/phase",
         isDragging && "z-30"
       )}
-      style={{ left: `calc(${leftMargin}px + ${position}%)` }}
+      style={{ left: `${position}%` }}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => !isDragging && setShowControls(false)}
     >

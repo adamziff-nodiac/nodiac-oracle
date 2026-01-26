@@ -22,6 +22,7 @@ interface TimelineRowProps {
   onDeleteMilestone: (milestoneId: string) => void
   isDragging?: boolean
   rowCount?: number
+  leftMargin: number
 }
 
 // Dynamic sizing based on row count - larger sizes for better visibility
@@ -80,6 +81,7 @@ export function TimelineRow({
   onDeleteMilestone,
   isDragging,
   rowCount = 5,
+  leftMargin,
 }: TimelineRowProps) {
   const {
     attributes,
@@ -260,36 +262,39 @@ export function TimelineRow({
       ref={setNodeRef}
       style={style}
       className={cn(
-        'flex items-center gap-2 py-1 group',
+        'relative py-1 group',
         (isDragging || isSortableDragging) && 'opacity-50'
       )}
     >
-      {/* Drag Handle for row reordering */}
-      <button
-        {...attributes}
-        {...listeners}
-        className="flex-shrink-0 p-1 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing"
-        data-edit-control
-      >
-        <GripVertical style={{ width: sizing.gripSize, height: sizing.gripSize }} />
-      </button>
+      {/* Left side controls - positioned absolutely */}
+      <div className="absolute left-0 top-0 bottom-0 flex items-center gap-2" style={{ width: leftMargin }}>
+        {/* Drag Handle for row reordering */}
+        <button
+          {...attributes}
+          {...listeners}
+          className="flex-shrink-0 p-1 text-gray-500 hover:text-gray-300 cursor-grab active:cursor-grabbing"
+          data-edit-control
+        >
+          <GripVertical style={{ width: sizing.gripSize, height: sizing.gripSize }} />
+        </button>
 
-      {/* Row Label */}
-      <div className="flex-shrink-0" style={{ width: sizing.labelWidth }}>
-        <EditableText
-          value={row.label}
-          onChange={(label) => onUpdate({ label })}
-          className="font-semibold text-white truncate"
-          inputClassName="font-semibold text-white w-full"
-          style={{ fontSize: sizing.labelFontSize }}
-        />
+        {/* Row Label */}
+        <div className="flex-1 min-w-0">
+          <EditableText
+            value={row.label}
+            onChange={(label) => onUpdate({ label })}
+            className="font-semibold text-white truncate"
+            inputClassName="font-semibold text-white w-full"
+            style={{ fontSize: sizing.labelFontSize }}
+          />
+        </div>
       </div>
 
-      {/* Timeline Bar Container */}
+      {/* Timeline Bar Container - uses same marginLeft as grid */}
       <div
         ref={containerRef}
-        className="flex-1 relative"
-        style={{ height: sizing.containerHeight }}
+        className="relative"
+        style={{ height: sizing.containerHeight, marginLeft: leftMargin }}
       >
         {/* The Bar - draggable for moving, double-click to add milestone */}
         <div
@@ -335,7 +340,7 @@ export function TimelineRow({
           {/* End milestone label (if exists) */}
           {endMilestone && (
             <div
-              className="absolute bottom-1/2 mb-4 whitespace-nowrap"
+              className="absolute bottom-1/2 left-0 mb-4 whitespace-nowrap"
               style={{ transform: 'translateX(-50%)' }}
             >
               <EditableText
@@ -351,7 +356,7 @@ export function TimelineRow({
           {/* Diamond handle */}
           <div
             className={cn(
-              'absolute top-1/2 border-2 border-white cursor-ew-resize z-10 shadow-lg hover:scale-125 transition-transform',
+              'absolute top-1/2 left-0 border-2 border-white cursor-ew-resize z-10 shadow-lg hover:scale-125 transition-transform',
               dragType === 'end' && 'scale-125'
             )}
             style={{
@@ -383,8 +388,11 @@ export function TimelineRow({
         ))}
       </div>
 
-      {/* Row Controls */}
-      <div className="flex-shrink-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" data-edit-control>
+      {/* Row Controls - positioned absolutely on the right */}
+      <div
+        className="absolute right-0 top-0 bottom-0 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
+        data-edit-control
+      >
         <ColorPicker value={row.color} onChange={(color) => onUpdate({ color })} />
         <button
           onClick={onDelete}

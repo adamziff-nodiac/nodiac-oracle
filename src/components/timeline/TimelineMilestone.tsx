@@ -149,7 +149,7 @@ export function TimelineMilestone({
     >
       {/* Label - always positioned above the marker */}
       <div
-        className="absolute bottom-1/2 mb-4 whitespace-nowrap flex items-center gap-1"
+        className="absolute bottom-1/2 left-0 mb-4 whitespace-nowrap flex items-center gap-1"
         style={{ transform: 'translateX(-50%)' }}
       >
         <EditableText
@@ -180,7 +180,7 @@ export function TimelineMilestone({
 
       {/* Vertical line connecting label to marker */}
       <div
-        className="absolute bottom-1/2 w-px bg-white/40"
+        className="absolute bottom-1/2 left-0 w-px bg-white/40"
         style={{
           height: 12,
           transform: 'translateX(-50%)',
@@ -190,7 +190,7 @@ export function TimelineMilestone({
       {/* Diamond Marker - centered on the bar, visible in exports */}
       <div
         className={cn(
-          'absolute top-1/2 border-2 border-white shadow-lg cursor-grab transition-transform',
+          'absolute top-1/2 left-0 border-2 border-white shadow-lg cursor-grab transition-transform',
           isDragging && 'cursor-grabbing scale-125',
           isHovered && !isDragging && 'scale-110'
         )}

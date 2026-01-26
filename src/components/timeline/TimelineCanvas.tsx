@@ -110,37 +110,38 @@ export function TimelineCanvas({
           {years.map((year, yearIndex) =>
             ['Q1', 'Q2', 'Q3', 'Q4'].map((q, qIndex) => {
               const position = (yearIndex * 4 + qIndex) / (totalYears * 4) * 100
+              const isYearBoundary = qIndex === 0
               return (
                 <div
                   key={`grid-${year}-${q}`}
-                  className="absolute top-0 bottom-0 border-l border-white/5"
+                  className={`absolute top-0 bottom-0 border-l ${isYearBoundary ? 'border-white/20' : 'border-white/5'}`}
                   style={{ left: `${position}%` }}
                 />
               )
             })
           )}
-          {/* Final line */}
-          <div className="absolute top-0 bottom-0 right-0 border-l border-white/5" />
+          {/* Final line (end of last year) */}
+          <div className="absolute top-0 bottom-0 right-0 border-l border-white/20" />
         </div>
 
-        {/* Phase Lines */}
-        {phases.map((phase) => (
-          <TimelinePhase
-            key={phase.id}
-            phase={phase}
-            startYear={startYear}
-            endYear={endYear}
-            onUpdate={(updates) => onUpdatePhase(phase.id, updates)}
-            onDelete={() => onDeletePhase(phase.id)}
-            rowCount={rowCount}
-            leftMargin={sizing.leftMargin}
-            containerRef={contentRef}
-          />
-        ))}
+        {/* Phase Lines - positioned in a container with left margin like the grid */}
+        <div className="absolute inset-0" style={{ marginLeft: sizing.leftMargin }}>
+          {phases.map((phase) => (
+            <TimelinePhase
+              key={phase.id}
+              phase={phase}
+              startYear={startYear}
+              endYear={endYear}
+              onUpdate={(updates) => onUpdatePhase(phase.id, updates)}
+              onDelete={() => onDeletePhase(phase.id)}
+              rowCount={rowCount}
+            />
+          ))}
+        </div>
 
-        {/* Rows - use flexbox to distribute space evenly */}
+        {/* Rows - use flexbox to distribute space evenly, with top padding for phase labels */}
         <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="relative z-10 h-full flex flex-col justify-evenly">
+          <div className="relative z-10 h-full flex flex-col justify-evenly pt-8">
             {rows.map((row) => (
               <TimelineRow
                 key={row.id}
@@ -153,6 +154,7 @@ export function TimelineCanvas({
                 onUpdateMilestone={onUpdateMilestone}
                 onDeleteMilestone={onDeleteMilestone}
                 rowCount={rowCount}
+                leftMargin={sizing.leftMargin}
               />
             ))}
           </div>

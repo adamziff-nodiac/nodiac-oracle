@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, Clock, Trash2, MoreVertical } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { AuthButton } from '@/components/auth/AuthButton'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
@@ -97,17 +98,20 @@ export default function TimelineListPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nodiac-dark via-slate-900 to-nodiac-dark">
+    <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-nodiac-dark dark:via-slate-900 dark:to-nodiac-dark">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-nodiac-dark/80 backdrop-blur-sm border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-sm border-b border-gray-200 dark:border-white/5">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <Link href="/" className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
               <span className="text-white font-bold text-lg">N</span>
             </div>
-            <span className="text-white font-semibold text-xl hidden sm:inline">Nodiac</span>
+            <span className="text-gray-900 dark:text-white font-semibold text-xl hidden sm:inline">Nodiac</span>
           </Link>
-          <Navigation />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Navigation />
+          </div>
         </div>
       </header>
 
@@ -115,7 +119,7 @@ export default function TimelineListPage() {
       <main className="pt-24 pb-16 px-4">
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-white">Timelines</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Timelines</h1>
             <button
               onClick={createNewTimeline}
               disabled={isGuest}
@@ -128,7 +132,7 @@ export default function TimelineListPage() {
 
           {isGuest ? (
             <div className="text-center py-16">
-              <p className="text-gray-400 mb-6">Sign in to create and save timelines</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-6">Sign in to create and save timelines</p>
               <div className="max-w-xs mx-auto">
                 <AuthButton />
               </div>
@@ -139,7 +143,7 @@ export default function TimelineListPage() {
             </div>
           ) : timelines.length === 0 ? (
             <div className="text-center py-16">
-              <p className="text-gray-400 mb-4">No timelines yet</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">No timelines yet</p>
               <button
                 onClick={createNewTimeline}
                 className="text-nodiac-primary hover:underline"
@@ -152,13 +156,13 @@ export default function TimelineListPage() {
               {timelines.map((timeline) => (
                 <div
                   key={timeline.id}
-                  className="group relative bg-white/5 border border-white/10 rounded-xl p-6 hover:bg-white/10 hover:border-white/20 transition-all"
+                  className="group relative bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl p-6 hover:bg-gray-50 dark:hover:bg-white/10 hover:border-gray-300 dark:hover:border-white/20 transition-all shadow-sm"
                 >
                   <Link href={`/timeline/${timeline.id}`} className="block">
-                    <h2 className="text-xl font-semibold text-white mb-2">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                       {timeline.title}
                     </h2>
-                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                    <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                       <span>
                         {timeline.startYear} - {timeline.endYear}
                       </span>
@@ -175,19 +179,19 @@ export default function TimelineListPage() {
                         e.preventDefault()
                         setMenuOpen(menuOpen === timeline.id ? null : timeline.id)
                       }}
-                      className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                      className="p-2 text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
                     >
                       <MoreVertical className="w-5 h-5" />
                     </button>
 
                     {menuOpen === timeline.id && (
-                      <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-white/10 rounded-lg shadow-xl py-1 min-w-[120px]">
+                      <div className="absolute right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-white/10 rounded-lg shadow-xl py-1 min-w-[120px]">
                         <button
                           onClick={(e) => {
                             e.preventDefault()
                             deleteTimeline(timeline.id)
                           }}
-                          className="w-full flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-white/5 transition-colors"
+                          className="w-full flex items-center gap-2 px-4 py-2 text-red-500 dark:text-red-400 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                         >
                           <Trash2 className="w-4 h-4" />
                           Delete

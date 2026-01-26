@@ -59,7 +59,7 @@ export function PerspectiveSelector({
                     'w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-all',
                     'text-left text-sm',
                     selected
-                      ? 'border-nodiac-primary bg-nodiac-primary/5 dark:bg-nodiac-primary/10'
+                      ? 'border-nodiac-primary dark:border-nodiac-secondary bg-nodiac-primary/5 dark:bg-nodiac-secondary/10'
                       : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500',
                     'disabled:opacity-50 disabled:cursor-not-allowed'
                   )}
@@ -68,16 +68,16 @@ export function PerspectiveSelector({
                     className={cn(
                       'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center mt-0.5',
                       selected
-                        ? 'bg-nodiac-primary border-nodiac-primary'
+                        ? 'bg-nodiac-primary dark:bg-nodiac-secondary border-nodiac-primary dark:border-nodiac-secondary'
                         : 'border-gray-300 dark:border-gray-500 bg-white dark:bg-gray-700'
                     )}
                   >
-                    {selected && <Check className="w-3 h-3 text-white" />}
+                    {selected && <Check className="w-3 h-3 text-white dark:text-nodiac-dark" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-base">{perspective.icon}</span>
-                      <span className={cn('font-medium', selected ? 'text-nodiac-primary' : 'text-gray-700 dark:text-gray-200')}>
+                      <span className={cn('font-medium', selected ? 'text-nodiac-primary dark:text-nodiac-secondary' : 'text-gray-700 dark:text-gray-200')}>
                         {perspective.name}
                       </span>
                     </div>

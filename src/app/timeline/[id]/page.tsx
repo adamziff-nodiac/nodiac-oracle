@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { TimelineBuilder } from '@/components/timeline/TimelineBuilder'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
@@ -175,7 +176,7 @@ export default function TimelineEditorPage() {
 
   if (isLoading || authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-nodiac-dark via-slate-900 to-nodiac-dark flex items-center justify-center">
+      <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-nodiac-dark dark:via-slate-900 dark:to-nodiac-dark flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-nodiac-primary" />
       </div>
     )
@@ -183,8 +184,8 @@ export default function TimelineEditorPage() {
 
   if (error || !timeline) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-nodiac-dark via-slate-900 to-nodiac-dark">
-        <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-nodiac-dark/80 backdrop-blur-sm border-b border-white/5">
+      <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-nodiac-dark dark:via-slate-900 dark:to-nodiac-dark">
+        <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-sm border-b border-gray-200 dark:border-white/5">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
             <Link href="/" className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
@@ -196,7 +197,7 @@ export default function TimelineEditorPage() {
         </header>
         <main className="pt-24 px-4">
           <div className="max-w-4xl mx-auto text-center">
-            <p className="text-gray-400 mb-4">{error || 'Timeline not found'}</p>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">{error || 'Timeline not found'}</p>
             <Link href="/timeline" className="text-nodiac-primary hover:underline">
               Back to timelines
             </Link>
@@ -207,26 +208,29 @@ export default function TimelineEditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-nodiac-dark via-slate-900 to-nodiac-dark">
+    <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-nodiac-dark dark:via-slate-900 dark:to-nodiac-dark">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-nodiac-dark/80 backdrop-blur-sm border-b border-white/5">
+      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-sm border-b border-gray-200 dark:border-white/5">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4">
             <Link
               href="/timeline"
-              className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
               <span className="hidden sm:inline">Back</span>
             </Link>
-            <div className="h-6 w-px bg-white/10" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-white/10" />
             <Link href="/" className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
                 <span className="text-white font-bold text-sm">N</span>
               </div>
             </Link>
           </div>
-          <Navigation />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Navigation />
+          </div>
         </div>
       </header>
 

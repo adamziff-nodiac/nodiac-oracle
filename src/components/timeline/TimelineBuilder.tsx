@@ -598,6 +598,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
                 onUpdateMilestone={() => {}}
                 onDeleteMilestone={() => {}}
                 isDragging
+                leftMargin={150}
               />
             </div>
           ) : null}
