@@ -13,10 +13,12 @@ export function AuthButton() {
   const handleSignIn = async () => {
     setIsSigningIn(true)
     const supabase = createClient()
+    // Include current path so user returns here after login
+    const returnPath = encodeURIComponent(window.location.pathname)
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: `${window.location.origin}/auth/callback?next=${returnPath}`,
       },
     })
     // Note: we don't setIsSigningIn(false) here because the page will redirect

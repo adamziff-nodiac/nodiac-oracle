@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Plus, Clock, Trash2, MoreVertical } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
+import { AuthButton } from '@/components/auth/AuthButton'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 import type { Timeline } from '@/types/timeline'
@@ -127,13 +128,10 @@ export default function TimelineListPage() {
 
           {isGuest ? (
             <div className="text-center py-16">
-              <p className="text-gray-400 mb-4">Sign in to create and save timelines</p>
-              <Link
-                href="/chat"
-                className="text-nodiac-primary hover:underline"
-              >
-                Go to Oracle to sign in
-              </Link>
+              <p className="text-gray-400 mb-6">Sign in to create and save timelines</p>
+              <div className="max-w-xs mx-auto">
+                <AuthButton />
+              </div>
             </div>
           ) : isLoading ? (
             <div className="flex items-center justify-center py-16">

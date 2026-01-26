@@ -50,7 +50,7 @@ const timelines: TimelineData[] = [
         startQuarter: [2026, 'Q1'],
         endQuarter: [2030, 'Q1'],
         milestones: [
-          { label: '120 MW', quarter: [2027, 'Q4'] },
+          { label: '104 MW', quarter: [2027, 'Q4'] },  // Phase 1: 104 MW solar
           { label: '320 MW', quarter: [2028, 'Q3'] },
           { label: '481 MW', quarter: [2030, 'Q1'] },
         ],
@@ -61,6 +61,7 @@ const timelines: TimelineData[] = [
         startQuarter: [2026, 'Q1'],
         endQuarter: [2029, 'Q4'],
         milestones: [
+          { label: '200 MWh', quarter: [2027, 'Q4'] },  // Phase 1: 50 MW 4-hr BESS
           { label: '480 MWh', quarter: [2028, 'Q2'] },
           { label: '721 MWh', quarter: [2029, 'Q4'] },
         ],
@@ -116,7 +117,7 @@ const timelines: TimelineData[] = [
         startQuarter: [2026, 'Q1'],
         endQuarter: [2029, 'Q4'],
         milestones: [
-          { label: '150 MW', quarter: [2027, 'Q3'] },
+          { label: '200 MW', quarter: [2027, 'Q3'] },  // Phase 1: 200 MW solar
           { label: '400 MW', quarter: [2028, 'Q2'] },
           { label: '921 MW', quarter: [2029, 'Q4'] },
         ],
@@ -127,6 +128,7 @@ const timelines: TimelineData[] = [
         startQuarter: [2026, 'Q1'],
         endQuarter: [2029, 'Q3'],
         milestones: [
+          { label: '800 MWh', quarter: [2027, 'Q3'] },  // Phase 1: 200 MW 4-hr BESS
           { label: '600 MWh', quarter: [2028, 'Q2'] },
           { label: '1382 MWh', quarter: [2029, 'Q3'] },
         ],
@@ -176,17 +178,7 @@ const timelines: TimelineData[] = [
     startYear: 2026,
     endYear: 2030,
     rows: [
-      {
-        label: 'Solar',
-        color: COLORS.Solar,
-        startQuarter: [2026, 'Q1'],
-        endQuarter: [2029, 'Q3'],
-        milestones: [
-          { label: '120 MW', quarter: [2027, 'Q2'] },
-          { label: '300 MW', quarter: [2028, 'Q1'] },
-          { label: '470 MW', quarter: [2029, 'Q3'] },
-        ],
-      },
+      // Solar row removed
       {
         label: 'BESS',
         color: COLORS.BESS,
@@ -201,10 +193,10 @@ const timelines: TimelineData[] = [
         label: 'Gas',
         color: COLORS.Gas,
         startQuarter: [2026, 'Q1'],
-        endQuarter: [2030, 'Q3'],
+        endQuarter: [2029, 'Q3'],
         milestones: [
-          { label: '500 MW', quarter: [2028, 'Q3'] },
-          { label: '1000 MW', quarter: [2030, 'Q3'] },
+          { label: '500 MW', quarter: [2027, 'Q3'] },   // Moved up 1 year from Q3 2028
+          { label: '1000 MW', quarter: [2029, 'Q3'] },  // Moved up 1 year from Q3 2030
         ],
       },
       {
