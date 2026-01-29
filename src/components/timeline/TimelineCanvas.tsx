@@ -16,6 +16,7 @@ interface TimelineCanvasProps {
   onDeleteMilestone: (milestoneId: string) => void
   onUpdatePhase: (phaseId: string, updates: { label?: string; date?: Date }) => void
   onDeletePhase: (phaseId: string) => void
+  onUpdateNotes: (notes: string) => void
 }
 
 // Dynamic sizing based on row count for the canvas - larger sizes for better visibility
@@ -56,8 +57,9 @@ export function TimelineCanvas({
   onDeleteMilestone,
   onUpdatePhase,
   onDeletePhase,
+  onUpdateNotes,
 }: TimelineCanvasProps) {
-  const { startYear, endYear, rows, phases } = timeline
+  const { startYear, endYear, rows, phases, notes } = timeline
   const totalYears = endYear - startYear + 1
   const years = Array.from({ length: totalYears }, (_, i) => startYear + i)
 
@@ -71,27 +73,47 @@ export function TimelineCanvas({
   const sizing = useMemo(() => getCanvasSizing(rowCount), [rowCount])
 
   // Calculate phase stagger levels based on overlap detection
-  // Phases within 10% of each other need to be staggered
+  // Estimate label width based on character count (only first line if label has colon)
   const phaseStaggerLevels = useMemo(() => {
-    const OVERLAP_THRESHOLD = 10 // percentage points
+    const CHAR_WIDTH_PERCENT = 0.8 // Each character takes ~0.8% of timeline width
+    const PADDING_PERCENT = 3 // Extra padding between labels
+
     const sortedPhases = [...phases]
-      .map(p => ({ id: p.id, position: dateToPosition(p.date, startYear, endYear) }))
+      .map(p => {
+        const position = dateToPosition(p.date, startYear, endYear)
+        // Only count characters before first ": " since that's the first line
+        const colonIndex = p.label.indexOf(': ')
+        const firstLineLength = colonIndex !== -1 ? colonIndex + 1 : p.label.length
+        const labelWidth = firstLineLength * CHAR_WIDTH_PERCENT
+        return {
+          id: p.id,
+          position,
+          left: position,
+          right: position + labelWidth,
+        }
+      })
       .sort((a, b) => a.position - b.position)
 
     const levels: Record<string, number> = {}
-    let currentLevel = 0
-    let lastPosition = -Infinity
+    // Track rightmost extent at each level (support up to 6 levels)
+    const levelRightEdges: number[] = [-Infinity, -Infinity, -Infinity, -Infinity, -Infinity, -Infinity]
 
     for (const phase of sortedPhases) {
-      if (phase.position - lastPosition < OVERLAP_THRESHOLD) {
-        // Too close to previous, increment level
-        currentLevel++
-      } else {
-        // Far enough, reset to level 0
-        currentLevel = 0
+      // Try each level in order
+      let assigned = false
+      for (let level = 0; level < 6; level++) {
+        if (phase.left > levelRightEdges[level] + PADDING_PERCENT) {
+          levels[phase.id] = level
+          levelRightEdges[level] = phase.right
+          assigned = true
+          break
+        }
       }
-      levels[phase.id] = currentLevel
-      lastPosition = phase.position
+      // All levels would overlap - use level 0 anyway
+      if (!assigned) {
+        levels[phase.id] = 0
+        levelRightEdges[0] = phase.right
+      }
     }
 
     return levels
@@ -132,7 +154,7 @@ export function TimelineCanvas({
       </div>
 
       {/* Main content area with rows */}
-      <div ref={contentRef} className="flex-1 relative min-h-0">
+      <div ref={contentRef} className="flex-1 relative min-h-0 flex flex-col">
         {/* Vertical grid lines */}
         <div className="absolute inset-0 pointer-events-none" style={{ marginLeft: sizing.leftMargin }}>
           {years.map((year, yearIndex) =>
@@ -153,7 +175,7 @@ export function TimelineCanvas({
         </div>
 
         {/* Phase Lines - positioned in a container with left margin like the grid */}
-        <div className="absolute inset-0" style={{ marginLeft: sizing.leftMargin }}>
+        <div className="absolute inset-0 overflow-hidden z-[1]" style={{ marginLeft: sizing.leftMargin }}>
           {phases.map((phase) => (
             <TimelinePhase
               key={phase.id}
@@ -170,7 +192,7 @@ export function TimelineCanvas({
 
         {/* Rows - use flexbox to distribute space evenly, with top padding for phase labels */}
         <SortableContext items={rows.map((r) => r.id)} strategy={verticalListSortingStrategy}>
-          <div className="relative z-10 h-full flex flex-col justify-evenly pt-8">
+          <div className="relative z-10 flex-1 flex flex-col justify-evenly pt-8">
             {rows.map((row) => (
               <TimelineRow
                 key={row.id}
@@ -195,37 +217,54 @@ export function TimelineCanvas({
             Click &quot;+ Row&quot; to add your first timeline row
           </div>
         )}
+
+        {/* Notes section - edge-to-edge background to hide grid and phase lines */}
+        {notes !== undefined && notes !== '' && (
+          <div className="flex-shrink-0 relative z-[15] -mx-4 px-4 py-3 mt-6 bg-[var(--background)]">
+            <textarea
+              value={notes}
+              onChange={(e) => onUpdateNotes(e.target.value)}
+              placeholder="Add notes..."
+              className="w-full bg-transparent text-gray-400 text-sm leading-relaxed resize-none outline-none placeholder:text-gray-600 px-4"
+              style={{ fontSize: 14, minHeight: 40 }}
+              rows={Math.max(notes.split('\n').length, 2)}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Bottom axis */}
-      <div className="flex-shrink-0 mt-2">
-        <div className="flex" style={{ marginLeft: sizing.leftMargin }}>
-          {years.map((year) => (
-            <div key={year} className="flex" style={{ width: `${yearWidth}%` }}>
-              {['Q1', 'Q2', 'Q3', 'Q4'].map((q) => (
-                <div
-                  key={`bottom-${year}-${q}`}
-                  className="text-center text-gray-500"
-                  style={{ width: '25%', fontSize: sizing.quarterFontSize }}
-                >
-                  {q}
-                </div>
-              ))}
-            </div>
-          ))}
+      {/* Bottom section - axis (when no notes) */}
+      {!(notes !== undefined && notes !== '') && (
+        <div className="flex-shrink-0 mt-2">
+          {/* Bottom axis */}
+          <div className="flex" style={{ marginLeft: sizing.leftMargin }}>
+            {years.map((year) => (
+              <div key={year} className="flex" style={{ width: `${yearWidth}%` }}>
+                {['Q1', 'Q2', 'Q3', 'Q4'].map((q) => (
+                  <div
+                    key={`bottom-${year}-${q}`}
+                    className="text-center text-gray-500"
+                    style={{ width: '25%', fontSize: sizing.quarterFontSize }}
+                  >
+                    {q}
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <div className="flex mt-1" style={{ marginLeft: sizing.leftMargin }}>
+            {years.map((year) => (
+              <div
+                key={year}
+                className="text-center font-semibold text-white/80"
+                style={{ width: `${yearWidth}%`, fontSize: sizing.yearFontSize }}
+              >
+                {year}
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex mt-1" style={{ marginLeft: sizing.leftMargin }}>
-          {years.map((year) => (
-            <div
-              key={year}
-              className="text-center font-semibold text-white/80"
-              style={{ width: `${yearWidth}%`, fontSize: sizing.yearFontSize }}
-            >
-              {year}
-            </div>
-          ))}
-        </div>
-      </div>
+      )}
     </div>
   )
 }
