@@ -650,7 +650,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
               as="h1"
             />
             {/* Legend */}
-            <div className="flex items-center gap-1.5 text-sm text-white/60">
+            <div className="flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1">
               <svg width="10" height="10" viewBox="0 0 10 10">
                 <polygon points="5,0 10,5 5,10 0,5" fill="currentColor" />
               </svg>
