@@ -78,9 +78,9 @@ export function TimelinePhase({
     const firstPart = phase.label.slice(0, colonIndex + 1)
     const secondPart = phase.label.slice(colonIndex + 2)
     return (
-      <span className="flex flex-col leading-tight">
-        <span>{firstPart}</span>
-        <span>{secondPart}</span>
+      <span className="flex flex-col gap-0" style={{ lineHeight: 1.1 }}>
+        <span className="leading-none">{firstPart}</span>
+        <span className="leading-none">{secondPart}</span>
       </span>
     )
   }, [phase.label])
