@@ -180,7 +180,7 @@ export function TimelinePhase({
         style={{ top: 12 + (staggerLevel * 28), left: 0 }}
       >
         {/* Label - pill centered on line with bottom teal accent */}
-        <div className="bg-slate-700/90 backdrop-blur-sm px-2 py-px rounded border border-white/10 border-b-2 border-b-nodiac-secondary leading-tight shadow-sm text-center">
+        <div className="bg-slate-700/90 backdrop-blur-sm px-2 py-px rounded border border-white/10 border-b-2 border-b-nodiac-primary leading-tight shadow-sm text-center">
           <EditableText
             value={phase.label}
             onChange={(label) => onUpdate({ label })}
