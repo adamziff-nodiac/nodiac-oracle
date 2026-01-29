@@ -175,24 +175,32 @@ export function TimelinePhase({
         )} />
       </div>
 
-      {/* Label and controls container - continuous hover area */}
+      {/* Label and controls container - connected to dashed line */}
       <div
-        className="absolute left-2 flex flex-col"
-        style={{ top: 12 + (staggerLevel * 24) }}
+        className="absolute flex flex-col"
+        style={{ top: 12 + (staggerLevel * 28), left: 0 }}
       >
-        <EditableText
-          value={phase.label}
-          onChange={(label) => onUpdate({ label })}
-          className="font-medium text-white/70 whitespace-nowrap"
-          inputClassName="font-medium text-white/70"
-          style={{ fontSize: sizing.labelFontSize, lineHeight: 0.95 }}
-          displayValue={formattedLabel}
-        />
+        {/* Label with colored background */}
+        <div className="flex items-stretch">
+          {/* Connector tab that touches the dashed line */}
+          <div className="w-1 bg-nodiac-primary rounded-l" />
+          {/* Label content */}
+          <div className="bg-nodiac-primary/90 backdrop-blur-sm px-2 py-1 rounded-r border-l-0">
+            <EditableText
+              value={phase.label}
+              onChange={(label) => onUpdate({ label })}
+              className="font-semibold text-white whitespace-nowrap"
+              inputClassName="font-semibold text-white bg-transparent"
+              style={{ fontSize: sizing.labelFontSize, lineHeight: 1.1 }}
+              displayValue={formattedLabel}
+            />
+          </div>
+        </div>
 
         {/* Controls */}
         {showControls && (
           <div
-            className="flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 mt-1"
+            className="flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 mt-1 ml-1"
             data-edit-control
           >
             <DatePicker
