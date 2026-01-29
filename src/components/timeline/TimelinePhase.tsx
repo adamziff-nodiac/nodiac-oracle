@@ -180,17 +180,17 @@ export function TimelinePhase({
         className="absolute flex flex-col"
         style={{ top: 12 + (staggerLevel * 28), left: 0 }}
       >
-        {/* Label with colored background */}
+        {/* Label with subtle background */}
         <div className="flex items-stretch">
           {/* Connector tab that touches the dashed line */}
-          <div className="w-1 bg-nodiac-primary rounded-l" />
+          <div className="w-1 bg-white/30 rounded-l" />
           {/* Label content */}
-          <div className="bg-nodiac-primary/90 backdrop-blur-sm px-2 py-1 rounded-r border-l-0">
+          <div className="bg-slate-700/90 backdrop-blur-sm px-2 py-1 rounded-r border border-l-0 border-white/10">
             <EditableText
               value={phase.label}
               onChange={(label) => onUpdate({ label })}
-              className="font-semibold text-white whitespace-nowrap"
-              inputClassName="font-semibold text-white bg-transparent"
+              className="font-medium text-white/90 whitespace-nowrap"
+              inputClassName="font-medium text-white/90 bg-transparent"
               style={{ fontSize: sizing.labelFontSize, lineHeight: 1.1 }}
               displayValue={formattedLabel}
             />
