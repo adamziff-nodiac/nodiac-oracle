@@ -18,31 +18,31 @@ interface TimelinePhaseProps {
   staggerLevel?: number
 }
 
-// Dynamic sizing based on row count - larger sizes for better visibility
+// Dynamic sizing based on row count - smaller sizes for phase labels
 function getPhaseSizing(rowCount: number) {
   if (rowCount <= 2) {
     return {
-      labelFontSize: 24,
-      controlFontSize: 18,
-      deleteIconSize: 18,
+      labelFontSize: 14,
+      controlFontSize: 14,
+      deleteIconSize: 14,
     }
   } else if (rowCount <= 4) {
     return {
-      labelFontSize: 22,
-      controlFontSize: 17,
-      deleteIconSize: 16,
+      labelFontSize: 13,
+      controlFontSize: 13,
+      deleteIconSize: 14,
     }
   } else if (rowCount <= 6) {
     return {
-      labelFontSize: 20,
-      controlFontSize: 16,
-      deleteIconSize: 14,
+      labelFontSize: 12,
+      controlFontSize: 12,
+      deleteIconSize: 12,
     }
   } else {
     return {
-      labelFontSize: 18,
-      controlFontSize: 15,
-      deleteIconSize: 14,
+      labelFontSize: 11,
+      controlFontSize: 11,
+      deleteIconSize: 12,
     }
   }
 }
@@ -70,6 +70,20 @@ export function TimelinePhase({
 
   // Get dynamic sizing
   const sizing = useMemo(() => getPhaseSizing(rowCount), [rowCount])
+
+  // Format label with line break after first colon
+  const formattedLabel = useMemo(() => {
+    const colonIndex = phase.label.indexOf(': ')
+    if (colonIndex === -1) return null // No colon, use default display
+    const firstPart = phase.label.slice(0, colonIndex + 1)
+    const secondPart = phase.label.slice(colonIndex + 2)
+    return (
+      <span className="flex flex-col">
+        <span>{firstPart}</span>
+        <span style={{ marginTop: 2 }}>{secondPart}</span>
+      </span>
+    )
+  }, [phase.label])
 
   // Snap to quarter boundaries or quarter midpoints (half-quarter intervals)
   const snapToHalfQuarter = useCallback((percent: number) => {
@@ -160,24 +174,26 @@ export function TimelinePhase({
         )} />
       </div>
 
-      {/* Label at top - stagger vertically only when overlapping */}
+      {/* Label at top - stagger vertically downward within content area */}
       <div
-        className="absolute left-2 whitespace-nowrap"
-        style={{ top: -4 - (staggerLevel * 20) }}
+        className="absolute left-2"
+        style={{ top: -10 + (staggerLevel * 24) }}
       >
         <EditableText
           value={phase.label}
           onChange={(label) => onUpdate({ label })}
-          className="font-medium text-white/70"
+          className="font-medium text-white/70 whitespace-nowrap"
           inputClassName="font-medium text-white/70"
-          style={{ fontSize: sizing.labelFontSize }}
+          style={{ fontSize: sizing.labelFontSize, lineHeight: 0.95 }}
+          displayValue={formattedLabel}
         />
       </div>
 
       {/* Controls */}
       {showControls && (
         <div
-          className="absolute top-8 left-2 flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 z-30"
+          className="absolute left-2 flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 z-30"
+          style={{ top: 36 + (staggerLevel * 24) }}
           data-edit-control
         >
           <DatePicker
