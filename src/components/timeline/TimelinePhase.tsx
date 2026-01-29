@@ -174,13 +174,13 @@ export function TimelinePhase({
         )} />
       </div>
 
-      {/* Label and controls container */}
+      {/* Label and controls container - centered on the line */}
       <div
-        className="absolute flex flex-col"
-        style={{ top: 12 + (staggerLevel * 28), left: 4 }}
+        className="absolute flex flex-col items-center -translate-x-1/2"
+        style={{ top: 12 + (staggerLevel * 28), left: 0 }}
       >
-        {/* Label - pill with teal accent for brand connection */}
-        <div className="bg-slate-700/90 backdrop-blur-sm px-1.5 py-px rounded border border-white/10 border-l-2 border-l-nodiac-secondary leading-tight shadow-sm">
+        {/* Label - pill centered on line with bottom teal accent */}
+        <div className="bg-slate-700/90 backdrop-blur-sm px-2 py-px rounded border border-white/10 border-b-2 border-b-nodiac-secondary leading-tight shadow-sm">
           <EditableText
             value={phase.label}
             onChange={(label) => onUpdate({ label })}
