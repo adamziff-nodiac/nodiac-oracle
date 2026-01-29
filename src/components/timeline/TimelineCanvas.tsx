@@ -121,16 +121,6 @@ export function TimelineCanvas({
 
   return (
     <div className="relative h-full flex flex-col px-4 pb-2">
-      {/* Legend */}
-      <div className="flex-shrink-0 mb-3 flex items-center gap-2 text-sm text-white/70">
-        <div className="flex items-center gap-1.5">
-          <svg width="12" height="12" viewBox="0 0 12 12" className="text-white/60">
-            <rect x="6" y="0" width="8.5" height="8.5" transform="rotate(45 6 6)" fill="currentColor" />
-          </svg>
-          <span>= COD</span>
-        </div>
-      </div>
-
       {/* Time Axis Header */}
       <div className="flex-shrink-0 mb-2">
         {/* Year labels */}

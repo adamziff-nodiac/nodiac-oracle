@@ -641,7 +641,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
           style={{ aspectRatio: '16 / 9' }}
         >
           {/* Title Header - included in export */}
-          <div className="px-6 pt-4 pb-2 flex-shrink-0">
+          <div className="px-6 pt-4 pb-2 flex-shrink-0 flex items-center justify-between">
             <EditableText
               value={timeline.title}
               onChange={updateTitle}
@@ -649,6 +649,13 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
               inputClassName="text-3xl font-bold text-white"
               as="h1"
             />
+            {/* Legend */}
+            <div className="flex items-center gap-1.5 text-sm text-white/60">
+              <svg width="10" height="10" viewBox="0 0 10 10">
+                <polygon points="5,0 10,5 5,10 0,5" fill="currentColor" />
+              </svg>
+              <span>= COD</span>
+            </div>
           </div>
 
           {/* Canvas content - flex-1 to fill remaining space */}
