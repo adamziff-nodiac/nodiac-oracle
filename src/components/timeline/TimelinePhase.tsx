@@ -15,6 +15,7 @@ interface TimelinePhaseProps {
   onUpdate: (updates: { label?: string; date?: Date }) => void
   onDelete: () => void
   rowCount?: number
+  staggerLevel?: number
 }
 
 // Dynamic sizing based on row count - larger sizes for better visibility
@@ -53,6 +54,7 @@ export function TimelinePhase({
   onUpdate,
   onDelete,
   rowCount = 5,
+  staggerLevel = 0,
 }: TimelinePhaseProps) {
   const [showControls, setShowControls] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -158,8 +160,11 @@ export function TimelinePhase({
         )} />
       </div>
 
-      {/* Label at top */}
-      <div className="absolute -top-1 left-2 whitespace-nowrap">
+      {/* Label at top - stagger vertically only when overlapping */}
+      <div
+        className="absolute left-2 whitespace-nowrap"
+        style={{ top: -4 - (staggerLevel * 20) }}
+      >
         <EditableText
           value={phase.label}
           onChange={(label) => onUpdate({ label })}

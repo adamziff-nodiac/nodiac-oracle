@@ -3,6 +3,9 @@
 ## Package Manager
 
 **USE BUN ONLY. DO NOT USE NPM.**
+**ALWAYS USE ATOMIC COMMITS.**
+**ALWAYS USE A FEATURE BRANCH OFF OF MAIN. ALWAYS PUSH TO THE FEATURE BRANCH.**
+**NEVER PUSH TO MAIN UNLESS EXPLICITLY ASKED TO BY THE USER.**
 
 - Install dependencies: `bun install`
 - Run dev server: `bun run dev`

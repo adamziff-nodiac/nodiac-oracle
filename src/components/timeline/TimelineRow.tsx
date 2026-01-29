@@ -32,8 +32,8 @@ function getSizing(rowCount: number) {
       barHeight: 32,
       handleSize: 36,
       containerHeight: 120,
-      labelWidth: 130,
-      labelFontSize: 28,
+      labelWidth: 250,
+      labelFontSize: 24,
       gripSize: 28,
       controlSize: 28,
     }
@@ -42,8 +42,8 @@ function getSizing(rowCount: number) {
       barHeight: 28,
       handleSize: 32,
       containerHeight: 100,
-      labelWidth: 120,
-      labelFontSize: 26,
+      labelWidth: 230,
+      labelFontSize: 22,
       gripSize: 26,
       controlSize: 26,
     }
@@ -52,8 +52,8 @@ function getSizing(rowCount: number) {
       barHeight: 24,
       handleSize: 28,
       containerHeight: 90,
-      labelWidth: 110,
-      labelFontSize: 24,
+      labelWidth: 210,
+      labelFontSize: 20,
       gripSize: 24,
       controlSize: 24,
     }
@@ -62,8 +62,8 @@ function getSizing(rowCount: number) {
       barHeight: 20,
       handleSize: 24,
       containerHeight: 80,
-      labelWidth: 100,
-      labelFontSize: 22,
+      labelWidth: 190,
+      labelFontSize: 18,
       gripSize: 22,
       controlSize: 22,
     }
@@ -131,6 +131,55 @@ export function TimelineRow({
     if (!endMilestone) return row.milestones
     return row.milestones.filter((m) => m.id !== endMilestone.id)
   }, [row.milestones, endMilestone])
+
+  // Calculate milestone stagger levels based on overlap detection
+  // Estimate label width as ~1% per character, centered on position
+  const milestoneStaggerLevels = useMemo(() => {
+    const CHAR_WIDTH_PERCENT = 1.0 // Each character takes ~1% of timeline width
+    const PADDING_PERCENT = 1 // Extra padding between labels
+
+    // Include end milestone in overlap calculation if it exists
+    const allMilestones = endMilestone
+      ? [...regularMilestones, endMilestone]
+      : regularMilestones
+
+    const sortedMilestones = allMilestones
+      .map(m => {
+        const position = dateToPosition(m.date, startYear, endYear)
+        const labelWidth = m.label.length * CHAR_WIDTH_PERCENT
+        return {
+          id: m.id,
+          position,
+          left: position - labelWidth / 2,
+          right: position + labelWidth / 2,
+        }
+      })
+      .sort((a, b) => a.position - b.position)
+
+    const levels: Record<string, number> = {}
+    // Track rightmost extent at each level
+    const levelRightEdges: number[] = [-Infinity, -Infinity]
+
+    for (const milestone of sortedMilestones) {
+      // Try level 0 (above) first
+      if (milestone.left > levelRightEdges[0] + PADDING_PERCENT) {
+        levels[milestone.id] = 0
+        levelRightEdges[0] = milestone.right
+      }
+      // Try level 1 (below) if level 0 would overlap
+      else if (milestone.left > levelRightEdges[1] + PADDING_PERCENT) {
+        levels[milestone.id] = 1
+        levelRightEdges[1] = milestone.right
+      }
+      // Both levels would overlap - use level 0 anyway (best effort)
+      else {
+        levels[milestone.id] = 0
+        levelRightEdges[0] = milestone.right
+      }
+    }
+
+    return levels
+  }, [regularMilestones, endMilestone, startYear, endYear])
 
   // Snap to quarter boundaries or quarter midpoints (half-quarter intervals)
   const snapToHalfQuarter = useCallback((percent: number) => {
@@ -279,13 +328,13 @@ export function TimelineRow({
         </button>
 
         {/* Row Label */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 pr-4 flex items-center justify-end">
           <EditableText
             value={row.label}
             onChange={(label) => onUpdate({ label })}
-            className="font-semibold text-white truncate"
-            inputClassName="font-semibold text-white w-full"
-            style={{ fontSize: sizing.labelFontSize }}
+            className="font-semibold text-white text-right"
+            inputClassName="font-semibold text-white w-full text-right"
+            style={{ fontSize: sizing.labelFontSize, textWrap: 'balance' }}
           />
         </div>
       </div>
@@ -340,7 +389,12 @@ export function TimelineRow({
           {/* End milestone label (if exists) */}
           {endMilestone && (
             <div
-              className="absolute bottom-1/2 left-0 mb-4 whitespace-nowrap"
+              className={cn(
+                "absolute left-0 whitespace-nowrap",
+                (milestoneStaggerLevels[endMilestone.id] || 0) === 0
+                  ? "bottom-1/2 mb-4"
+                  : "top-1/2 mt-6"
+              )}
               style={{ transform: 'translateX(-50%)' }}
             >
               <EditableText
@@ -370,7 +424,7 @@ export function TimelineRow({
         </div>
 
         {/* Milestones (excluding end milestone) */}
-        {regularMilestones.map((milestone, index) => (
+        {regularMilestones.map((milestone) => (
           <TimelineMilestone
             key={milestone.id}
             milestone={milestone}
@@ -381,7 +435,7 @@ export function TimelineRow({
             onDelete={() => onDeleteMilestone(milestone.id)}
             isNew={milestone.id === newMilestoneId}
             onNewComplete={() => setNewMilestoneId(null)}
-            index={index}
+            staggerLevel={milestoneStaggerLevels[milestone.id] || 0}
             containerRef={containerRef}
             rowCount={rowCount}
           />

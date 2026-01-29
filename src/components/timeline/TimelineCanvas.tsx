@@ -4,6 +4,7 @@ import { useMemo, useRef } from 'react'
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { TimelineRow } from './TimelineRow'
 import { TimelinePhase } from './TimelinePhase'
+import { dateToPosition } from '@/types/timeline'
 import type { TimelineWithData, TimelineRowWithData } from '@/types/timeline'
 
 interface TimelineCanvasProps {
@@ -23,25 +24,25 @@ function getCanvasSizing(rowCount: number) {
     return {
       yearFontSize: 26,
       quarterFontSize: 18,
-      leftMargin: 160,
+      leftMargin: 280,
     }
   } else if (rowCount <= 4) {
     return {
       yearFontSize: 24,
       quarterFontSize: 17,
-      leftMargin: 150,
+      leftMargin: 260,
     }
   } else if (rowCount <= 6) {
     return {
       yearFontSize: 22,
       quarterFontSize: 16,
-      leftMargin: 140,
+      leftMargin: 240,
     }
   } else {
     return {
       yearFontSize: 20,
       quarterFontSize: 15,
-      leftMargin: 130,
+      leftMargin: 220,
     }
   }
 }
@@ -68,6 +69,33 @@ export function TimelineCanvas({
 
   // Get dynamic sizing
   const sizing = useMemo(() => getCanvasSizing(rowCount), [rowCount])
+
+  // Calculate phase stagger levels based on overlap detection
+  // Phases within 10% of each other need to be staggered
+  const phaseStaggerLevels = useMemo(() => {
+    const OVERLAP_THRESHOLD = 10 // percentage points
+    const sortedPhases = [...phases]
+      .map(p => ({ id: p.id, position: dateToPosition(p.date, startYear, endYear) }))
+      .sort((a, b) => a.position - b.position)
+
+    const levels: Record<string, number> = {}
+    let currentLevel = 0
+    let lastPosition = -Infinity
+
+    for (const phase of sortedPhases) {
+      if (phase.position - lastPosition < OVERLAP_THRESHOLD) {
+        // Too close to previous, increment level
+        currentLevel++
+      } else {
+        // Far enough, reset to level 0
+        currentLevel = 0
+      }
+      levels[phase.id] = currentLevel
+      lastPosition = phase.position
+    }
+
+    return levels
+  }, [phases, startYear, endYear])
 
   return (
     <div className="relative h-full flex flex-col px-4 pb-2">
@@ -135,6 +163,7 @@ export function TimelineCanvas({
               onUpdate={(updates) => onUpdatePhase(phase.id, updates)}
               onDelete={() => onDeletePhase(phase.id)}
               rowCount={rowCount}
+              staggerLevel={phaseStaggerLevels[phase.id] || 0}
             />
           ))}
         </div>

@@ -16,7 +16,7 @@ interface TimelineMilestoneProps {
   onDelete: () => void
   isNew?: boolean
   onNewComplete?: () => void
-  index?: number
+  staggerLevel?: number
   containerRef?: React.RefObject<HTMLDivElement | null>
   rowCount?: number
 }
@@ -59,7 +59,7 @@ export function TimelineMilestone({
   onDelete,
   isNew = false,
   onNewComplete,
-  index: _index = 0,
+  staggerLevel = 0,
   containerRef,
   rowCount = 5,
 }: TimelineMilestoneProps) {
@@ -147,9 +147,14 @@ export function TimelineMilestone({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Label - always positioned above the marker */}
+      {/* Label - only go below when staggerLevel > 0 (overlapping) */}
       <div
-        className="absolute bottom-1/2 left-0 mb-4 whitespace-nowrap flex items-center gap-1"
+        className={cn(
+          "absolute left-0 flex items-center gap-1 whitespace-nowrap",
+          staggerLevel === 0
+            ? "bottom-1/2 mb-4"
+            : "top-1/2 mt-6"
+        )}
         style={{ transform: 'translateX(-50%)' }}
       >
         <EditableText
@@ -169,7 +174,7 @@ export function TimelineMilestone({
               e.stopPropagation()
               onDelete()
             }}
-            className="p-0.5 text-gray-400 hover:text-red-400 bg-slate-800/90 rounded transition-colors"
+            className="p-0.5 text-gray-400 hover:text-red-400 bg-slate-800/90 rounded transition-colors flex-shrink-0"
             title="Delete milestone"
             data-edit-control
           >
@@ -180,7 +185,10 @@ export function TimelineMilestone({
 
       {/* Vertical line connecting label to marker */}
       <div
-        className="absolute bottom-1/2 left-0 w-px bg-white/40"
+        className={cn(
+          "absolute left-0 w-px bg-white/40",
+          staggerLevel === 0 ? "bottom-1/2" : "top-1/2"
+        )}
         style={{
           height: 12,
           transform: 'translateX(-50%)',
