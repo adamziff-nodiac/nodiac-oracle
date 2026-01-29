@@ -78,9 +78,9 @@ export function TimelinePhase({
     const firstPart = phase.label.slice(0, colonIndex + 1)
     const secondPart = phase.label.slice(colonIndex + 2)
     return (
-      <span className="flex flex-col">
+      <span className="flex flex-col leading-tight">
         <span>{firstPart}</span>
-        <span style={{ marginTop: 2 }}>{secondPart}</span>
+        <span>{secondPart}</span>
       </span>
     )
   }, [phase.label])
@@ -175,32 +175,27 @@ export function TimelinePhase({
         )} />
       </div>
 
-      {/* Label and controls container - connected to dashed line */}
+      {/* Label and controls container */}
       <div
         className="absolute flex flex-col"
-        style={{ top: 12 + (staggerLevel * 28), left: 0 }}
+        style={{ top: 12 + (staggerLevel * 28), left: 4 }}
       >
-        {/* Label with subtle background */}
-        <div className="flex items-stretch">
-          {/* Connector tab that touches the dashed line */}
-          <div className="w-1 bg-white/30 rounded-l" />
-          {/* Label content */}
-          <div className="bg-slate-700/90 backdrop-blur-sm px-2 py-1 rounded-r border border-l-0 border-white/10">
-            <EditableText
-              value={phase.label}
-              onChange={(label) => onUpdate({ label })}
-              className="font-medium text-white/90 whitespace-nowrap"
-              inputClassName="font-medium text-white/90 bg-transparent"
-              style={{ fontSize: sizing.labelFontSize, lineHeight: 1.1 }}
-              displayValue={formattedLabel}
-            />
-          </div>
+        {/* Label - clean pill style with left accent */}
+        <div className="bg-slate-600/80 backdrop-blur-sm pl-1.5 pr-2 py-0.5 rounded border-l-2 border-white/40">
+          <EditableText
+            value={phase.label}
+            onChange={(label) => onUpdate({ label })}
+            className="font-medium text-white/90 whitespace-nowrap"
+            inputClassName="font-medium text-white/90 bg-transparent"
+            style={{ fontSize: sizing.labelFontSize, lineHeight: 1.2 }}
+            displayValue={formattedLabel}
+          />
         </div>
 
         {/* Controls */}
         {showControls && (
           <div
-            className="flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 mt-1 ml-1"
+            className="flex items-center gap-1 bg-slate-800 border border-white/10 rounded px-1.5 py-0.5 mt-1"
             data-edit-control
           >
             <DatePicker
@@ -211,7 +206,7 @@ export function TimelinePhase({
             />
             <button
               onClick={onDelete}
-              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+              className="p-0.5 text-gray-400 hover:text-red-400 transition-colors"
               title="Delete phase"
             >
               <X style={{ width: sizing.deleteIconSize, height: sizing.deleteIconSize }} />
