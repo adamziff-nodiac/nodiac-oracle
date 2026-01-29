@@ -52,6 +52,11 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
+  // Draggable legend position (percentage-based)
+  const [legendPosition, setLegendPosition] = useState({ x: 95, y: 5 })
+  const [isDraggingLegend, setIsDraggingLegend] = useState(false)
+  const legendDragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 })
+
   // Track pending writes to prevent realtime subscription from overwriting optimistic updates
   const pendingWritesRef = useRef(0)
   const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null)
@@ -548,6 +553,47 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
     }
   }
 
+  // Legend drag handlers
+  const handleLegendMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDraggingLegend(true)
+    legendDragStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      startX: legendPosition.x,
+      startY: legendPosition.y,
+    }
+  }, [legendPosition])
+
+  useEffect(() => {
+    if (!isDraggingLegend) return
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!canvasRef.current) return
+      const rect = canvasRef.current.getBoundingClientRect()
+      const deltaX = ((e.clientX - legendDragStart.current.x) / rect.width) * 100
+      const deltaY = ((e.clientY - legendDragStart.current.y) / rect.height) * 100
+
+      const newX = Math.max(5, Math.min(95, legendDragStart.current.startX + deltaX))
+      const newY = Math.max(2, Math.min(95, legendDragStart.current.startY + deltaY))
+
+      setLegendPosition({ x: newX, y: newY })
+    }
+
+    const handleMouseUp = () => {
+      setIsDraggingLegend(false)
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDraggingLegend])
+
   // Export to PNG
   const exportToPng = async () => {
     if (!canvasRef.current) return
@@ -637,11 +683,28 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       >
         <div
           ref={canvasRef}
-          className="bg-nodiac-dark rounded-2xl border border-white/10 flex flex-col overflow-hidden"
+          className="bg-nodiac-dark rounded-2xl border border-white/10 flex flex-col overflow-hidden relative"
           style={{ aspectRatio: '16 / 9' }}
         >
+          {/* Draggable Legend */}
+          <div
+            className={`absolute z-50 flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1 cursor-move select-none ${isDraggingLegend ? 'opacity-80' : 'hover:border-white/40'}`}
+            style={{
+              left: `${legendPosition.x}%`,
+              top: `${legendPosition.y}%`,
+              transform: 'translate(-100%, 0)',
+            }}
+            onMouseDown={handleLegendMouseDown}
+            title="Drag to reposition"
+          >
+            <svg width="10" height="10" viewBox="0 0 10 10">
+              <polygon points="5,0 10,5 5,10 0,5" fill="currentColor" />
+            </svg>
+            <span>= COD</span>
+          </div>
+
           {/* Title Header - included in export */}
-          <div className="px-6 pt-4 pb-2 flex-shrink-0 flex items-center justify-between">
+          <div className="px-6 pt-4 pb-2 flex-shrink-0">
             <EditableText
               value={timeline.title}
               onChange={updateTitle}
@@ -649,13 +712,6 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
               inputClassName="text-3xl font-bold text-white"
               as="h1"
             />
-            {/* Legend */}
-            <div className="flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1">
-              <svg width="10" height="10" viewBox="0 0 10 10">
-                <polygon points="5,0 10,5 5,10 0,5" fill="currentColor" />
-              </svg>
-              <span>= COD</span>
-            </div>
           </div>
 
           {/* Canvas content - flex-1 to fill remaining space */}
