@@ -71,17 +71,16 @@ export function TimelinePhase({
   // Get dynamic sizing
   const sizing = useMemo(() => getPhaseSizing(rowCount), [rowCount])
 
-  // Format label with line break after first colon
+  // Format label with line break after first colon - keep on single line for compactness
   const formattedLabel = useMemo(() => {
     const colonIndex = phase.label.indexOf(': ')
     if (colonIndex === -1) return null // No colon, use default display
     const firstPart = phase.label.slice(0, colonIndex + 1)
     const secondPart = phase.label.slice(colonIndex + 2)
     return (
-      <span className="flex flex-col gap-0" style={{ lineHeight: 1.1 }}>
-        <span className="leading-none">{firstPart}</span>
-        <span className="leading-none">{secondPart}</span>
-      </span>
+      <>
+        {firstPart}<br/>{secondPart}
+      </>
     )
   }, [phase.label])
 
@@ -181,13 +180,13 @@ export function TimelinePhase({
         style={{ top: 12 + (staggerLevel * 28), left: 4 }}
       >
         {/* Label - clean pill style with left accent */}
-        <div className="bg-slate-600/80 backdrop-blur-sm pl-1.5 pr-2 py-0.5 rounded border-l-2 border-white/40">
+        <div className="bg-slate-600/80 backdrop-blur-sm px-1.5 py-px rounded border-l-2 border-white/40 leading-tight">
           <EditableText
             value={phase.label}
             onChange={(label) => onUpdate({ label })}
-            className="font-medium text-white/90 whitespace-nowrap"
+            className="font-medium text-white/90 whitespace-nowrap leading-tight"
             inputClassName="font-medium text-white/90 bg-transparent"
-            style={{ fontSize: sizing.labelFontSize, lineHeight: 1.2 }}
+            style={{ fontSize: sizing.labelFontSize }}
             displayValue={formattedLabel}
           />
         </div>
