@@ -161,6 +161,7 @@ export default function TimelineEditorPage() {
         title: timelineData.title,
         startYear: timelineData.start_year,
         endYear: timelineData.end_year,
+        notes: timelineData.notes || '',
         createdAt: new Date(timelineData.created_at || Date.now()),
         updatedAt: new Date(timelineData.updated_at || Date.now()),
         rows,

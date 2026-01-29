@@ -152,19 +152,20 @@ export function TimelinePhase({
     <div
       ref={phaseRef}
       className={cn(
-        "absolute top-0 bottom-0 z-20 group/phase",
+        "absolute bottom-0 z-20 group/phase pointer-events-auto",
         isDragging && "z-30"
       )}
-      style={{ left: `${position}%` }}
+      style={{ left: `${position}%`, top: -16 }}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => !isDragging && setShowControls(false)}
     >
       {/* Dashed line - draggable */}
       <div
         className={cn(
-          "absolute top-0 bottom-0 w-3 -ml-1.5 cursor-ew-resize flex items-center justify-center",
+          "absolute bottom-0 w-3 -ml-1.5 cursor-ew-resize flex items-center justify-center",
           isDragging && "bg-white/10"
         )}
+        style={{ top: 16 }}
         onMouseDown={handleMouseDown}
         title="Drag to move phase"
       >
@@ -174,10 +175,10 @@ export function TimelinePhase({
         )} />
       </div>
 
-      {/* Label at top - stagger vertically downward within content area */}
+      {/* Label and controls container - continuous hover area */}
       <div
-        className="absolute left-2"
-        style={{ top: -10 + (staggerLevel * 24) }}
+        className="absolute left-2 flex flex-col"
+        style={{ top: 12 + (staggerLevel * 24) }}
       >
         <EditableText
           value={phase.label}
@@ -187,30 +188,29 @@ export function TimelinePhase({
           style={{ fontSize: sizing.labelFontSize, lineHeight: 0.95 }}
           displayValue={formattedLabel}
         />
-      </div>
 
-      {/* Controls */}
-      {showControls && (
-        <div
-          className="absolute left-2 flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 z-30"
-          style={{ top: 36 + (staggerLevel * 24) }}
-          data-edit-control
-        >
-          <DatePicker
-            value={phase.date}
-            onChange={(date) => onUpdate({ date })}
-            minYear={startYear}
-            maxYear={endYear}
-          />
-          <button
-            onClick={onDelete}
-            className="p-1 text-gray-400 hover:text-red-400 transition-colors"
-            title="Delete phase"
+        {/* Controls */}
+        {showControls && (
+          <div
+            className="flex items-center gap-1 bg-slate-800 border border-white/10 rounded-lg px-2 py-1 mt-1"
+            data-edit-control
           >
-            <X style={{ width: sizing.deleteIconSize, height: sizing.deleteIconSize }} />
-          </button>
-        </div>
-      )}
+            <DatePicker
+              value={phase.date}
+              onChange={(date) => onUpdate({ date })}
+              minYear={startYear}
+              maxYear={endYear}
+            />
+            <button
+              onClick={onDelete}
+              className="p-1 text-gray-400 hover:text-red-400 transition-colors"
+              title="Delete phase"
+            >
+              <X style={{ width: sizing.deleteIconSize, height: sizing.deleteIconSize }} />
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

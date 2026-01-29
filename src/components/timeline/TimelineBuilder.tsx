@@ -52,6 +52,10 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
+  // Track pending writes to prevent realtime subscription from overwriting optimistic updates
+  const pendingWritesRef = useRef(0)
+  const realtimeDebounceRef = useRef<NodeJS.Timeout | null>(null)
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -64,6 +68,15 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   )
 
   const supabase = createClient()
+
+  // Helper functions to track pending writes
+  const startWrite = useCallback(() => {
+    pendingWritesRef.current += 1
+  }, [])
+
+  const endWrite = useCallback(() => {
+    pendingWritesRef.current = Math.max(0, pendingWritesRef.current - 1)
+  }, [])
 
   // Helper to fetch all timeline data fresh from DB
   const fetchFullTimeline = useCallback(async () => {
@@ -133,6 +146,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       title: t.title,
       startYear: t.start_year,
       endYear: t.end_year,
+      notes: t.notes || '',
       createdAt: new Date(t.created_at || Date.now()),
       updatedAt: new Date(t.updated_at || Date.now()),
       rows,
@@ -143,10 +157,27 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   // Set up Supabase realtime subscriptions
   useEffect(() => {
     const handleChange = async () => {
-      const freshData = await fetchFullTimeline()
-      if (freshData) {
-        onUpdate(freshData)
+      // Skip if there are pending writes to avoid overwriting optimistic updates
+      if (pendingWritesRef.current > 0) {
+        return
       }
+
+      // Clear any existing debounce timeout
+      if (realtimeDebounceRef.current) {
+        clearTimeout(realtimeDebounceRef.current)
+      }
+
+      // Debounce the fetch to allow DB writes to complete
+      realtimeDebounceRef.current = setTimeout(async () => {
+        // Double-check no writes started during debounce
+        if (pendingWritesRef.current > 0) {
+          return
+        }
+        const freshData = await fetchFullTimeline()
+        if (freshData) {
+          onUpdate(freshData)
+        }
+      }, 300)
     }
 
     const channel = supabase
@@ -174,6 +205,9 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       .subscribe()
 
     return () => {
+      if (realtimeDebounceRef.current) {
+        clearTimeout(realtimeDebounceRef.current)
+      }
       supabase.removeChannel(channel)
     }
   }, [timeline.id, supabase, fetchFullTimeline, onUpdate])
@@ -181,26 +215,42 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   // Update timeline title
   const updateTitle = useCallback(
     async (title: string) => {
+      startWrite()
       onUpdate({ ...timeline, title })
       await supabase.from('timelines').update({ title }).eq('id', timeline.id)
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
+  )
+
+  // Update timeline notes
+  const updateNotes = useCallback(
+    async (notes: string) => {
+      startWrite()
+      onUpdate({ ...timeline, notes })
+      await supabase.from('timelines').update({ notes }).eq('id', timeline.id)
+      endWrite()
+    },
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Update timeline settings
   const updateSettings = useCallback(
     async (startYear: number, endYear: number) => {
+      startWrite()
       onUpdate({ ...timeline, startYear, endYear })
       await supabase
         .from('timelines')
         .update({ start_year: startYear, end_year: endYear })
         .eq('id', timeline.id)
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Add a new row
   const addRow = useCallback(async () => {
+    startWrite()
     const colors = ['#EAB308', '#14B8A6', '#F97316', '#EF4444', '#3B82F6', '#22C55E', '#A855F7', '#EC4899']
     const color = colors[timeline.rows.length % colors.length]
     const position = timeline.rows.length
@@ -227,6 +277,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
 
     if (error) {
       console.error('Error adding row:', error)
+      endWrite()
       return
     }
 
@@ -248,10 +299,12 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       ...timeline,
       rows: [...timeline.rows, fullRow],
     })
-  }, [timeline, onUpdate, supabase])
+    endWrite()
+  }, [timeline, onUpdate, supabase, startWrite, endWrite])
 
   // Add a new phase
   const addPhase = useCallback(async () => {
+    startWrite()
     const position = timeline.phases.length
     const defaultDate = new Date(
       timeline.startYear + Math.floor((timeline.endYear - timeline.startYear) / 2),
@@ -272,6 +325,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
 
     if (error) {
       console.error('Error adding phase:', error)
+      endWrite()
       return
     }
 
@@ -290,7 +344,8 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
         },
       ],
     })
-  }, [timeline, onUpdate, supabase])
+    endWrite()
+  }, [timeline, onUpdate, supabase, startWrite, endWrite])
 
   // Update a row
   const updateRow = useCallback(
@@ -298,6 +353,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       const rowIndex = timeline.rows.findIndex((r) => r.id === rowId)
       if (rowIndex === -1) return
 
+      startWrite()
       const updatedRows = [...timeline.rows]
       updatedRows[rowIndex] = { ...updatedRows[rowIndex], ...updates }
       onUpdate({ ...timeline, rows: updatedRows })
@@ -312,20 +368,23 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       if (Object.keys(dbUpdates).length > 0) {
         await supabase.from('timeline_rows').update(dbUpdates).eq('id', rowId)
       }
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Delete a row
   const deleteRow = useCallback(
     async (rowId: string) => {
+      startWrite()
       onUpdate({
         ...timeline,
         rows: timeline.rows.filter((r) => r.id !== rowId),
       })
       await supabase.from('timeline_rows').delete().eq('id', rowId)
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Add milestone to a row at a specific date, returns the milestone ID
@@ -334,6 +393,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       const row = timeline.rows.find((r) => r.id === rowId)
       if (!row) return undefined
 
+      startWrite()
       const position = row.milestones.length
 
       const { data, error } = await supabase
@@ -349,6 +409,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
 
       if (error) {
         console.error('Error adding milestone:', error)
+        endWrite()
         return undefined
       }
 
@@ -372,14 +433,16 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       })
 
       onUpdate({ ...timeline, rows: updatedRows })
+      endWrite()
       return data.id
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Update milestone
   const updateMilestone = useCallback(
     async (milestoneId: string, updates: { label?: string; date?: Date }) => {
+      startWrite()
       const updatedRows = timeline.rows.map((row) => ({
         ...row,
         milestones: row.milestones.map((m) =>
@@ -395,26 +458,30 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       if (Object.keys(dbUpdates).length > 0) {
         await supabase.from('timeline_milestones').update(dbUpdates).eq('id', milestoneId)
       }
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Delete milestone
   const deleteMilestone = useCallback(
     async (milestoneId: string) => {
+      startWrite()
       const updatedRows = timeline.rows.map((row) => ({
         ...row,
         milestones: row.milestones.filter((m) => m.id !== milestoneId),
       }))
       onUpdate({ ...timeline, rows: updatedRows })
       await supabase.from('timeline_milestones').delete().eq('id', milestoneId)
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Update phase
   const updatePhase = useCallback(
     async (phaseId: string, updates: { label?: string; date?: Date }) => {
+      startWrite()
       const updatedPhases = timeline.phases.map((p) =>
         p.id === phaseId ? { ...p, ...updates } : p
       )
@@ -427,20 +494,23 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       if (Object.keys(dbUpdates).length > 0) {
         await supabase.from('timeline_phases').update(dbUpdates).eq('id', phaseId)
       }
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Delete phase
   const deletePhase = useCallback(
     async (phaseId: string) => {
+      startWrite()
       onUpdate({
         ...timeline,
         phases: timeline.phases.filter((p) => p.id !== phaseId),
       })
       await supabase.from('timeline_phases').delete().eq('id', phaseId)
+      endWrite()
     },
-    [timeline, onUpdate, supabase]
+    [timeline, onUpdate, supabase, startWrite, endWrite]
   )
 
   // Handle drag and drop for row reordering
@@ -457,6 +527,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       const newIndex = timeline.rows.findIndex((r) => r.id === over.id)
 
       if (oldIndex !== -1 && newIndex !== -1) {
+        startWrite()
         const newRows = [...timeline.rows]
         const [removed] = newRows.splice(oldIndex, 1)
         newRows.splice(newIndex, 0, removed)
@@ -472,6 +543,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
             .update({ position: row.position })
             .eq('id', row.id)
         }
+        endWrite()
       }
     }
   }
@@ -537,6 +609,15 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
           <Plus className="w-4 h-4" />
           <span className="hidden sm:inline">Row</span>
         </button>
+        {!timeline.notes && (
+          <button
+            onClick={() => updateNotes(' ')}
+            className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span className="hidden sm:inline">Notes</span>
+          </button>
+        )}
         <button
           onClick={exportToPng}
           disabled={isExporting}
@@ -556,7 +637,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
       >
         <div
           ref={canvasRef}
-          className="bg-nodiac-dark rounded-2xl border border-white/10 flex flex-col"
+          className="bg-nodiac-dark rounded-2xl border border-white/10 flex flex-col overflow-hidden"
           style={{ aspectRatio: '16 / 9' }}
         >
           {/* Title Header - included in export */}
@@ -581,6 +662,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
               onDeleteMilestone={deleteMilestone}
               onUpdatePhase={updatePhase}
               onDeletePhase={deletePhase}
+              onUpdateNotes={updateNotes}
             />
           </div>
         </div>

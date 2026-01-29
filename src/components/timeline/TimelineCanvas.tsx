@@ -175,7 +175,7 @@ export function TimelineCanvas({
         </div>
 
         {/* Phase Lines - positioned in a container with left margin like the grid */}
-        <div className="absolute inset-0 z-[12]" style={{ marginLeft: sizing.leftMargin }}>
+        <div className="absolute inset-0 z-[12] pointer-events-none" style={{ marginLeft: sizing.leftMargin }}>
           {phases.map((phase) => (
             <TimelinePhase
               key={phase.id}

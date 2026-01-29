@@ -6,6 +6,7 @@ export type Timeline = {
   title: string
   startYear: number
   endYear: number
+  notes: string
   createdAt: Date
   updatedAt: Date
 }

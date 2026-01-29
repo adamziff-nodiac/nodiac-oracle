@@ -13,6 +13,7 @@ interface EditableTextProps {
   autoEdit?: boolean
   onEditEnd?: () => void
   style?: React.CSSProperties
+  displayValue?: React.ReactNode // Custom display content (value is still used for editing)
 }
 
 export function EditableText({
@@ -25,6 +26,7 @@ export function EditableText({
   autoEdit = false,
   onEditEnd,
   style,
+  displayValue,
 }: EditableTextProps) {
   const [isEditing, setIsEditing] = useState(autoEdit)
   const [editValue, setEditValue] = useState(value)
@@ -99,7 +101,7 @@ export function EditableText({
       )}
       style={style}
     >
-      {value || placeholder}
+      {displayValue ?? (value || placeholder)}
     </Component>
   )
 }

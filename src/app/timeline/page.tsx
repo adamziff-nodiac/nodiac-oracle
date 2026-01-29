@@ -42,6 +42,7 @@ export default function TimelineListPage() {
             title: t.title,
             startYear: t.start_year,
             endYear: t.end_year,
+            notes: t.notes || '',
             createdAt: new Date(t.created_at || Date.now()),
             updatedAt: new Date(t.updated_at || Date.now()),
           }))
