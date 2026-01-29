@@ -179,13 +179,13 @@ export function TimelinePhase({
         className="absolute flex flex-col"
         style={{ top: 12 + (staggerLevel * 28), left: 4 }}
       >
-        {/* Label - clean pill style with left accent */}
-        <div className="bg-slate-600/80 backdrop-blur-sm px-1.5 py-px rounded border-l-2 border-white/40 leading-tight">
+        {/* Label - pill with teal accent for brand connection */}
+        <div className="bg-slate-700/90 backdrop-blur-sm px-1.5 py-px rounded border border-white/10 border-l-2 border-l-nodiac-secondary leading-tight shadow-sm">
           <EditableText
             value={phase.label}
             onChange={(label) => onUpdate({ label })}
-            className="font-medium text-white/90 whitespace-nowrap leading-tight"
-            inputClassName="font-medium text-white/90 bg-transparent"
+            className="font-medium text-white whitespace-nowrap leading-tight"
+            inputClassName="font-medium text-white bg-transparent"
             style={{ fontSize: sizing.labelFontSize }}
             displayValue={formattedLabel}
           />
