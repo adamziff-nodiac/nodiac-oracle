@@ -53,7 +53,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   const [showSettings, setShowSettings] = useState(false)
 
   // Draggable legend position (percentage-based)
-  const [legendPosition, setLegendPosition] = useState({ x: 95, y: 5 })
+  const [legendPosition, setLegendPosition] = useState({ x: 3, y: 10 })
   const [isDraggingLegend, setIsDraggingLegend] = useState(false)
   const legendDragStart = useRef({ x: 0, y: 0, startX: 0, startY: 0 })
 
@@ -688,11 +688,10 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
         >
           {/* Draggable Legend */}
           <div
-            className={`absolute z-50 flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1 cursor-move select-none ${isDraggingLegend ? 'opacity-80' : 'hover:border-white/40'}`}
+            className={`absolute z-50 flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1 cursor-move select-none whitespace-nowrap ${isDraggingLegend ? 'opacity-80' : 'hover:border-white/40'}`}
             style={{
               left: `${legendPosition.x}%`,
               top: `${legendPosition.y}%`,
-              transform: 'translate(-100%, 0)',
             }}
             onMouseDown={handleLegendMouseDown}
             title="Drag to reposition"
