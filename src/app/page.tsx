@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageSquare, BarChart3, ArrowRight } from 'lucide-react'
+import { MessageSquare, BarChart3, ArrowRight, Map, FileSearch } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -19,6 +19,20 @@ const features = [
     title: 'Timelines',
     description: 'Create and export professional project timelines for presentations',
     color: 'from-nodiac-secondary to-nodiac-primary',
+  },
+  {
+    href: '/regional-hubs',
+    icon: Map,
+    title: 'Regional Hubs',
+    description: 'Interactive heat map scoring US counties for distributed data center placement',
+    color: 'from-nodiac-secondary to-emerald-600',
+  },
+  {
+    href: '/screening',
+    icon: FileSearch,
+    title: 'Site Screening',
+    description: 'Upload IPP portfolios and score sites against regional hub criteria',
+    color: 'from-nodiac-soft-orchid to-nodiac-primary',
   },
 ]
 
@@ -55,7 +69,7 @@ export default function HomePage() {
           </div>
 
           {/* Feature Cards */}
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             {features.map((feature) => {
               const Icon = feature.icon
               return (

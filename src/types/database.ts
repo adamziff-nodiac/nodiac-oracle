@@ -39,6 +39,220 @@ export type Database = {
   }
   public: {
     Tables: {
+      county_scores: {
+        Row: {
+          id: string
+          fips_code: string
+          state_fips: string
+          county_name: string
+          state_abbr: string
+          coop_density_score: number
+          grid_reliability_score: number
+          clipped_curtailed_score: number
+          permitting_score: number
+          labor_score: number
+          fiber_score: number
+          data_sources: Json
+          last_permitting_update: string | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          fips_code: string
+          state_fips: string
+          county_name: string
+          state_abbr: string
+          coop_density_score?: number
+          grid_reliability_score?: number
+          clipped_curtailed_score?: number
+          permitting_score?: number
+          labor_score?: number
+          fiber_score?: number
+          data_sources?: Json
+          last_permitting_update?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          fips_code?: string
+          state_fips?: string
+          county_name?: string
+          state_abbr?: string
+          coop_density_score?: number
+          grid_reliability_score?: number
+          clipped_curtailed_score?: number
+          permitting_score?: number
+          labor_score?: number
+          fiber_score?: number
+          data_sources?: Json
+          last_permitting_update?: string | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      hub_regions: {
+        Row: {
+          id: string
+          name: string
+          description: string | null
+          geojson: Json
+          color: string
+          priority_rank: number | null
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          name: string
+          description?: string | null
+          geojson: Json
+          color?: string
+          priority_rank?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          name?: string
+          description?: string | null
+          geojson?: Json
+          color?: string
+          priority_rank?: number | null
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      permitting_sentiment: {
+        Row: {
+          id: string
+          fips_code: string
+          sentiment_label: string
+          sentiment_score: number
+          evidence: Json
+          moratoria_active: boolean
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          fips_code: string
+          sentiment_label: string
+          sentiment_score?: number
+          evidence?: Json
+          moratoria_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          fips_code?: string
+          sentiment_label?: string
+          sentiment_score?: number
+          evidence?: Json
+          moratoria_active?: boolean
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permitting_sentiment_fips_code_fkey"
+            columns: ["fips_code"]
+            isOneToOne: true
+            referencedRelation: "county_scores"
+            referencedColumns: ["fips_code"]
+          },
+        ]
+      }
+      portfolio_uploads: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          site_count: number
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          name: string
+          site_count?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          name?: string
+          site_count?: number
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_sites: {
+        Row: {
+          id: string
+          upload_id: string
+          site_name: string
+          latitude: number | null
+          longitude: number | null
+          county: string | null
+          state: string | null
+          fips_code: string | null
+          raw_data: Json
+          site_score: number | null
+          tier: string | null
+          score_breakdown: Json
+          created_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string
+          upload_id: string
+          site_name: string
+          latitude?: number | null
+          longitude?: number | null
+          county?: string | null
+          state?: string | null
+          fips_code?: string | null
+          raw_data?: Json
+          site_score?: number | null
+          tier?: string | null
+          score_breakdown?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string
+          upload_id?: string
+          site_name?: string
+          latitude?: number | null
+          longitude?: number | null
+          county?: string | null
+          state?: string | null
+          fips_code?: string | null
+          raw_data?: Json
+          site_score?: number | null
+          tier?: string | null
+          score_breakdown?: Json
+          created_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_sites_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chats: {
         Row: {
           created_at: string | null

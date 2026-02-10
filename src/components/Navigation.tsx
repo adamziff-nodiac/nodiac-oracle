@@ -2,13 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MessageSquare, BarChart3, Home } from 'lucide-react'
+import { MessageSquare, BarChart3, Home, Map, FileSearch } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/chat', label: 'Oracle', icon: MessageSquare },
   { href: '/timeline', label: 'Timelines', icon: BarChart3 },
+  { href: '/regional-hubs', label: 'Hubs', icon: Map },
+  { href: '/screening', label: 'Screening', icon: FileSearch },
 ]
 
 export function Navigation() {
