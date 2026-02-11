@@ -168,15 +168,20 @@ export function MethodologyDeepDive() {
                 co-op density means more territory where Nodiac&apos;s co-op partnership model applies.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Target data source:</strong> EIA Form 861 &mdash; annual
-                report from every US electric utility identifying their service territory at the
-                county level. The form includes utility type classification (cooperative, IOU, municipal,
-                federal). We calculate the fraction of utilities serving each county that are cooperatives,
-                weighted by the approximate territory share.
+                <strong className="text-gray-200">Data source:</strong> EIA Form 861 (2024 final release) &mdash;
+                annual report from every US electric utility identifying their service territory at the
+                county level. The <code className="text-nodiac-secondary bg-white/5 px-1 rounded text-xs">Service_Territory_2024.xlsx</code> file
+                maps 2,907 utilities to counties (11,776 rows). The <code className="text-nodiac-secondary bg-white/5 px-1 rounded text-xs">Frame_2024.xlsx</code> file
+                classifies each of 3,413 utilities by ownership type.
               </p>
-              <p className="mt-1 text-sm text-gray-400">
-                Current status: Seeded from state-level estimates with per-county jitter. Planned upgrade
-                to actual EIA-861 service territory data.
+              <p className="mt-2">
+                <strong className="text-gray-200">Method:</strong> For each county FIPS, we count the distinct
+                utilities serving that county and calculate the fraction that are cooperatives. Score = co-op
+                count / total utility count.
+              </p>
+              <p className="mt-1 text-sm text-nodiac-secondary">
+                Status: Real data. 99% county coverage (3,097 of 3,143). FIPS match rate: 99.6%. 117 counties
+                are 100% co-op served; 540 counties have zero co-op presence.
               </p>
             </div>
 
@@ -184,41 +189,54 @@ export function MethodologyDeepDive() {
               <h4 className="text-white font-semibold mb-1">2. Grid Reliability (grid_reliability_score)</h4>
               <p>
                 Measures the reliability of the local electric grid using SAIDI (System Average
-                Interruption Duration Index) and SAIFI (System Average Interruption Frequency Index).
-                Lower outage duration and fewer interruptions = higher score. This is an
+                Interruption Duration Index) &mdash; the average number of minutes each customer
+                experiences without power per year. Lower SAIDI = higher reliability. This is an
                 <strong className="text-white"> inverse metric</strong>: raw outage minutes are
-                normalized to 0&ndash;1 where 1 = most reliable.
+                rank-normalized then inverted so 1 = most reliable.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Target data source:</strong> EIA Form 861 Reliability
-                Data &mdash; utilities report SAIDI/SAIFI annually. We aggregate at the county level by
-                weighting each utility&apos;s reliability metrics by the number of customers they serve in
-                that county.
+                <strong className="text-gray-200">Data source:</strong> EIA Form 861 Reliability
+                Data (2024) &mdash; 971 utilities report SAIDI annually. We prefer the &ldquo;IEEE
+                Without Major Event Days&rdquo; metric (col 8) which strips weather anomalies,
+                falling back to &ldquo;All Events&rdquo; or &ldquo;Other Standard&rdquo; where unavailable.
               </p>
-              <p className="mt-1 text-sm text-gray-400">
-                Current status: Seeded from state-level reliability averages. Planned upgrade
-                to per-utility SAIDI/SAIFI from EIA-861 reliability tables.
+              <p className="mt-2">
+                <strong className="text-gray-200">Method:</strong> Map each utility&apos;s SAIDI to its
+                service territory counties, average across utilities per county, then apply percentile-based
+                inverse ranking. Median county SAIDI is ~158 minutes/year.
+              </p>
+              <p className="mt-1 text-sm text-nodiac-secondary">
+                Status: Real data. 96% county coverage (3,025 of 3,143). 905 utilities with valid SAIDI data.
+                Remaining 4% default to 0.5 (neutral).
               </p>
             </div>
 
             <div>
               <h4 className="text-white font-semibold mb-1">3. Clipped/Curtailed (clipped_curtailed_score)</h4>
               <p>
-                Measures the presence of renewable energy that&apos;s being curtailed
-                (generators forced to reduce output because the grid can&apos;t absorb it).
+                Measures the presence of variable renewable energy (solar + wind) that may be curtailed.
                 High curtailment signals an opportunity: a data center co-located with these
                 generators can absorb the excess power behind the meter, getting cheap energy
                 that would otherwise be wasted.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Target data source:</strong> EIA Form 860 (installed
-                generator capacity by county) cross-referenced with LBNL interconnection queue data.
-                We look at the ratio of installed renewable nameplate capacity to local grid hosting
-                capacity. Counties where renewables far exceed grid capacity have the highest scores.
+                <strong className="text-gray-200">Data source:</strong> EIA Form 860 (2024) &mdash;
+                generator-level data for 16,132 plants. We extract all variable renewables (Solar PV,
+                Wind, Solar Thermal) from the Operable sheet (8,684 generators, 277,437 MW total) and
+                Proposed sheet for pipeline pressure.
               </p>
-              <p className="mt-1 text-sm text-gray-400">
-                Current status: Seeded from state-level renewable penetration estimates. Planned upgrade
-                to EIA-860 generator-level data joined to county via lat/lon.
+              <p className="mt-2">
+                <strong className="text-gray-200">Method:</strong> Three-component composite:
+                (1) log-normalized installed renewable MW per county (55% weight) &mdash; uses log transform
+                because distribution is extremely skewed (Kern County CA leads at 8,756 MW);
+                (2) pipeline pressure ratio (proposed MW / existing MW, 20% weight);
+                (3) congestion flag from balancing authority (25% weight) &mdash; counties in CAISO, ERCOT,
+                MISO, SPP, or BPAT territories get a congestion bonus.
+              </p>
+              <p className="mt-1 text-sm text-nodiac-secondary">
+                Status: Real data. 54% county coverage (1,684 of 3,143). Remaining 46% have no variable
+                renewable generation and score 0.0 (no curtailment opportunity). Top counties: Kern CA,
+                Riverside CA, Clark NV, Nolan TX.
               </p>
             </div>
 
@@ -238,10 +256,10 @@ export function MethodologyDeepDive() {
                 score (0 = hostile/moratorium, 0.5 = neutral, 1 = actively welcoming with incentives).
                 Evidence URLs and summaries are stored alongside each score.
               </p>
-              <p className="mt-1 text-sm text-gray-400">
-                Current status: All counties initialized to 0.5 (neutral). Being enriched in batches
-                using the permitting sentiment skill. Known moratoria counties (Loudoun VA, several GA
-                counties, parts of SC) are prioritized for scoring.
+              <p className="mt-1 text-sm text-yellow-400/80">
+                Status: All counties initialized to 0.5 (neutral). This is the only criterion without
+                real data &mdash; it requires per-county web research that will be enriched in batches
+                using the permitting sentiment skill.
               </p>
             </div>
 
@@ -254,34 +272,48 @@ export function MethodologyDeepDive() {
                 nearby college or military base with relevant workforce.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Target data source:</strong> Census County Business
-                Patterns (CBP) &mdash; specifically NAICS codes 5182 (Data Processing, Hosting, and
-                Related Services) and 5415 (Computer Systems Design). We calculate IT employment per
-                capita, then normalize across all counties.
+                <strong className="text-gray-200">Data source:</strong> Census County Business
+                Patterns (CBP 2023) via Census API (no key required). Three NAICS codes:
+                5182 (Data Processing, Hosting &mdash; 594 counties), 5415 (Computer Systems Design &mdash;
+                1,481 counties), and 517 (Telecommunications &mdash; 2,167 counties). Population denominator
+                from Census Population Estimates (2024 vintage, POPESTIMATE2023).
               </p>
-              <p className="mt-1 text-sm text-gray-400">
-                Current status: Seeded from state-level tech employment density. Planned upgrade
-                to actual CBP county-level establishment and employment data.
+              <p className="mt-2">
+                <strong className="text-gray-200">Method:</strong> Sum IT employees across all three NAICS
+                codes per county, divide by population to get per-10K-residents density, then apply
+                percentile rank normalization. Counties with zero IT establishments score at the 0th
+                percentile. 2,222 of 3,143 counties have at least one IT establishment.
+              </p>
+              <p className="mt-1 text-sm text-nodiac-secondary">
+                Status: Real data. 100% county coverage. Percentile rank normalization produces a
+                uniform distribution from 0 to 1.
               </p>
             </div>
 
             <div>
               <h4 className="text-white font-semibold mb-1">6. Fiber Availability (fiber_score)</h4>
               <p>
-                Measures broadband fiber infrastructure at the county level. Data centers require
-                high-bandwidth, low-latency connectivity. Counties with extensive fiber-to-the-premises
-                (FTTP) deployments typically have the backhaul infrastructure needed for data center
-                interconnection.
+                Measures broadband infrastructure at the county level as a proxy for fiber availability.
+                Data centers require high-bandwidth, low-latency connectivity. Counties with higher
+                broadband subscription rates typically have the backbone infrastructure needed for
+                data center interconnection.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Target data source:</strong> FCC Broadband Data
-                Collection (BDC) &mdash; the successor to Form 477. Reports broadband availability
-                at the census block level by technology type. We calculate the percentage of census
-                blocks in each county with fiber (technology code 50) availability, then normalize.
+                <strong className="text-gray-200">Data source:</strong> Census American Community Survey
+                (ACS) 5-Year Estimates (2023), Table B28002 &mdash; &ldquo;Presence and Types of Internet
+                Subscriptions in Household.&rdquo; We use B28002_004E (cable/fiber/DSL subscriptions) divided
+                by B28002_001E (total households) as the broadband rate. Median county broadband rate is 85.1%.
               </p>
-              <p className="mt-1 text-sm text-gray-400">
-                Current status: Seeded from state-level fiber penetration estimates. Planned upgrade
-                to actual FCC BDC location-level fiber availability data.
+              <p className="mt-2">
+                <strong className="text-gray-200">Method:</strong> Calculate the cable/fiber/DSL subscription
+                rate per county, then apply percentile rank normalization. This is a <em>proxy</em> for fiber
+                availability &mdash; subscription rates correlate with but are not identical to fiber
+                infrastructure presence. FCC BDC location-level fiber data would be more precise but requires
+                registration for bulk download.
+              </p>
+              <p className="mt-1 text-sm text-nodiac-secondary">
+                Status: Real data (proxy). 100% county coverage. Census ACS broadband subscriptions used as
+                proxy for actual fiber infrastructure availability.
               </p>
             </div>
           </div>
@@ -290,29 +322,45 @@ export function MethodologyDeepDive() {
         {/* 4. NORMALIZATION */}
         <Collapsible title="Normalization (How Raw Data Becomes 0-1 Scores)">
           <p>
-            Each criterion&apos;s raw values come in different units (percentages, outage minutes, MW capacity,
-            employment counts). To make them comparable and combinable, we normalize each to a 0&ndash;1 scale
-            using <strong className="text-white">min-max normalization</strong>:
+            Each criterion&apos;s raw values come in different units (ratios, outage minutes, MW capacity,
+            employment counts, subscription rates). To make them comparable, we normalize each to a
+            0&ndash;1 scale. The pipeline uses <strong className="text-white">two normalization strategies</strong> depending
+            on the data distribution:
           </p>
+
+          <h4 className="text-white font-semibold mt-4 mb-1">1. Direct Ratio (Co-op Density)</h4>
+          <p>
+            Co-op density is already a natural 0&ndash;1 value (fraction of utilities that are cooperatives),
+            so no further normalization is needed.
+          </p>
+
+          <h4 className="text-white font-semibold mt-4 mb-1">2. Percentile Rank (Grid, Labor, Fiber)</h4>
           <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
-            normalized = (value &minus; min) / (max &minus; min)
+            score = rank(value) / (N &minus; 1)
           </div>
           <p>
-            Where <code className="text-nodiac-secondary bg-white/5 px-1 rounded">min</code> and
-            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">max</code> are the minimum
-            and maximum values across all ~3,200 counties for that criterion. This maps the worst county
-            to 0 and the best county to 1, with everything else distributed linearly between them.
+            Produces a uniform distribution where each county gets a score proportional to how many other
+            counties it outranks. Used when raw distributions are heavily skewed (e.g., labor density is
+            dominated by a few metro counties). For inverse metrics like grid SAIDI, we use{' '}
+            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">1 &minus; rank</code> so that
+            the best (lowest SAIDI) gets the highest score.
           </p>
+
+          <h4 className="text-white font-semibold mt-4 mb-1">3. Log-Transform + Composite (Curtailment)</h4>
+          <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
+            score = 0.55 &times; log_norm(renewable_MW) + 0.20 &times; pipeline_pressure + 0.25 &times; congestion_flag
+          </div>
           <p>
-            For <strong className="text-white">inverse metrics</strong> (like grid outage duration, where
-            lower is better), we use{' '}
-            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">1 &minus; normalized</code>{' '}
-            so that 1 still means &ldquo;best.&rdquo;
+            Curtailment uses <code className="text-nodiac-secondary bg-white/5 px-1 rounded">log1p(MW)</code>{' '}
+            normalization because renewable capacity is extremely right-skewed (Kern County CA has 8,756 MW
+            while most counties have under 100 MW). The log transform preserves meaningful differences at
+            the low end without letting California dominate the entire scale.
           </p>
-          <p>
-            Values are clamped to [0, 1] so outliers don&apos;t produce negative scores or scores above 1.
-            When the data pipeline is fully connected, normalization happens at seed time (when data is
-            ingested) so that the 0&ndash;1 scores stored in the database are ready for immediate use.
+
+          <p className="mt-3">
+            All normalization happens at <strong className="text-white">pipeline time</strong> (when the
+            data pipeline runs), so the 0&ndash;1 scores stored in the database are ready for immediate
+            use by the frontend.
           </p>
         </Collapsible>
 
@@ -362,83 +410,88 @@ export function MethodologyDeepDive() {
         {/* 6. DATA PIPELINE */}
         <Collapsible title="Data Pipeline and Current Status">
           <p>
-            The data pipeline has two modes: <strong className="text-white">seed data</strong> (current)
-            and <strong className="text-white">live data</strong> (planned).
+            The data pipeline (<code className="text-nodiac-secondary bg-white/5 px-1 rounded">scripts/build-real-county-scores.py</code>)
+            downloads and processes public datasets from federal agencies to compute per-county scores.
+            Run with <code className="text-nodiac-secondary bg-white/5 px-1 rounded">uv run scripts/build-real-county-scores.py</code>.
           </p>
 
-          <h4 className="text-white font-semibold mt-4 mb-1">Current: Seed Data</h4>
-          <p>
-            A seed script (<code className="text-nodiac-secondary bg-white/5 px-1 rounded">scripts/seed-county-scores.ts</code>)
-            generates scores for all ~3,200 counties:
-          </p>
+          <h4 className="text-white font-semibold mt-4 mb-1">Pipeline Steps</h4>
           <ol className="list-decimal list-inside space-y-1 ml-2 mt-2">
-            <li>
-              Fetches the official FIPS county code list from the Census Bureau
-              (<code className="text-nodiac-secondary bg-white/5 px-1 rounded text-xs">census.gov/geo/docs/reference/codes2020/national_county2020.txt</code>)
-            </li>
-            <li>
-              For each county, looks up its state&apos;s baseline scores &mdash; a manually researched
-              set of approximate 0&ndash;1 values per criterion per state (e.g., MN co-op = 0.75,
-              TX curtailment = 0.80, VA fiber = 0.90)
-            </li>
-            <li>
-              Applies per-county <strong className="text-white">jitter</strong> of &plusmn;0.15 to create
-              within-state variation (random uniform noise, clamped to [0, 1])
-            </li>
-            <li>
-              Sets all permitting scores to 0.5 (neutral) &mdash; this is enriched separately by
-              the permitting sentiment skill
-            </li>
-            <li>
-              Writes to both Supabase (via upsert) and a static JSON fallback at{' '}
-              <code className="text-nodiac-secondary bg-white/5 px-1 rounded">/data/county-scores.json</code>
-            </li>
+            <li>Downloads FIPS crosswalk for county name &rarr; FIPS code mapping (3,136 entries)</li>
+            <li>Downloads EIA Form 861 ZIP (4.4 MB, 20 files) &rarr; co-op density + grid reliability</li>
+            <li>Downloads EIA Form 860 ZIP (21 MB, 13 files) &rarr; curtailment proxy</li>
+            <li>Fetches Census CBP via API (3 NAICS codes) + population estimates &rarr; labor score</li>
+            <li>Fetches Census ACS broadband data via API &rarr; fiber proxy</li>
+            <li>Assembles all scores per county FIPS, writes to JSON + Supabase</li>
           </ol>
 
-          <h4 className="text-white font-semibold mt-4 mb-1">Planned: Live Data Pipeline</h4>
+          <h4 className="text-white font-semibold mt-4 mb-1">Data Source Coverage</h4>
           <div className="overflow-x-auto">
             <table className="w-full text-sm mt-2">
               <thead>
                 <tr className="border-b border-white/10">
                   <th className="text-left py-2 pr-3 text-gray-400 font-medium">Criterion</th>
                   <th className="text-left py-2 pr-3 text-gray-400 font-medium">Source</th>
-                  <th className="text-left py-2 text-gray-400 font-medium">Method</th>
+                  <th className="text-left py-2 pr-3 text-gray-400 font-medium">Coverage</th>
+                  <th className="text-left py-2 text-gray-400 font-medium">Status</th>
                 </tr>
               </thead>
               <tbody>
                 <tr className="border-b border-white/5">
                   <td className="py-2 pr-3 text-white">Co-op Density</td>
-                  <td className="py-2 pr-3">EIA Form 861</td>
-                  <td className="py-2">% of county utilities that are co-ops, weighted by territory</td>
+                  <td className="py-2 pr-3">EIA Form 861 (2024)</td>
+                  <td className="py-2 pr-3">99%</td>
+                  <td className="py-2 text-nodiac-secondary">Real data</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-2 pr-3 text-white">Grid Reliability</td>
-                  <td className="py-2 pr-3">EIA Form 861 (SAIDI/SAIFI)</td>
-                  <td className="py-2">Customer-weighted avg outage duration, inverted</td>
+                  <td className="py-2 pr-3">EIA Form 861 SAIDI (2024)</td>
+                  <td className="py-2 pr-3">96%</td>
+                  <td className="py-2 text-nodiac-secondary">Real data</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-2 pr-3 text-white">Clipped/Curtailed</td>
-                  <td className="py-2 pr-3">EIA Form 860 + LBNL queue</td>
-                  <td className="py-2">Renewable nameplate MW / grid hosting capacity</td>
+                  <td className="py-2 pr-3">EIA Form 860 (2024)</td>
+                  <td className="py-2 pr-3">54%</td>
+                  <td className="py-2 text-nodiac-secondary">Real data</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-2 pr-3 text-white">Permitting</td>
-                  <td className="py-2 pr-3">Web research (Claude skill)</td>
-                  <td className="py-2">Sentiment analysis of ordinances, moratoria, incentives</td>
+                  <td className="py-2 pr-3">Claude skill (web research)</td>
+                  <td className="py-2 pr-3">0%</td>
+                  <td className="py-2 text-yellow-400/80">Default 0.5</td>
                 </tr>
                 <tr className="border-b border-white/5">
                   <td className="py-2 pr-3 text-white">Skilled IT Labor</td>
-                  <td className="py-2 pr-3">Census CBP (NAICS 5182, 5415)</td>
-                  <td className="py-2">IT employment per capita, min-max normalized</td>
+                  <td className="py-2 pr-3">Census CBP 2023</td>
+                  <td className="py-2 pr-3">100%</td>
+                  <td className="py-2 text-nodiac-secondary">Real data</td>
                 </tr>
                 <tr>
                   <td className="py-2 pr-3 text-white">Fiber</td>
-                  <td className="py-2 pr-3">FCC Broadband Data Collection</td>
-                  <td className="py-2">% of census blocks with fiber (tech code 50)</td>
+                  <td className="py-2 pr-3">Census ACS 2023 (proxy)</td>
+                  <td className="py-2 pr-3">100%</td>
+                  <td className="py-2 text-nodiac-secondary">Real data (proxy)</td>
                 </tr>
               </tbody>
             </table>
           </div>
+
+          <h4 className="text-white font-semibold mt-4 mb-1">Potential Upgrades</h4>
+          <ul className="list-disc list-inside space-y-1 ml-2 mt-1 text-sm">
+            <li>
+              <strong className="text-gray-200">Curtailment:</strong> Add EIA Form 923 generation data
+              to compute capacity factor gaps (actual vs theoretical CF) as a direct curtailment proxy
+            </li>
+            <li>
+              <strong className="text-gray-200">Fiber:</strong> Replace ACS broadband subscription proxy
+              with FCC BDC location-level fiber availability data (requires FCC bulk data registration)
+            </li>
+            <li>
+              <strong className="text-gray-200">Permitting:</strong> Batch-enrich counties using the
+              permitting sentiment skill, prioritizing target hub regions
+            </li>
+          </ul>
         </Collapsible>
 
         {/* 7. GEOGRAPHY */}
@@ -466,34 +519,45 @@ export function MethodologyDeepDive() {
         <Collapsible title="Known Limitations and Caveats">
           <ul className="list-disc list-inside space-y-2 ml-2">
             <li>
-              <strong className="text-white">Seed data uses state-level baselines with jitter</strong> &mdash;
-              within-state variation is random, not based on actual county-level differences.
-              A county in rural western MN currently gets a similar score to one in the Twin Cities suburbs.
-              The live data pipeline will fix this.
-            </li>
-            <li>
               <strong className="text-white">Permitting scores are all 0.5 by default</strong> &mdash;
               this is the most impactful criterion for real decision-making, and it&apos;s currently
-              uniform. As the permitting sentiment skill enriches counties, the map will differentiate
-              more meaningfully.
+              uniform across all counties. As the permitting sentiment skill enriches counties, the map
+              will differentiate more meaningfully. This is the single biggest gap in the model.
             </li>
             <li>
-              <strong className="text-white">No temporal dimension</strong> &mdash; scores are static
-              snapshots. Grid reliability, curtailment, and permitting all change over time. Future
-              versions will include <code className="text-nodiac-secondary bg-white/5 px-1 rounded">last_permitting_update</code> timestamps
-              and historical trend data.
+              <strong className="text-white">Curtailment is a proxy, not a measurement</strong> &mdash;
+              actual curtailment data is only reported by ISOs at the regional level (CAISO reports
+              ~3.4M MWh curtailed in 2024). Our EIA-860 score measures <em>potential</em> for curtailment
+              based on installed renewable MW and congestion-prone balancing authorities. Adding EIA Form
+              923 generation data would give capacity factor gaps as a better proxy.
             </li>
             <li>
-              <strong className="text-white">Equal normalization across all counties</strong> &mdash;
-              min-max normalization is sensitive to outliers. A single county with extreme values
-              can compress the rest of the distribution. Quantile normalization may produce better
-              visual differentiation.
+              <strong className="text-white">Fiber score is a subscription proxy</strong> &mdash;
+              we use Census ACS broadband subscription rates (median: 85.1%) rather than actual fiber
+              infrastructure presence from the FCC BDC. Subscription rates correlate with but are not
+              identical to fiber availability. The FCC BDC bulk dataset requires registration.
+            </li>
+            <li>
+              <strong className="text-white">Census CBP employment data has noise infusion</strong> &mdash;
+              the Census Bureau adds random noise (2&ndash;5%) to employee counts for disclosure avoidance.
+              At the county level, this is acceptable for ranking purposes but not precise enough for
+              exact headcount analysis.
+            </li>
+            <li>
+              <strong className="text-white">46% of counties have zero curtailment score</strong> &mdash;
+              this is factually correct (they have no variable renewable generation), but it creates a
+              bimodal distribution that can visually distort the map when curtailment weight is high.
             </li>
             <li>
               <strong className="text-white">No interaction effects</strong> &mdash; the weighted
               average treats criteria independently. In reality, a county with high co-op density
               AND high curtailment is more than additively valuable (that&apos;s the behind-the-meter
               arbitrage play). A multiplicative or geometric mean model could capture this.
+            </li>
+            <li>
+              <strong className="text-white">No temporal dimension</strong> &mdash; scores are static
+              snapshots. Grid reliability, curtailment, and permitting all change over time. Future
+              versions will track <code className="text-nodiac-secondary bg-white/5 px-1 rounded">last_permitting_update</code> timestamps.
             </li>
           </ul>
         </Collapsible>
