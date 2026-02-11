@@ -7,7 +7,7 @@ import { TierBadge } from './TierBadge'
 import { ScoringBreakdown } from './ScoringBreakdown'
 import { cn } from '@/lib/utils'
 
-type SortKey = 'site_name' | 'county' | 'state' | 'tier' | 'site_score'
+type SortKey = 'site_name' | 'county' | 'state' | 'utility_type' | 'tier' | 'site_score'
 type SortDir = 'asc' | 'desc'
 
 const TIER_ORDER = { good: 0, okay: 1, bad: 2 }
@@ -36,6 +36,9 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
         case 'state':
           cmp = (a.state || '').localeCompare(b.state || '')
           break
+        case 'utility_type':
+          cmp = (a.utility_type || '').localeCompare(b.utility_type || '')
+          break
         case 'tier':
           cmp = (TIER_ORDER[a.tier || 'bad'] ?? 3) - (TIER_ORDER[b.tier || 'bad'] ?? 3)
           break
@@ -63,18 +66,21 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
       : <ChevronDown className="w-3 h-3 inline ml-1" />
   }
 
+  const columns: [SortKey, string][] = [
+    ['site_name', 'Site'],
+    ['county', 'County'],
+    ['state', 'State'],
+    ['utility_type', 'Utility'],
+    ['tier', 'Tier'],
+    ['site_score', 'Score'],
+  ]
+
   return (
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-white/10 text-left">
-            {([
-              ['site_name', 'Site'],
-              ['county', 'County'],
-              ['state', 'State'],
-              ['tier', 'Tier'],
-              ['site_score', 'Score'],
-            ] as [SortKey, string][]).map(([key, label]) => (
+            {columns.map(([key, label]) => (
               <th
                 key={key}
                 className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
@@ -105,6 +111,7 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
                 <td className="px-3 py-2.5 text-white font-medium">{site.site_name}</td>
                 <td className="px-3 py-2.5 text-gray-300">{site.county || '—'}</td>
                 <td className="px-3 py-2.5 text-gray-300">{site.state || '—'}</td>
+                <td className="px-3 py-2.5 text-gray-400 text-xs">{site.utility_type || '—'}</td>
                 <td className="px-3 py-2.5">
                   <TierBadge tier={site.tier} />
                 </td>
@@ -114,7 +121,7 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
               </tr>
               {expandedId === site.id && site.score_breakdown && (
                 <tr key={`${site.id}-detail`}>
-                  <td colSpan={5} className="px-3 py-3 bg-white/[0.02]">
+                  <td colSpan={6} className="px-3 py-3 bg-white/[0.02]">
                     <ScoringBreakdown breakdown={site.score_breakdown} />
                   </td>
                 </tr>

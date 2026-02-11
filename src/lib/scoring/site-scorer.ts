@@ -1,4 +1,5 @@
 import type { SiteScoreBreakdown, SiteTier } from '@/types/screening'
+import type { CriterionKey } from '@/types/regional-hubs'
 
 const TIER_THRESHOLDS = {
   good: 6.5,
@@ -6,8 +7,9 @@ const TIER_THRESHOLDS = {
 } as const
 
 /**
- * Score a site based on its criterion breakdown.
+ * Score a site based on its criterion breakdown (simple average).
  * Each criterion is 0-1; we average available scores and scale to 0-10.
+ * Used server-side for default (Balanced) scoring.
  */
 export function scoreSite(breakdown: SiteScoreBreakdown): { score: number; tier: SiteTier } {
   const values = Object.values(breakdown).filter(
@@ -20,6 +22,40 @@ export function scoreSite(breakdown: SiteScoreBreakdown): { score: number; tier:
 
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length
   const score = Math.round(avg * 100) / 10 // 0-10 scale, 1 decimal
+
+  const tier: SiteTier =
+    score >= TIER_THRESHOLDS.good
+      ? 'good'
+      : score >= TIER_THRESHOLDS.okay
+        ? 'okay'
+        : 'bad'
+
+  return { score, tier }
+}
+
+/**
+ * Score a site using weighted criteria — same logic as county-scorer's computeCompositeScore.
+ * Used client-side when the user selects a weight preset.
+ */
+export function scoreSiteWeighted(
+  breakdown: SiteScoreBreakdown,
+  weights: Record<CriterionKey, number>
+): { score: number; tier: SiteTier } {
+  let weightedSum = 0
+  let totalWeight = 0
+
+  for (const key of Object.keys(weights) as CriterionKey[]) {
+    const w = weights[key]
+    if (w <= 0) continue
+    const value = breakdown[key]
+    if (value === null || value === undefined) continue
+    weightedSum += value * w
+    totalWeight += w
+  }
+
+  if (totalWeight === 0) return { score: 0, tier: 'bad' }
+
+  const score = Math.round((weightedSum / totalWeight) * 100) / 10 // 0-10 scale, 1 decimal
 
   const tier: SiteTier =
     score >= TIER_THRESHOLDS.good

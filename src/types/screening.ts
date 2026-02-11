@@ -31,6 +31,7 @@ export interface PortfolioSite {
   site_score: number | null
   tier: SiteTier | null
   score_breakdown: SiteScoreBreakdown | null
+  utility_type: string | null
 }
 
 export interface ParsedSite {

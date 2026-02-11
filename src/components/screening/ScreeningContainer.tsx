@@ -6,9 +6,15 @@ import { ScreeningMap } from './ScreeningMap'
 import { SiteTable } from './SiteTable'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import { RotateCcw } from 'lucide-react'
+import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
+import { cn } from '@/lib/utils'
 
 export function ScreeningContainer() {
-  const { state, upload, sites, error, uploadCSV, reset } = usePortfolio()
+  const {
+    state, upload, sites, error, siteCount,
+    selectedProfileId, setProfileId,
+    uploadCSV, reset,
+  } = usePortfolio()
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
 
   const handleSiteSelect = useCallback((siteId: string) => {
@@ -44,7 +50,9 @@ export function ScreeningContainer() {
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center">
           <div className="w-10 h-10 border-2 border-nodiac-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white font-medium">Scoring sites...</p>
+          <p className="text-white font-medium">
+            Scoring {siteCount > 0 ? `${siteCount} sites` : 'sites'}...
+          </p>
           <p className="text-sm text-gray-400 mt-1">
             Looking up county data and computing scores
           </p>
@@ -79,6 +87,27 @@ export function ScreeningContainer() {
           <RotateCcw className="w-3.5 h-3.5" />
           New Upload
         </button>
+      </div>
+
+      {/* Weight presets */}
+      <div className="px-6 py-3 border-b border-white/10">
+        <div className="flex flex-wrap gap-1.5">
+          {WEIGHT_PROFILES.map((profile) => (
+            <button
+              key={profile.id}
+              onClick={() => setProfileId(profile.id)}
+              className={cn(
+                'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
+                selectedProfileId === profile.id
+                  ? 'bg-nodiac-secondary text-nodiac-dark'
+                  : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+              )}
+              title={profile.description}
+            >
+              {profile.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Map */}
