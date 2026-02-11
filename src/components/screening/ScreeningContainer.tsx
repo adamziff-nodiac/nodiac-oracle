@@ -8,7 +8,11 @@ import { usePortfolio } from '@/hooks/usePortfolio'
 import type { ProgressStep } from '@/hooks/usePortfolio'
 import { RotateCcw, Check, Loader2 } from 'lucide-react'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
+import type { SiteTier } from '@/types/screening'
+import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
 import { cn } from '@/lib/utils'
+
+const ALL_TIERS: SiteTier[] = ['good', 'okay', 'bad']
 
 function StepIndicator({ steps }: { steps: ProgressStep[] }) {
   return (
@@ -49,9 +53,23 @@ export function ScreeningContainer() {
     uploadCSV, reset,
   } = usePortfolio()
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
+  const [visibleTiers, setVisibleTiers] = useState<Set<SiteTier>>(new Set(ALL_TIERS))
 
   const handleSiteSelect = useCallback((siteId: string) => {
     setSelectedSiteId(prev => prev === siteId ? null : siteId)
+  }, [])
+
+  const toggleTier = useCallback((tier: SiteTier) => {
+    setVisibleTiers(prev => {
+      const next = new Set(prev)
+      if (next.has(tier)) {
+        // Don't allow deselecting all — keep at least one
+        if (next.size > 1) next.delete(tier)
+      } else {
+        next.add(tier)
+      }
+      return next
+    })
   }, [])
 
   // Upload phase
@@ -138,12 +156,41 @@ export function ScreeningContainer() {
         </div>
       </div>
 
-      {/* Map */}
+      {/* Map filter + map */}
+      <div className="px-6 py-2 flex items-center gap-1.5 border-b border-white/10">
+        <span className="text-xs text-gray-500 mr-1">Show:</span>
+        {ALL_TIERS.map((tier) => {
+          const active = visibleTiers.has(tier)
+          const color = TIER_COLORS[tier]
+          return (
+            <button
+              key={tier}
+              onClick={() => toggleTier(tier)}
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                active
+                  ? 'bg-white/10 text-white'
+                  : 'bg-white/[0.03] text-gray-500 hover:bg-white/5'
+              )}
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{
+                  backgroundColor: color,
+                  opacity: active ? 1 : 0.3,
+                }}
+              />
+              {TIER_LABELS[tier]}
+            </button>
+          )
+        })}
+      </div>
       <div className="h-[40vh] border-b border-white/10">
         <ScreeningMap
           sites={sites}
           selectedSiteId={selectedSiteId}
           onSiteSelect={handleSiteSelect}
+          visibleTiers={visibleTiers}
         />
       </div>
 
