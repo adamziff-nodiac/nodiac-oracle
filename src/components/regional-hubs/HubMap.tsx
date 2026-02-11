@@ -33,8 +33,8 @@ export function HubMap({
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
       const feature = e.features?.[0]
-      if (feature?.properties?.GEOID) {
-        onCountyClick?.(feature.properties.GEOID)
+      if (feature?.properties?.FIPS) {
+        onCountyClick?.(feature.properties.FIPS)
       }
     },
     [onCountyClick]
@@ -43,7 +43,7 @@ export function HubMap({
   const handleHover = useCallback(
     (e: MapMouseEvent) => {
       const feature = e.features?.[0]
-      const fips = feature?.properties?.GEOID || null
+      const fips = feature?.properties?.FIPS || null
       setHoveredFips(fips)
       onCountyHover?.(fips)
     },

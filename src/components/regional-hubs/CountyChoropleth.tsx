@@ -1,10 +1,9 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 
-const COUNTY_TILESET_URL = 'mapbox://mapbox.boundaries-adm2-v4'
-const COUNTY_SOURCE_LAYER = 'boundaries_admin_2'
+const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
 /**
  * Interpolate between two hex colors.
@@ -38,6 +37,15 @@ export function CountyChoropleth({
   scoreRange,
   hoveredFips,
 }: CountyChoroplethProps) {
+  const [geojson, setGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
+
+  useEffect(() => {
+    fetch(COUNTIES_GEOJSON_URL)
+      .then(res => res.json())
+      .then(data => setGeojson(data))
+      .catch(err => console.error('Failed to load county boundaries:', err))
+  }, [])
+
   // Build Mapbox match expression for fill color based on FIPS → score lookup
   const fillColorExpression = useMemo(() => {
     if (scoreLookup.size === 0) return 'rgba(50, 50, 60, 0.3)'
@@ -45,8 +53,8 @@ export function CountyChoropleth({
     const [minScore, maxScore] = scoreRange
     const range = maxScore - minScore || 1
 
-    // Build a match expression: ['match', ['get', 'GEOID'], fips1, color1, fips2, color2, ..., defaultColor]
-    const matchExpr: unknown[] = ['match', ['get', 'GEOID']]
+    // Build a match expression: ['match', ['get', 'FIPS'], fips1, color1, fips2, color2, ..., defaultColor]
+    const matchExpr: unknown[] = ['match', ['get', 'FIPS']]
 
     scoreLookup.forEach((score, fips) => {
       const t = (score - minScore) / range
@@ -68,23 +76,23 @@ export function CountyChoropleth({
     if (!hoveredFips) return 0.75
     return [
       'case',
-      ['==', ['get', 'GEOID'], hoveredFips],
+      ['==', ['get', 'FIPS'], hoveredFips],
       1,
       0.75,
     ] as mapboxgl.Expression
   }, [hoveredFips])
 
+  if (!geojson) return null
+
   return (
     <Source
       id="county-boundaries"
-      type="vector"
-      url={COUNTY_TILESET_URL}
+      type="geojson"
+      data={geojson}
     >
       <Layer
         id="county-fill"
         type="fill"
-        source-layer={COUNTY_SOURCE_LAYER}
-        filter={['==', ['get', 'iso_3166_1'], 'US']}
         paint={{
           'fill-color': fillColorExpression as string,
           'fill-opacity': fillOpacityExpression as number,
@@ -93,8 +101,6 @@ export function CountyChoropleth({
       <Layer
         id="county-outline"
         type="line"
-        source-layer={COUNTY_SOURCE_LAYER}
-        filter={['==', ['get', 'iso_3166_1'], 'US']}
         paint={{
           'line-color': 'rgba(255, 255, 255, 0.08)',
           'line-width': 0.5,
