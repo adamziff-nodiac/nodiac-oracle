@@ -5,13 +5,46 @@ import { CsvUploader } from './CsvUploader'
 import { ScreeningMap } from './ScreeningMap'
 import { SiteTable } from './SiteTable'
 import { usePortfolio } from '@/hooks/usePortfolio'
-import { RotateCcw } from 'lucide-react'
+import type { ProgressStep } from '@/hooks/usePortfolio'
+import { RotateCcw, Check, Loader2 } from 'lucide-react'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
 import { cn } from '@/lib/utils'
 
+function StepIndicator({ steps }: { steps: ProgressStep[] }) {
+  return (
+    <div className="flex flex-col gap-3 w-64">
+      {steps.map((step, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center">
+            {step.status === 'done' ? (
+              <div className="w-5 h-5 rounded-full bg-nodiac-secondary/20 flex items-center justify-center">
+                <Check className="w-3 h-3 text-nodiac-secondary" />
+              </div>
+            ) : step.status === 'active' ? (
+              <Loader2 className="w-5 h-5 text-nodiac-secondary animate-spin" />
+            ) : (
+              <div className="w-5 h-5 rounded-full border border-white/20" />
+            )}
+          </div>
+          <span
+            className={cn(
+              'text-sm',
+              step.status === 'active' && 'text-white font-medium',
+              step.status === 'done' && 'text-gray-400',
+              step.status === 'pending' && 'text-gray-500'
+            )}
+          >
+            {step.label}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function ScreeningContainer() {
   const {
-    state, upload, sites, error, siteCount,
+    state, upload, sites, error, steps,
     selectedProfileId, setProfileId,
     uploadCSV, reset,
   } = usePortfolio()
@@ -22,7 +55,7 @@ export function ScreeningContainer() {
   }, [])
 
   // Upload phase
-  if (state === 'idle' || state === 'uploading' || state === 'error') {
+  if (state === 'idle' || state === 'error') {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-6">
         <div className="text-center mb-10">
@@ -35,7 +68,7 @@ export function ScreeningContainer() {
         </div>
         <CsvUploader
           onUpload={uploadCSV}
-          isUploading={state === 'uploading'}
+          isUploading={false}
         />
         {error && (
           <p className="mt-4 text-sm text-red-400">{error}</p>
@@ -44,18 +77,13 @@ export function ScreeningContainer() {
     )
   }
 
-  // Scoring phase
-  if (state === 'scoring') {
+  // Loading phase (uploading, scoring, or loading results)
+  if (state === 'uploading' || state === 'scoring' || state === 'loading-results') {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-10 h-10 border-2 border-nodiac-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-white font-medium">
-            Scoring {siteCount > 0 ? `${siteCount} sites` : 'sites'}...
-          </p>
-          <p className="text-sm text-gray-400 mt-1">
-            Looking up county data and computing scores
-          </p>
+        <div className="flex flex-col items-center gap-6">
+          <h3 className="text-lg font-semibold text-white">Processing portfolio</h3>
+          <StepIndicator steps={steps} />
         </div>
       </div>
     )

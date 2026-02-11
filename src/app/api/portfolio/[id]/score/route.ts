@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { batchLookupFips } from '@/lib/geo/fips-lookup'
 import { scoreSite, buildSiteBreakdown } from '@/lib/scoring/site-scorer'
+import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
 import type { SiteScoreBreakdown } from '@/types/screening'
 import type { Json } from '@/types/database'
 
@@ -15,64 +16,6 @@ type CountyScoreRow = {
   permitting_score: number
   labor_score: number
   fiber_score: number
-}
-
-/** Detect utility type from raw_data and return a classification. */
-function classifyUtilityType(rawData: Record<string, unknown>): {
-  utilityType: string | null
-  coopOverride: number | null
-} {
-  // Try common CSV column names
-  const keys = [
-    'Electric Infrastructure Owner & Operator',
-    'electric infrastructure owner & operator',
-    'utility type',
-    'Utility Type',
-    'utility_type',
-  ]
-
-  let value: string | null = null
-  for (const key of keys) {
-    if (rawData[key] && typeof rawData[key] === 'string') {
-      value = (rawData[key] as string).trim()
-      break
-    }
-  }
-
-  if (!value) return { utilityType: null, coopOverride: null }
-
-  const lower = value.toLowerCase()
-
-  // Co-op detection
-  if (
-    lower.includes('coop') ||
-    lower.includes('cooperative') ||
-    lower.includes('co-op') ||
-    lower.includes('electric cooperative')
-  ) {
-    return { utilityType: 'Co-op', coopOverride: 1.0 }
-  }
-
-  // IOU detection
-  if (
-    lower.includes('investor') ||
-    lower === 'iou' ||
-    lower.includes('investor-owned')
-  ) {
-    return { utilityType: 'IOU', coopOverride: 0.2 }
-  }
-
-  // Municipal detection
-  if (
-    lower.includes('municipal') ||
-    lower.includes('muni') ||
-    lower.includes('city of') ||
-    lower.includes('public power')
-  ) {
-    return { utilityType: 'Municipal', coopOverride: 0.6 }
-  }
-
-  return { utilityType: value, coopOverride: null }
 }
 
 export async function POST(
