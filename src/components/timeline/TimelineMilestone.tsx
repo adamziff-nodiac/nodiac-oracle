@@ -77,12 +77,19 @@ export function TimelineMilestone({
   // Get dynamic sizing
   const sizing = useMemo(() => getMilestoneSizing(rowCount), [rowCount])
 
+  // Max valid position: last half-quarter snap point
+  const maxPosition = useMemo(() => {
+    const totalQuarters = (endYear - startYear + 1) * 4
+    return 100 - (100 / (totalQuarters * 2))
+  }, [startYear, endYear])
+
   // Snap to quarter boundaries or quarter midpoints (half-quarter intervals)
   const snapToHalfQuarter = useCallback((percent: number) => {
     const totalQuarters = (endYear - startYear + 1) * 4
     const halfQuarterWidth = 100 / (totalQuarters * 2) // Half-quarter intervals
-    return Math.round(percent / halfQuarterWidth) * halfQuarterWidth
-  }, [startYear, endYear])
+    const snapped = Math.round(percent / halfQuarterWidth) * halfQuarterWidth
+    return Math.max(0, Math.min(snapped, maxPosition))
+  }, [startYear, endYear, maxPosition])
 
   // Handle drag start
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -102,14 +109,14 @@ export function TimelineMilestone({
     const rect = containerRef.current.getBoundingClientRect()
     const deltaPercent = ((e.clientX - dragStartX) / rect.width) * 100
     let newPosition = snapToHalfQuarter(originalPosition + deltaPercent)
-    newPosition = Math.max(0, Math.min(100, newPosition))
+    newPosition = Math.max(0, Math.min(maxPosition, newPosition))
 
     // Only mark as moved if position actually changed
     if (Math.abs(newPosition - originalPosition) > 0.01) {
       setHasMoved(true)
     }
     setDragPosition(newPosition)
-  }, [isDragging, dragStartX, originalPosition, snapToHalfQuarter, containerRef])
+  }, [isDragging, dragStartX, originalPosition, snapToHalfQuarter, maxPosition, containerRef])
 
   // Handle drag end - only write to DB if position changed
   const handleMouseUp = useCallback(() => {

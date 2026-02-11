@@ -51,6 +51,7 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [showLegend, setShowLegend] = useState(true)
 
   // Draggable legend position (percentage-based)
   const [legendPosition, setLegendPosition] = useState({ x: 3, y: 10 })
@@ -634,6 +635,15 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
     <div className="max-w-7xl mx-auto">
       {/* Toolbar - outside the export area */}
       <div className="flex items-center justify-end mb-4 flex-wrap gap-2" data-edit-control>
+        <label className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showLegend}
+            onChange={(e) => setShowLegend(e.target.checked)}
+            className="accent-nodiac-primary w-4 h-4 cursor-pointer"
+          />
+          <span className="hidden sm:inline text-sm">Legend</span>
+        </label>
         <button
           onClick={() => setShowSettings(true)}
           className="flex items-center gap-2 px-3 py-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
@@ -687,20 +697,22 @@ export function TimelineBuilder({ timeline, onUpdate }: TimelineBuilderProps) {
           style={{ aspectRatio: '16 / 9' }}
         >
           {/* Draggable Legend */}
-          <div
-            className={`absolute z-50 flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1 cursor-move select-none whitespace-nowrap ${isDraggingLegend ? 'opacity-80' : 'hover:border-white/40'}`}
-            style={{
-              left: `${legendPosition.x}%`,
-              top: `${legendPosition.y}%`,
-            }}
-            onMouseDown={handleLegendMouseDown}
-            title="Drag to reposition"
-          >
-            <svg width="10" height="10" viewBox="0 0 10 10">
-              <polygon points="5,0 10,5 5,10 0,5" fill="currentColor" />
-            </svg>
-            <span>= COD</span>
-          </div>
+          {showLegend && (
+            <div
+              className={`absolute z-50 flex items-center gap-1.5 text-sm text-white/70 border border-white/20 rounded-md px-2 py-1 cursor-move select-none whitespace-nowrap ${isDraggingLegend ? 'opacity-80' : 'hover:border-white/40'}`}
+              style={{
+                left: `${legendPosition.x}%`,
+                top: `${legendPosition.y}%`,
+              }}
+              onMouseDown={handleLegendMouseDown}
+              title="Drag to reposition"
+            >
+              <svg width="10" height="10" viewBox="0 0 10 10">
+                <polygon points="5,0 10,5 5,10 0,5" fill="currentColor" />
+              </svg>
+              <span>= COD</span>
+            </div>
+          )}
 
           {/* Title Header - included in export */}
           <div className="px-6 pt-4 pb-2 flex-shrink-0">

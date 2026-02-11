@@ -21,8 +21,8 @@ export function TimelineSettingsModal({
   const [error, setError] = useState<string | null>(null)
 
   const handleSave = () => {
-    if (startYear >= endYear) {
-      setError('Start year must be before end year')
+    if (startYear > endYear) {
+      setError('Start year cannot be after end year')
       return
     }
     if (endYear - startYear > 20) {

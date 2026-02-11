@@ -181,12 +181,19 @@ export function TimelineRow({
     return levels
   }, [regularMilestones, endMilestone, startYear, endYear])
 
+  // Max valid position: last half-quarter snap point (e.g. 87.5% for a 1-year timeline)
+  const maxPosition = useMemo(() => {
+    const totalQuarters = (endYear - startYear + 1) * 4
+    return 100 - (100 / (totalQuarters * 2))
+  }, [startYear, endYear])
+
   // Snap to quarter boundaries or quarter midpoints (half-quarter intervals)
   const snapToHalfQuarter = useCallback((percent: number) => {
     const totalQuarters = (endYear - startYear + 1) * 4
     const halfQuarterWidth = 100 / (totalQuarters * 2) // Half-quarter intervals
-    return Math.round(percent / halfQuarterWidth) * halfQuarterWidth
-  }, [startYear, endYear])
+    const snapped = Math.round(percent / halfQuarterWidth) * halfQuarterWidth
+    return Math.max(0, Math.min(snapped, maxPosition))
+  }, [startYear, endYear, maxPosition])
 
   // Handle mouse down on bar (move) or handles (resize)
   const handleMouseDown = useCallback((e: React.MouseEvent, type: 'move' | 'start' | 'end') => {
@@ -236,9 +243,9 @@ export function TimelineRow({
         newStart = 0
         newEnd = barWidth
       }
-      if (newEnd > 100) {
-        newEnd = 100
-        newStart = 100 - barWidth
+      if (newEnd > maxPosition) {
+        newEnd = maxPosition
+        newStart = maxPosition - barWidth
       }
 
       // Check if actually moved
@@ -258,13 +265,13 @@ export function TimelineRow({
     } else if (dragType === 'end') {
       // Resize from end
       let newEnd = snapToHalfQuarter(originalEnd + deltaPercent)
-      newEnd = Math.min(100, Math.max(newEnd, originalStart + 5)) // Min 5% width
+      newEnd = Math.min(maxPosition, Math.max(newEnd, originalStart + 5)) // Min 5% width
       if (Math.abs(newEnd - originalEnd) > 0.01) {
         setHasMoved(true)
       }
       setDragBarEnd(newEnd)
     }
-  }, [dragType, dragStartX, originalStart, originalEnd, snapToHalfQuarter])
+  }, [dragType, dragStartX, originalStart, originalEnd, snapToHalfQuarter, maxPosition])
 
   // Handle mouse up - only write to DB if position changed
   const handleMouseUp = useCallback(() => {
