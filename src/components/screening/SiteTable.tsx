@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { Fragment, useState, useMemo } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import type { PortfolioSite } from '@/types/screening'
 import { TierBadge } from './TierBadge'
@@ -94,9 +94,8 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
         </thead>
         <tbody>
           {sorted.map((site) => (
-            <>
+            <Fragment key={site.id}>
               <tr
-                key={site.id}
                 className={cn(
                   'border-b border-white/5 cursor-pointer transition-colors',
                   selectedSiteId === site.id
@@ -120,13 +119,13 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
                 </td>
               </tr>
               {expandedId === site.id && site.score_breakdown && (
-                <tr key={`${site.id}-detail`}>
+                <tr>
                   <td colSpan={6} className="px-3 py-3 bg-white/[0.02]">
                     <ScoringBreakdown breakdown={site.score_breakdown} />
                   </td>
                 </tr>
               )}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>
