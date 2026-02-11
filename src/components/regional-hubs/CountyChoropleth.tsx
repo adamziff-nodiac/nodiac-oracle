@@ -5,11 +5,10 @@ import { Source, Layer } from 'react-map-gl/mapbox'
 
 const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
-// Purple scale: transparent dark (low) → mid purple → Nodiac purple (high)
-// Most desirable locations glow in Nodiac purple
-const COLOR_LOW = '#1a1520'     // near-invisible, blends with dark map
-const COLOR_MID = '#4d2445'     // mid-range purple
-const COLOR_HIGH = '#8b3578'    // bright Nodiac purple (visible on dark bg)
+// Purple scale: all counties visible, high scores glow Nodiac purple
+const COLOR_LOW = '#2d2233'     // visible muted purple — distinct from base map
+const COLOR_MID = '#5c2d55'     // mid-range purple
+const COLOR_HIGH = '#8b3578'    // bright Nodiac purple
 const COLOR_PEAK = '#b48fc1'    // soft orchid for top scores — max pop
 
 interface CountyChoroplethProps {
@@ -55,7 +54,7 @@ export function CountyChoropleth({
 
   // Hover highlight expression
   const fillOpacityExpression = useMemo(() => {
-    if (!hoveredFips) return 0.85
+    if (!hoveredFips) return 0.9
     return [
       'case',
       ['==', ['get', 'FIPS'], hoveredFips],
@@ -82,7 +81,7 @@ export function CountyChoropleth({
           'fill-color': [
             'case',
             ['==', ['get', 'compositeScore'], null],
-            'rgba(25, 22, 30, 0.3)',
+            '#221d28',
             [
               'interpolate',
               ['linear'],
