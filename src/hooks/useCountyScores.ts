@@ -31,8 +31,9 @@ export function useCountyScores() {
           // API failed, will try fallback
         }
 
-        // Fall back to static JSON if API returned nothing
-        if (data.length === 0) {
+        // Fall back to static JSON if API returned nothing or a truncated set
+        // (Supabase defaults to 1000 rows which misses many states)
+        if (data.length < 2000) {
           data = await fetchStaticFallback()
         }
 
