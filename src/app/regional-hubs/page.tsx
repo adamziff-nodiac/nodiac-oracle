@@ -11,6 +11,7 @@ import { CountyDetailPanel } from '@/components/regional-hubs/CountyDetailPanel'
 import { MapLegend } from '@/components/regional-hubs/MapLegend'
 import { ExportControls } from '@/components/regional-hubs/ExportControls'
 import { NarrativeSection } from '@/components/regional-hubs/NarrativeSection'
+import { MethodologyDeepDive } from '@/components/regional-hubs/MethodologyDeepDive'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
@@ -134,6 +135,14 @@ export default function RegionalHubsPage() {
 
       {/* Narrative */}
       <NarrativeSection />
+
+      {/* Divider */}
+      <div className="max-w-4xl mx-auto px-6">
+        <hr className="border-white/10" />
+      </div>
+
+      {/* Deep Dive Methodology */}
+      <MethodologyDeepDive />
     </div>
   )
 }
