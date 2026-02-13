@@ -345,20 +345,23 @@ scripts/
               </SubSection>
 
               <SubSection title="5. Skilled IT Labor (labor_score)">
-                <p>IT and telecom workforce density per capita.</p>
+                <p>Existing tech business presence per capita — a <strong className="text-white">proxy for available talent</strong>, not a direct measure of hireable labor.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> Census CBP 2023 — NAICS 5182 (Data Processing), 5415 (Computer Systems Design), 517 (Telecom). Population from Census 2024 vintage.</p>
-                  <p><strong className="text-gray-200">Method:</strong> Sum IT employees across all three NAICS per county, divide by population for per-10K density, percentile rank normalize.</p>
-                  <p><strong className="text-gray-200">Coverage:</strong> 100%. 2,222 of 3,143 counties have at least one IT establishment.</p>
+                  <p><strong className="text-gray-200">Source:</strong> Census County Business Patterns (CBP) 2023 — counts <em>businesses</em> under NAICS 5182 (Data Processing &amp; Hosting), 5415 (Computer Systems Design), and 517 (Telecommunications). Population from Census 2024 vintage.</p>
+                  <p><strong className="text-gray-200">Method:</strong> Sum employees across all three NAICS per county, divide by population for per-10K density, percentile rank normalize.</p>
+                  <p><strong className="text-gray-200">What it measures:</strong> The density of existing tech/telecom businesses in a county. Counties with more data processing, IT consulting, and telecom firms are likely to have a deeper pool of relevant talent nearby.</p>
+                  <p><strong className="text-gray-200">Limitations:</strong> This is a <em>proxy</em>. CBP counts business establishments, not individual workers available for hire. It doesn&apos;t capture remote workers, freelancers, or talent willing to relocate. A county with one large employer (e.g., a single data center) may score high despite limited labor market depth. Conversely, counties near major metros may have accessible talent that commutes in but isn&apos;t captured here.</p>
+                  <p><strong className="text-gray-200">Coverage:</strong> 100%. 2,222 of 3,143 counties have at least one IT establishment; the remaining 921 score 0.</p>
                 </div>
               </SubSection>
 
               <SubSection title="6. Fiber Availability (fiber_score)">
-                <p>Broadband infrastructure proxy for fiber availability.</p>
+                <p>Consumer broadband adoption as a <strong className="text-white">proxy for fiber infrastructure</strong> — not a direct measure of enterprise or dark fiber availability.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> Census ACS 5-Year (2023), Table B28002 — cable/fiber/DSL subscriptions ÷ total households. Median: 85.1%.</p>
+                  <p><strong className="text-gray-200">Source:</strong> Census ACS 5-Year (2023), Table B28002 — cable/fiber/DSL household subscriptions ÷ total households. Median subscription rate: 85.1%.</p>
                   <p><strong className="text-gray-200">Method:</strong> Subscription rate per county → percentile rank normalization.</p>
-                  <p><strong className="text-gray-200">Note:</strong> This is a proxy. FCC BDC location-level fiber data would be more precise but requires registration.</p>
+                  <p><strong className="text-gray-200">What it measures:</strong> The share of households subscribing to wired broadband (cable, fiber, or DSL). Counties with high consumer broadband adoption generally have better-developed telecom infrastructure that correlates with enterprise fiber availability.</p>
+                  <p><strong className="text-gray-200">Limitations:</strong> This is a <em>proxy</em>. Consumer broadband subscriptions ≠ enterprise/dark fiber availability. A county could have high residential cable adoption but no lit fiber routes suitable for data center interconnection. What data centers actually need — dark fiber, carrier-neutral meet-me rooms, low-latency IX peering — is not captured in Census data. The FCC Broadband Data Collection (BDC) has location-level fiber availability but requires registration for bulk access.</p>
                   <p><strong className="text-gray-200">Coverage:</strong> 100%.</p>
                 </div>
               </SubSection>
@@ -735,7 +738,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Fiber is a subscription proxy</strong> — ACS broadband rates ≠ actual fiber presence. FCC BDC bulk data requires registration.</span>
+                <span><strong className="text-white">Fiber and Labor are proxies</strong> — ACS broadband subscription rates ≠ enterprise/dark fiber availability. CBP business counts ≠ hireable labor supply. Both are the best freely available county-level data but measure indirect signals.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />

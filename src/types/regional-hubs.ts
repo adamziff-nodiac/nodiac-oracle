@@ -17,11 +17,11 @@ export const CRITERION_LABELS: Record<CriterionKey, string> = {
 
 export const CRITERION_DESCRIPTIONS: Record<CriterionKey, string> = {
   coop_density: 'Share of county served by electric cooperatives',
-  grid_reliability: 'Grid uptime based on SAIDI/SAIFI metrics',
+  grid_reliability: 'Grid uptime based on multi-year SAIDI averages (2013–2024)',
   clipped_curtailed: 'Renewable curtailment indicating excess capacity',
   permitting: 'Local permitting friendliness for data centers',
-  labor: 'IT and telecom workforce per capita',
-  fiber: 'Fiber broadband availability by census block',
+  labor: 'Tech business density per capita (proxy for available talent)',
+  fiber: 'Household broadband adoption (proxy for fiber infrastructure)',
 }
 
 export interface PermittingCitation {
