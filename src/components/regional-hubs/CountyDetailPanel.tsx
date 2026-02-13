@@ -95,6 +95,24 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
                       style={{ width: `${value * 100}%` }}
                     />
                   </div>
+                  {key === 'grid_reliability' && county.grid_reliability_years && (
+                    <p className={cn(
+                      'text-[10px] mt-0.5',
+                      county.grid_reliability_years >= 5 ? 'text-gray-500' :
+                      county.grid_reliability_years >= 3 ? 'text-yellow-600' :
+                      'text-orange-500'
+                    )}>
+                      {county.grid_reliability_years >= 5
+                        ? `Based on ${county.grid_reliability_years} years of SAIDI data (${county.grid_reliability_data_range})`
+                        : county.grid_reliability_years >= 3
+                        ? `Based on ${county.grid_reliability_years} years of data (${county.grid_reliability_data_range})`
+                        : `⚠️ Based on only ${county.grid_reliability_years} year${county.grid_reliability_years > 1 ? 's' : ''} of data`
+                      }
+                      {county.grid_reliability_avg_saidi != null && (
+                        <> · Avg {county.grid_reliability_avg_saidi} min/yr</>
+                      )}
+                    </p>
+                  )}
                 </div>
               )
             })}

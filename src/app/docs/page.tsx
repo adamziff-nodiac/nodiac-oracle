@@ -182,7 +182,7 @@ scripts/
             <SubSection title="Pipeline Steps">
               <ol className="list-decimal list-inside space-y-2 ml-2">
                 <li><strong className="text-white">FIPS crosswalk</strong> — Downloads county name → FIPS code mapping (3,136 entries)</li>
-                <li><strong className="text-white">EIA Form 861</strong> — Downloads ZIP (4.4 MB, 20 files) → processes <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Service_Territory_2024.xlsx</code> for co-op density and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Reliability_2024.xlsx</code> for grid SAIDI</li>
+                <li><strong className="text-white">EIA Form 861</strong> — Downloads ZIPs for 2013–2024 (12 years) → processes <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Service_Territory_2024.xlsx</code> for co-op density and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Reliability_YYYY.xlsx</code> files for multi-year grid SAIDI averaging</li>
                 <li><strong className="text-white">EIA Form 860</strong> — Downloads ZIP (21 MB, 13 files) → extracts solar/wind generators from Operable + Proposed sheets for curtailment proxy</li>
                 <li><strong className="text-white">Census CBP</strong> — API calls for NAICS 5182, 5415, 517 + population estimates → labor score</li>
                 <li><strong className="text-white">Census ACS</strong> — API call for B28002 broadband subscriptions → fiber proxy</li>
@@ -310,11 +310,13 @@ scripts/
               </SubSection>
 
               <SubSection title="2. Grid Reliability (grid_reliability_score)">
-                <p>Grid uptime measured by SAIDI (average outage minutes per customer per year). <strong className="text-white">Inverse metric</strong> — lower SAIDI = higher score.</p>
+                <p>Grid uptime measured by SAIDI (average outage minutes per customer per year). <strong className="text-white">Inverse metric</strong> — lower SAIDI = higher score. Uses <strong className="text-white">multi-year averaging</strong> for robustness.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> EIA Form 861 Reliability Data (2024) — 971 utilities report SAIDI. Prefers &ldquo;IEEE Without Major Event Days&rdquo; metric.</p>
-                  <p><strong className="text-gray-200">Method:</strong> Map utility SAIDI to service territory counties, average per county, inverse percentile rank. Median SAIDI: ~158 min/yr.</p>
-                  <p><strong className="text-gray-200">Coverage:</strong> 3,025 of 3,143 counties (96%). Remaining 4% default to 0.5.</p>
+                  <p><strong className="text-gray-200">Source:</strong> EIA Form 861 Reliability Data (2013–2024, up to 12 years) — ~900–1,000 utilities report SAIDI per year. Prefers &ldquo;IEEE Without Major Event Days&rdquo; metric.</p>
+                  <p><strong className="text-gray-200">Method:</strong> For each year, map utility SAIDI to service territory counties and average per county. Then average across all available years per county. Inverse percentile rank of multi-year average.</p>
+                  <p><strong className="text-gray-200">Why multi-year:</strong> Single-year SAIDI can be skewed by one bad storm or one good year. Multi-year averages smooth out anomalies and better reflect structural grid quality.</p>
+                  <p><strong className="text-gray-200">Coverage metadata:</strong> Each county includes <code className="text-nodiac-secondary bg-white/5 px-1 rounded">grid_reliability_years</code> (number of years with data) and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">grid_reliability_data_range</code>. Counties with more years of data have more reliable scores.</p>
+                  <p><strong className="text-gray-200">Coverage:</strong> ~3,025 of 3,143 counties (96%). Remaining 4% default to 0.5.</p>
                 </div>
               </SubSection>
 
@@ -749,7 +751,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Static snapshot</strong> — No temporal dimension. Grid reliability, curtailment, and permitting all change over time.</span>
+                <span><strong className="text-white">Mostly static snapshot</strong> — Grid reliability now uses multi-year averages (2013–2024), but curtailment and permitting are still single-year snapshots.</span>
               </li>
             </ul>
           </Section>

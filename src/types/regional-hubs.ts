@@ -50,6 +50,9 @@ export interface CountyScore {
   data_sources: Record<string, string>
   last_permitting_update: string | null
   permitting_citation_ids?: number[]
+  grid_reliability_years?: number
+  grid_reliability_data_range?: string
+  grid_reliability_avg_saidi?: number
 }
 
 export interface HubRegion {

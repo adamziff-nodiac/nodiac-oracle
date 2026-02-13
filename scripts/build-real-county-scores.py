@@ -48,6 +48,11 @@ FIPS_URL = "https://www2.census.gov/geo/docs/reference/codes2020/national_county
 # EIA Form 861 (co-op density + grid reliability)
 EIA_861_URL = "https://www.eia.gov/electricity/data/eia861/zip/f8612024.zip"
 
+# EIA Form 861 multi-year reliability data (2013-2024, reliability reporting started 2013)
+EIA_861_RELIABILITY_YEARS = list(range(2013, 2025))  # 2013 through 2024
+EIA_861_ARCHIVE_URL_TEMPLATE = "https://www.eia.gov/electricity/data/eia861/archive/zip/f861{year}.zip"
+EIA_861_CURRENT_URL = "https://www.eia.gov/electricity/data/eia861/zip/f8612024.zip"
+
 # EIA Form 860 (renewable capacity / curtailment proxy)
 EIA_860_URL = "https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip"
 
@@ -333,69 +338,73 @@ def compute_coop_density(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
 # Step 3: Grid Reliability from EIA-861
 # ============================================================
 
-def compute_grid_reliability(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
-    """Compute grid reliability score per county from EIA-861 Reliability data.
+def _download_reliability_year(year: int, tmpdir: str) -> str | None:
+    """Download EIA 861 ZIP for a single year and extract the Reliability xlsx.
 
-    File structure (Reliability_2024.xlsx, sheet 'Reliability_States'):
-    - Row 0: Category headers (merged cells)
-    - Row 1: Subcategory headers
-    - Row 2: Column headers (Data Year, Utility Number, ..., SAIDI, SAIFI, ...)
-    - Row 3+: Data rows
-
-    Key columns (0-indexed):
-    - 1: Utility Number
-    - 3: State
-    - 5: SAIDI (IEEE, All Events with MED)
-    - 8: SAIDI (IEEE, Without Major Event Days) <- preferred
-    - 17: SAIDI (Other Standard, All Events)
-    Missing values are represented as "." (period string).
+    Returns the path to the extracted reliability file, or None on failure.
     """
-    print("\n=== Computing Grid Reliability (EIA-861) ===", flush=True)
+    if year == 2024:
+        url = EIA_861_CURRENT_URL
+    else:
+        url = EIA_861_ARCHIVE_URL_TEMPLATE.format(year=year)
 
-    reliability_path = os.path.join(tmpdir, "reliability.xlsx")
-    if not os.path.exists(reliability_path):
-        log("WARNING: Reliability file not found, using fallback estimates")
-        return {}
+    try:
+        resp = requests.get(url, timeout=120)
+        resp.raise_for_status()
+    except Exception as e:
+        log(f"  {year}: download failed ({e})")
+        return None
 
-    territory_path = os.path.join(tmpdir, "territory.xlsx")
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        names = zf.namelist()
+        reliability_files = [n for n in names if "Reliability" in n and n.endswith(".xlsx")]
+        if not reliability_files:
+            # Older years might use .xls or different naming
+            reliability_files = [n for n in names if "eliability" in n.lower() and (n.endswith(".xlsx") or n.endswith(".xls"))]
+        if not reliability_files:
+            log(f"  {year}: no reliability file in ZIP ({len(names)} files)")
+            zf.close()
+            return None
+        rel_path = os.path.join(tmpdir, f"reliability_{year}.xlsx")
+        with open(rel_path, "wb") as f:
+            f.write(zf.read(reliability_files[0]))
+        zf.close()
+        size_mb = os.path.getsize(rel_path) / 1024 / 1024
+        log(f"  {year}: OK ({size_mb:.1f} MB, {reliability_files[0]})")
+        return rel_path
+    except Exception as e:
+        log(f"  {year}: extraction failed ({e})")
+        return None
 
-    # First build utility -> counties mapping
-    log("Building utility-to-county mapping...")
-    wb_terr = openpyxl.load_workbook(territory_path, read_only=True)
-    ws_terr = wb_terr["Counties_States"]
 
-    util_to_counties: dict[int, set[str]] = defaultdict(set)
-    for i, row in enumerate(ws_terr.iter_rows(values_only=True)):
-        if i == 0:
-            continue
-        util_num = row[1]
-        state = str(row[4]).strip() if row[4] else ""
-        county = str(row[5]).strip() if row[5] else ""
-        if not state or not county or state in SKIP_STATES:
-            continue
-        fips = resolve_fips(state, county, fips_lookup)
-        if fips and util_num:
-            util_to_counties[util_num].add(fips)
-    wb_terr.close()
-    log(f"Utilities mapped to counties: {len(util_to_counties)}")
+def _parse_reliability_file(rel_path: str) -> dict[int, float]:
+    """Parse a single Reliability xlsx and return {utility_number: saidi}."""
+    wb_rel = openpyxl.load_workbook(rel_path, read_only=True)
 
-    # Parse Reliability data
-    log("Parsing Reliability data (SAIDI)...")
-    wb_rel = openpyxl.load_workbook(reliability_path, read_only=True)
-    ws_rel = wb_rel["Reliability_States"]
+    # Try common sheet names
+    sheet_name = None
+    for candidate in ["Reliability_States", "Reliability States", "Reliability"]:
+        if candidate in wb_rel.sheetnames:
+            sheet_name = candidate
+            break
+    if sheet_name is None:
+        # Fall back to first sheet
+        sheet_name = wb_rel.sheetnames[0]
+
+    ws_rel = wb_rel[sheet_name]
 
     util_saidi: dict[int, float] = {}
     parsed_count = 0
 
     for i, row in enumerate(ws_rel.iter_rows(values_only=True)):
         if i < 3:
-            continue  # Skip 3 header rows (category, subcategory, column names)
+            continue  # Skip header rows
 
         vals = list(row)
-        if len(vals) < 18:
+        if len(vals) < 6:
             continue
 
-        # Column 1: Utility Number
         try:
             util_num = int(vals[1])
         except (ValueError, TypeError):
@@ -424,28 +433,121 @@ def compute_grid_reliability(tmpdir: str, fips_lookup: dict) -> dict[str, float]
             util_saidi[util_num] = saidi
 
     wb_rel.close()
-    log(f"Parsed {parsed_count} utility rows, {len(util_saidi)} with SAIDI data")
+    return util_saidi
 
-    if len(util_saidi) == 0:
-        log("WARNING: Could not parse SAIDI data, using fallback")
-        return {}
 
-    # Map SAIDI to counties (average across utilities serving each county)
-    county_saidi: dict[str, list[float]] = defaultdict(list)
-    for util_num, saidi in util_saidi.items():
-        for fips in util_to_counties.get(util_num, set()):
-            county_saidi[fips].append(saidi)
+def compute_grid_reliability(tmpdir: str, fips_lookup: dict) -> tuple[dict[str, float], dict[str, dict]]:
+    """Compute grid reliability score per county from multi-year EIA-861 Reliability data.
 
-    log(f"Counties with SAIDI data: {len(county_saidi)}")
+    Downloads reliability data for all available years (2013-2024), averages SAIDI
+    across years per county, and returns both scores and metadata about data coverage.
 
-    # Compute reliability score: lower SAIDI = higher reliability
-    # SAIDI is in minutes of outage per year. Typical range: 30-600 minutes
+    Returns:
+        (scores, metadata) where:
+        - scores: {fips: reliability_score}
+        - metadata: {fips: {years: [2019, 2020, ...], avg_saidi: 123.4, year_count: 5}}
+    """
+    print("\n=== Computing Grid Reliability (EIA-861, Multi-Year) ===", flush=True)
+
+    territory_path = os.path.join(tmpdir, "territory.xlsx")
+    if not os.path.exists(territory_path):
+        log("WARNING: Territory file not found, using fallback estimates")
+        return {}, {}
+
+    # Build utility -> counties mapping from 2024 territory data
+    log("Building utility-to-county mapping...")
+    wb_terr = openpyxl.load_workbook(territory_path, read_only=True)
+    ws_terr = wb_terr["Counties_States"]
+
+    util_to_counties: dict[int, set[str]] = defaultdict(set)
+    for i, row in enumerate(ws_terr.iter_rows(values_only=True)):
+        if i == 0:
+            continue
+        util_num = row[1]
+        state = str(row[4]).strip() if row[4] else ""
+        county = str(row[5]).strip() if row[5] else ""
+        if not state or not county or state in SKIP_STATES:
+            continue
+        fips = resolve_fips(state, county, fips_lookup)
+        if fips and util_num:
+            util_to_counties[util_num].add(fips)
+    wb_terr.close()
+    log(f"Utilities mapped to counties: {len(util_to_counties)}")
+
+    # Download and parse reliability data for each year
+    log(f"Downloading reliability data for {len(EIA_861_RELIABILITY_YEARS)} years...")
+
+    # Per-year SAIDI by utility: {year: {util_num: saidi}}
+    yearly_util_saidi: dict[int, dict[int, float]] = {}
+    successful_years: list[int] = []
+
+    # 2024 reliability file may already be extracted from the coop density step
+    existing_2024 = os.path.join(tmpdir, "reliability.xlsx")
+    if os.path.exists(existing_2024):
+        log("  2024: using already-extracted file")
+        saidi_data = _parse_reliability_file(existing_2024)
+        if saidi_data:
+            yearly_util_saidi[2024] = saidi_data
+            successful_years.append(2024)
+            log(f"  2024: {len(saidi_data)} utilities with SAIDI")
+
+    for year in EIA_861_RELIABILITY_YEARS:
+        if year in yearly_util_saidi:
+            continue  # Already have 2024
+
+        rel_path = _download_reliability_year(year, tmpdir)
+        if rel_path is None:
+            continue
+
+        saidi_data = _parse_reliability_file(rel_path)
+        if saidi_data:
+            yearly_util_saidi[year] = saidi_data
+            successful_years.append(year)
+            log(f"  {year}: {len(saidi_data)} utilities with SAIDI")
+        else:
+            log(f"  {year}: no SAIDI data parsed")
+
+    successful_years.sort()
+    log(f"Successfully loaded {len(successful_years)} years: {successful_years}")
+
+    if not yearly_util_saidi:
+        log("WARNING: Could not parse any SAIDI data, using fallback")
+        return {}, {}
+
+    # Map SAIDI to counties per year, then average across years
+    # county_yearly_saidi: {fips: {year: avg_saidi_for_that_year}}
+    county_yearly_saidi: dict[str, dict[int, float]] = defaultdict(dict)
+
+    for year, util_saidi in yearly_util_saidi.items():
+        # For each year, average SAIDI across utilities serving each county
+        county_year_values: dict[str, list[float]] = defaultdict(list)
+        for util_num, saidi in util_saidi.items():
+            for fips in util_to_counties.get(util_num, set()):
+                county_year_values[fips].append(saidi)
+
+        for fips, values in county_year_values.items():
+            county_yearly_saidi[fips][year] = sum(values) / len(values)
+
+    log(f"Counties with any SAIDI data: {len(county_yearly_saidi)}")
+
+    # Compute multi-year average SAIDI per county
     county_avg_saidi: dict[str, float] = {}
-    for fips, values in county_saidi.items():
-        county_avg_saidi[fips] = sum(values) / len(values)
+    grid_metadata: dict[str, dict] = {}
+
+    for fips, yearly in county_yearly_saidi.items():
+        years_with_data = sorted(yearly.keys())
+        avg_saidi = sum(yearly.values()) / len(yearly)
+        county_avg_saidi[fips] = avg_saidi
+        grid_metadata[fips] = {
+            "years": years_with_data,
+            "year_count": len(years_with_data),
+            "min_year": min(years_with_data),
+            "max_year": max(years_with_data),
+            "avg_saidi": round(avg_saidi, 1),
+        }
 
     if not county_avg_saidi:
-        return {}
+        return {}, {}
 
     # Use percentile-based inverse: accounts for extreme outliers
     fips_list = sorted(county_avg_saidi.keys())
@@ -460,8 +562,11 @@ def compute_grid_reliability(tmpdir: str, fips_lookup: dict) -> dict[str, float]
     # Stats
     saidi_sorted = sorted(county_avg_saidi.values())
     median_saidi = saidi_sorted[len(saidi_sorted) // 2]
+    year_counts = [m["year_count"] for m in grid_metadata.values()]
+    avg_years = sum(year_counts) / len(year_counts)
     log(f"Counties scored: {len(scores)} | Median SAIDI: {median_saidi:.0f} min/yr")
-    return scores
+    log(f"Avg years of data per county: {avg_years:.1f} | Range: {min(year_counts)}-{max(year_counts)}")
+    return scores, grid_metadata
 
 
 # ============================================================
@@ -941,6 +1046,7 @@ def assemble_scores(
     curtail_scores: dict[str, float],
     labor_scores: dict[str, float],
     fiber_scores: dict[str, float],
+    grid_metadata: dict[str, dict] | None = None,
 ) -> list[dict]:
     """Assemble all criterion scores into final county records."""
     print("\n=== Assembling Final Scores ===", flush=True)
@@ -983,11 +1089,16 @@ def assemble_scores(
 
         # Grid reliability
         grid = grid_scores.get(fips)
-        if grid is not None:
-            sources["grid"] = "EIA Form 861 Reliability (2024 actual)"
+        gm = (grid_metadata or {}).get(fips)
+        if grid is not None and gm:
+            year_range = f"{gm['min_year']}-{gm['max_year']}" if gm['min_year'] != gm['max_year'] else str(gm['min_year'])
+            sources["grid"] = f"EIA Form 861 Reliability ({year_range}, {gm['year_count']}yr avg SAIDI)"
+        elif grid is not None:
+            sources["grid"] = "EIA Form 861 Reliability (actual)"
         else:
             # State-level fallback for grid (moderate default)
             grid = 0.5
+            gm = None
             sources["grid"] = "Default estimate (no SAIDI data)"
 
         # Curtailment
@@ -1022,7 +1133,7 @@ def assemble_scores(
             fiber = 0.3  # Conservative default
             sources["fiber"] = "Default estimate (no ACS data)"
 
-        counties.append({
+        county_record = {
             "fips_code": fips,
             "state_fips": state_fips,
             "county_name": clean_name,
@@ -1035,14 +1146,25 @@ def assemble_scores(
             "fiber_score": round(fiber, 4),
             "data_sources": sources,
             "permitting_citation_ids": [],  # Populated by build_permitting_citations()
-        })
+        }
+
+        # Add grid reliability metadata if available
+        if gm:
+            county_record["grid_reliability_years"] = gm["year_count"]
+            county_record["grid_reliability_data_range"] = (
+                f"{gm['min_year']}-{gm['max_year']}" if gm['min_year'] != gm['max_year']
+                else str(gm['min_year'])
+            )
+            county_record["grid_reliability_avg_saidi"] = gm["avg_saidi"]
+
+        counties.append(county_record)
 
     log(f"Total counties assembled: {len(counties)}")
 
     # Stats
     real_data_counts = {
         "coop": sum(1 for c in counties if "actual" in c["data_sources"]["coop"]),
-        "grid": sum(1 for c in counties if "actual" in c["data_sources"]["grid"]),
+        "grid": sum(1 for c in counties if "EIA" in c["data_sources"]["grid"]),
         "curtail": sum(1 for c in counties if "860" in c["data_sources"]["curtail"]),
         "labor": sum(1 for c in counties if "CBP" in c["data_sources"]["labor"]),
         "fiber": sum(1 for c in counties if "ACS" in c["data_sources"]["fiber"]),
@@ -1184,7 +1306,7 @@ def main():
 
         # Compute each criterion score
         coop_scores = compute_coop_density(tmpdir, fips_lookup)
-        grid_scores = compute_grid_reliability(tmpdir, fips_lookup)
+        grid_scores, grid_metadata = compute_grid_reliability(tmpdir, fips_lookup)
         curtail_scores = compute_curtailment_proxy(tmpdir, fips_lookup)
         labor_scores = compute_labor_score()
         fiber_scores = compute_fiber_proxy()
@@ -1197,6 +1319,7 @@ def main():
             curtail_scores,
             labor_scores,
             fiber_scores,
+            grid_metadata,
         )
 
         # Build permitting citations
