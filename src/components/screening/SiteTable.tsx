@@ -3,6 +3,7 @@
 import { Fragment, useState, useMemo } from 'react'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import type { PortfolioSite } from '@/types/screening'
+import type { PermittingCitation, CountyScore } from '@/types/regional-hubs'
 import { TierBadge } from './TierBadge'
 import { ScoringBreakdown } from './ScoringBreakdown'
 import { cn } from '@/lib/utils'
@@ -16,9 +17,24 @@ interface SiteTableProps {
   sites: PortfolioSite[]
   selectedSiteId: string | null
   onSiteSelect: (siteId: string) => void
+  countyScores?: CountyScore[]
+  citationRegistry?: PermittingCitation[]
 }
 
-export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProps) {
+function resolveCitations(
+  fips: string | null,
+  countyScores?: CountyScore[],
+  registry?: PermittingCitation[]
+): PermittingCitation[] {
+  if (!fips || !countyScores || !registry?.length) return []
+  const county = countyScores.find(c => c.fips_code === fips)
+  if (!county?.permitting_citation_ids) return []
+  return county.permitting_citation_ids
+    .filter(id => id >= 0 && id < registry.length)
+    .map(id => registry[id])
+}
+
+export function SiteTable({ sites, selectedSiteId, onSiteSelect, countyScores, citationRegistry }: SiteTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('site_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -121,7 +137,10 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect }: SiteTableProp
               {expandedId === site.id && site.score_breakdown && (
                 <tr>
                   <td colSpan={6} className="px-3 py-3 bg-white/[0.02]">
-                    <ScoringBreakdown breakdown={site.score_breakdown} />
+                    <ScoringBreakdown
+                      breakdown={site.score_breakdown}
+                      permittingCitations={resolveCitations(site.fips_code, countyScores, citationRegistry)}
+                    />
                   </td>
                 </tr>
               )}

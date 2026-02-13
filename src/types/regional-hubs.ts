@@ -24,6 +24,18 @@ export const CRITERION_DESCRIPTIONS: Record<CriterionKey, string> = {
   fiber: 'Fiber broadband availability by census block',
 }
 
+export interface PermittingCitation {
+  title: string
+  url: string
+  relevance: string
+  type: 'state_policy' | 'incentive' | 'regulatory' | 'opposition' | 'moratorium'
+}
+
+export interface CountyScoreData {
+  permitting_citation_registry: PermittingCitation[]
+  counties: CountyScore[]
+}
+
 export interface CountyScore {
   fips_code: string
   state_fips: string
@@ -37,6 +49,7 @@ export interface CountyScore {
   fiber_score: number
   data_sources: Record<string, string>
   last_permitting_update: string | null
+  permitting_citation_ids?: number[]
 }
 
 export interface HubRegion {

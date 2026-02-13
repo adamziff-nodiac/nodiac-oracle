@@ -10,6 +10,7 @@ import { RotateCcw, Check, Loader2 } from 'lucide-react'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
 import type { SiteTier } from '@/types/screening'
 import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
+import { useCountyScores } from '@/hooks/useCountyScores'
 import { cn } from '@/lib/utils'
 
 const ALL_TIERS: SiteTier[] = ['good', 'okay', 'bad']
@@ -52,6 +53,7 @@ export function ScreeningContainer() {
     selectedProfileId, setProfileId,
     uploadCSV, reset,
   } = usePortfolio()
+  const { scores: countyScores, citationRegistry } = useCountyScores()
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [visibleTiers, setVisibleTiers] = useState<Set<SiteTier>>(new Set(ALL_TIERS))
 
@@ -83,6 +85,11 @@ export function ScreeningContainer() {
           <p className="text-gray-400 max-w-md mx-auto">
             Upload a CSV of potential sites to score them against our regional hub criteria
           </p>
+          <div className="flex justify-center gap-3 mt-4">
+            <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">← Regional Hubs</a>
+            <span className="text-gray-600">·</span>
+            <a href="/docs" className="text-sm text-nodiac-secondary hover:underline">📖 Developer Docs</a>
+          </div>
         </div>
         <CsvUploader
           onUpload={uploadCSV}
@@ -91,6 +98,38 @@ export function ScreeningContainer() {
         {error && (
           <p className="mt-4 text-sm text-red-400">{error}</p>
         )}
+
+        {/* How it works */}
+        <div className="mt-12 max-w-2xl w-full">
+          <details className="group">
+            <summary className="text-sm text-gray-400 cursor-pointer hover:text-white transition-colors select-none font-medium">
+              ℹ️ How Site Screening Works
+            </summary>
+            <div className="mt-3 p-5 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 space-y-3">
+              <p>
+                <strong className="text-white">1. Upload</strong> — Drop a CSV with site names, lat/lon coordinates, and optionally utility info.
+                Supports Fleet CIR Validated and consolidated formats.
+              </p>
+              <p>
+                <strong className="text-white">2. FIPS Resolution</strong> — Each site&apos;s location is matched to a US county using
+                county/state names or the FCC Area API (lat/lon → FIPS code).
+              </p>
+              <p>
+                <strong className="text-white">3. Scoring</strong> — Sites inherit their county&apos;s six criterion scores (co-op density,
+                grid reliability, curtailment, permitting, labor, fiber). If the CSV identifies the utility type,
+                co-op density is overridden: Co-op → 1.0, IOU → 0.2, Municipal → 0.6.
+              </p>
+              <p>
+                <strong className="text-white">4. Tiering</strong> — Scores are averaged to a 0–10 composite.
+                ≥ 6.5 = Strong Fit (teal), ≥ 4.0 = Moderate Fit (orchid), &lt; 4.0 = Weak Fit (red).
+              </p>
+              <p>
+                <strong className="text-white">5. Re-weighting</strong> — After upload, use the preset buttons to re-score with different
+                weight profiles. This happens instantly in your browser.
+              </p>
+            </div>
+          </details>
+        </div>
       </div>
     )
   }
@@ -126,13 +165,21 @@ export function ScreeningContainer() {
             {sites.length} sites — {tierCounts.good} strong, {tierCounts.okay} moderate, {tierCounts.bad} weak
           </p>
         </div>
-        <button
-          onClick={reset}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
-        >
-          <RotateCcw className="w-3.5 h-3.5" />
-          New Upload
-        </button>
+        <div className="flex items-center gap-2">
+          <a
+            href="/docs#site-screening"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            📖 Docs
+          </a>
+          <button
+            onClick={reset}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            New Upload
+          </button>
+        </div>
       </div>
 
       {/* Weight presets */}
@@ -200,6 +247,8 @@ export function ScreeningContainer() {
           sites={sites}
           selectedSiteId={selectedSiteId}
           onSiteSelect={handleSiteSelect}
+          countyScores={countyScores}
+          citationRegistry={citationRegistry}
         />
       </div>
     </div>

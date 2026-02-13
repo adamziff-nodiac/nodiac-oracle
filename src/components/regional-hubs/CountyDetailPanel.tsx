@@ -1,12 +1,14 @@
 'use client'
 
 import { X } from 'lucide-react'
-import type { WeightedCountyScore, CriterionKey } from '@/types/regional-hubs'
+import type { WeightedCountyScore, CriterionKey, PermittingCitation } from '@/types/regional-hubs'
 import { ALL_CRITERIA, CRITERION_LABELS } from '@/types/regional-hubs'
+import { PermittingCitations } from '@/components/shared/PermittingCitations'
 import { cn } from '@/lib/utils'
 
 interface CountyDetailPanelProps {
   county: WeightedCountyScore | null
+  citationRegistry?: PermittingCitation[]
   onClose: () => void
 }
 
@@ -28,7 +30,17 @@ function scoreColor(score: number): string {
   return 'bg-gray-500'
 }
 
-export function CountyDetailPanel({ county, onClose }: CountyDetailPanelProps) {
+function getCountyCitations(
+  county: WeightedCountyScore,
+  registry: PermittingCitation[]
+): PermittingCitation[] {
+  const ids = county.permitting_citation_ids ?? []
+  return ids
+    .filter(id => id >= 0 && id < registry.length)
+    .map(id => registry[id])
+}
+
+export function CountyDetailPanel({ county, citationRegistry = [], onClose }: CountyDetailPanelProps) {
   return (
     <div
       className={cn(
@@ -87,6 +99,13 @@ export function CountyDetailPanel({ county, onClose }: CountyDetailPanelProps) {
               )
             })}
           </div>
+
+          {/* Permitting Citations */}
+          {citationRegistry.length > 0 && (
+            <PermittingCitations
+              citations={getCountyCitations(county, citationRegistry)}
+            />
+          )}
 
           <div className="text-xs text-gray-500">
             <p>FIPS: {county.fips_code}</p>

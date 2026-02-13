@@ -19,7 +19,7 @@ import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
-  const { scores, isLoading: scoresLoading } = useCountyScores()
+  const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
   const { regions } = useHubRegions()
 
   const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
@@ -80,6 +80,38 @@ export default function RegionalHubsPage() {
             Scoring every US county across six criteria to identify optimal locations for
             Nodiac&apos;s distributed data center hubs.
           </p>
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-nodiac-secondary hover:bg-white/10 transition-colors"
+            >
+              📖 Developer Docs
+            </Link>
+            <Link
+              href="/screening"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 hover:bg-white/10 transition-colors"
+            >
+              🔍 Screen a Portfolio
+            </Link>
+          </div>
+          <details className="mt-6 group">
+            <summary className="text-sm text-gray-400 cursor-pointer hover:text-white transition-colors select-none">
+              ℹ️ How to use this map
+            </summary>
+            <div className="mt-3 p-4 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 space-y-2 max-w-2xl">
+              <p>
+                <strong className="text-white">Click any county</strong> to see its score breakdown across all six criteria.
+              </p>
+              <p>
+                <strong className="text-white">Use the preset buttons</strong> (top-left panel) to snap weights to strategic profiles,
+                or drag individual sliders for custom weighting. Changes are instant — no server calls.
+              </p>
+              <p>
+                <strong className="text-white">Brighter purple = higher score.</strong> The color scale compresses the top 20%
+                for visual pop. Scroll down for narrative context and full methodology.
+              </p>
+            </div>
+          </details>
         </div>
       </section>
 
@@ -125,6 +157,7 @@ export default function RegionalHubsPage() {
                 {/* County detail panel */}
                 <CountyDetailPanel
                   county={selectedCounty}
+                  citationRegistry={citationRegistry}
                   onClose={handleCloseDetail}
                 />
               </>

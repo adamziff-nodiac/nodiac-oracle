@@ -17,7 +17,7 @@ Data Sources:
     - Curtailment Proxy: EIA Form 860 (2024) — Variable renewable MW per county
     - Labor:             Census County Business Patterns (2023) — NAICS 5182/5415/517
     - Fiber:             Census ACS 5-Year (2023) — Broadband subscriptions proxy
-    - Permitting:        Default 0.5 (enriched by Claude skill later)
+    - Permitting:        State DC incentive data (NCSL, SDI Alliance, H5, NAIOP, Data Center Watch)
 
 Output:
     - public/data/county-scores.json (static fallback for frontend)
@@ -841,6 +841,96 @@ def compute_fiber_proxy() -> dict[str, float]:
 
 
 # ============================================================
+# Step 6b: Permitting Score (state policy + risk + county adjustments)
+# ============================================================
+
+# State-level data center policy scores (tax incentives, exemptions)
+# Sources: NCSL Policy Snapshot, SDI Alliance, H5 Data Centers, NAIOP (2025-2026)
+_STATE_DC_POLICY = {
+    "AL": 0.85, "AZ": 0.70, "CT": 0.80, "FL": 0.85, "GA": 0.85,
+    "IA": 0.80, "IN": 0.85, "KS": 0.65, "KY": 0.65, "LA": 0.55,
+    "MN": 0.65, "MS": 0.70, "MO": 0.75, "NB": 0.75, "NE": 0.75,
+    "NV": 0.80, "NY": 0.60, "NC": 0.80, "ND": 0.65, "OH": 0.75,
+    "OK": 0.65, "SC": 0.80, "TN": 0.75, "TX": 0.80, "VA": 0.80,
+    "WA": 0.70, "WV": 0.80, "WY": 0.75,
+    # Limited / no DC-specific incentives
+    "CO": 0.45, "WI": 0.40, "OR": 0.55, "DE": 0.55, "MT": 0.50,
+    "NH": 0.50, "SD": 0.45, "UT": 0.45, "PA": 0.35, "IL": 0.30,
+    "ID": 0.30, "AK": 0.40, "AR": 0.25, "CA": 0.20, "HI": 0.15,
+    "ME": 0.25, "MD": 0.30, "MA": 0.25, "MI": 0.30, "NJ": 0.25,
+    "NM": 0.30, "RI": 0.20, "VT": 0.20,
+}
+
+# Regulatory environment (lower burden = higher score)
+_STATE_REGULATORY = {
+    "TX": 0.90, "FL": 0.85, "GA": 0.85, "TN": 0.85, "AL": 0.80,
+    "SC": 0.80, "NC": 0.80, "IN": 0.85, "OH": 0.75, "MO": 0.80,
+    "MS": 0.80, "OK": 0.80, "AR": 0.75, "LA": 0.70, "KY": 0.75,
+    "WV": 0.75, "KS": 0.80, "NE": 0.80, "SD": 0.85, "ND": 0.80,
+    "WY": 0.85, "MT": 0.75, "ID": 0.80, "UT": 0.80, "AZ": 0.75,
+    "NV": 0.80, "IA": 0.80,
+    "VA": 0.65, "PA": 0.55, "MI": 0.60, "WI": 0.65, "MN": 0.60,
+    "CO": 0.60, "NM": 0.60, "WA": 0.55, "OR": 0.50, "DE": 0.65,
+    "MD": 0.55, "NH": 0.70, "AK": 0.65,
+    "NY": 0.45, "NJ": 0.40, "CT": 0.50, "MA": 0.40, "IL": 0.45,
+    "CA": 0.25, "HI": 0.30, "VT": 0.45, "ME": 0.55, "RI": 0.40,
+}
+
+# Risk factors inverted (1.0 = low risk). Sources: Data Center Watch 2025
+_STATE_RISK = {
+    "TX": 0.85, "GA": 0.80, "TN": 0.85, "AL": 0.85, "SC": 0.80,
+    "NC": 0.75, "FL": 0.80, "MS": 0.85, "OK": 0.85, "AR": 0.85,
+    "LA": 0.80, "WV": 0.75, "NE": 0.85, "SD": 0.90, "ND": 0.85,
+    "WY": 0.90, "MT": 0.85, "ID": 0.80, "UT": 0.80, "NV": 0.80,
+    "KS": 0.75, "NM": 0.80, "AK": 0.85, "DE": 0.80, "NH": 0.80,
+    "IA": 0.80, "KY": 0.70, "OH": 0.70, "PA": 0.70, "MI": 0.65,
+    "WI": 0.70, "MN": 0.60, "CO": 0.70, "WA": 0.65, "MD": 0.70,
+    "CT": 0.70, "IN": 0.65, "MO": 0.60, "NY": 0.60,
+    "VA": 0.40, "AZ": 0.55, "OR": 0.50, "CA": 0.50, "IL": 0.55,
+    "NJ": 0.60, "MA": 0.55, "VT": 0.65, "ME": 0.70, "RI": 0.60,
+    "HI": 0.50,
+}
+
+# Zoning favorability
+_STATE_ZONING = {
+    "TX": 0.90, "WY": 0.90, "MT": 0.85, "SD": 0.85, "ND": 0.85,
+    "NE": 0.85, "KS": 0.85, "OK": 0.85, "IA": 0.85, "ID": 0.80,
+    "NV": 0.80, "UT": 0.80, "AR": 0.80, "MS": 0.80, "AL": 0.80,
+    "NM": 0.75, "AK": 0.70, "WI": 0.75, "MN": 0.75, "CO": 0.75,
+    "GA": 0.75, "SC": 0.75, "NC": 0.75, "TN": 0.75, "IN": 0.75,
+    "OH": 0.70, "MO": 0.70, "KY": 0.75, "WV": 0.75, "LA": 0.70,
+    "FL": 0.70, "VA": 0.65, "PA": 0.65, "MI": 0.70, "WA": 0.65,
+    "OR": 0.60, "AZ": 0.70, "ME": 0.70, "NH": 0.65, "VT": 0.65,
+    "DE": 0.60, "NY": 0.50, "NJ": 0.45, "CT": 0.55, "MA": 0.50,
+    "MD": 0.55, "IL": 0.60, "CA": 0.45, "HI": 0.35, "RI": 0.45,
+}
+
+# County-level adjustments (blocked projects, moratoriums, local factors)
+_COUNTY_ADJUSTMENTS = {
+    "51153": -0.15, "51047": -0.10, "51099": -0.10, "51061": -0.10,
+    "51107": -0.08, "51059": -0.08, "51087": -0.05,  # Virginia opposition
+    "29037": -0.15,  # Cass County MO (Peculiar moratorium)
+    "18127": -0.10,  # Porter County IN (Chesterton blocked)
+    "04013": -0.05,  # Maricopa AZ (mixed)
+    "41027": -0.10,  # Hood River OR (Cascade Locks)
+    "55033": 0.05, "55123": 0.05,  # Dunn/Vernon WI (rural co-op friendly)
+    "08123": 0.03,  # Weld CO (industrial-friendly)
+}
+
+
+def compute_permitting_score(state: str, fips: str) -> float:
+    """Compute permitting score from state policy, regulation, risk, and zoning."""
+    policy = _STATE_DC_POLICY.get(state, 0.35)
+    regulatory = _STATE_REGULATORY.get(state, 0.50)
+    risk = _STATE_RISK.get(state, 0.70)
+    zoning = _STATE_ZONING.get(state, 0.60)
+
+    base = 0.40 * policy + 0.25 * regulatory + 0.20 * risk + 0.15 * zoning
+    adj = _COUNTY_ADJUSTMENTS.get(fips, 0.0)
+    return round(max(0.05, min(0.95, base + adj)), 4)
+
+
+# ============================================================
 # Step 7: Assemble final scores
 # ============================================================
 
@@ -909,8 +999,12 @@ def assemble_scores(
             sources["curtail"] = "Default (no renewable generation)"
 
         # Permitting
-        permitting = 0.5  # Always neutral default
-        sources["permitting"] = "Default 0.5 (awaiting sentiment analysis)"
+        permitting = compute_permitting_score(state_abbr, fips)
+        sources["permitting"] = (
+            "State DC incentive programs (NCSL, SDI Alliance, H5 2025-2026), "
+            "moratorium/opposition data (Data Center Watch 2025), "
+            "county-level adjustments where data exists"
+        )
 
         # Labor
         labor = labor_scores.get(fips)
@@ -940,6 +1034,7 @@ def assemble_scores(
             "labor_score": round(labor, 4),
             "fiber_score": round(fiber, 4),
             "data_sources": sources,
+            "permitting_citation_ids": [],  # Populated by build_permitting_citations()
         })
 
     log(f"Total counties assembled: {len(counties)}")
@@ -963,16 +1058,80 @@ def assemble_scores(
 # Step 8: Write output
 # ============================================================
 
-def write_output(counties: list[dict]):
+def build_permitting_citations(counties: list[dict]) -> list[dict]:
+    """Build permitting citation registry and assign IDs to each county.
+
+    Returns the citation registry (list of {title, url, relevance} dicts).
+    Mutates counties in place to set permitting_citation_ids.
+
+    Citation architecture:
+    - State-level citations: every county in a state gets its state's citations
+    - County-level citations: specific counties with known opposition/moratoriums
+    - Universal citations: methodology sources appended to all counties
+    - Registry is deduplicated; counties reference by integer ID for compact JSON
+    """
+    print("\n=== Building Permitting Citations ===", flush=True)
+
+    # Import citation data from the permitting module
+    # (Defined inline to keep the pipeline self-contained)
+    from _permitting_citations import STATE_CITS, COUNTY_CITS, UNIVERSAL_CITS
+
+    registry: list[dict] = []
+    key_to_id: dict[tuple[str, str], int] = {}
+
+    def get_id(cit: dict) -> int:
+        key = (cit["title"], cit["url"])
+        if key not in key_to_id:
+            key_to_id[key] = len(registry)
+            registry.append(cit)
+        return key_to_id[key]
+
+    for county in counties:
+        state = county["state_abbr"]
+        fips = county["fips_code"]
+
+        ids: list[int] = []
+        for cit in STATE_CITS.get(state, []):
+            ids.append(get_id(cit))
+        for cit in COUNTY_CITS.get(fips, []):
+            ids.append(get_id(cit))
+        for cit in UNIVERSAL_CITS:
+            ids.append(get_id(cit))
+
+        # Deduplicate preserving order
+        seen: set[int] = set()
+        deduped: list[int] = []
+        for i in ids:
+            if i not in seen:
+                seen.add(i)
+                deduped.append(i)
+        county["permitting_citation_ids"] = deduped
+
+    log(f"Citation registry: {len(registry)} unique citations")
+    avg = sum(len(c["permitting_citation_ids"]) for c in counties) / max(len(counties), 1)
+    log(f"Average citations per county: {avg:.1f}")
+    return registry
+
+
+def write_output(counties: list[dict], citation_registry: list[dict] | None = None):
     """Write county scores to JSON file and optionally to Supabase."""
     print("\n=== Writing Output ===", flush=True)
 
     # Ensure output directory exists
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+    # Wrap with citation registry if provided
+    if citation_registry:
+        output = {
+            "permitting_citation_registry": citation_registry,
+            "counties": counties,
+        }
+    else:
+        output = counties
+
     # Write static JSON (compact for smaller file size)
     with open(OUTPUT_PATH, "w") as f:
-        json.dump(counties, f, separators=(",", ":"))
+        json.dump(output, f, separators=(",", ":"))
 
     file_size = OUTPUT_PATH.stat().st_size / 1024
     log(f"Wrote {OUTPUT_PATH} ({file_size:.0f} KB, {len(counties)} counties)")
@@ -1040,8 +1199,16 @@ def main():
             fiber_scores,
         )
 
+        # Build permitting citations
+        try:
+            citation_registry = build_permitting_citations(counties)
+        except ImportError:
+            log("WARNING: _permitting_citations module not found, skipping citations")
+            log("  Citations will be empty. See scripts/_permitting_citations.py")
+            citation_registry = None
+
         # Write output
-        write_output(counties)
+        write_output(counties, citation_registry)
 
     print("\n" + "=" * 60)
     print("  PIPELINE COMPLETE")

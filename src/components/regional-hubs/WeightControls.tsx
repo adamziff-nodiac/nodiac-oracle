@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react'
 import type { CriterionKey } from '@/types/regional-hubs'
-import { ALL_CRITERIA, CRITERION_LABELS } from '@/types/regional-hubs'
+import { ALL_CRITERIA, CRITERION_LABELS, CRITERION_DESCRIPTIONS } from '@/types/regional-hubs'
 
 interface WeightControlsProps {
   weights: Record<CriterionKey, number>
@@ -25,7 +25,7 @@ export function WeightControls({ weights, onWeightChange }: WeightControlsProps)
       {ALL_CRITERIA.map((key) => (
         <div key={key} className="space-y-1">
           <div className="flex justify-between items-center">
-            <label className="text-xs text-gray-300 font-medium">
+            <label className="text-xs text-gray-300 font-medium" title={CRITERION_DESCRIPTIONS[key]}>
               {CRITERION_LABELS[key]}
             </label>
             <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
