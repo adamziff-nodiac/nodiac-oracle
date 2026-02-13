@@ -115,7 +115,8 @@ async function main() {
     const stateAbbr = parts[0].trim()
     const stateFips = parts[1].trim()
     const countyFips = parts[2].trim()
-    const countyName = parts[3].trim()
+    // parts[3] is COUNTYNS (ANSI code) — NOT the name!
+    const countyName = parts[4]?.trim() || parts[3].trim()
 
     if (!stateFips || !countyFips) continue
     // Skip territories

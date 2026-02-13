@@ -43,13 +43,15 @@ export function useCountyScores() {
           // API failed, will try fallback
         }
 
-        // Fall back to static JSON if API returned nothing or a truncated set
-        // (Supabase defaults to 1000 rows which misses many states)
-        if (data.length < 2000) {
-          const fallback = await fetchStaticFallback()
+        // Fall back to static JSON if API returned nothing or incomplete data.
+        // Static JSON also has citation registry which Supabase doesn't store.
+        const fallback = await fetchStaticFallback()
+        if (data.length < 2000 || !data[0]?.county_name || /^\d+$/.test(data[0].county_name)) {
+          // API data missing, truncated, or has broken county names — use static
           data = fallback.counties
-          registry = fallback.registry
         }
+        // Always load citation registry from static JSON (not in Supabase)
+        registry = fallback.registry
 
         if (!cancelled) {
           setScores(data)
