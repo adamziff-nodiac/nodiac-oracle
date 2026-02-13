@@ -16,7 +16,8 @@ Data Sources:
     - Grid Reliability:  EIA Form 861 (2024) — Reliability metrics
     - Curtailment Proxy: EIA Form 860 (2024) — Variable renewable MW per county
     - Labor:             Census County Business Patterns (2023) — NAICS 5182/5415/517
-    - Fiber:             Census ACS 5-Year (2023) — Broadband subscriptions proxy
+    - Fiber:             FCC BDC Dec 2024 (primary) — Fiber availability at BSLs via ArcGIS
+                         Census ACS 5-Year 2023 (fallback) — Broadband subscriptions proxy
     - Permitting:        State DC incentive data (NCSL, SDI Alliance, H5, NAIOP, Data Center Watch)
 
 Output:
@@ -63,8 +64,16 @@ CBP_NAICS_CODES = ["5182", "5415", "517"]
 # Census population estimates
 POP_URL = "https://www2.census.gov/programs-surveys/popest/datasets/2020-2024/counties/totals/co-est2024-alldata.csv"
 
-# Census ACS 5-Year broadband (fiber proxy)
+# Census ACS 5-Year broadband (fiber fallback)
 ACS_BROADBAND_URL = "https://api.census.gov/data/2023/acs/acs5"
+
+# FCC BDC (primary fiber source) — via ArcGIS Living Atlas county summaries
+# Data: FCC Broadband Data Collection, Dec 2024 vintage
+# Fields: TotalBSLs, ServedBSLsFiber, UnderservedBSLsFiber, UniqueProvidersFiber
+FCC_BDC_ARCGIS_URL = (
+    "https://services8.arcgis.com/peDZJliSvYims39Q/arcgis/rest/services/"
+    "FCC_Broadband_Data_Collection_December_2024_View/FeatureServer/1/query"
+)
 
 # FIPS crosswalk for EIA data
 FIPS_CROSSWALK_URL = "https://raw.githubusercontent.com/kjhealy/fips-codes/master/state_and_county_fips_master.csv"
@@ -872,16 +881,122 @@ def compute_labor_score() -> dict[str, float]:
 # Step 6: Fiber / Broadband from Census ACS
 # ============================================================
 
-def compute_fiber_proxy() -> dict[str, float]:
-    """Compute fiber availability proxy from Census ACS broadband subscriptions."""
-    print("\n=== Computing Fiber Proxy (Census ACS Broadband) ===", flush=True)
+def compute_fiber_fcc_bdc() -> tuple[dict[str, float], dict[str, dict]]:
+    """Compute fiber availability from FCC BDC county-level data (Dec 2024).
 
-    # ACS Table B28002: Presence and Types of Internet Subscriptions
-    # B28002_001E = Total households
-    # B28002_007E = Broadband (any type)
-    # We want broadband subscription rate as a proxy for infrastructure availability
-    #
-    # Alternative: S2801 has more detail but B28002 is simpler
+    Primary fiber source: ISP-reported fiber-to-the-premises availability
+    at the location level, aggregated to county via ArcGIS Living Atlas.
+
+    Returns:
+        (scores, metadata) where:
+        - scores: {fips: fiber_score}
+        - metadata: {fips: {pct_fiber: 0.53, total_bsls: 12345, fiber_bsls: 6543, providers: 3}}
+    """
+    print("\n=== Computing Fiber Score (FCC BDC, Dec 2024) ===", flush=True)
+
+    fields = "GEOID,TotalBSLs,ServedBSLsFiber,UnderservedBSLsFiber,UnservedBSLsFiber,UniqueProvidersFiber"
+    all_features: list[dict] = []
+
+    # ArcGIS paginates at 2000 records max; total is ~3234
+    offset = 0
+    batch_size = 2000
+    while True:
+        url = (
+            f"{FCC_BDC_ARCGIS_URL}?where=1%3D1&outFields={fields}"
+            f"&resultRecordCount={batch_size}&resultOffset={offset}"
+            f"&f=json&returnGeometry=false"
+        )
+        log(f"Fetching BDC county data (offset {offset})...")
+        try:
+            resp = requests.get(url, timeout=120)
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception as e:
+            log(f"WARNING: FCC BDC fetch failed: {e}")
+            break
+
+        features = data.get("features", [])
+        if not features:
+            break
+        all_features.extend(features)
+        if len(features) < batch_size:
+            break
+        offset += batch_size
+
+    log(f"FCC BDC counties fetched: {len(all_features)}")
+
+    if not all_features:
+        log("WARNING: No FCC BDC data, will fall back to ACS")
+        return {}, {}
+
+    # Compute fiber availability rate per county
+    # "Fiber available" = locations where fiber is served OR underserved (i.e., fiber exists but < 100/20)
+    # This captures actual fiber infrastructure presence, not just high-speed fiber
+    fiber_rates: dict[str, float] = {}
+    fiber_metadata: dict[str, dict] = {}
+
+    for feat in all_features:
+        a = feat["attributes"]
+        geoid = str(a.get("GEOID", "")).zfill(5)
+        total_bsls = a.get("TotalBSLs") or 0
+        served_fiber = a.get("ServedBSLsFiber") or 0
+        underserved_fiber = a.get("UnderservedBSLsFiber") or 0
+        providers = a.get("UniqueProvidersFiber") or 0
+
+        if total_bsls <= 0:
+            continue
+
+        # Fiber-available locations = served + underserved (fiber exists at location)
+        fiber_bsls = served_fiber + underserved_fiber
+        pct = fiber_bsls / total_bsls
+
+        fiber_rates[geoid] = pct
+        fiber_metadata[geoid] = {
+            "pct_fiber": round(pct, 4),
+            "total_bsls": total_bsls,
+            "fiber_bsls": fiber_bsls,
+            "fiber_providers": providers,
+        }
+
+    log(f"Counties with FCC BDC fiber data: {len(fiber_rates)}")
+
+    if not fiber_rates:
+        return {}, {}
+
+    # Composite score: 80% fiber availability rate + 20% provider competition
+    # Provider competition matters: 1 provider = monopoly, 3+ = healthy market
+    max_providers = max((m["fiber_providers"] for m in fiber_metadata.values()), default=1)
+
+    fips_list = sorted(fiber_rates.keys())
+    raw_scores: list[float] = []
+    for fips in fips_list:
+        rate = fiber_rates[fips]
+        providers = fiber_metadata[fips]["fiber_providers"]
+        # Normalize providers: diminishing returns after ~5
+        provider_score = min(providers / 5.0, 1.0)
+        composite = 0.80 * rate + 0.20 * provider_score
+        raw_scores.append(composite)
+
+    # Percentile rank normalization
+    ranks = percentile_rank(raw_scores)
+    scores: dict[str, float] = {}
+    for fips, rank in zip(fips_list, ranks):
+        scores[fips] = round(rank, 4)
+
+    # Stats
+    rates_sorted = sorted(fiber_rates.values())
+    median_rate = rates_sorted[len(rates_sorted) // 2]
+    zero_fiber = sum(1 for r in fiber_rates.values() if r == 0)
+    high_fiber = sum(1 for r in fiber_rates.values() if r > 0.8)
+    log(f"Median fiber availability: {median_rate:.1%}")
+    log(f"Zero fiber: {zero_fiber} counties | >80% fiber: {high_fiber} counties")
+
+    return scores, fiber_metadata
+
+
+def compute_fiber_acs_fallback() -> dict[str, float]:
+    """Compute fiber proxy from Census ACS broadband subscriptions (fallback only)."""
+    print("\n=== Computing Fiber Fallback (Census ACS Broadband) ===", flush=True)
 
     variables = "B28002_001E,B28002_004E,B28002_007E"
     url = f"{ACS_BROADBAND_URL}?get=NAME,{variables}&for=county:*&in=state:*"
@@ -893,44 +1008,27 @@ def compute_fiber_proxy() -> dict[str, float]:
         data = resp.json()
     except Exception as e:
         log(f"WARNING: Failed to fetch ACS broadband data: {e}")
-        log("Falling back to default scores")
         return {}
 
     if not data or len(data) < 2:
-        log("WARNING: No ACS broadband data returned")
         return {}
 
-    headers = data[0]
-    log(f"ACS columns: {headers}")
-
-    # Parse: compute broadband subscription rate per county
     broadband_rates: dict[str, float] = {}
-
     for row in data[1:]:
         try:
             total_hh = int(row[1]) if row[1] else 0
-            # B28002_004E: Cable/fiber/DSL subscriptions
             cable_fiber = int(row[2]) if row[2] else 0
-            # B28002_007E: Broadband of any type
-            broadband_any = int(row[3]) if row[3] else 0
-
             state_fips = row[-2]
             county_fips = row[-1]
             fips = state_fips + county_fips
-
             if total_hh > 0:
-                # Use cable/fiber/DSL rate as proxy (more indicative of wired infrastructure)
-                rate = cable_fiber / total_hh
-                broadband_rates[fips] = rate
+                broadband_rates[fips] = cable_fiber / total_hh
         except (ValueError, TypeError, IndexError):
             continue
-
-    log(f"Counties with broadband data: {len(broadband_rates)}")
 
     if not broadband_rates:
         return {}
 
-    # Percentile rank normalization
     fips_list = sorted(broadband_rates.keys())
     rate_vals = [broadband_rates[f] for f in fips_list]
     ranks = percentile_rank(rate_vals)
@@ -939,10 +1037,45 @@ def compute_fiber_proxy() -> dict[str, float]:
     for fips, rank in zip(fips_list, ranks):
         scores[fips] = round(rank, 4)
 
-    # Stats
-    median_rate = sorted(broadband_rates.values())[len(broadband_rates) // 2]
-    log(f"Median broadband rate: {median_rate:.1%}")
+    log(f"ACS fallback counties: {len(scores)}")
     return scores
+
+
+def compute_fiber_score() -> tuple[dict[str, float], dict[str, dict], dict[str, str]]:
+    """Compute fiber score using FCC BDC as primary, ACS as fallback.
+
+    Returns:
+        (scores, metadata, source_map) where:
+        - scores: {fips: fiber_score}
+        - metadata: {fips: {...}} (only for BDC counties)
+        - source_map: {fips: "FCC BDC Dec 2024" | "Census ACS 2023 (fallback)"}
+    """
+    # Primary: FCC BDC
+    bdc_scores, bdc_metadata = compute_fiber_fcc_bdc()
+
+    # Fallback: Census ACS
+    acs_scores = compute_fiber_acs_fallback()
+
+    # Merge: BDC takes priority
+    scores: dict[str, float] = {}
+    source_map: dict[str, str] = {}
+
+    all_fips = set(bdc_scores.keys()) | set(acs_scores.keys())
+    bdc_used = 0
+    acs_used = 0
+
+    for fips in all_fips:
+        if fips in bdc_scores:
+            scores[fips] = bdc_scores[fips]
+            source_map[fips] = "FCC BDC Dec 2024 (fiber availability at BSLs via ArcGIS Living Atlas)"
+            bdc_used += 1
+        elif fips in acs_scores:
+            scores[fips] = acs_scores[fips]
+            source_map[fips] = "Census ACS 2023 (broadband subscription fallback)"
+            acs_used += 1
+
+    log(f"\nFiber scoring summary: {bdc_used} BDC + {acs_used} ACS fallback = {len(scores)} total")
+    return scores, bdc_metadata, source_map
 
 
 # ============================================================
@@ -1047,6 +1180,8 @@ def assemble_scores(
     labor_scores: dict[str, float],
     fiber_scores: dict[str, float],
     grid_metadata: dict[str, dict] | None = None,
+    fiber_metadata: dict[str, dict] | None = None,
+    fiber_source_map: dict[str, str] | None = None,
 ) -> list[dict]:
     """Assemble all criterion scores into final county records."""
     print("\n=== Assembling Final Scores ===", flush=True)
@@ -1128,10 +1263,10 @@ def assemble_scores(
         # Fiber
         fiber = fiber_scores.get(fips)
         if fiber is not None:
-            sources["fiber"] = "Census ACS 2023 (broadband subscription proxy)"
+            sources["fiber"] = (fiber_source_map or {}).get(fips, "FCC BDC Dec 2024")
         else:
             fiber = 0.3  # Conservative default
-            sources["fiber"] = "Default estimate (no ACS data)"
+            sources["fiber"] = "Default estimate (no fiber data)"
 
         county_record = {
             "fips_code": fips,
@@ -1147,6 +1282,14 @@ def assemble_scores(
             "data_sources": sources,
             "permitting_citation_ids": [],  # Populated by build_permitting_citations()
         }
+
+        # Add fiber metadata if available (FCC BDC data)
+        fm = (fiber_metadata or {}).get(fips)
+        if fm:
+            county_record["fiber_pct_availability"] = fm["pct_fiber"]
+            county_record["fiber_bsls"] = fm["fiber_bsls"]
+            county_record["fiber_total_bsls"] = fm["total_bsls"]
+            county_record["fiber_providers"] = fm["fiber_providers"]
 
         # Add grid reliability metadata if available
         if gm:
@@ -1167,7 +1310,7 @@ def assemble_scores(
         "grid": sum(1 for c in counties if "EIA" in c["data_sources"]["grid"]),
         "curtail": sum(1 for c in counties if "860" in c["data_sources"]["curtail"]),
         "labor": sum(1 for c in counties if "CBP" in c["data_sources"]["labor"]),
-        "fiber": sum(1 for c in counties if "ACS" in c["data_sources"]["fiber"]),
+        "fiber": sum(1 for c in counties if "Default" not in c["data_sources"]["fiber"]),
     }
     for criterion, count in real_data_counts.items():
         pct = count / len(counties) * 100
@@ -1309,7 +1452,7 @@ def main():
         grid_scores, grid_metadata = compute_grid_reliability(tmpdir, fips_lookup)
         curtail_scores = compute_curtailment_proxy(tmpdir, fips_lookup)
         labor_scores = compute_labor_score()
-        fiber_scores = compute_fiber_proxy()
+        fiber_scores, fiber_metadata, fiber_source_map = compute_fiber_score()
 
         # Assemble final scores
         counties = assemble_scores(
@@ -1320,6 +1463,8 @@ def main():
             labor_scores,
             fiber_scores,
             grid_metadata,
+            fiber_metadata,
+            fiber_source_map,
         )
 
         # Build permitting citations

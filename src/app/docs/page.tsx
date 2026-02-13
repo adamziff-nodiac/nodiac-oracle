@@ -185,7 +185,8 @@ scripts/
                 <li><strong className="text-white">EIA Form 861</strong> — Downloads ZIPs for 2013–2024 (12 years) → processes <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Service_Territory_2024.xlsx</code> for co-op density and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Reliability_YYYY.xlsx</code> files for multi-year grid SAIDI averaging</li>
                 <li><strong className="text-white">EIA Form 860</strong> — Downloads ZIP (21 MB, 13 files) → extracts solar/wind generators from Operable + Proposed sheets for curtailment proxy</li>
                 <li><strong className="text-white">Census CBP</strong> — API calls for NAICS 5182, 5415, 517 + population estimates → labor score</li>
-                <li><strong className="text-white">Census ACS</strong> — API call for B28002 broadband subscriptions → fiber proxy</li>
+                <li><strong className="text-white">FCC BDC</strong> — ArcGIS Living Atlas query for county-level fiber availability (Dec 2024)</li>
+                <li><strong className="text-white">Census ACS</strong> — API call for B28002 broadband subscriptions → fiber fallback</li>
                 <li><strong className="text-white">Assembly</strong> — Joins all scores by FIPS, writes to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">public/data/county-scores.json</code> and Supabase <code className="text-nodiac-secondary bg-white/5 px-1 rounded">county_scores</code> table</li>
               </ol>
             </SubSection>
@@ -356,13 +357,14 @@ scripts/
               </SubSection>
 
               <SubSection title="6. Fiber Availability (fiber_score)">
-                <p>Consumer broadband adoption as a <strong className="text-white">proxy for fiber infrastructure</strong> — not a direct measure of enterprise or dark fiber availability.</p>
+                <p>Actual fiber-to-the-premises (FTTP) availability from <strong className="text-white">ISP-reported FCC data</strong> — a direct measure of fiber infrastructure presence at the location level.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> Census ACS 5-Year (2023), Table B28002 — cable/fiber/DSL household subscriptions ÷ total households. Median subscription rate: 85.1%.</p>
-                  <p><strong className="text-gray-200">Method:</strong> Subscription rate per county → percentile rank normalization.</p>
-                  <p><strong className="text-gray-200">What it measures:</strong> The share of households subscribing to wired broadband (cable, fiber, or DSL). Counties with high consumer broadband adoption generally have better-developed telecom infrastructure that correlates with enterprise fiber availability.</p>
-                  <p><strong className="text-gray-200">Limitations:</strong> This is a <em>proxy</em>. Consumer broadband subscriptions ≠ enterprise/dark fiber availability. A county could have high residential cable adoption but no lit fiber routes suitable for data center interconnection. What data centers actually need — dark fiber, carrier-neutral meet-me rooms, low-latency IX peering — is not captured in Census data. The FCC Broadband Data Collection (BDC) has location-level fiber availability but requires registration for bulk access.</p>
-                  <p><strong className="text-gray-200">Coverage:</strong> 100%.</p>
+                  <p><strong className="text-gray-200">Primary Source:</strong> FCC Broadband Data Collection (BDC), December 2024 vintage — county-level summaries via ArcGIS Living Atlas. Measures the percentage of Broadband Serviceable Locations (BSLs) with fiber availability and the number of competing fiber providers per county.</p>
+                  <p><strong className="text-gray-200">Fallback Source:</strong> Census ACS 5-Year (2023), Table B28002 — broadband subscription rates, used only for counties missing from BDC data.</p>
+                  <p><strong className="text-gray-200">Method:</strong> Composite score = 80% × (fiber BSLs ÷ total BSLs) + 20% × (provider competition, capped at 5). Percentile rank normalization across all counties. Provider competition captures market depth — a county with 3 fiber ISPs has more robust infrastructure than one with a single provider.</p>
+                  <p><strong className="text-gray-200">What it measures:</strong> The share of locations in a county where at least one ISP reports fiber-to-the-premises availability, plus the competitive landscape. This is ISP-reported data filed with the FCC — a significant improvement over the previous broadband subscription proxy.</p>
+                  <p><strong className="text-gray-200">Limitations:</strong> ISP-reported data may overstate actual availability (ISPs sometimes report planned coverage). This measures consumer/business FTTP, not enterprise dark fiber, lit fiber routes, or carrier-neutral interconnection points. A county with high residential fiber may still lack the dedicated dark fiber infrastructure data centers need. However, counties with extensive FTTP deployment almost always have better underlying fiber trunk infrastructure.</p>
+                  <p><strong className="text-gray-200">Coverage:</strong> ~3,234 counties via FCC BDC (primary), remainder via ACS fallback.</p>
                 </div>
               </SubSection>
             </div>
@@ -738,7 +740,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Fiber and Labor are proxies</strong> — ACS broadband subscription rates ≠ enterprise/dark fiber availability. CBP business counts ≠ hireable labor supply. Both are the best freely available county-level data but measure indirect signals.</span>
+                <span><strong className="text-white">Fiber measures FTTP availability, not enterprise dark fiber</strong> — FCC BDC data captures ISP-reported fiber-to-the-premises coverage, which correlates with but doesn&apos;t directly measure enterprise/dark fiber infrastructure. <strong className="text-white">Labor is a proxy</strong> — CBP business counts ≠ hireable labor supply. Both are the best freely available county-level data.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
@@ -779,7 +781,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
             <SubSection title="Planned Upgrades">
               <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
                 <li><strong className="text-gray-200">EIA Form 923</strong> — Generation data for capacity factor gap analysis (better curtailment proxy)</li>
-                <li><strong className="text-gray-200">FCC BDC</strong> — Location-level fiber availability (replace ACS broadband proxy)</li>
+                <li><strong className="text-gray-200">Long-haul fiber routes</strong> — Proximity to backbone fiber (e.g., InterTubes dataset) for enterprise/dark fiber scoring</li>
                 <li><strong className="text-gray-200">Permitting enrichment</strong> — Batch web research via Claude skill, prioritizing target hub regions</li>
                 <li><strong className="text-gray-200">Temporal tracking</strong> — Store score history, show trends over time</li>
                 <li><strong className="text-gray-200">Geometric mean option</strong> — Capture interaction effects between criteria</li>

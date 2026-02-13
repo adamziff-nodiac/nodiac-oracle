@@ -293,27 +293,27 @@ export function MethodologyDeepDive() {
             <div>
               <h4 className="text-white font-semibold mb-1">6. Fiber Availability (fiber_score)</h4>
               <p>
-                Measures broadband infrastructure at the county level as a proxy for fiber availability.
-                Data centers require high-bandwidth, low-latency connectivity. Counties with higher
-                broadband subscription rates typically have the backbone infrastructure needed for
-                data center interconnection.
+                Measures actual fiber-to-the-premises (FTTP) availability at the county level using
+                ISP-reported data from the FCC. Data centers require high-bandwidth, low-latency
+                connectivity, and counties with extensive fiber infrastructure are better positioned
+                for data center interconnection.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Data source:</strong> Census American Community Survey
-                (ACS) 5-Year Estimates (2023), Table B28002 &mdash; &ldquo;Presence and Types of Internet
-                Subscriptions in Household.&rdquo; We use B28002_004E (cable/fiber/DSL subscriptions) divided
-                by B28002_001E (total households) as the broadband rate. Median county broadband rate is 85.1%.
+                <strong className="text-gray-200">Primary data source:</strong> FCC Broadband Data Collection
+                (BDC), December 2024 vintage &mdash; county-level summaries accessed via ArcGIS Living Atlas.
+                Measures the percentage of Broadband Serviceable Locations (BSLs) with fiber availability
+                and the number of competing fiber ISPs per county. Fallback: Census ACS 2023 broadband
+                subscriptions for any counties not covered by BDC.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-200">Method:</strong> Calculate the cable/fiber/DSL subscription
-                rate per county, then apply percentile rank normalization. This is a <em>proxy</em> for fiber
-                availability &mdash; subscription rates correlate with but are not identical to fiber
-                infrastructure presence. FCC BDC location-level fiber data would be more precise but requires
-                registration for bulk download.
+                <strong className="text-gray-200">Method:</strong> Composite score = 80% &times; (fiber BSLs
+                &divide; total BSLs) + 20% &times; (provider competition, capped at 5 providers).
+                Percentile rank normalization across all counties. Provider competition captures market
+                depth &mdash; multiple fiber ISPs indicate robust underlying infrastructure.
               </p>
               <p className="mt-1 text-sm text-nodiac-secondary">
-                Status: Real data (proxy). 100% county coverage. Census ACS broadband subscriptions used as
-                proxy for actual fiber infrastructure availability.
+                Status: Real data (direct measure). ~3,234 counties via FCC BDC, remainder via ACS fallback.
+                Significant upgrade from previous broadband subscription proxy.
               </p>
             </div>
           </div>
@@ -421,7 +421,8 @@ export function MethodologyDeepDive() {
             <li>Downloads EIA Form 861 ZIP (4.4 MB, 20 files) &rarr; co-op density + grid reliability</li>
             <li>Downloads EIA Form 860 ZIP (21 MB, 13 files) &rarr; curtailment proxy</li>
             <li>Fetches Census CBP via API (3 NAICS codes) + population estimates &rarr; labor score</li>
-            <li>Fetches Census ACS broadband data via API &rarr; fiber proxy</li>
+            <li>Queries FCC BDC county summaries via ArcGIS Living Atlas &rarr; fiber availability</li>
+            <li>Fetches Census ACS broadband data via API &rarr; fiber fallback</li>
             <li>Assembles all scores per county FIPS, writes to JSON + Supabase</li>
           </ol>
 
@@ -469,9 +470,9 @@ export function MethodologyDeepDive() {
                 </tr>
                 <tr>
                   <td className="py-2 pr-3 text-white">Fiber</td>
-                  <td className="py-2 pr-3">Census ACS 2023 (proxy)</td>
+                  <td className="py-2 pr-3">FCC BDC Dec 2024 + ACS fallback</td>
                   <td className="py-2 pr-3">100%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data (proxy)</td>
+                  <td className="py-2 text-nodiac-secondary">Real data (direct)</td>
                 </tr>
               </tbody>
             </table>
@@ -484,8 +485,8 @@ export function MethodologyDeepDive() {
               to compute capacity factor gaps (actual vs theoretical CF) as a direct curtailment proxy
             </li>
             <li>
-              <strong className="text-gray-200">Fiber:</strong> Replace ACS broadband subscription proxy
-              with FCC BDC location-level fiber availability data (requires FCC bulk data registration)
+              <strong className="text-gray-200">Fiber:</strong> Supplement FCC BDC FTTP data with
+              long-haul fiber route proximity (e.g., InterTubes dataset) for enterprise/dark fiber scoring
             </li>
             <li>
               <strong className="text-gray-200">Permitting:</strong> Batch-enrich counties using the
@@ -532,10 +533,12 @@ export function MethodologyDeepDive() {
               923 generation data would give capacity factor gaps as a better proxy.
             </li>
             <li>
-              <strong className="text-white">Fiber score is a subscription proxy</strong> &mdash;
-              we use Census ACS broadband subscription rates (median: 85.1%) rather than actual fiber
-              infrastructure presence from the FCC BDC. Subscription rates correlate with but are not
-              identical to fiber availability. The FCC BDC bulk dataset requires registration.
+              <strong className="text-white">Fiber score measures FTTP, not enterprise dark fiber</strong> &mdash;
+              the FCC BDC data captures ISP-reported fiber-to-the-premises availability at Broadband
+              Serviceable Locations. This is a significant improvement over the previous ACS broadband
+              subscription proxy, but it still measures consumer/business fiber, not dedicated dark fiber
+              routes or carrier-neutral interconnection infrastructure that data centers specifically need.
+              ISPs may also overstate availability in their FCC filings.
             </li>
             <li>
               <strong className="text-white">Census CBP employment data has noise infusion</strong> &mdash;
