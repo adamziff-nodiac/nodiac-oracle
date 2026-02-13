@@ -5,13 +5,23 @@ A multi-perspective AI chatbot with voice mode for getting insights from differe
 ## Features
 
 - **Multi-Model Support**: Choose from Claude (Opus 4.5, Sonnet 4), GPT-4o, and Gemini models
-- **Four Industry Perspectives**:
-  - Hyperscaler Data Center Executive
-  - Tech VC
-  - Power Utility Executive
-  - Renewables IPP Executive
+- **Four Industry Perspectives**: Hyperscaler DC Executive, Tech VC, Power Utility Executive, Renewables IPP Executive
 - **Voice Mode**: Speak your questions and hear responses
-- **Intuitive UI**: Clean, responsive chat interface
+- **Regional Hub Strategy** (`/regional-hubs`): Interactive choropleth map scoring all 3,143 US counties across six criteria (co-op density, grid reliability, curtailment, permitting, labor, fiber) with adjustable weight profiles
+- **Site Screening** (`/screening`): Portfolio-level site evaluation tool
+- **Developer Docs** (`/docs`): Full methodology documentation
+
+### Data Pipeline
+
+County scores are computed by `scripts/build-real-county-scores.py` from public datasets:
+- **Co-op Density**: EIA Form 861 (2024)
+- **Grid Reliability**: EIA Form 861 Reliability (2024)
+- **Curtailment Proxy**: EIA Form 860 (2024) renewable MW + balancing authority
+- **Permitting**: Research-based state+county scores with 42 verified citation URLs (NCSL, SDI Alliance, H5, Data Center Watch)
+- **Labor**: Census CBP 2023 (NAICS 5182/5415/517)
+- **Fiber**: Census ACS 2023 (broadband subscription proxy)
+
+Output: `public/data/county-scores.json` (static) + optional Supabase upsert
 
 ## Local Development
 

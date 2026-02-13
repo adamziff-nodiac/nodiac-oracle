@@ -333,9 +333,12 @@ scripts/
 
               <SubSection title="4. Permitting (permitting_score)">
                 <p>Local government friendliness toward data center development.</p>
-                <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-yellow-400/80">⚠ Status: All counties default to 0.5 (neutral).</strong> This is the only criterion without real data.</p>
-                  <p><strong className="text-gray-200">Planned source:</strong> Claude Code &ldquo;permitting-sentiment&rdquo; skill — web research on moratoria, zoning, incentives. Score: 0 (hostile) → 0.5 (neutral) → 1 (welcoming with incentives).</p>
+                <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
+                  <p><strong className="text-emerald-400">✓ Status: Real research-based scores for all 3,143 counties.</strong> 42 verified citation URLs in a per-county citation registry.</p>
+                  <p><strong className="text-gray-200">Sources:</strong> NCSL state incentive database, SDI Alliance policy tracker, H5 Data Centers 2025-2026 state rankings, NAIOP development reports, Data Center Watch moratorium tracker, state regulatory environment assessments.</p>
+                  <p><strong className="text-gray-200">Methodology:</strong> Multi-component scoring: state incentive programs (30%), regulatory environment (25%), moratorium/opposition risk (25%), tax policy (20%). County-level adjustments applied where specific opposition or moratorium data exists (e.g., Loudoun County VA, multiple GA counties).</p>
+                  <p><strong className="text-gray-200">Range:</strong> 0.30 (hostile, active moratoria) → 0.50 (neutral) → 0.85+ (welcoming with strong incentives). TX = 0.85, WY = 0.83, NJ = 0.39.</p>
+                  <p><strong className="text-gray-200">Citations:</strong> Each county links to relevant source URLs via <code className="text-nodiac-secondary bg-white/5 px-1 rounded">permitting_citation_ids</code> referencing the <code className="text-nodiac-secondary bg-white/5 px-1 rounded">permitting_citation_registry</code> array in the data file.</p>
                 </div>
               </SubSection>
 
@@ -722,7 +725,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
             <ul className="space-y-3 ml-2">
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Permitting is uniform</strong> — All counties at 0.5. Single biggest gap. Enrichment via permitting-sentiment skill is pending.</span>
+                <span><strong className="text-white">Permitting is state-level</strong> — Scores are primarily state-level with county adjustments where moratorium/opposition data exists. Granular county-by-county zoning research would further improve accuracy.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />

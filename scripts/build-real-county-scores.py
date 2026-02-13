@@ -960,7 +960,7 @@ def assemble_scores(
         state_abbr = parts[0].strip()
         state_fips = parts[1].strip()
         county_fips_3 = parts[2].strip()
-        county_name = parts[3].strip()
+        county_name = parts[4].strip()
 
         if not state_fips or not county_fips_3:
             continue
