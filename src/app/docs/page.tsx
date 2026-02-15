@@ -89,7 +89,7 @@ function CodeBlock({ children, title }: { children: string; title?: string }) {
 
 const TOC = [
   { id: 'overview', label: 'Overview' },
-  { id: 'six-criteria', label: 'The Six Criteria' },
+  { id: 'seven-criteria', label: 'The Seven Criteria' },
   { id: 'scoring', label: 'Scoring & Tiering' },
   { id: 'weight-profiles', label: 'Weight Profiles' },
   { id: 'site-screening', label: 'Site Screening' },
@@ -167,10 +167,10 @@ export default function DocsPage() {
           {/* ═══ OVERVIEW ═══ */}
           <Section id="overview" title="Overview">
             <p>
-              Nodiac&apos;s scoring model evaluates every U.S. county across <strong className="text-gray-900 dark:text-white">six criteria</strong> that
+              Nodiac&apos;s scoring model evaluates every U.S. county across <strong className="text-gray-900 dark:text-white">seven criteria</strong> that
               determine suitability for distributed data center development at IPP and utility sites. The model produces a
-              composite score (0&ndash;10) that captures power infrastructure, renewable energy opportunity, regulatory
-              environment, workforce availability, and connectivity.
+              composite score (0&ndash;10) that captures power infrastructure, renewable energy opportunity, interconnection
+              queue activity, regulatory environment, workforce availability, and connectivity.
             </p>
             <p>
               The tool serves two functions:
@@ -180,9 +180,10 @@ export default function DocsPage() {
               <li><strong className="text-gray-900 dark:text-white">Site Screening</strong> &mdash; Evaluate specific IPP portfolio sites against the same criteria, with site-level overrides where available (e.g., co-op territory check)</li>
             </ul>
             <p>
-              Each criterion is independently scored 0&ndash;1, then combined via a weighted average. Four preset weight
-              profiles let you emphasize different development strategies (co-op partnerships, curtailment capture,
-              speed to deploy). Changing weights is instant &mdash; all recomputation happens in the browser.
+              Each criterion is independently scored 0&ndash;1, then combined via a weighted average (with an optional
+              geometric mean mode that penalizes near-zero scores). Four preset weight profiles let you emphasize different
+              development strategies (co-op partnerships, curtailment capture, speed to deploy). Changing weights is
+              instant &mdash; all recomputation happens in the browser.
             </p>
 
             <DataBox>
@@ -193,7 +194,7 @@ export default function DocsPage() {
           </Section>
 
           {/* ═══ THE SIX CRITERIA ═══ */}
-          <Section id="six-criteria" title="The Six Criteria">
+          <Section id="seven-criteria" title="The Seven Criteria">
             <p>
               Each criterion captures a distinct dimension of site suitability. All are scored 0&ndash;1 independently
               before being combined. The sections below explain what each measures, why it matters for development
@@ -334,8 +335,8 @@ export default function DocsPage() {
                 </DataBox>
 
                 <MethodDropdown>
-                  <p>The score is a four-component composite:</p>
-                  <FormulaBlock>{"score = 0.30 × log_norm(installed_MW)\n     + 0.15 × pipeline_pressure\n     + 0.20 × ISO_curtailment_intensity\n     + 0.35 × CF_gap_923"}</FormulaBlock>
+                  <p>The score is a five-component composite (the base four plus a negative LMP overlay):</p>
+                  <FormulaBlock>{"base = 0.30 × log_norm(installed_MW)\n     + 0.15 × pipeline_pressure\n     + 0.20 × ISO_curtailment_intensity\n     + 0.35 × CF_gap_923\nscore = 0.85 × base + 0.15 × negative_LMP_frequency"}</FormulaBlock>
 
                   <p><strong className="text-gray-900 dark:text-white">Component 1: Capacity Factor Gap (35%) <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium ml-1">NEW</span></strong></p>
                   <p>
@@ -391,11 +392,25 @@ export default function DocsPage() {
                     PJM 2025 Renewable Dispatch Data Request Results, EIA Today in Energy (2024).
                   </p>
 
-                  <p><strong className="text-gray-900 dark:text-white">Component 4: Pipeline Pressure (15%)</strong></p>
+                  <p><strong className="text-gray-900 dark:text-white">Component 4: Pipeline Pressure (15% of base)</strong></p>
                   <p>
                     Ratio of proposed renewable MW (from EIA Form 860 &ldquo;Proposed&rdquo; sheet) to existing renewable MW in each county.
                     High pipeline pressure means new generation is being built that will increase future curtailment risk.
                     Counties with large proposed-to-existing ratios are where the grid is about to get more congested.
+                  </p>
+
+                  <p><strong className="text-gray-900 dark:text-white">Component 5: Negative LMP Frequency (15% overlay) <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium ml-1">NEW</span></strong></p>
+                  <p>
+                    The market signal that directly causes economic curtailment. Uses the <code className="text-xs">gridstatus</code> open-source
+                    Python library to query zone-level day-ahead hourly LMP from six ISOs (CAISO, PJM, MISO, SPP, NYISO,
+                    ISO-NE) over a 90-day window. Computes the percentage of hours with negative prices per ISO zone, then
+                    maps zones to counties via balancing authority codes from EIA Form 860 plant data. Counties in ISOs with
+                    high negative price frequency receive a higher overlay. The overlay is blended at 15% weight with the
+                    base curtailment score (85%).
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    This component is optional &mdash; if gridstatus is not installed or queries fail, the curtailment score
+                    uses only the four base components.
                   </p>
 
                   <Assumption>
@@ -574,6 +589,68 @@ export default function DocsPage() {
                 </MethodDropdown>
               </SubSection>
 
+              {/* ── 7. Queue Pressure ── */}
+              <SubSection title="7. Queue Pressure">
+                <p>
+                  <strong className="text-gray-900 dark:text-white">What it measures:</strong> The volume of renewable and storage projects waiting in
+                  the interconnection queue for each county &mdash; a signal of developer activity and future grid congestion.
+                </p>
+                <p>
+                  <strong className="text-gray-900 dark:text-white">Why it matters:</strong> A large interconnection queue means developers have identified
+                  the area as high-value for generation, but the grid can&apos;t absorb it all quickly. For Nodiac, this is a
+                  positive signal: queued projects represent future BTM power supply partners. Areas with heavy queue pressure are
+                  exactly where behind-the-meter deployment offers the most value &mdash; new generation is coming, and co-locating
+                  compute load avoids the 5+ year interconnection wait. Nationally, over 10,000 active projects totaling ~1,400 GW
+                  are in U.S. interconnection queues (2024 data).
+                </p>
+
+                <DataBox>
+                  <p><Label>Source:</Label> LBNL &ldquo;Queued Up&rdquo; 2025 Edition &mdash; the definitive dataset of interconnection queue activity across all U.S. ISOs/RTOs and major utilities. Compiled by Lawrence Berkeley National Lab from ISO/RTO queue data.</p>
+                  <p><Label>Vintage:</Label> Through 2024 (2025 publication)</p>
+                  <p><Label>Coverage:</Label> ~97% of U.S. generating capacity. Counties without queued projects score 0.0.</p>
+                  <p><Label>Confidence:</Label> High &mdash; LBNL is the gold-standard source for queue data, used by DOE, FERC, and industry analysts.</p>
+                </DataBox>
+
+                <MethodDropdown>
+                  <p><strong className="text-gray-900 dark:text-white">Calculation:</strong></p>
+                  <ol className="list-decimal list-inside space-y-1.5 ml-2">
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Download LBNL dataset.</strong> The full xlsx file contains ~10,300 active
+                      queue entries with state, county, capacity (MW), status, and technology type.
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Filter active entries.</strong> Keep only projects with active status
+                      (pending, in progress, feasibility study, system impact study, facilities study, IA pending/executed,
+                      under construction). Completed or withdrawn projects are excluded.
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Sum MW per county.</strong> Aggregate total queued MW for each county using
+                      state + county name to FIPS code resolution. Projects without county-level location are excluded.
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Log-normalize.</strong> Apply log1p transform to handle extreme skew (some
+                      counties have 10,000+ MW queued while most have &lt; 100 MW).
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Percentile rank.</strong> Rank all counties with queued capacity.
+                      The county with the most queued MW gets score 1.0; counties with no queued projects score 0.0.
+                    </li>
+                  </ol>
+                  <FormulaBlock>{"score = percentile_rank(log1p(queued_MW)) / (N - 1)"}</FormulaBlock>
+
+                  <Assumption>
+                    Queue entries without county-level location data are excluded, which underrepresents queue pressure in
+                    some areas. The score treats all queued MW equally regardless of technology type (solar, wind, storage)
+                    or likelihood of project completion.
+                  </Assumption>
+                  <Assumption>
+                    Higher queue pressure is scored as <em>positive</em> for Nodiac (more developer activity = more BTM
+                    opportunity). This is the opposite of how interconnection congestion is typically viewed &mdash; for
+                    a generator trying to connect, a congested queue is bad. For Nodiac&apos;s BTM model, it signals opportunity.
+                  </Assumption>
+                </MethodDropdown>
+              </SubSection>
+
             </div>
           </Section>
 
@@ -581,19 +658,28 @@ export default function DocsPage() {
           <Section id="scoring" title="Scoring & Tiering">
             <SubSection title="Composite Score">
               <p>
-                Each county and site receives a composite score from 0 to 10, computed as a weighted average of the
-                six criterion scores:
+                Each county and site receives a composite score from 0 to 10, computed from the seven criterion scores.
+                Two scoring modes are available, toggled in the weight controls panel:
               </p>
+              <p><strong className="text-gray-900 dark:text-white">Arithmetic Mean (default):</strong></p>
               <FormulaBlock>composite = ( &Sigma; criterion_score_i &times; weight_i ) / ( &Sigma; weight_i ) &times; 10</FormulaBlock>
+              <p><strong className="text-gray-900 dark:text-white">Geometric Mean:</strong></p>
+              <FormulaBlock>{"composite = exp( Σ(w_i × ln(score_i + ε)) / Σ(w_i) ) × 10\nwhere ε = 0.001"}</FormulaBlock>
+              <p>
+                The geometric mean naturally penalizes counties with any near-zero criterion. A county that scores
+                well across all seven dimensions will rank higher than one with a few 10s and some 0s. The epsilon
+                (0.001) prevents ln(0) while preserving the penalty &mdash; a county with a true zero in any weighted
+                criterion will score near zero overall.
+              </p>
               <p>
                 Each criterion score is 0&ndash;1. Weights range from 0 to 3. If a weight is set to 0, that criterion is
-                excluded entirely &mdash; it doesn&apos;t penalize the county, it&apos;s simply ignored.
+                excluded entirely &mdash; it doesn&apos;t penalize the county, it&apos;s simply ignored. Both modes respect this.
               </p>
             </SubSection>
 
             <MethodDropdown title="Worked Example">
               <p>
-                County with: Co-op = 0.80, Grid = 0.65, Curtailment = 0.50, Permitting = 0.50, Labor = 0.50, Fiber = 0.50
+                County with: Co-op = 0.80, Grid = 0.65, Curtailment = 0.50, Permitting = 0.50, Labor = 0.50, Fiber = 0.50, Queue = 0.40
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -646,16 +732,16 @@ export default function DocsPage() {
             </SubSection>
 
             <Assumption>
-              The weighted average treats criteria independently. A county that scores high on every criterion is better
-              than one with a few 10s and some 0s, but the arithmetic mean doesn&apos;t fully capture this &mdash; a
-              geometric mean option is planned to better reward uniformly strong counties.
+              In arithmetic mode, the weighted average treats criteria independently. A county that scores high on every
+              criterion is better than one with a few 10s and some 0s. Switch to geometric mean mode to penalize
+              counties with near-zero scores in any weighted criterion.
             </Assumption>
           </Section>
 
           {/* ═══ WEIGHT PROFILES ═══ */}
           <Section id="weight-profiles" title="Weight Profiles">
             <p>
-              Four preset profiles configure all six weights for different development strategies. You can also adjust
+              Four preset profiles configure all seven weights for different development strategies. You can also adjust
               weights manually &mdash; any manual change switches to &ldquo;Custom&rdquo; mode. Weight range: 0.0&ndash;3.0.
             </p>
             <div className="overflow-x-auto">
@@ -669,12 +755,14 @@ export default function DocsPage() {
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Permit</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Labor</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Fiber</th>
+                    <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Queue</th>
                     <th className="text-left py-2 pl-3 text-gray-500 dark:text-gray-400 font-medium">When to use</th>
                   </tr>
                 </thead>
                 <tbody className="font-mono">
                   <tr className="border-b border-gray-100 dark:border-white/5">
                     <td className="py-2 pr-3 text-gray-900 dark:text-white font-sans font-medium">Balanced</td>
+                    <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
@@ -691,6 +779,7 @@ export default function DocsPage() {
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2">1.0</td>
+                    <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">Prioritizing co-op partnerships and favorable permitting</td>
                   </tr>
                   <tr className="border-b border-gray-100 dark:border-white/5">
@@ -700,6 +789,7 @@ export default function DocsPage() {
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">Minimizing time-to-power &mdash; fast permitting, reliable grid, fiber ready</td>
                   </tr>
@@ -711,6 +801,7 @@ export default function DocsPage() {
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2">1.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">Maximizing stranded renewable energy opportunity</td>
                   </tr>
                 </tbody>
@@ -745,7 +836,7 @@ export default function DocsPage() {
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">3</span>
                   <div>
                     <p className="text-gray-900 dark:text-white font-medium">Score Inheritance</p>
-                    <p className="text-gray-500 dark:text-gray-400">The site inherits all six criterion scores from its county (grid reliability, curtailment, permitting, labor, fiber).</p>
+                    <p className="text-gray-500 dark:text-gray-400">The site inherits all seven criterion scores from its county (grid reliability, curtailment, permitting, labor, fiber, queue pressure).</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -813,6 +904,13 @@ export default function DocsPage() {
                     <td className="py-2"><span className="text-green-500 font-medium">High</span></td>
                   </tr>
                   <tr className="border-b border-gray-100 dark:border-white/5">
+                    <td className="py-2 pr-3 text-gray-900 dark:text-white">EIA Form 923</td>
+                    <td className="py-2 pr-3">Energy Information Admin</td>
+                    <td className="py-2 pr-3">2024</td>
+                    <td className="py-2 pr-3">CF gap (actual generation)</td>
+                    <td className="py-2"><span className="text-green-500 font-medium">High</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100 dark:border-white/5">
                     <td className="py-2 pr-3 text-gray-900 dark:text-white">ISO/RTO Market Reports</td>
                     <td className="py-2 pr-3">CAISO, ERCOT, SPP, MISO, PJM</td>
                     <td className="py-2 pr-3">2023&ndash;2024</td>
@@ -854,6 +952,20 @@ export default function DocsPage() {
                     <td className="py-2 pr-3">Labor normalization</td>
                     <td className="py-2"><span className="text-green-500 font-medium">High</span></td>
                   </tr>
+                  <tr className="border-b border-gray-100 dark:border-white/5">
+                    <td className="py-2 pr-3 text-gray-900 dark:text-white">LBNL Queued Up</td>
+                    <td className="py-2 pr-3">Lawrence Berkeley National Lab</td>
+                    <td className="py-2 pr-3">2025 (thru 2024)</td>
+                    <td className="py-2 pr-3">Queue pressure (IX queue MW)</td>
+                    <td className="py-2"><span className="text-green-500 font-medium">High</span></td>
+                  </tr>
+                  <tr className="border-b border-gray-100 dark:border-white/5">
+                    <td className="py-2 pr-3 text-gray-900 dark:text-white">gridstatus (ISOs)</td>
+                    <td className="py-2 pr-3">CAISO, PJM, MISO, SPP, NYISO, ISONE</td>
+                    <td className="py-2 pr-3">Rolling 90-day</td>
+                    <td className="py-2 pr-3">Negative LMP frequency</td>
+                    <td className="py-2"><span className="text-yellow-500 font-medium">Medium</span> <span className="text-xs text-gray-500">(zone-level)</span></td>
+                  </tr>
                   <tr>
                     <td className="py-2 pr-3 text-gray-900 dark:text-white">TIGER/Line Counties</td>
                     <td className="py-2 pr-3">Census Bureau</td>
@@ -892,7 +1004,11 @@ export default function DocsPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">No interaction effects.</strong> The weighted average treats criteria independently. A county strong in all six dimensions is better than one with a few 10s and some 0s, but the current arithmetic mean doesn&apos;t fully capture this. A geometric mean option is planned.</span>
+                <span><strong className="text-gray-900 dark:text-white">Queue pressure treats all queued MW equally.</strong> The LBNL queue pressure score doesn&apos;t distinguish between solar, wind, and storage projects, or between projects likely to complete and those likely to withdraw (~70% of queue entries historically are withdrawn). Counties with many speculative entries may score higher than warranted.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">Negative LMP is zone-level.</strong> ISO pricing zones are coarse (e.g., all of ERCOT shares one negative LMP frequency). Node-level LMP data would provide county-level precision but involves querying ~10,000+ nodes per ISO. The zone-level data is blended at only 15% weight to limit this limitation&apos;s impact.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
@@ -913,20 +1029,20 @@ export default function DocsPage() {
                 <span><strong className="text-gray-900 dark:text-white">EIA Form 923 capacity factor gap</strong> <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium">IMPLEMENTED</span> &mdash; Plant-level generation data from EIA Form 923 is now used to compute actual vs. expected capacity factors by technology (solar/wind) and state. The CF gap (expected CF minus actual CF, weighted by plant capacity) is the single largest component (35%) of the curtailment score, providing county-level precision within each ISO zone.</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">Negative LMP frequency</strong> &mdash; Count hours with negative locational marginal prices per pricing node, then aggregate to counties. Negative pricing is the market signal that directly causes economic curtailment. Available from all major ISOs via the gridstatus open-source library.</span>
+                <span className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">Negative LMP frequency</strong> <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium">IMPLEMENTED</span> &mdash; Queries zone-level day-ahead hourly LMP from six ISOs via gridstatus, computes % of hours with negative prices per zone, maps zones to counties via BA codes, and blends into the curtailment score at 15% weight. Optional &mdash; gracefully skipped if gridstatus is not installed.</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">LBNL interconnection queue pressure</strong> &mdash; The &ldquo;Queued Up&rdquo; dataset from Lawrence Berkeley National Lab covers ~97% of U.S. generating capacity in interconnection queues. Counties with large queued renewable MW relative to transmission capacity face increased future curtailment.</span>
+                <span className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">LBNL interconnection queue pressure</strong> <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium">IMPLEMENTED</span> &mdash; Now the 7th criterion. Downloads the LBNL &ldquo;Queued Up&rdquo; 2025 Edition (~10,300 active projects, ~1,400 GW), sums queued MW per county, log-normalizes, and percentile-ranks. Higher queue pressure = more developer activity = more BTM opportunity.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
                 <span><strong className="text-gray-900 dark:text-white">Enterprise fiber routes</strong> &mdash; Proximity to long-haul backbone fiber (e.g., InterTubes dataset) for direct measurement of data center-grade connectivity instead of the FTTP proxy.</span>
               </li>
               <li className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">Geometric mean scoring</strong> &mdash; Alternative composite formula that naturally penalizes having any single criterion near zero. Better captures the development reality that uniformly strong scores are worth more than a mix of highs and lows.</span>
+                <span className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">Geometric mean scoring</strong> <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium">IMPLEMENTED</span> &mdash; Toggle between arithmetic and geometric mean in the weight controls panel. Geometric mean uses <code className="text-xs">exp(Σ(w_i × ln(score_i + 0.001)) / Σ(w_i)) × 10</code>, naturally penalizing near-zero scores in any weighted criterion.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
@@ -952,15 +1068,15 @@ export default function DocsPage() {
                   <strong className="text-gray-900 dark:text-white"> Supabase backend</strong> (Postgres + Auth).
                   All weight changes happen client-side for zero-latency interaction.
                 </p>
-                <CodeBlock title="Key Files">{`scripts/build-real-county-scores.py   # Offline data pipeline
-src/lib/scoring/county-scorer.ts      # computeCompositeScore() — weighted average
-src/lib/scoring/site-scorer.ts        # scoreSite(), scoreSiteWeighted()
-src/lib/scoring/weight-profiles.ts    # 4 preset weight profiles
+                <CodeBlock title="Key Files">{`scripts/build-real-county-scores.py   # Offline data pipeline (7 criteria + neg LMP)
+src/lib/scoring/county-scorer.ts      # computeCompositeScore() — arithmetic + geometric
+src/lib/scoring/site-scorer.ts        # scoreSite(), buildSiteBreakdown()
+src/lib/scoring/weight-profiles.ts    # 4 preset weight profiles (7 criteria)
 src/lib/scoring/normalize.ts          # minMaxNormalize, inverseNormalize
 src/lib/geo/fips-lookup.ts            # FCC Area API → FIPS code
 src/lib/geo/coop-territory-lookup.ts  # ArcGIS co-op territory spatial query
-src/hooks/useCountyScores.ts          # Fetch + cache county scores
-src/hooks/useWeightedScores.ts        # Client-side composite scoring`}</CodeBlock>
+src/hooks/useCountyScores.ts          # Fetch + cache county scores (w/ backfill)
+src/hooks/useWeightedScores.ts        # Client-side composite scoring + quantiles`}</CodeBlock>
               </div>
             </details>
 
