@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { batchLookupFips } from '@/lib/geo/fips-lookup'
+import { batchCheckCoopTerritory } from '@/lib/geo/coop-territory-lookup'
 import { scoreSite, buildSiteBreakdown } from '@/lib/scoring/site-scorer'
 import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
 import type { SiteScoreBreakdown } from '@/types/screening'
@@ -108,7 +109,24 @@ export async function POST(
     }
   }
 
-  // Step 4: Score each site with utility type blending
+  // Step 4: Batch check co-op territory for all sites with coordinates
+  const coordsForCoopCheck: Array<{ lat: number; lon: number; index: number }> = []
+  for (let i = 0; i < resolved.length; i++) {
+    const site = resolved[i].site
+    if (site.latitude && site.longitude) {
+      coordsForCoopCheck.push({
+        lat: Number(site.latitude),
+        lon: Number(site.longitude),
+        index: i,
+      })
+    }
+  }
+
+  const coopResults = coordsForCoopCheck.length > 0
+    ? await batchCheckCoopTerritory(coordsForCoopCheck, 5)
+    : new Map()
+
+  // Step 5: Score each site — binary co-op territory check replaces keyword matching
   const updates: Array<{
     id: string
     upload_id: string
@@ -134,15 +152,28 @@ export async function POST(
     utility_type: string | null
   }> = []
 
-  for (const { site, fips_code, county, state } of resolved) {
+  for (let i = 0; i < resolved.length; i++) {
+    const { site, fips_code, county, state } = resolved[i]
     const countyScores = fips_code ? scoresByFips.get(fips_code) ?? null : null
     const breakdown = buildSiteBreakdown(countyScores)
 
-    // Utility type blending: override coop_density with site-level knowledge
-    const rawData = (site.raw_data ?? {}) as Record<string, unknown>
-    const { utilityType, coopOverride } = classifyUtilityType(rawData)
-    if (coopOverride !== null) {
-      breakdown.coop_density = coopOverride
+    // Co-op territory: binary spatial check (1.0 if inside co-op/public power territory, 0.0 if not)
+    const coopCheck = coopResults.get(i)
+    let utilityType: string | null = null
+
+    if (coopCheck) {
+      breakdown.coop_density = coopCheck.inCoopTerritory ? 1.0 : 0.0
+      if (coopCheck.inCoopTerritory) {
+        utilityType = coopCheck.utilityName ? `Co-op: ${coopCheck.utilityName}` : 'Co-op'
+      }
+    } else {
+      // No coordinates — fall back to CSV keyword classification
+      const rawData = (site.raw_data ?? {}) as Record<string, unknown>
+      const classified = classifyUtilityType(rawData)
+      utilityType = classified.utilityType
+      if (classified.coopOverride !== null) {
+        breakdown.coop_density = classified.coopOverride
+      }
     }
 
     const { score, tier } = scoreSite(breakdown)
@@ -173,7 +204,7 @@ export async function POST(
     })
   }
 
-  // Step 5: Batch update all sites in one call
+  // Step 6: Batch update all sites in one call
   if (updates.length > 0) {
     const { error: updateError } = await supabase
       .from('portfolio_sites')

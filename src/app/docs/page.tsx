@@ -301,12 +301,13 @@ scripts/
           <Section id="six-criteria" title="The Six Criteria">
             <div className="space-y-8">
               <SubSection title="1. Co-op Density (coop_density_score)">
-                <p>Share of a county&apos;s electric service territory served by rural electric cooperatives.</p>
+                <p>Percentage of a county&apos;s land area covered by co-op or public power service territories.</p>
                 <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-700 dark:text-gray-200">Source:</strong> EIA Form 861 (2024) — Service_Territory_2024.xlsx (11,776 rows mapping 2,907 utilities to counties) + Frame_2024.xlsx (3,413 utilities classified by ownership type)</p>
-                  <p><strong className="text-gray-700 dark:text-gray-200">Method:</strong> Count distinct utilities per county, calculate fraction that are cooperatives. Score = co-op count / total count.</p>
-                  <p><strong className="text-gray-700 dark:text-gray-200">Range:</strong> Natural 0–1 ratio. No normalization needed.</p>
-                  <p><strong className="text-gray-700 dark:text-gray-200">Coverage:</strong> 3,097 of 3,143 counties (99%). 117 counties are 100% co-op; 540 have zero co-op presence.</p>
+                  <p><strong className="text-gray-700 dark:text-gray-200">Source:</strong> ArcGIS &ldquo;America Electrical Coop Service Territories&rdquo; layer (833 polygons) — Oak Ridge National Lab, LANL, INL, and NGA data covering co-op + public power district boundaries.</p>
+                  <p><strong className="text-gray-700 dark:text-gray-200">County method:</strong> Intersect co-op/public power territory polygons with county boundaries. Score = overlap area / county area.</p>
+                  <p><strong className="text-gray-700 dark:text-gray-200">Site method:</strong> Point-in-polygon spatial query — if the site&apos;s lat/lon falls within a co-op/public power territory, score = 1.0 (binary). Otherwise 0.0.</p>
+                  <p><strong className="text-gray-700 dark:text-gray-200">Range:</strong> Natural 0–1 area ratio (county) or binary 0/1 (site). No normalization needed.</p>
+                  <p><strong className="text-gray-700 dark:text-gray-200">Coverage:</strong> 100% of counties (every county is checked for territory overlap). 833 service territory polygons.</p>
                 </div>
               </SubSection>
 
@@ -522,8 +523,8 @@ function normalizeArray(values): number[]`}</CodeBlock>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">4</span>
                   <div>
-                    <p className="text-gray-900 dark:text-white font-medium">Utility Blending</p>
-                    <p className="text-gray-500 dark:text-gray-400">If CSV identifies the utility type, override coop_density: Co-op → 1.0, IOU → 0.2, Municipal → 0.6.</p>
+                    <p className="text-gray-900 dark:text-white font-medium">Co-op Territory Check</p>
+                    <p className="text-gray-500 dark:text-gray-400">Spatial point-in-polygon query against ArcGIS co-op/public power territory layer. In territory → coop_density = 1.0, not in territory → 0.0. Falls back to CSV keyword matching if no coordinates.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -540,45 +541,18 @@ function normalizeArray(values): number[]`}</CodeBlock>
           {/* Utility Classification */}
           <Section id="utility-classification" title="Utility Classification">
             <p>
-              The <code className="text-nodiac-secondary bg-gray-100 dark:bg-white/5 px-1 rounded">classifyUtilityType()</code> function
-              detects utility type from CSV raw data and applies a co-op density override:
+              Site-level co-op scoring uses a <strong className="text-gray-900 dark:text-white">spatial point-in-polygon check</strong> against
+              the ArcGIS co-op/public power service territory layer. If the site has coordinates, we query whether
+              the point falls within a co-op territory — producing a binary 1.0 or 0.0 score.
             </p>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-200 dark:border-white/10">
-                    <th className="text-left py-2 pr-3 text-gray-500 dark:text-gray-400 font-medium">Detected Type</th>
-                    <th className="text-left py-2 pr-3 text-gray-500 dark:text-gray-400 font-medium">Keywords Matched</th>
-                    <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium">coop_density Override</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-gray-100 dark:border-white/5">
-                    <td className="py-2 pr-3 text-gray-900 dark:text-white">Co-op</td>
-                    <td className="py-2 pr-3 text-gray-600 dark:text-gray-300 text-xs font-mono">coop, cooperative, co-op</td>
-                    <td className="py-2 text-nodiac-secondary font-mono">1.0</td>
-                  </tr>
-                  <tr className="border-b border-gray-100 dark:border-white/5">
-                    <td className="py-2 pr-3 text-gray-900 dark:text-white">IOU</td>
-                    <td className="py-2 pr-3 text-gray-600 dark:text-gray-300 text-xs font-mono">investor, iou, investor-owned</td>
-                    <td className="py-2 text-gray-600 dark:text-gray-300 font-mono">0.2</td>
-                  </tr>
-                  <tr className="border-b border-gray-100 dark:border-white/5">
-                    <td className="py-2 pr-3 text-gray-900 dark:text-white">Municipal</td>
-                    <td className="py-2 pr-3 text-gray-600 dark:text-gray-300 text-xs font-mono">municipal, muni, city of, public power</td>
-                    <td className="py-2 text-gray-600 dark:text-gray-300 font-mono">0.6</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 pr-3 text-gray-900 dark:text-white">Unknown</td>
-                    <td className="py-2 pr-3 text-gray-600 dark:text-gray-300 text-xs font-mono">(no match)</td>
-                    <td className="py-2 text-gray-500 dark:text-gray-400 font-mono">null (uses county score)</td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg p-4 space-y-2 text-sm">
+              <p><strong className="text-gray-700 dark:text-gray-200">Primary method (spatial):</strong> ArcGIS query with site lat/lon → esriSpatialRelIntersects against 833 co-op/public power territory polygons. If hit → coop_density = 1.0, utility_type = &ldquo;Co-op: [name]&rdquo;. If miss → coop_density = 0.0.</p>
+              <p><strong className="text-gray-700 dark:text-gray-200">Fallback (keyword):</strong> If the site has no coordinates, the system falls back to CSV keyword matching on utility name columns. Co-op keywords → 1.0, IOU → 0.2, Municipal → 0.6, Unknown → county score.</p>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              This override reflects site-level knowledge: if the CSV says the site is on co-op territory,
-              that&apos;s more precise than the county-wide co-op density average.
+              The spatial approach is strictly better than keyword matching: it works regardless of CSV column
+              names, handles cases where the utility name isn&apos;t in the CSV, and gives a definitive answer
+              based on actual service territory boundaries.
             </p>
           </Section>
 
@@ -681,10 +655,16 @@ function normalizeArray(values): number[]`}</CodeBlock>
                 </thead>
                 <tbody>
                   <tr className="border-b border-gray-100 dark:border-white/5">
+                    <td className="py-2 pr-3 text-gray-900 dark:text-white">ArcGIS Co-op Territories</td>
+                    <td className="py-2 pr-3">ORNL / LANL / INL / NGA</td>
+                    <td className="py-2 pr-3">2025</td>
+                    <td className="py-2">Co-op density (area-based)</td>
+                  </tr>
+                  <tr className="border-b border-gray-100 dark:border-white/5">
                     <td className="py-2 pr-3 text-gray-900 dark:text-white">EIA Form 861</td>
                     <td className="py-2 pr-3">Energy Information Admin</td>
-                    <td className="py-2 pr-3">2024</td>
-                    <td className="py-2">Co-op density + Grid reliability</td>
+                    <td className="py-2 pr-3">2013–2024</td>
+                    <td className="py-2">Grid reliability (multi-year SAIDI)</td>
                   </tr>
                   <tr className="border-b border-gray-100 dark:border-white/5">
                     <td className="py-2 pr-3 text-gray-900 dark:text-white">EIA Form 860</td>

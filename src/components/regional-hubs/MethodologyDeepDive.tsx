@@ -163,25 +163,30 @@ export function MethodologyDeepDive() {
             <div>
               <h4 className="text-gray-900 dark:text-white font-semibold mb-1">1. Co-op Density (coop_density_score)</h4>
               <p>
-                Measures the share of a county&apos;s electric service territory served by
-                rural electric cooperatives vs. investor-owned utilities (IOUs) or munis. Higher
-                co-op density means more territory where Nodiac&apos;s co-op partnership model applies.
+                Measures the percentage of a county&apos;s land area covered by co-op or public power
+                service territories. Higher coverage means more of the county is served by
+                community-oriented utilities where Nodiac&apos;s partnership model applies.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-700 dark:text-gray-200">Data source:</strong> EIA Form 861 (2024 final release) &mdash;
-                annual report from every US electric utility identifying their service territory at the
-                county level. The <code className="text-nodiac-secondary bg-white/5 px-1 rounded text-xs">Service_Territory_2024.xlsx</code> file
-                maps 2,907 utilities to counties (11,776 rows). The <code className="text-nodiac-secondary bg-white/5 px-1 rounded text-xs">Frame_2024.xlsx</code> file
-                classifies each of 3,413 utilities by ownership type.
+                <strong className="text-gray-700 dark:text-gray-200">Data source:</strong> ArcGIS &ldquo;America Electrical Coop
+                Service Territories&rdquo; layer (833 polygons) &mdash; sourced from Oak Ridge National Lab,
+                Los Alamos National Lab, Idaho National Lab, and the National Geospatial-Intelligence Agency.
+                Covers co-op and public power district service territory boundaries across the continental US.
               </p>
               <p className="mt-2">
-                <strong className="text-gray-700 dark:text-gray-200">Method:</strong> For each county FIPS, we count the distinct
-                utilities serving that county and calculate the fraction that are cooperatives. Score = co-op
-                count / total utility count.
+                <strong className="text-gray-700 dark:text-gray-200">County-level method:</strong> Each co-op/public power
+                territory polygon is intersected with county boundaries using computational geometry. The score
+                equals the fraction of the county&apos;s area that falls within any co-op/public power territory.
+              </p>
+              <p className="mt-2">
+                <strong className="text-gray-700 dark:text-gray-200">Site-level method:</strong> For portfolio screening,
+                each site&apos;s lat/lon is checked directly against the service territory polygons via
+                a spatial point-in-polygon query. If the site falls within a co-op/public power territory,
+                the score is 1.0 (binary). If not, it&apos;s 0.0. This replaces the previous keyword-matching approach.
               </p>
               <p className="mt-1 text-sm text-nodiac-secondary">
-                Status: Real data. 99% county coverage (3,097 of 3,143). FIPS match rate: 99.6%. 117 counties
-                are 100% co-op served; 540 counties have zero co-op presence.
+                Status: Real data (spatial). 833 service territory polygons. County scores range 0&ndash;1
+                based on area overlap. Site scores are binary (in territory or not).
               </p>
             </div>
 
@@ -328,10 +333,11 @@ export function MethodologyDeepDive() {
             on the data distribution:
           </p>
 
-          <h4 className="text-gray-900 dark:text-white font-semibold mt-4 mb-1">1. Direct Ratio (Co-op Density)</h4>
+          <h4 className="text-gray-900 dark:text-white font-semibold mt-4 mb-1">1. Area Ratio (Co-op Density)</h4>
           <p>
-            Co-op density is already a natural 0&ndash;1 value (fraction of utilities that are cooperatives),
-            so no further normalization is needed.
+            Co-op density is computed as the fraction of a county&apos;s land area covered by co-op/public power
+            service territory polygons &mdash; already a natural 0&ndash;1 value, so no further normalization is needed.
+            For site screening, the score is binary (1.0 if the site&apos;s coordinates fall within a territory, 0.0 if not).
           </p>
 
           <h4 className="text-gray-900 dark:text-white font-semibold mt-4 mb-1">2. Percentile Rank (Grid, Labor, Fiber)</h4>
@@ -440,9 +446,9 @@ export function MethodologyDeepDive() {
               <tbody>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Co-op Density</td>
-                  <td className="py-2 pr-3">EIA Form 861 (2024)</td>
-                  <td className="py-2 pr-3">99%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data</td>
+                  <td className="py-2 pr-3">ArcGIS Co-op Territories (ORNL/LANL/INL)</td>
+                  <td className="py-2 pr-3">100%</td>
+                  <td className="py-2 text-nodiac-secondary">Real data (spatial)</td>
                 </tr>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Grid Reliability</td>

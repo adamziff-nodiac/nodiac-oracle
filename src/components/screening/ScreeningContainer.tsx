@@ -137,9 +137,9 @@ export function ScreeningContainer() {
                 county/state names or the FCC Area API (lat/lon → FIPS code).
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">3. Scoring</strong> — Sites inherit their county&apos;s six criterion scores (co-op density,
-                grid reliability, curtailment, permitting, labor, fiber). If the CSV identifies the utility type,
-                co-op density is overridden: Co-op → 1.0, IOU → 0.2, Municipal → 0.6.
+                <strong className="text-gray-900 dark:text-white">3. Scoring</strong> — Sites inherit their county&apos;s criterion scores (grid reliability,
+                curtailment, permitting, labor, fiber). Co-op density is determined by a spatial check:
+                if the site&apos;s coordinates fall within a co-op/public power service territory → 1.0, otherwise → 0.0.
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">4. Tiering</strong> — Scores are averaged to a 0–10 composite.

@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["openpyxl", "requests"]
+# dependencies = ["openpyxl", "requests", "shapely"]
 # ///
 """
 Real county scores data pipeline.
@@ -38,6 +38,9 @@ from pathlib import Path
 
 import openpyxl
 import requests
+from shapely.geometry import shape, mapping
+from shapely.ops import unary_union
+from shapely.prepared import prep
 
 # ============================================================
 # Configuration
@@ -73,6 +76,12 @@ ACS_BROADBAND_URL = "https://api.census.gov/data/2023/acs/acs5"
 FCC_BDC_ARCGIS_URL = (
     "https://services8.arcgis.com/peDZJliSvYims39Q/arcgis/rest/services/"
     "FCC_Broadband_Data_Collection_December_2024_View/FeatureServer/1/query"
+)
+
+# ArcGIS co-op + public power service territory polygons (Oak Ridge / LANL / INL)
+COOP_TERRITORY_ARCGIS_URL = (
+    "https://services5.arcgis.com/ARxOqVFcodl7rmzw/arcgis/rest/services/"
+    "America_Electrical_Coop_Service_Territories/FeatureServer/10/query"
 )
 
 # FIPS crosswalk for EIA data
@@ -247,9 +256,137 @@ def resolve_fips(state: str, county: str, fips_lookup: dict) -> str | None:
 # Step 2: Co-op Density from EIA-861
 # ============================================================
 
-def compute_coop_density(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
-    """Compute co-op density score per county from EIA Form 861."""
-    print("\n=== Computing Co-op Density (EIA-861) ===", flush=True)
+def compute_coop_density_area(fips_lookup: dict) -> dict[str, float]:
+    """Compute co-op density as % of county area covered by co-op/public power territories.
+
+    Uses ArcGIS "America Electrical Coop Service Territories" layer (833 polygons,
+    sourced from Oak Ridge / LANL / INL) intersected with Census county boundaries.
+
+    Returns {fips_code: float(0-1)} where 1.0 = entire county covered.
+    """
+    print("\n=== Computing Co-op Density (Area-Based, ArcGIS) ===", flush=True)
+
+    # Step 1: Download co-op territory polygons from ArcGIS
+    log("Downloading co-op/public power territory polygons from ArcGIS...")
+    all_features = []
+    offset = 0
+    batch_size = 1000  # 833 total, so one batch should suffice
+
+    while True:
+        params = {
+            "where": "1=1",
+            "outFields": "NAME,STATE",
+            "outSR": "4326",
+            "returnGeometry": "true",
+            "resultRecordCount": str(batch_size),
+            "resultOffset": str(offset),
+            "f": "json",
+        }
+        resp = requests.get(COOP_TERRITORY_ARCGIS_URL, params=params, timeout=120)
+        resp.raise_for_status()
+        data = resp.json()
+        features = data.get("features", [])
+        if not features:
+            break
+        all_features.extend(features)
+        log(f"  Downloaded {len(all_features)} features so far...")
+        if len(features) < batch_size:
+            break
+        offset += batch_size
+
+    log(f"Total co-op/public power territories: {len(all_features)}")
+
+    # Step 2: Convert ArcGIS JSON features to shapely geometries
+    coop_geoms = []
+    for feat in all_features:
+        geom = feat.get("geometry")
+        if not geom:
+            continue
+        try:
+            # ArcGIS uses "rings" format — convert to GeoJSON polygon
+            rings = geom.get("rings", [])
+            if not rings:
+                continue
+            geojson_geom = {"type": "Polygon", "coordinates": rings}
+            shp = shape(geojson_geom)
+            if shp.is_valid and not shp.is_empty:
+                coop_geoms.append(shp)
+        except Exception:
+            continue
+
+    log(f"Valid co-op geometries: {len(coop_geoms)}")
+
+    # Step 3: Build spatial index — merge all co-op territories into a single MultiPolygon
+    log("Building unified co-op coverage geometry (this may take a minute)...")
+    coop_union = unary_union(coop_geoms)
+    coop_prepared = prep(coop_union)
+    log("Co-op union built successfully")
+
+    # Step 4: Load county boundaries from the project's GeoJSON
+    county_geojson_path = Path(__file__).parent.parent / "public" / "data" / "us-counties.json"
+    log(f"Loading county boundaries from {county_geojson_path}...")
+
+    with open(county_geojson_path) as f:
+        counties_geojson = json.load(f)
+
+    county_features = counties_geojson.get("features", [])
+    log(f"Loaded {len(county_features)} county boundaries")
+
+    # Step 5: For each county, compute % area covered by co-op territories
+    scores: dict[str, float] = {}
+    covered_count = 0
+    partial_count = 0
+
+    for feat in county_features:
+        props = feat.get("properties", {})
+        fips = props.get("FIPS", "")
+        if not fips or len(fips) != 5:
+            continue
+
+        try:
+            county_shape = shape(feat["geometry"])
+            if not county_shape.is_valid:
+                county_shape = county_shape.buffer(0)
+
+            # Quick check: does any co-op territory touch this county?
+            if not coop_prepared.intersects(county_shape):
+                scores[fips] = 0.0
+                continue
+
+            # Compute intersection area
+            intersection = coop_union.intersection(county_shape)
+            county_area = county_shape.area
+            if county_area <= 0:
+                scores[fips] = 0.0
+                continue
+
+            ratio = intersection.area / county_area
+            score = min(ratio, 1.0)  # Cap at 1.0 (rounding errors)
+            scores[fips] = round(score, 4)
+
+            if score >= 0.99:
+                covered_count += 1
+            elif score > 0:
+                partial_count += 1
+
+        except Exception as e:
+            log(f"  Warning: geometry error for FIPS {fips}: {e}")
+            scores[fips] = 0.0
+
+    zero_coop = sum(1 for s in scores.values() if s == 0.0)
+    log(f"Counties scored: {len(scores)}")
+    log(f"  Fully covered (≥99%): {covered_count}")
+    log(f"  Partially covered: {partial_count}")
+    log(f"  Zero coverage: {zero_coop}")
+
+    return scores
+
+
+def compute_coop_density_legacy(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
+    """LEGACY: Compute co-op density as utility count ratio from EIA Form 861.
+    Kept for reference — replaced by compute_coop_density_area().
+    """
+    print("\n=== Computing Co-op Density (EIA-861, LEGACY) ===", flush=True)
 
     # Download and extract
     zipdata = download(EIA_861_URL, "EIA Form 861 (2024)")
@@ -1214,13 +1351,13 @@ def assemble_scores(
         # Determine data sources for this county
         sources: dict[str, str] = {}
 
-        # Co-op density
+        # Co-op density (area-based: % of county covered by co-op/public power territories)
         coop = coop_scores.get(fips)
         if coop is not None:
-            sources["coop"] = "EIA Form 861 (2024 actual)"
+            sources["coop"] = "ArcGIS Co-op Service Territories (area-based, ORNL/LANL/INL)"
         else:
-            coop = 0.0  # No utility data = no co-ops
-            sources["coop"] = "Default (no utility data)"
+            coop = 0.0  # No territory overlap
+            sources["coop"] = "Default (no co-op territory overlap)"
 
         # Grid reliability
         grid = grid_scores.get(fips)
@@ -1448,7 +1585,7 @@ def main():
         fips_lookup = build_fips_lookup()
 
         # Compute each criterion score
-        coop_scores = compute_coop_density(tmpdir, fips_lookup)
+        coop_scores = compute_coop_density_area(fips_lookup)
         grid_scores, grid_metadata = compute_grid_reliability(tmpdir, fips_lookup)
         curtail_scores = compute_curtailment_proxy(tmpdir, fips_lookup)
         labor_scores = compute_labor_score()
