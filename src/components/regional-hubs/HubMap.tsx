@@ -5,7 +5,7 @@ import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
-import type { CriterionKey, HubRegion } from '@/types/regional-hubs'
+import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
@@ -58,6 +58,74 @@ export function HubMap({
     onCountyHover?.(null)
   }, [onCountyHover])
 
+  const handleStyleLoad = useCallback(() => {
+    const map = (ref as React.RefObject<MapRef>).current?.getMap()
+    if (!map) return
+
+    // County layers are added later by react-map-gl <Layer> components.
+    // We wait for them, then add a fresh state-borders layer on top using
+    // Mapbox's built-in composite vector tiles (admin source-layer).
+    const addStateBorders = () => {
+      if (!map.getLayer('county-fill')) {
+        setTimeout(addStateBorders, 200)
+        return
+      }
+      try {
+        // Remove our custom layer if it already exists (hot-reload safety)
+        if (map.getLayer('state-borders-bg')) map.removeLayer('state-borders-bg')
+        if (map.getLayer('state-borders')) map.removeLayer('state-borders')
+
+        // Background glow (wider, softer)
+        map.addLayer({
+          id: 'state-borders-bg',
+          type: 'line',
+          source: 'composite',
+          'source-layer': 'admin',
+          filter: [
+            'all',
+            ['==', ['get', 'admin_level'], 1],
+            ['==', ['get', 'maritime'], 'false'],
+          ],
+          paint: {
+            'line-color': 'rgba(255, 255, 255, 0.2)',
+            'line-width': [
+              'interpolate', ['linear'], ['zoom'],
+              3, 4,
+              6, 7,
+              8, 8,
+            ],
+            'line-blur': 2,
+          },
+        })
+
+        // Crisp foreground line
+        map.addLayer({
+          id: 'state-borders',
+          type: 'line',
+          source: 'composite',
+          'source-layer': 'admin',
+          filter: [
+            'all',
+            ['==', ['get', 'admin_level'], 1],
+            ['==', ['get', 'maritime'], 'false'],
+          ],
+          paint: {
+            'line-color': 'rgba(255, 255, 255, 0.7)',
+            'line-width': [
+              'interpolate', ['linear'], ['zoom'],
+              3, 1.5,
+              6, 2.5,
+              8, 3,
+            ],
+          },
+        })
+      } catch (err) {
+        console.error('[HubMap] Failed to add state borders:', err)
+      }
+    }
+    addStateBorders()
+  }, [ref])
+
   if (!MAPBOX_TOKEN) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-nodiac-dark/50 text-gray-400">
@@ -82,6 +150,7 @@ export function HubMap({
       onMouseMove={handleHover}
       onMouseLeave={handleMouseLeave}
       cursor={hoveredFips ? 'pointer' : 'grab'}
+      onLoad={handleStyleLoad}
     >
       <CountyChoropleth
         scoreLookup={scoreLookup}
