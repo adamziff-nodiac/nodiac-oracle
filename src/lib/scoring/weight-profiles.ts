@@ -4,7 +4,7 @@ export const WEIGHT_PROFILES: WeightProfile[] = [
   {
     id: 'balanced',
     name: 'Balanced',
-    description: 'Equal weight across all six criteria',
+    description: 'Equal weight across all seven criteria',
     weights: {
       coop_density: 1,
       grid_reliability: 1,
@@ -12,6 +12,7 @@ export const WEIGHT_PROFILES: WeightProfile[] = [
       permitting: 1,
       labor: 1,
       fiber: 1,
+      queue_pressure: 1,
     },
   },
   {
@@ -25,6 +26,7 @@ export const WEIGHT_PROFILES: WeightProfile[] = [
       permitting: 2,
       labor: 0.5,
       fiber: 1,
+      queue_pressure: 0.5,
     },
   },
   {
@@ -38,6 +40,7 @@ export const WEIGHT_PROFILES: WeightProfile[] = [
       permitting: 3,
       labor: 1,
       fiber: 2,
+      queue_pressure: 2,
     },
   },
   {
@@ -51,6 +54,7 @@ export const WEIGHT_PROFILES: WeightProfile[] = [
       permitting: 1,
       labor: 0.5,
       fiber: 1,
+      queue_pressure: 2,
     },
   },
 ]

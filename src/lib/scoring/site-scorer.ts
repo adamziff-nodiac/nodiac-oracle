@@ -77,6 +77,7 @@ export function buildSiteBreakdown(countyScores: {
   permitting_score: number
   labor_score: number
   fiber_score: number
+  queue_pressure_score: number
 } | null): SiteScoreBreakdown {
   if (!countyScores) {
     return {
@@ -86,6 +87,7 @@ export function buildSiteBreakdown(countyScores: {
       permitting: null,
       labor: null,
       fiber: null,
+      queue_pressure: null,
     }
   }
 
@@ -96,5 +98,6 @@ export function buildSiteBreakdown(countyScores: {
     permitting: countyScores.permitting_score,
     labor: countyScores.labor_score,
     fiber: countyScores.fiber_score,
+    queue_pressure: countyScores.queue_pressure_score,
   }
 }

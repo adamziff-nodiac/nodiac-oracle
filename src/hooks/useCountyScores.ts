@@ -3,6 +3,13 @@
 import { useState, useEffect } from 'react'
 import type { CountyScore, PermittingCitation, CountyScoreData } from '@/types/regional-hubs'
 
+function backfillDefaults(counties: CountyScore[]): CountyScore[] {
+  return counties.map(c => ({
+    ...c,
+    queue_pressure_score: c.queue_pressure_score ?? 0,
+  }))
+}
+
 async function fetchStaticFallback(): Promise<{ counties: CountyScore[]; registry: PermittingCitation[] }> {
   const res = await fetch('/data/county-scores.json')
   if (!res.ok) throw new Error('Failed to load static county scores')
@@ -10,11 +17,11 @@ async function fetchStaticFallback(): Promise<{ counties: CountyScore[]; registr
 
   // Support both old flat array format and new wrapped format
   if (Array.isArray(raw)) {
-    return { counties: raw, registry: [] }
+    return { counties: backfillDefaults(raw), registry: [] }
   }
   const data = raw as CountyScoreData
   return {
-    counties: data.counties ?? [],
+    counties: backfillDefaults(data.counties ?? []),
     registry: data.permitting_citation_registry ?? [],
   }
 }
@@ -37,7 +44,7 @@ export function useCountyScores() {
         try {
           const res = await fetch('/api/county-scores')
           if (res.ok) {
-            data = await res.json()
+            data = backfillDefaults(await res.json())
           }
         } catch {
           // API failed, will try fallback

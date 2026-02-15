@@ -29,7 +29,7 @@ import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
 import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
-import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
+import type { CriterionKey, ScoringMode, WeightedCountyScore } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
   const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
@@ -39,8 +39,9 @@ export default function RegionalHubsPage() {
   const [activeProfileId, setActiveProfileId] = useState<string | null>('balanced')
   const [selectedCounty, setSelectedCounty] = useState<WeightedCountyScore | null>(null)
   const [showMobileWeights, setShowMobileWeights] = useState(false)
+  const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
 
-  const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights)
+  const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
   const mapExportRef = useRef<HTMLDivElement>(null)
 
@@ -91,7 +92,7 @@ export default function RegionalHubsPage() {
             Regional Hub Strategy
           </h1>
           <p className="mt-4 text-xl text-gray-500 dark:text-nodiac-dusty-lilac max-w-2xl leading-relaxed">
-            Scoring every US county across six criteria to identify optimal locations for
+            Scoring every US county across seven criteria to identify optimal locations for
             Nodiac&apos;s distributed data center hubs.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -114,7 +115,7 @@ export default function RegionalHubsPage() {
             </summary>
             <div className="mt-3 p-4 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-2 max-w-2xl">
               <p>
-                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all six criteria.
+                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all seven criteria.
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">Use the preset buttons</strong> (top-left panel) to snap weights to strategic profiles,
@@ -170,6 +171,8 @@ export default function RegionalHubsPage() {
                   <WeightControls
                     weights={weights}
                     onWeightChange={handleWeightChange}
+                    scoringMode={scoringMode}
+                    onScoringModeChange={setScoringMode}
                   />
                 </div>
 

@@ -17,6 +17,7 @@ type CountyScoreRow = {
   permitting_score: number
   labor_score: number
   fiber_score: number
+  queue_pressure_score: number
 }
 
 export async function POST(

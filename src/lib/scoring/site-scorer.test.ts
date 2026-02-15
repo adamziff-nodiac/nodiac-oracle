@@ -11,11 +11,12 @@ describe('scoreSite', () => {
       permitting: 0.6,
       labor: 0.4,
       fiber: 0.9,
+      queue_pressure: 0.6,
     }
     const { score, tier } = scoreSite(breakdown)
-    // avg = (0.8+0.7+0.5+0.6+0.4+0.9)/6 = 0.65 → 6.5
-    expect(score).toBeCloseTo(6.5, 1)
-    expect(tier).toBe('good')
+    // avg = (0.8+0.7+0.5+0.6+0.4+0.9+0.6)/7 ≈ 0.643 → 6.4
+    expect(score).toBeCloseTo(6.4, 1)
+    expect(tier).toBe('okay')
   })
 
   it('assigns "okay" tier for moderate scores', () => {
@@ -26,6 +27,7 @@ describe('scoreSite', () => {
       permitting: 0.5,
       labor: 0.5,
       fiber: 0.5,
+      queue_pressure: 0.5,
     }
     const { score, tier } = scoreSite(breakdown)
     expect(score).toBeCloseTo(5.0, 1)
@@ -40,6 +42,7 @@ describe('scoreSite', () => {
       permitting: 0.1,
       labor: 0.2,
       fiber: 0.1,
+      queue_pressure: 0.1,
     }
     const { score, tier } = scoreSite(breakdown)
     expect(tier).toBe('bad')
@@ -53,6 +56,7 @@ describe('scoreSite', () => {
       permitting: 0.8,
       labor: null,
       fiber: 0.8,
+      queue_pressure: null,
     }
     const { score, tier } = scoreSite(breakdown)
     // avg = (0.8+0.8+0.8)/3 = 0.8 → 8.0
@@ -68,6 +72,7 @@ describe('scoreSite', () => {
       permitting: null,
       labor: null,
       fiber: null,
+      queue_pressure: null,
     }
     const { score, tier } = scoreSite(breakdown)
     expect(score).toBe(0)
@@ -84,6 +89,7 @@ describe('buildSiteBreakdown', () => {
       permitting_score: 0.6,
       labor_score: 0.4,
       fiber_score: 0.9,
+      queue_pressure_score: 0.6,
     }
     const breakdown = buildSiteBreakdown(countyScores)
     expect(breakdown.coop_density).toBe(0.8)

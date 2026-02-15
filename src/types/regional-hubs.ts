@@ -5,6 +5,9 @@ export type CriterionKey =
   | 'permitting'
   | 'labor'
   | 'fiber'
+  | 'queue_pressure'
+
+export type ScoringMode = 'arithmetic' | 'geometric'
 
 export const CRITERION_LABELS: Record<CriterionKey, string> = {
   coop_density: 'Co-op Density',
@@ -13,6 +16,7 @@ export const CRITERION_LABELS: Record<CriterionKey, string> = {
   permitting: 'Permitting',
   labor: 'Skilled IT Labor',
   fiber: 'Fiber Availability',
+  queue_pressure: 'Queue Pressure',
 }
 
 export const CRITERION_DESCRIPTIONS: Record<CriterionKey, string> = {
@@ -22,6 +26,7 @@ export const CRITERION_DESCRIPTIONS: Record<CriterionKey, string> = {
   permitting: 'Local permitting friendliness for data centers',
   labor: 'Tech business density per capita (proxy for available talent)',
   fiber: 'Household broadband adoption (proxy for fiber infrastructure)',
+  queue_pressure: 'Interconnection queue congestion from LBNL Queued Up data',
 }
 
 export interface PermittingCitation {
@@ -47,6 +52,7 @@ export interface CountyScore {
   permitting_score: number
   labor_score: number
   fiber_score: number
+  queue_pressure_score: number
   data_sources: Record<string, string>
   last_permitting_update: string | null
   permitting_citation_ids?: number[]
@@ -82,4 +88,5 @@ export const ALL_CRITERIA: CriterionKey[] = [
   'permitting',
   'labor',
   'fiber',
+  'queue_pressure',
 ]

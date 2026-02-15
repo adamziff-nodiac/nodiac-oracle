@@ -7,6 +7,7 @@ export interface SiteScoreBreakdown {
   permitting: number | null
   labor: number | null
   fiber: number | null
+  queue_pressure: number | null
 }
 
 export interface PortfolioUpload {

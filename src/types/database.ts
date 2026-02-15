@@ -52,6 +52,7 @@ export type Database = {
           permitting_score: number
           labor_score: number
           fiber_score: number
+          queue_pressure_score: number
           data_sources: Json
           last_permitting_update: string | null
           created_at: string | null
@@ -69,6 +70,7 @@ export type Database = {
           permitting_score?: number
           labor_score?: number
           fiber_score?: number
+          queue_pressure_score?: number
           data_sources?: Json
           last_permitting_update?: string | null
           created_at?: string | null
@@ -86,6 +88,7 @@ export type Database = {
           permitting_score?: number
           labor_score?: number
           fiber_score?: number
+          queue_pressure_score?: number
           data_sources?: Json
           last_permitting_update?: string | null
           created_at?: string | null

@@ -17,6 +17,7 @@ const KEYS: Array<{ key: keyof SiteScoreBreakdown; label: string }> = [
   { key: 'permitting', label: CRITERION_LABELS.permitting },
   { key: 'labor', label: CRITERION_LABELS.labor },
   { key: 'fiber', label: CRITERION_LABELS.fiber },
+  { key: 'queue_pressure', label: CRITERION_LABELS.queue_pressure },
 ]
 
 function barColor(value: number): string {

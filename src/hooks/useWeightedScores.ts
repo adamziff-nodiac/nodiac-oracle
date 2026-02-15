@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import type { CountyScore, CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
+import type { CountyScore, CriterionKey, ScoringMode, WeightedCountyScore } from '@/types/regional-hubs'
 import { scoreAllCounties, buildScoreLookup } from '@/lib/scoring/county-scorer'
 
 export interface QuantileBreaks {
@@ -25,16 +25,17 @@ export interface QuantileBreaks {
  */
 export function useWeightedScores(
   scores: CountyScore[],
-  weights: Record<CriterionKey, number>
+  weights: Record<CriterionKey, number>,
+  scoringMode: ScoringMode = 'arithmetic'
 ) {
   const weightedScores = useMemo(
-    () => scoreAllCounties(scores, weights),
-    [scores, weights]
+    () => scoreAllCounties(scores, weights, scoringMode),
+    [scores, weights, scoringMode]
   )
 
   const scoreLookup = useMemo(
-    () => buildScoreLookup(scores, weights),
-    [scores, weights]
+    () => buildScoreLookup(scores, weights, scoringMode),
+    [scores, weights, scoringMode]
   )
 
   const scoreRange = useMemo(() => {

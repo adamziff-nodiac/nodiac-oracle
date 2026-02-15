@@ -20,6 +20,7 @@ function getScoreValue(county: WeightedCountyScore, key: CriterionKey): number {
     permitting: county.permitting_score,
     labor: county.labor_score,
     fiber: county.fiber_score,
+    queue_pressure: county.queue_pressure_score,
   }
   return map[key]
 }
