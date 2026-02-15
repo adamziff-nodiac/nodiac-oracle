@@ -41,6 +41,7 @@ import requests
 from shapely.geometry import shape, mapping
 from shapely.ops import unary_union
 from shapely.prepared import prep
+from shapely import STRtree
 
 # ============================================================
 # Configuration
@@ -99,8 +100,56 @@ VARIABLE_RENEWABLES = {
     "Offshore Wind Turbine",
 }
 
-# Congestion-prone balancing authorities (proxy for curtailment)
-CONGESTION_BAS = {"CISO", "ERCO", "MISO", "SPP", "BPAT", "IID", "NEVP"}
+# ISO/RTO curtailment intensity scores (0-1 scale)
+# Based on 2023-2024 published market reports and curtailment data
+# Higher = more curtailment observed in this balancing authority
+ISO_CURTAILMENT_INTENSITY = {
+    # ERCOT: 8+ TWh curtailed in 2024, worst in US
+    # West Zone + Panhandle account for majority
+    # Sources: Modo Energy (2024), World Climate Service (Oct 2024)
+    "ERCO": 0.95,
+
+    # CAISO: 3.4M MWh curtailed in 2024, up 29% from 2023
+    # 93% solar, concentrated in SP15 during midday shoulder seasons
+    # Sources: EIA Today in Energy (2024), CAISO Production Data, Utility Dive
+    "CISO": 0.85,
+
+    # SPP: Average hourly wind curtailment 1,097 MW (2023), 6x increase since 2020
+    # West and Panhandle zones generate more than transmission can export
+    # Source: SPP 2024 Annual State of the Market Report
+    "SWPP": 0.80,
+
+    # MISO: Average hourly wind curtailment 508 MW (2023), up from 242 MW (2019)
+    # West Region most congested
+    # Source: MISO/Potomac Economics 2024 State of Market Report
+    "MISO": 0.60,
+
+    # BPA: Hydro/wind interaction causes curtailment during high-water seasons
+    # Pacific NW wind curtailment during spring runoff
+    # Source: BPA oversupply management reports
+    "BPAT": 0.55,
+
+    # Imperial Irrigation District: Moderate solar curtailment
+    # Small but congested territory in Southern California desert
+    "IID": 0.50,
+
+    # PJM: Curtailments jumped 6x in 2024 vs 2023
+    # Driven by Northern Virginia data center congestion
+    # Source: PJM 2025 Renewable Dispatch Data Request Results
+    "PJM": 0.40,
+
+    # Nevada Power: Moderate solar curtailment
+    # Growing with Nevada solar buildout
+    "NEVP": 0.35,
+
+    # NYISO: Moderate, growing with offshore wind pipeline
+    "NYIS": 0.25,
+
+    # ISO-NE: Lower curtailment, but growing
+    "ISNE": 0.20,
+}
+# Default for balancing authorities not listed above
+ISO_CURTAILMENT_DEFAULT = 0.10
 
 # Output path
 OUTPUT_PATH = Path("public/data/county-scores.json")
@@ -716,11 +765,28 @@ def compute_grid_reliability(tmpdir: str, fips_lookup: dict) -> tuple[dict[str, 
 
 
 # ============================================================
-# Step 4: Curtailment Proxy from EIA-860
+# Step 4: Curtailment Score from EIA-860 + ISO/RTO Data
 # ============================================================
 
-def compute_curtailment_proxy(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
-    """Compute curtailment proxy score from EIA Form 860 renewable capacity."""
+def compute_curtailment_score(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
+    """Compute curtailment risk score from EIA Form 860 renewable capacity and ISO data.
+
+    Methodology:
+      score = 0.40 * log_norm(installed_MW)
+            + 0.20 * pipeline_pressure
+            + 0.40 * curtailment_intensity
+
+    Components:
+      - Installed renewable MW (40%): Log-normalized nameplate capacity from
+        EIA Form 860 operable generators (solar PV, solar thermal, wind).
+        Captures existing renewable density that drives curtailment.
+      - Pipeline pressure (20%): Ratio of proposed-to-existing renewable MW.
+        Forward-looking signal for areas where curtailment may worsen.
+      - ISO curtailment intensity (40%): Continuous 0-1 score per balancing
+        authority from ISO_CURTAILMENT_INTENSITY lookup table, derived from
+        2023-2024 ISO/RTO market reports (CAISO, ERCOT, SPP, MISO, PJM).
+        Uses max(BA scores) for counties with generators in multiple BAs.
+    """
     print("\n=== Computing Curtailment Proxy (EIA-860) ===", flush=True)
 
     # Download and extract
@@ -881,8 +947,8 @@ def compute_curtailment_proxy(tmpdir: str, fips_lookup: dict) -> dict[str, float
     log(f"Counties with proposed MW: {len(county_proposed_mw)}")
 
     # Compute composite curtailment score
-    # Components: renewable density (50%), pipeline pressure (20%),
-    #             plant count density (15%), congestion BA flag (15%)
+    # Components: installed MW (40%), pipeline pressure (20%),
+    #             ISO curtailment intensity (40%)
     all_fips = set(county_renewable_mw.keys()) | set(county_proposed_mw.keys())
 
     if not all_fips:
@@ -900,19 +966,26 @@ def compute_curtailment_proxy(tmpdir: str, fips_lookup: dict) -> dict[str, float
     max_pipeline = max(pipeline.values()) if pipeline else 1
     norm_pipeline = {f: min(v / max(max_pipeline, 1), 1.0) for f, v in pipeline.items()}
 
-    # Congestion flag from BA
-    congestion = {}
+    # ISO curtailment intensity from BA codes
+    # Use max intensity across all BAs serving generators in this county
+    curtailment = {}
     for f in all_fips:
         bas = county_ba_codes.get(f, set())
-        congestion[f] = 1.0 if bas & CONGESTION_BAS else 0.0
+        if bas:
+            curtailment[f] = max(
+                ISO_CURTAILMENT_INTENSITY.get(ba, ISO_CURTAILMENT_DEFAULT)
+                for ba in bas
+            )
+        else:
+            curtailment[f] = ISO_CURTAILMENT_DEFAULT
 
-    # Combine
+    # Combine: 40% installed MW + 20% pipeline pressure + 40% curtailment intensity
     scores: dict[str, float] = {}
     for fips in all_fips:
         score = (
-            0.55 * norm_mw.get(fips, 0) +
+            0.40 * norm_mw.get(fips, 0) +
             0.20 * norm_pipeline.get(fips, 0) +
-            0.25 * congestion.get(fips, 0)
+            0.40 * curtailment.get(fips, 0)
         )
         scores[fips] = round(min(max(score, 0), 1), 4)
 
@@ -1012,6 +1085,95 @@ def compute_labor_score() -> dict[str, float]:
     positive = sum(1 for f in scores if county_emp.get(f, 0) > 0)
     log(f"Counties scored: {len(scores)} | With IT employment: {positive}")
     return scores
+
+
+def blend_labor_with_neighbors(
+    labor_scores: dict[str, float],
+    self_weight: float = 0.75,
+) -> dict[str, float]:
+    """Blend labor scores with neighboring county averages.
+
+    Labor markets don't stop at county lines — a site in a rural county
+    adjacent to a metro area benefits from the metro's workforce. This
+    function computes neighbor-blended scores using county boundary
+    adjacency from the project's GeoJSON.
+
+    Formula: blended = self_weight × own_score + (1 - self_weight) × avg(neighbor_scores)
+
+    Uses shapely STRtree for efficient spatial neighbor lookup.
+    """
+    print("\n--- Blending labor scores with neighboring counties ---", flush=True)
+
+    county_geojson_path = Path(__file__).parent.parent / "public" / "data" / "us-counties.json"
+    with open(county_geojson_path) as f:
+        counties_geojson = json.load(f)
+
+    features = counties_geojson.get("features", [])
+
+    # Build county shapes and spatial index
+    shapes_by_fips: dict[str, object] = {}
+    fips_list: list[str] = []
+    geom_list: list[object] = []
+
+    for feat in features:
+        props = feat.get("properties", {})
+        fips = props.get("FIPS", "")
+        if not fips or len(fips) != 5:
+            continue
+        try:
+            s = shape(feat["geometry"])
+            if not s.is_valid:
+                s = s.buffer(0)
+            shapes_by_fips[fips] = s
+            fips_list.append(fips)
+            geom_list.append(s)
+        except Exception:
+            continue
+
+    log(f"Built shapes for {len(fips_list)} counties")
+
+    # Build STRtree spatial index for fast neighbor queries
+    tree = STRtree(geom_list)
+
+    # For each county, find neighbors (counties whose boundaries touch/intersect)
+    neighbor_weight = 1.0 - self_weight
+    blended: dict[str, float] = {}
+    blend_count = 0
+
+    for i, fips in enumerate(fips_list):
+        own_score = labor_scores.get(fips, 0.0)
+        county_geom = geom_list[i]
+
+        # Query tree for geometries that intersect a small buffer of the county boundary
+        # Using the boundary (not the polygon) to find touching/adjacent counties
+        boundary = county_geom.boundary.buffer(0.001)  # ~100m buffer for numerical stability
+        candidate_indices = tree.query(boundary)
+
+        neighbor_scores: list[float] = []
+        for idx in candidate_indices:
+            neighbor_fips = fips_list[idx]
+            if neighbor_fips == fips:
+                continue  # Skip self
+            # Verify actual intersection (tree query returns bbox candidates)
+            if county_geom.touches(geom_list[idx]) or county_geom.boundary.intersects(geom_list[idx].boundary):
+                ns = labor_scores.get(neighbor_fips, 0.0)
+                neighbor_scores.append(ns)
+
+        if neighbor_scores:
+            avg_neighbor = sum(neighbor_scores) / len(neighbor_scores)
+            blended[fips] = round(self_weight * own_score + neighbor_weight * avg_neighbor, 4)
+            if blended[fips] != round(own_score, 4):
+                blend_count += 1
+        else:
+            blended[fips] = round(own_score, 4)
+
+    # Include any counties from labor_scores that weren't in the GeoJSON
+    for fips, score in labor_scores.items():
+        if fips not in blended:
+            blended[fips] = round(score, 4)
+
+    log(f"Blended {blend_count} counties with neighbor influence (self={self_weight}, neighbor={neighbor_weight})")
+    return blended
 
 
 # ============================================================
@@ -1376,7 +1538,7 @@ def assemble_scores(
         # Curtailment
         curtail = curtail_scores.get(fips)
         if curtail is not None:
-            sources["curtail"] = "EIA Form 860 (2024 renewable MW + BA proxy)"
+            sources["curtail"] = "EIA Form 860 + ISO/RTO curtailment intensity (CAISO, ERCOT, SPP, MISO, PJM 2023-2024 market reports)"
         else:
             curtail = 0.0  # No renewables = no curtailment opportunity
             sources["curtail"] = "Default (no renewable generation)"
@@ -1587,8 +1749,9 @@ def main():
         # Compute each criterion score
         coop_scores = compute_coop_density_area(fips_lookup)
         grid_scores, grid_metadata = compute_grid_reliability(tmpdir, fips_lookup)
-        curtail_scores = compute_curtailment_proxy(tmpdir, fips_lookup)
-        labor_scores = compute_labor_score()
+        curtail_scores = compute_curtailment_score(tmpdir, fips_lookup)
+        labor_scores_raw = compute_labor_score()
+        labor_scores = blend_labor_with_neighbors(labor_scores_raw)
         fiber_scores, fiber_metadata, fiber_source_map = compute_fiber_score()
 
         # Assemble final scores
