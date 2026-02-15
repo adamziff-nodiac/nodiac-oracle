@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["openpyxl", "requests", "shapely"]
+# dependencies = ["openpyxl", "requests", "shapely", "gridstatus", "pandas"]
 # ///
 """
 Real county scores data pipeline.
@@ -86,6 +86,12 @@ FCC_BDC_ARCGIS_URL = (
 COOP_TERRITORY_ARCGIS_URL = (
     "https://services5.arcgis.com/ARxOqVFcodl7rmzw/arcgis/rest/services/"
     "America_Electrical_Coop_Service_Territories/FeatureServer/10/query"
+)
+
+# LBNL "Queued Up" interconnection queue data (2025 Edition, through 2024)
+LBNL_QUEUE_URL = (
+    "https://eta-publications.lbl.gov/sites/default/files/2025-08/"
+    "lbnl_ix_queue_data_file_thru2024_v2.xlsx"
 )
 
 # FIPS crosswalk for EIA data
@@ -1887,7 +1893,331 @@ def compute_permitting_score(state: str, fips: str) -> float:
 
 
 # ============================================================
-# Step 7: Assemble final scores
+# Step 7: Negative LMP Frequency (gridstatus)
+# ============================================================
+
+def compute_negative_lmp_frequency(
+    plant_info: dict[int, dict],
+    fips_lookup: dict,
+) -> dict[str, float]:
+    """Compute negative LMP frequency per county using gridstatus library.
+
+    Queries zone-level day-ahead hourly LMP from each supported ISO for a
+    recent 90-day window. Computes % of hours with negative prices per zone,
+    then maps zones to counties via BA codes from the 860 plant data.
+
+    Returns: dict mapping FIPS -> negative LMP frequency score (0-1, higher = more negative prices).
+    Falls back to empty dict if gridstatus is not available or queries fail.
+    """
+    print("\n=== Computing Negative LMP Frequency (gridstatus) ===", flush=True)
+
+    try:
+        import gridstatus
+        import pandas as pd
+    except ImportError:
+        log("WARNING: gridstatus or pandas not installed, skipping negative LMP analysis")
+        log("  Install with: uv add gridstatus pandas")
+        return {}
+
+    # Build BA code -> set of FIPS mapping from plant_info
+    ba_to_fips: dict[str, set[str]] = defaultdict(set)
+    for plant_code, pinfo in plant_info.items():
+        ba = pinfo.get("ba_code", "")
+        state = pinfo.get("state", "")
+        county = pinfo.get("county", "")
+        if ba and state and county and state not in SKIP_STATES:
+            fips = resolve_fips(state, county, fips_lookup)
+            if fips:
+                ba_to_fips[ba].add(fips)
+    log(f"BA codes mapped to counties: {len(ba_to_fips)}")
+
+    # Query each ISO for zone-level day-ahead hourly LMP
+    # Use 90-day window ending yesterday
+    end_date = pd.Timestamp.now().normalize() - pd.Timedelta(days=1)
+    start_date = end_date - pd.Timedelta(days=90)
+    log(f"Query window: {start_date.date()} to {end_date.date()}")
+
+    # ISO class -> BA code prefix mapping
+    iso_configs: list[tuple[str, object, str, dict]] = []
+    try:
+        iso_configs = [
+            ("CAISO", gridstatus.CAISO(), "DAY_AHEAD_HOURLY", {"location_type": "ZONE"}),
+            ("PJM", gridstatus.PJM(), "REAL_TIME_HOURLY", {"location_type": "ZONE"}),
+            ("MISO", gridstatus.MISO(), "DAY_AHEAD_HOURLY", {}),
+            ("SPP", gridstatus.SPP(), "DAY_AHEAD_HOURLY", {}),
+            ("NYISO", gridstatus.NYISO(), "DAY_AHEAD_5_MIN", {"location_type": "ZONE"}),
+            ("ISONE", gridstatus.ISONE(), "DAY_AHEAD_HOURLY", {"location_type": "ZONE"}),
+        ]
+    except Exception as e:
+        log(f"WARNING: Failed to initialize gridstatus ISOs: {e}")
+        return {}
+
+    # BA code -> ISO name mapping for county attribution
+    ba_to_iso = {
+        "CISO": "CAISO", "PJM": "PJM", "MISO": "MISO",
+        "SWPP": "SPP", "NYIS": "NYISO", "ISNE": "ISONE",
+        "ERCO": "ERCOT",
+    }
+
+    # Collect negative price percentage per ISO
+    iso_neg_pct: dict[str, float] = {}
+
+    for iso_name, iso_obj, market, kwargs in iso_configs:
+        try:
+            log(f"  Querying {iso_name} zone-level LMP ({market})...")
+            df = iso_obj.get_lmp(
+                start=start_date,
+                end=end_date,
+                market=market,
+                **kwargs,
+            )
+            if df is not None and len(df) > 0:
+                # Count negative price hours
+                lmp_col = "LMP" if "LMP" in df.columns else df.columns[df.columns.str.contains("LMP", case=False)].tolist()
+                if isinstance(lmp_col, list) and lmp_col:
+                    lmp_col = lmp_col[0]
+                elif isinstance(lmp_col, str):
+                    pass
+                else:
+                    log(f"    No LMP column found in {iso_name} data")
+                    continue
+
+                total_rows = len(df)
+                neg_rows = (df[lmp_col] < 0).sum()
+                neg_pct = neg_rows / total_rows if total_rows > 0 else 0
+                iso_neg_pct[iso_name] = neg_pct
+                log(f"    {iso_name}: {neg_rows}/{total_rows} negative ({neg_pct:.1%})")
+            else:
+                log(f"    {iso_name}: no data returned")
+        except Exception as e:
+            log(f"    {iso_name}: query failed ({e})")
+            continue
+
+    if not iso_neg_pct:
+        log("WARNING: No negative LMP data retrieved from any ISO")
+        return {}
+
+    # Map ISO negative price frequency to counties via BA codes
+    county_neg_freq: dict[str, float] = {}
+    for ba_code, fips_set in ba_to_fips.items():
+        # Find which ISO this BA belongs to
+        iso_name = ba_to_iso.get(ba_code)
+        if iso_name and iso_name in iso_neg_pct:
+            for fips in fips_set:
+                # Use max if county spans multiple BAs
+                existing = county_neg_freq.get(fips, 0)
+                county_neg_freq[fips] = max(existing, iso_neg_pct[iso_name])
+
+    if not county_neg_freq:
+        return {}
+
+    # Normalize via percentile rank
+    fips_list = list(county_neg_freq.keys())
+    freq_values = [county_neg_freq[f] for f in fips_list]
+    ranks = percentile_rank(freq_values)
+
+    scores: dict[str, float] = {}
+    for fips, rank in zip(fips_list, ranks):
+        scores[fips] = round(rank, 4)
+
+    log(f"Negative LMP scores computed for {len(scores)} counties")
+    return scores
+
+
+# ============================================================
+# Step 8: Interconnection Queue Pressure (LBNL "Queued Up")
+# ============================================================
+
+def compute_queue_pressure(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
+    """Compute interconnection queue pressure from LBNL Queued Up dataset.
+
+    Downloads the LBNL interconnection queue dataset, parses active queue
+    entries (renewable + storage projects), sums queued MW per county,
+    and normalizes to 0-1 via percentile rank.
+
+    Higher score = more MW in the interconnection queue = more developer
+    activity and potential BTM opportunity for Nodiac.
+
+    Returns: dict mapping FIPS -> queue pressure score (0-1).
+    """
+    print("\n=== Computing Queue Pressure (LBNL Queued Up) ===", flush=True)
+
+    try:
+        xlsx_data = download(LBNL_QUEUE_URL, "LBNL Queued Up (2025 Edition)")
+    except Exception as e:
+        log(f"WARNING: Failed to download LBNL queue data: {e}")
+        return {}
+
+    xlsx_path = os.path.join(tmpdir, "lbnl_queue.xlsx")
+    with open(xlsx_path, "wb") as f:
+        f.write(xlsx_data)
+
+    log("Parsing LBNL queue data...")
+    wb = openpyxl.load_workbook(xlsx_path, read_only=True)
+
+    # Find the main data sheet — usually "Data" or the first sheet
+    data_sheet = None
+    for sn in wb.sheetnames:
+        sl = sn.lower()
+        if sl in ("data", "queue data", "project data", "all projects"):
+            data_sheet = sn
+            break
+    if data_sheet is None:
+        # Try finding a sheet with many rows (the data sheet)
+        # Fall back to the first non-codebook sheet
+        for sn in wb.sheetnames:
+            if "codebook" not in sn.lower() and "summary" not in sn.lower():
+                data_sheet = sn
+                break
+    if data_sheet is None:
+        data_sheet = wb.sheetnames[0]
+
+    log(f"Using sheet: {data_sheet}")
+    ws = wb[data_sheet]
+
+    # Find header row
+    headers = None
+    header_row_idx = None
+    for i, row in enumerate(ws.iter_rows(values_only=True)):
+        vals = [str(v).strip() if v else "" for v in row]
+        # Look for key columns: state, county, capacity
+        has_state = any("state" in v.lower() for v in vals)
+        has_capacity = any("capacity" in v.lower() or "mw" in v.lower() for v in vals)
+        if has_state and has_capacity:
+            headers = vals
+            header_row_idx = i
+            break
+        if i > 10:
+            break
+
+    if not headers:
+        log("WARNING: Could not find header row in LBNL queue data")
+        wb.close()
+        return {}
+
+    log(f"Header row found at index {header_row_idx}")
+    log(f"Columns: {[h for h in headers if h][:15]}...")  # Show first 15 non-empty
+
+    # Map column indices
+    state_idx = None
+    county_idx = None
+    capacity_idx = None
+    status_idx = None
+    type_idx = None
+
+    for j, h in enumerate(headers):
+        hl = h.lower()
+        if state_idx is None and ("state" in hl and "county" not in hl):
+            state_idx = j
+        elif county_idx is None and "county" in hl:
+            county_idx = j
+        elif capacity_idx is None and ("capacity" in hl or ("mw" in hl and "name" not in hl)):
+            capacity_idx = j
+        elif status_idx is None and "status" in hl:
+            status_idx = j
+        elif type_idx is None and ("type" in hl or "fuel" in hl or "technology" in hl):
+            type_idx = j
+
+    if state_idx is None or capacity_idx is None:
+        log(f"WARNING: Missing required columns. state_idx={state_idx}, capacity_idx={capacity_idx}")
+        wb.close()
+        return {}
+
+    log(f"Column indices: state={state_idx}, county={county_idx}, "
+        f"capacity={capacity_idx}, status={status_idx}, type={type_idx}")
+
+    # Active queue statuses (projects still seeking interconnection)
+    ACTIVE_STATUSES = {
+        "active", "pending", "in progress", "feasibility study",
+        "system impact study", "facilities study", "ia pending",
+        "ia executed", "under construction",
+    }
+
+    # Parse queue entries
+    county_queued_mw: dict[str, float] = defaultdict(float)
+    parsed = 0
+    matched = 0
+    skipped_status = 0
+    skipped_no_location = 0
+
+    for i, row in enumerate(ws.iter_rows(values_only=True)):
+        if i <= header_row_idx:
+            continue
+        vals = list(row)
+
+        # Filter by status if available
+        if status_idx is not None and status_idx < len(vals):
+            status = str(vals[status_idx]).strip().lower() if vals[status_idx] else ""
+            if status and status not in ACTIVE_STATUSES and "active" not in status:
+                skipped_status += 1
+                continue
+
+        parsed += 1
+
+        # Get capacity
+        try:
+            cap = float(vals[capacity_idx]) if vals[capacity_idx] else 0
+        except (ValueError, TypeError):
+            continue
+        if cap <= 0:
+            continue
+
+        # Get state
+        state = str(vals[state_idx]).strip() if state_idx is not None and state_idx < len(vals) and vals[state_idx] else ""
+        if not state or state in SKIP_STATES:
+            continue
+
+        # Try to get county
+        county = ""
+        if county_idx is not None and county_idx < len(vals) and vals[county_idx]:
+            county = str(vals[county_idx]).strip()
+
+        if not county:
+            # If no county, attribute to all counties in the state
+            # by using state FIPS prefix
+            skipped_no_location += 1
+            continue
+
+        fips = resolve_fips(state, county, fips_lookup)
+        if fips:
+            county_queued_mw[fips] += cap
+            matched += 1
+
+    wb.close()
+    log(f"Queue entries parsed: {parsed}")
+    log(f"  Matched to counties: {matched}")
+    log(f"  Skipped (inactive status): {skipped_status}")
+    log(f"  Skipped (no county): {skipped_no_location}")
+    log(f"Counties with queued MW: {len(county_queued_mw)}")
+
+    if not county_queued_mw:
+        return {}
+
+    # Log-normalize queued MW (very skewed distribution)
+    log_mw = {f: math.log1p(mw) for f, mw in county_queued_mw.items()}
+
+    # Percentile rank normalization
+    fips_list = sorted(log_mw.keys())
+    log_vals = [log_mw[f] for f in fips_list]
+    ranks = percentile_rank(log_vals)
+
+    scores: dict[str, float] = {}
+    for fips, rank in zip(fips_list, ranks):
+        scores[fips] = round(rank, 4)
+
+    # Stats
+    total_mw = sum(county_queued_mw.values())
+    top = sorted(county_queued_mw.items(), key=lambda x: x[1], reverse=True)[:10]
+    log(f"Total queued MW across all counties: {total_mw:,.0f}")
+    log("Top 10 counties by queued MW:")
+    for fips, mw in top:
+        log(f"  {fips}: {mw:,.0f} MW (score={scores.get(fips, 0):.3f})")
+
+    return scores
+
+
+# ============================================================
+# Step 9: Assemble final scores
 # ============================================================
 
 def assemble_scores(
@@ -1897,6 +2227,7 @@ def assemble_scores(
     curtail_scores: dict[str, float],
     labor_scores: dict[str, float],
     fiber_scores: dict[str, float],
+    queue_scores: dict[str, float],
     grid_metadata: dict[str, dict] | None = None,
     fiber_metadata: dict[str, dict] | None = None,
     fiber_source_map: dict[str, str] | None = None,
@@ -1989,6 +2320,14 @@ def assemble_scores(
             fiber = 0.3  # Conservative default
             sources["fiber"] = "Default estimate (no fiber data)"
 
+        # Queue pressure
+        queue = queue_scores.get(fips)
+        if queue is not None:
+            sources["queue"] = "LBNL Queued Up 2025 Edition (interconnection queue MW through 2024)"
+        else:
+            queue = 0.0
+            sources["queue"] = "Default (no queued projects)"
+
         county_record = {
             "fips_code": fips,
             "state_fips": state_fips,
@@ -2000,6 +2339,7 @@ def assemble_scores(
             "permitting_score": round(permitting, 4),
             "labor_score": round(labor, 4),
             "fiber_score": round(fiber, 4),
+            "queue_pressure_score": round(queue, 4),
             "data_sources": sources,
             "permitting_citation_ids": [],  # Populated by build_permitting_citations()
         }
@@ -2032,6 +2372,7 @@ def assemble_scores(
         "curtail": sum(1 for c in counties if "860" in c["data_sources"]["curtail"]),
         "labor": sum(1 for c in counties if "CBP" in c["data_sources"]["labor"]),
         "fiber": sum(1 for c in counties if "Default" not in c["data_sources"]["fiber"]),
+        "queue": sum(1 for c in counties if "LBNL" in c["data_sources"].get("queue", "")),
     }
     for criterion, count in real_data_counts.items():
         pct = count / len(counties) * 100
@@ -2171,10 +2512,23 @@ def main():
         # Compute each criterion score
         coop_scores = compute_coop_density_area(fips_lookup)
         grid_scores, grid_metadata = compute_grid_reliability(tmpdir, fips_lookup)
-        curtail_scores, _plant_info = compute_curtailment_score(tmpdir, fips_lookup)
+        curtail_scores, plant_info = compute_curtailment_score(tmpdir, fips_lookup)
         labor_scores_raw = compute_labor_score()
         labor_scores = blend_labor_with_neighbors(labor_scores_raw)
         fiber_scores, fiber_metadata, fiber_source_map = compute_fiber_score()
+        queue_scores = compute_queue_pressure(tmpdir, fips_lookup)
+
+        # Enhance curtailment with negative LMP frequency (optional)
+        neg_lmp_scores = compute_negative_lmp_frequency(plant_info, fips_lookup)
+        if neg_lmp_scores:
+            log(f"\nIntegrating negative LMP data into curtailment scores ({len(neg_lmp_scores)} counties)...")
+            for fips in curtail_scores:
+                if fips in neg_lmp_scores:
+                    # Blend: 85% existing curtailment + 15% negative LMP frequency
+                    curtail_scores[fips] = round(
+                        0.85 * curtail_scores[fips] + 0.15 * neg_lmp_scores[fips],
+                        4,
+                    )
 
         # Assemble final scores
         counties = assemble_scores(
@@ -2184,6 +2538,7 @@ def main():
             curtail_scores,
             labor_scores,
             fiber_scores,
+            queue_scores,
             grid_metadata,
             fiber_metadata,
             fiber_source_map,
