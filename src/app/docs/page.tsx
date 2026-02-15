@@ -327,17 +327,29 @@ export default function DocsPage() {
                 </p>
 
                 <DataBox>
-                  <p><Label>Sources:</Label> EIA Form 860 (2024) for installed renewable capacity (8,684 variable generators, 277,437 MW total) + ISO/RTO market reports (CAISO, ERCOT, SPP, MISO, PJM) for curtailment intensity by region.</p>
-                  <p><Label>Vintage:</Label> EIA 860 (2024), ISO market data (2023&ndash;2024)</p>
+                  <p><Label>Sources:</Label> EIA Form 860 (2024) for installed capacity + EIA Form 923 (2024) for actual generation + ISO/RTO market reports (CAISO, ERCOT, SPP, MISO, PJM) for regional curtailment intensity.</p>
+                  <p><Label>Vintage:</Label> EIA 860/923 (2024), ISO market data (2023&ndash;2024)</p>
                   <p><Label>Coverage:</Label> 1,684 of 3,143 counties (54%) have variable renewable generation. The remaining 46% score 0.0 &mdash; no renewables means no curtailment opportunity.</p>
-                  <p><Label>Confidence:</Label> Medium &mdash; installed capacity data is solid, but actual curtailment varies by year, season, and grid conditions. The ISO intensity scores are calibrated from published market reports but are zone-level approximations, not county-level measurements.</p>
+                  <p><Label>Confidence:</Label> Medium-High &mdash; the 923 CF gap provides plant-level curtailment measurement rather than relying solely on zone-level proxies. Expected CF benchmarks are state-level averages, which introduces some noise for states with wide resource variation.</p>
                 </DataBox>
 
                 <MethodDropdown>
-                  <p>The score is a three-component composite:</p>
-                  <FormulaBlock>score = 0.40 × log_norm(installed_MW) + 0.20 × pipeline_pressure + 0.40 × ISO_curtailment_intensity</FormulaBlock>
+                  <p>The score is a four-component composite:</p>
+                  <FormulaBlock>{"score = 0.30 × log_norm(installed_MW)\n     + 0.15 × pipeline_pressure\n     + 0.20 × ISO_curtailment_intensity\n     + 0.35 × CF_gap_923"}</FormulaBlock>
 
-                  <p><strong className="text-gray-900 dark:text-white">Component 1: Installed Renewable MW (40%)</strong></p>
+                  <p><strong className="text-gray-900 dark:text-white">Component 1: Capacity Factor Gap (35%) <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium ml-1">NEW</span></strong></p>
+                  <p>
+                    The most direct curtailment signal. Downloads actual monthly generation (MWh) for every renewable
+                    plant from EIA Form 923, joins to nameplate capacity from Form 860, and computes actual capacity
+                    factor: <code className="text-xs">CF = net_generation / (capacity_MW × 8,760 hours)</code>.
+                    This is compared to state-level expected CF benchmarks (from EIA Electric Power Monthly / NREL ATB)
+                    for the plant&apos;s technology type (solar or wind). The gap (expected minus actual) indicates
+                    generation shortfall &mdash; a strong proxy for curtailment. Gaps are weighted by plant capacity
+                    so larger plants matter more, then aggregated per county and percentile-ranked.
+                    Plants commissioned in 2024 are excluded to avoid false positives from partial-year generation.
+                  </p>
+
+                  <p><strong className="text-gray-900 dark:text-white">Component 2: Installed Renewable MW (30%)</strong></p>
                   <p>
                     Total nameplate capacity of solar PV, solar thermal, and onshore/offshore wind generators in the county,
                     from EIA Form 860 &ldquo;Operable&rdquo; sheet. Log-transformed and min-max normalized because the distribution is
@@ -345,14 +357,7 @@ export default function DocsPage() {
                     mega-counties from dominating the scale.
                   </p>
 
-                  <p><strong className="text-gray-900 dark:text-white">Component 2: Pipeline Pressure (20%)</strong></p>
-                  <p>
-                    Ratio of proposed renewable MW (from EIA Form 860 &ldquo;Proposed&rdquo; sheet) to existing renewable MW in each county.
-                    High pipeline pressure means new generation is being built that will increase future curtailment risk.
-                    Counties with large proposed-to-existing ratios are where the grid is about to get more congested.
-                  </p>
-
-                  <p><strong className="text-gray-900 dark:text-white">Component 3: ISO Curtailment Intensity (40%)</strong></p>
+                  <p><strong className="text-gray-900 dark:text-white">Component 3: ISO Curtailment Intensity (20%)</strong></p>
                   <p>
                     Each county&apos;s generators are mapped to their balancing authority. The BA receives a curtailment intensity
                     score (0&ndash;1) based on published ISO/RTO market data:
@@ -386,10 +391,16 @@ export default function DocsPage() {
                     PJM 2025 Renewable Dispatch Data Request Results, EIA Today in Energy (2024).
                   </p>
 
+                  <p><strong className="text-gray-900 dark:text-white">Component 4: Pipeline Pressure (15%)</strong></p>
+                  <p>
+                    Ratio of proposed renewable MW (from EIA Form 860 &ldquo;Proposed&rdquo; sheet) to existing renewable MW in each county.
+                    High pipeline pressure means new generation is being built that will increase future curtailment risk.
+                    Counties with large proposed-to-existing ratios are where the grid is about to get more congested.
+                  </p>
+
                   <Assumption>
-                    ISO curtailment intensity scores are zone-level approximations applied to all counties within a BA.
-                    Actual curtailment varies significantly by node and season &mdash; ERCOT West Zone accounts for the
-                    majority of ERCOT curtailment, but all ERCOT counties receive the same BA-level score.
+                    ISO curtailment intensity scores are zone-level approximations, but they now account for only 20%
+                    of the total score. The CF gap component (35%) provides county-level differentiation within each BA.
                   </Assumption>
                   <Assumption>
                     Counties with no renewable generation score 0.0. This is intentional &mdash; no generation means no
@@ -869,7 +880,7 @@ export default function DocsPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">Curtailment is zone-level, not node-level.</strong> ISO curtailment intensity scores are applied uniformly across a balancing authority. In reality, curtailment is highly localized &mdash; in ERCOT, 20% of nodes account for 77% of total curtailment. County-level variation within an ISO is not captured. Planned upgrade: EIA Form 923 capacity factor gap analysis for plant-level curtailment estimation.</span>
+                <span><strong className="text-gray-900 dark:text-white">Curtailment blends zone-level and plant-level data.</strong> ISO curtailment intensity scores are applied uniformly across a balancing authority (20% weight), but this is now supplemented by plant-level capacity factor gap analysis from EIA Form 923 (35% weight). The CF gap measures actual generation shortfall per plant, providing county-level precision within each ISO. However, the expected capacity factor benchmarks are state-level averages — a wind farm in the Texas Panhandle and one near Houston use the same expected CF, though their actual resource quality differs.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
@@ -898,8 +909,8 @@ export default function DocsPage() {
           <Section id="roadmap" title="Planned Improvements">
             <ul className="space-y-3 ml-2">
               <li className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">EIA Form 923 capacity factor gap</strong> &mdash; Plant-level generation data to compute actual vs. expected capacity factors. The gap between expected (NREL resource assessment) and actual (EIA-923) capacity factor is a strong proxy for curtailment at the plant level, mapped to counties. This would replace the zone-level ISO approximation with plant-level precision.</span>
+                <span className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">EIA Form 923 capacity factor gap</strong> <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/20 text-green-400 font-medium">IMPLEMENTED</span> &mdash; Plant-level generation data from EIA Form 923 is now used to compute actual vs. expected capacity factors by technology (solar/wind) and state. The CF gap (expected CF minus actual CF, weighted by plant capacity) is the single largest component (35%) of the curtailment score, providing county-level precision within each ISO zone.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />

@@ -61,6 +61,9 @@ EIA_861_CURRENT_URL = "https://www.eia.gov/electricity/data/eia861/zip/f8612024.
 # EIA Form 860 (renewable capacity / curtailment proxy)
 EIA_860_URL = "https://www.eia.gov/electricity/data/eia860/xls/eia8602024.zip"
 
+# EIA Form 923 (actual generation data for capacity factor gap analysis)
+EIA_923_URL = "https://www.eia.gov/electricity/data/eia923/xls/f923_2024.zip"
+
 # Census CBP (IT labor)
 CBP_API_BASE = "https://api.census.gov/data/2023/cbp"
 CBP_NAICS_CODES = ["5182", "5415", "517"]
@@ -150,6 +153,34 @@ ISO_CURTAILMENT_INTENSITY = {
 }
 # Default for balancing authorities not listed above
 ISO_CURTAILMENT_DEFAULT = 0.10
+
+# State-level expected capacity factors for solar PV and wind (2022-2024 averages)
+# Sources: EIA Electric Power Monthly Table 6.07.B, NREL ATB 2024
+# Used as benchmarks to detect curtailment via CF gap analysis
+EXPECTED_CF_SOLAR = {
+    "AZ": 0.27, "CA": 0.27, "NV": 0.26, "NM": 0.26, "UT": 0.25,
+    "TX": 0.24, "CO": 0.24, "FL": 0.23, "NC": 0.22, "GA": 0.22,
+    "SC": 0.22, "AL": 0.21, "MS": 0.21, "LA": 0.21, "TN": 0.21,
+    "OK": 0.21, "KS": 0.21, "AR": 0.20, "MO": 0.20, "VA": 0.20,
+    "KY": 0.19, "IN": 0.19, "IL": 0.19, "OH": 0.18, "PA": 0.18,
+    "NJ": 0.18, "MD": 0.18, "DE": 0.18, "IA": 0.18, "NE": 0.19,
+    "SD": 0.19, "ND": 0.18, "MN": 0.18, "WI": 0.17, "MI": 0.17,
+    "NY": 0.17, "CT": 0.17, "MA": 0.17, "RI": 0.17, "VT": 0.16,
+    "NH": 0.16, "ME": 0.16, "WV": 0.18, "ID": 0.22, "MT": 0.20,
+    "WY": 0.22, "OR": 0.20, "WA": 0.18, "HI": 0.22, "AK": 0.12,
+}
+EXPECTED_CF_WIND = {
+    "TX": 0.34, "OK": 0.38, "KS": 0.40, "NE": 0.38, "SD": 0.42,
+    "ND": 0.40, "MN": 0.35, "IA": 0.36, "MO": 0.30, "IL": 0.30,
+    "IN": 0.28, "OH": 0.26, "MI": 0.28, "WI": 0.28, "CO": 0.33,
+    "WY": 0.38, "MT": 0.35, "NM": 0.32, "AZ": 0.25, "CA": 0.28,
+    "OR": 0.28, "WA": 0.28, "ID": 0.28, "NV": 0.22, "UT": 0.25,
+    "NY": 0.25, "PA": 0.24, "ME": 0.30, "VT": 0.26, "NH": 0.25,
+    "MA": 0.28, "RI": 0.28, "CT": 0.25, "NJ": 0.25, "MD": 0.25,
+    "VA": 0.26, "NC": 0.26, "WV": 0.26, "AR": 0.28, "LA": 0.25,
+    "AL": 0.25, "GA": 0.25, "SC": 0.25, "FL": 0.22, "MS": 0.25,
+    "TN": 0.25, "KY": 0.25, "DE": 0.25, "HI": 0.30, "AK": 0.28,
+}
 
 # Output path
 OUTPUT_PATH = Path("public/data/county-scores.json")
@@ -768,24 +799,33 @@ def compute_grid_reliability(tmpdir: str, fips_lookup: dict) -> tuple[dict[str, 
 # Step 4: Curtailment Score from EIA-860 + ISO/RTO Data
 # ============================================================
 
-def compute_curtailment_score(tmpdir: str, fips_lookup: dict) -> dict[str, float]:
-    """Compute curtailment risk score from EIA Form 860 renewable capacity and ISO data.
+def compute_curtailment_score(tmpdir: str, fips_lookup: dict) -> tuple[dict[str, float], dict[int, dict]]:
+    """Compute curtailment score from EIA Forms 860 + 923 and ISO/RTO data.
 
-    Methodology:
+    Methodology (when 923 CF gap data available):
+      score = 0.30 * log_norm(installed_MW)
+            + 0.15 * pipeline_pressure
+            + 0.20 * iso_curtailment_intensity
+            + 0.35 * cf_gap_923
+
+    Fallback (when 923 data unavailable):
       score = 0.40 * log_norm(installed_MW)
             + 0.20 * pipeline_pressure
-            + 0.40 * curtailment_intensity
+            + 0.40 * iso_curtailment_intensity
 
     Components:
-      - Installed renewable MW (40%): Log-normalized nameplate capacity from
+      - CF gap (35%): Plant-level capacity factor gap from EIA Form 923
+        generation data. Most direct measurement of actual curtailment.
+      - Installed renewable MW (30%): Log-normalized nameplate capacity from
         EIA Form 860 operable generators (solar PV, solar thermal, wind).
         Captures existing renewable density that drives curtailment.
-      - Pipeline pressure (20%): Ratio of proposed-to-existing renewable MW.
-        Forward-looking signal for areas where curtailment may worsen.
-      - ISO curtailment intensity (40%): Continuous 0-1 score per balancing
+      - ISO curtailment intensity (20%): Continuous 0-1 score per balancing
         authority from ISO_CURTAILMENT_INTENSITY lookup table, derived from
         2023-2024 ISO/RTO market reports (CAISO, ERCOT, SPP, MISO, PJM).
-        Uses max(BA scores) for counties with generators in multiple BAs.
+      - Pipeline pressure (15%): Ratio of proposed-to-existing renewable MW.
+        Forward-looking signal for areas where curtailment may worsen.
+
+    Returns: (scores dict, plant_info dict) — plant_info is passed to CF gap.
     """
     print("\n=== Computing Curtailment Proxy (EIA-860) ===", flush=True)
 
@@ -952,7 +992,7 @@ def compute_curtailment_score(tmpdir: str, fips_lookup: dict) -> dict[str, float
     all_fips = set(county_renewable_mw.keys()) | set(county_proposed_mw.keys())
 
     if not all_fips:
-        return {}
+        return {}, plant_info
 
     # Normalize renewable MW using log transform (very skewed distribution)
     mw_values = {f: county_renewable_mw.get(f, 0) for f in all_fips}
@@ -968,28 +1008,407 @@ def compute_curtailment_score(tmpdir: str, fips_lookup: dict) -> dict[str, float
 
     # ISO curtailment intensity from BA codes
     # Use max intensity across all BAs serving generators in this county
-    curtailment = {}
+    iso_intensity = {}
     for f in all_fips:
         bas = county_ba_codes.get(f, set())
         if bas:
-            curtailment[f] = max(
+            iso_intensity[f] = max(
                 ISO_CURTAILMENT_INTENSITY.get(ba, ISO_CURTAILMENT_DEFAULT)
                 for ba in bas
             )
         else:
-            curtailment[f] = ISO_CURTAILMENT_DEFAULT
+            iso_intensity[f] = ISO_CURTAILMENT_DEFAULT
 
-    # Combine: 40% installed MW + 20% pipeline pressure + 40% curtailment intensity
+    # Compute CF gap from EIA 923 (plant-level generation vs expected)
+    cf_gap_scores = compute_cf_gap_923(tmpdir, plant_info, fips_lookup)
+    has_923 = len(cf_gap_scores) > 0
+    if has_923:
+        log(f"CF gap data available for {len(cf_gap_scores)} counties — using 4-component formula")
+    else:
+        log("CF gap data unavailable — falling back to 3-component formula")
+
+    # Combine components
     scores: dict[str, float] = {}
     for fips in all_fips:
-        score = (
-            0.40 * norm_mw.get(fips, 0) +
-            0.20 * norm_pipeline.get(fips, 0) +
-            0.40 * curtailment.get(fips, 0)
-        )
+        if has_923:
+            # Full formula: 30% MW + 15% pipeline + 20% ISO + 35% CF gap
+            score = (
+                0.30 * norm_mw.get(fips, 0) +
+                0.15 * norm_pipeline.get(fips, 0) +
+                0.20 * iso_intensity.get(fips, ISO_CURTAILMENT_DEFAULT) +
+                0.35 * cf_gap_scores.get(fips, 0)
+            )
+        else:
+            # Fallback: 40% MW + 20% pipeline + 40% ISO
+            score = (
+                0.40 * norm_mw.get(fips, 0) +
+                0.20 * norm_pipeline.get(fips, 0) +
+                0.40 * iso_intensity.get(fips, ISO_CURTAILMENT_DEFAULT)
+            )
         scores[fips] = round(min(max(score, 0), 1), 4)
 
     log(f"Counties with curtailment scores: {len(scores)}")
+    return scores, plant_info
+
+
+# ============================================================
+# Step 4b: EIA Form 923 Capacity Factor Gap Analysis
+# ============================================================
+
+def compute_cf_gap_923(
+    tmpdir: str,
+    plant_info: dict[int, dict],
+    fips_lookup: dict,
+) -> dict[str, float]:
+    """Compute plant-level capacity factor gaps from EIA Form 923 generation data.
+
+    Downloads actual monthly generation (Form 923), joins to nameplate capacity
+    (Form 860 plant_info), computes actual CF vs expected CF benchmarks, and
+    aggregates the capacity-weighted gap to county level.
+
+    A large positive gap means plants in that county are producing significantly
+    less than their resource potential — a direct signal of curtailment.
+
+    Returns: dict mapping FIPS -> normalized CF gap score (0-1, higher = more curtailment).
+    """
+    print("\n--- Computing CF Gap from EIA Form 923 ---", flush=True)
+
+    # Download EIA 923
+    try:
+        zipdata = download(EIA_923_URL, "EIA Form 923 (2024)")
+    except Exception as e:
+        log(f"WARNING: Failed to download EIA 923: {e}")
+        log("  CF gap analysis will be skipped")
+        return {}
+
+    zf = zipfile.ZipFile(io.BytesIO(zipdata))
+    names = zf.namelist()
+    log(f"ZIP contains {len(names)} files")
+
+    # Find the generation data file — naming varies by year
+    gen_file = None
+    for name in names:
+        lower = name.lower()
+        if lower.endswith(".xlsx") and ("generation" in lower or "schedules_2_3_4_5" in lower or "page_1" in lower):
+            gen_file = name
+            break
+    if not gen_file:
+        # Fallback: just pick the largest xlsx
+        xlsx_files = [n for n in names if n.lower().endswith(".xlsx")]
+        if xlsx_files:
+            gen_file = xlsx_files[0]
+
+    if not gen_file:
+        log("WARNING: No generation spreadsheet found in EIA 923 ZIP")
+        return {}
+
+    log(f"Using generation file: {gen_file}")
+    gen_path = os.path.join(tmpdir, "eia923_gen.xlsx")
+    with open(gen_path, "wb") as f:
+        f.write(zf.read(gen_file))
+    zf.close()
+
+    # Parse generation data
+    log("Parsing EIA 923 generation data...")
+    wb = openpyxl.load_workbook(gen_path, read_only=True)
+
+    # Find the right sheet — look for generation/fuel data
+    target_sheet = None
+    for sn in wb.sheetnames:
+        sl = sn.lower()
+        if "page 1" in sl or "generation and fuel" in sl or "generation_and_fuel" in sl:
+            target_sheet = sn
+            break
+    if not target_sheet:
+        target_sheet = wb.sheetnames[0]  # Fallback to first sheet
+
+    log(f"Using sheet: {target_sheet}")
+    ws = wb[target_sheet]
+
+    # Find header row and column indices
+    headers = None
+    header_row_idx = None
+    for i, row in enumerate(ws.iter_rows(values_only=True)):
+        vals = [str(v).strip() if v else "" for v in row]
+        # Look for a row that has "Plant Id" or "Plant Code" and generation month columns
+        has_plant_id = any("plant" in v.lower() and ("id" in v.lower() or "code" in v.lower()) for v in vals)
+        has_net_gen = any("net generation" in v.lower() or "netgen" in v.lower() for v in vals)
+        if has_plant_id and has_net_gen:
+            headers = vals
+            header_row_idx = i
+            break
+        # Also check for month columns like "January", "February" etc
+        if has_plant_id and any(v.lower() in ("january", "february", "march") for v in vals):
+            headers = vals
+            header_row_idx = i
+            break
+        if i > 10:  # Don't scan too far
+            break
+
+    if not headers:
+        log("WARNING: Could not find header row in EIA 923 generation sheet")
+        wb.close()
+        return {}
+
+    log(f"Header row found at index {header_row_idx}")
+
+    # Map column indices
+    plant_id_idx = None
+    prime_mover_idx = None
+    fuel_type_idx = None
+    net_gen_month_idxs: list[int] = []
+
+    for j, h in enumerate(headers):
+        hl = h.lower()
+        if ("plant" in hl and ("id" in hl or "code" in hl)) and plant_id_idx is None:
+            plant_id_idx = j
+        elif "prime" in hl and "mover" in hl and prime_mover_idx is None:
+            prime_mover_idx = j
+        elif "fuel" in hl and "type" in hl and "code" in hl and fuel_type_idx is None:
+            fuel_type_idx = j
+        elif "net" in hl and "gen" in hl:
+            net_gen_month_idxs.append(j)
+        elif hl in ("january", "february", "march", "april", "may", "june",
+                     "july", "august", "september", "october", "november", "december"):
+            net_gen_month_idxs.append(j)
+
+    if plant_id_idx is None or not net_gen_month_idxs:
+        log(f"WARNING: Missing required columns. plant_id_idx={plant_id_idx}, gen_months={len(net_gen_month_idxs)}")
+        wb.close()
+        return {}
+
+    log(f"Columns: plant_id={plant_id_idx}, prime_mover={prime_mover_idx}, "
+        f"fuel_type={fuel_type_idx}, gen_month_cols={len(net_gen_month_idxs)}")
+
+    # Renewable fuel type codes in EIA 923
+    RENEWABLE_FUEL_CODES = {"SUN", "WND"}
+    # Renewable prime mover codes
+    RENEWABLE_PM_CODES = {"PV", "WT", "CP"}  # PV=solar, WT=wind, CP=concentrated solar
+
+    # Aggregate annual net generation by plant
+    # We group by plant_code and track fuel type for expected CF lookup
+    plant_annual_gen: dict[int, float] = defaultdict(float)  # plant_code -> total MWh
+    plant_fuel_type: dict[int, str] = {}  # plant_code -> "SUN" or "WND"
+
+    data_rows = 0
+    renewable_rows = 0
+    for i, row in enumerate(ws.iter_rows(values_only=True)):
+        if i <= header_row_idx:
+            continue
+        vals = list(row)
+
+        # Check fuel type or prime mover for renewable identification
+        is_renewable = False
+        fuel = ""
+        if fuel_type_idx is not None and fuel_type_idx < len(vals):
+            fuel = str(vals[fuel_type_idx]).strip().upper() if vals[fuel_type_idx] else ""
+            if fuel in RENEWABLE_FUEL_CODES:
+                is_renewable = True
+        if not is_renewable and prime_mover_idx is not None and prime_mover_idx < len(vals):
+            pm = str(vals[prime_mover_idx]).strip().upper() if vals[prime_mover_idx] else ""
+            if pm in RENEWABLE_PM_CODES:
+                is_renewable = True
+                if pm == "PV" or pm == "CP":
+                    fuel = "SUN"
+                elif pm == "WT":
+                    fuel = "WND"
+
+        if not is_renewable:
+            continue
+
+        try:
+            plant_code = int(vals[plant_id_idx])
+        except (ValueError, TypeError):
+            continue
+
+        # Sum monthly generation
+        annual_gen = 0.0
+        valid_months = 0
+        for idx in net_gen_month_idxs:
+            if idx < len(vals) and vals[idx] is not None:
+                try:
+                    month_gen = float(vals[idx])
+                    annual_gen += month_gen
+                    valid_months += 1
+                except (ValueError, TypeError):
+                    pass
+
+        if valid_months == 0 or annual_gen <= 0:
+            continue
+
+        plant_annual_gen[plant_code] += annual_gen
+        if plant_code not in plant_fuel_type:
+            plant_fuel_type[plant_code] = fuel
+        renewable_rows += 1
+        data_rows += 1
+
+    wb.close()
+    log(f"Parsed {renewable_rows} renewable generation rows for {len(plant_annual_gen)} plants")
+
+    if not plant_annual_gen:
+        log("WARNING: No renewable generation data found in EIA 923")
+        return {}
+
+    # Now we need nameplate capacity from 860 plant_info
+    # The plant_info dict has state/county/ba_code but not capacity.
+    # We need to get capacity from the 860 generator data.
+    # However, that's already parsed in compute_curtailment_score's operable generators.
+    # To avoid re-parsing, we'll compute CF gap per-plant using a simpler approach:
+    # re-download isn't needed — we'll parse the already-extracted 860 generator file.
+    # But the temp file might not exist. Let's re-extract just the capacity we need.
+
+    # Actually, let's download 860 for just the capacity data
+    log("Loading nameplate capacity from EIA 860 for CF calculation...")
+    zipdata_860 = download(EIA_860_URL, "EIA Form 860 (for CF gap)")
+    zf860 = zipfile.ZipFile(io.BytesIO(zipdata_860))
+    gen_860_file = [n for n in zf860.namelist() if "Generator" in n and "3_1" in n and n.endswith(".xlsx")][0]
+    gen_860_path = os.path.join(tmpdir, "gen_860_cf.xlsx")
+    with open(gen_860_path, "wb") as f:
+        f.write(zf860.read(gen_860_file))
+    zf860.close()
+
+    # Parse 860 generator data for nameplate capacity by plant
+    wb860 = openpyxl.load_workbook(gen_860_path, read_only=True)
+    ws860 = wb860["Operable"]
+
+    plant_capacity_mw: dict[int, float] = defaultdict(float)
+    plant_op_year: dict[int, int] = {}  # plant_code -> earliest operating year
+
+    headers860 = None
+    for i, row in enumerate(ws860.iter_rows(values_only=True)):
+        vals = list(row)
+        if i == 0:
+            continue
+        if i == 1:
+            headers860 = [str(v).strip() if v else "" for v in vals]
+            continue
+        if headers860 is None:
+            continue
+
+        tech_idx = next((j for j, h in enumerate(headers860) if h == "Technology"), None)
+        cap_idx = next((j for j, h in enumerate(headers860) if h == "Nameplate Capacity (MW)"), None)
+        plant_idx = next((j for j, h in enumerate(headers860) if h == "Plant Code"), None)
+        status_idx = next((j for j, h in enumerate(headers860) if h == "Status"), None)
+        op_year_idx = next((j for j, h in enumerate(headers860) if h == "Operating Year"), None)
+
+        if any(idx is None for idx in [tech_idx, cap_idx, plant_idx]):
+            continue
+
+        tech = str(vals[tech_idx]) if vals[tech_idx] else ""
+        if tech not in VARIABLE_RENEWABLES:
+            continue
+
+        status = str(vals[status_idx]) if status_idx is not None and vals[status_idx] else "OP"
+        if status not in ("OP", "SB"):
+            continue
+
+        try:
+            cap = float(vals[cap_idx]) if vals[cap_idx] else 0
+            pc = int(vals[plant_idx])
+        except (ValueError, TypeError):
+            continue
+
+        plant_capacity_mw[pc] += cap
+
+        # Track earliest operating year to filter partial-year plants
+        if op_year_idx is not None and vals[op_year_idx]:
+            try:
+                oy = int(vals[op_year_idx])
+                if pc not in plant_op_year or oy < plant_op_year[pc]:
+                    plant_op_year[pc] = oy
+            except (ValueError, TypeError):
+                pass
+
+    wb860.close()
+    log(f"Loaded capacity for {len(plant_capacity_mw)} renewable plants from 860")
+
+    # Compute CF gap per plant, aggregate to county
+    # CF = annual_gen_mwh / (capacity_mw * 8760)
+    # Gap = expected_cf - actual_cf (positive = curtailment)
+    hours_in_year = 8760
+    county_cf_gap_weighted: dict[str, float] = defaultdict(float)  # fips -> sum(gap * MW)
+    county_capacity: dict[str, float] = defaultdict(float)  # fips -> sum(MW)
+    plants_matched = 0
+    plants_skipped_no_capacity = 0
+    plants_skipped_partial_year = 0
+    plants_skipped_no_fips = 0
+
+    for plant_code, annual_gen_mwh in plant_annual_gen.items():
+        cap_mw = plant_capacity_mw.get(plant_code, 0)
+        if cap_mw <= 0:
+            plants_skipped_no_capacity += 1
+            continue
+
+        # Skip plants that started operating in the data year (partial year)
+        op_year = plant_op_year.get(plant_code, 0)
+        if op_year >= 2024:
+            plants_skipped_partial_year += 1
+            continue
+
+        # Get plant location
+        pinfo = plant_info.get(plant_code, {})
+        state = pinfo.get("state", "")
+        county = pinfo.get("county", "")
+        if not state or not county or state in SKIP_STATES:
+            plants_skipped_no_fips += 1
+            continue
+
+        fips = resolve_fips(state, county, fips_lookup)
+        if not fips:
+            plants_skipped_no_fips += 1
+            continue
+
+        # Compute actual capacity factor
+        actual_cf = annual_gen_mwh / (cap_mw * hours_in_year)
+
+        # Look up expected CF based on fuel type and state
+        fuel = plant_fuel_type.get(plant_code, "")
+        if fuel == "SUN":
+            expected_cf = EXPECTED_CF_SOLAR.get(state, 0.20)
+        elif fuel == "WND":
+            expected_cf = EXPECTED_CF_WIND.get(state, 0.30)
+        else:
+            expected_cf = 0.25  # Generic fallback
+
+        # CF gap: positive means underperforming (curtailed)
+        # Clamp to [0, expected_cf] — negative gap means overperforming, not curtailment
+        gap = max(0, expected_cf - actual_cf)
+
+        # Weight by plant capacity (larger plants matter more)
+        county_cf_gap_weighted[fips] += gap * cap_mw
+        county_capacity[fips] += cap_mw
+        plants_matched += 1
+
+    log(f"Plants matched: {plants_matched}")
+    log(f"Plants skipped: no_capacity={plants_skipped_no_capacity}, "
+        f"partial_year={plants_skipped_partial_year}, no_fips={plants_skipped_no_fips}")
+
+    if not county_cf_gap_weighted:
+        return {}
+
+    # Compute capacity-weighted average gap per county
+    county_avg_gap: dict[str, float] = {}
+    for fips in county_cf_gap_weighted:
+        if county_capacity[fips] > 0:
+            county_avg_gap[fips] = county_cf_gap_weighted[fips] / county_capacity[fips]
+
+    # Normalize via percentile rank
+    fips_list = list(county_avg_gap.keys())
+    gap_values = [county_avg_gap[f] for f in fips_list]
+    ranks = percentile_rank(gap_values)
+
+    scores: dict[str, float] = {}
+    for fips, rank in zip(fips_list, ranks):
+        scores[fips] = round(rank, 4)
+
+    log(f"CF gap scores computed for {len(scores)} counties")
+
+    # Report top counties by gap
+    top_gap = sorted(county_avg_gap.items(), key=lambda x: x[1], reverse=True)[:10]
+    log("Top 10 counties by CF gap (most curtailed):")
+    for fips, gap in top_gap:
+        log(f"  {fips}: avg_gap={gap:.3f}, capacity={county_capacity[fips]:.0f} MW")
+
     return scores
 
 
@@ -1538,7 +1957,10 @@ def assemble_scores(
         # Curtailment
         curtail = curtail_scores.get(fips)
         if curtail is not None:
-            sources["curtail"] = "EIA Form 860 + ISO/RTO curtailment intensity (CAISO, ERCOT, SPP, MISO, PJM 2023-2024 market reports)"
+            sources["curtail"] = (
+                "EIA Forms 860 + 923 (plant-level CF gap analysis) + "
+                "ISO/RTO curtailment intensity (CAISO, ERCOT, SPP, MISO, PJM 2023-2024 market reports)"
+            )
         else:
             curtail = 0.0  # No renewables = no curtailment opportunity
             sources["curtail"] = "Default (no renewable generation)"
@@ -1749,7 +2171,7 @@ def main():
         # Compute each criterion score
         coop_scores = compute_coop_density_area(fips_lookup)
         grid_scores, grid_metadata = compute_grid_reliability(tmpdir, fips_lookup)
-        curtail_scores = compute_curtailment_score(tmpdir, fips_lookup)
+        curtail_scores, _plant_info = compute_curtailment_score(tmpdir, fips_lookup)
         labor_scores_raw = compute_labor_score()
         labor_scores = blend_labor_with_neighbors(labor_scores_raw)
         fiber_scores, fiber_metadata, fiber_source_map = compute_fiber_score()
