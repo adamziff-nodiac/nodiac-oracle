@@ -33,10 +33,10 @@ export function NarrativeSection() {
     <section className="max-w-4xl mx-auto px-6 py-16 space-y-16">
       {SECTIONS.map((section) => (
         <div key={section.id} id={section.id}>
-          <h2 className="text-2xl font-bold text-white mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             {section.title}
           </h2>
-          <p className="text-gray-300 leading-relaxed text-base">
+          <p className="text-gray-600 dark:text-gray-300 leading-relaxed text-base">
             {section.content}
           </p>
         </div>

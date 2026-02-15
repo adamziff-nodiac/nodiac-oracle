@@ -33,6 +33,10 @@ src/
 └── types/         # TypeScript types
 ```
 
+## Browser Testing
+
+Use `agent-browser` for visual testing and UI review. Run `agent-browser --help` for the full list of commands.
+
 ## Brand Colors
 
 Primary (Purple):

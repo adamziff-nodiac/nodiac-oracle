@@ -38,7 +38,7 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
           relative border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer
           ${dragActive
             ? 'border-nodiac-secondary bg-nodiac-secondary/5'
-            : 'border-white/20 hover:border-white/30 bg-white/5'
+            : 'border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/30 bg-gray-50 dark:bg-white/5'
           }
         `}
         onDragOver={(e) => { e.preventDefault(); setDragActive(true) }}
@@ -54,21 +54,21 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
           onChange={handleFileSelect}
         />
         <Upload className="w-10 h-10 text-gray-400 mx-auto mb-4" />
-        <p className="text-white font-medium mb-1">
+        <p className="text-gray-900 dark:text-white font-medium mb-1">
           Drop a CSV file here or click to browse
         </p>
-        <p className="text-sm text-gray-400">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
           Supports Fleet CIR Validated and consolidated CSV formats
         </p>
       </div>
 
       {selectedFile && (
-        <div className="mt-4 flex items-center justify-between bg-white/5 rounded-lg px-4 py-3 border border-white/10">
+        <div className="mt-4 flex items-center justify-between bg-gray-50 dark:bg-white/5 rounded-lg px-4 py-3 border border-gray-200 dark:border-white/10">
           <div className="flex items-center gap-3">
             <FileText className="w-5 h-5 text-nodiac-secondary" />
             <div>
-              <p className="text-sm text-white font-medium">{selectedFile.name}</p>
-              <p className="text-xs text-gray-400">
+              <p className="text-sm text-gray-900 dark:text-white font-medium">{selectedFile.name}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {(selectedFile.size / 1024).toFixed(1)} KB
               </p>
             </div>

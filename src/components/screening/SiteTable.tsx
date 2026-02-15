@@ -95,11 +95,11 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect, countyScores, c
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-white/10 text-left">
+          <tr className="border-b border-gray-200 dark:border-white/10 text-left">
             {columns.map(([key, label]) => (
               <th
                 key={key}
-                className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-white transition-colors"
+                className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
                 onClick={() => toggleSort(key)}
               >
                 {label}
@@ -113,30 +113,30 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect, countyScores, c
             <Fragment key={site.id}>
               <tr
                 className={cn(
-                  'border-b border-white/5 cursor-pointer transition-colors',
+                  'border-b border-gray-100 dark:border-white/5 cursor-pointer transition-colors',
                   selectedSiteId === site.id
                     ? 'bg-nodiac-secondary/10'
-                    : 'hover:bg-white/5'
+                    : 'hover:bg-gray-50 dark:hover:bg-white/5'
                 )}
                 onClick={() => {
                   onSiteSelect(site.id)
                   setExpandedId(expandedId === site.id ? null : site.id)
                 }}
               >
-                <td className="px-3 py-2.5 text-white font-medium">{site.site_name}</td>
-                <td className="px-3 py-2.5 text-gray-300">{site.county || '—'}</td>
-                <td className="px-3 py-2.5 text-gray-300">{site.state || '—'}</td>
-                <td className="px-3 py-2.5 text-gray-400 text-xs">{site.utility_type || '—'}</td>
+                <td className="px-3 py-2.5 text-gray-900 dark:text-white font-medium">{site.site_name}</td>
+                <td className="px-3 py-2.5 text-gray-600 dark:text-gray-300">{site.county || '—'}</td>
+                <td className="px-3 py-2.5 text-gray-600 dark:text-gray-300">{site.state || '—'}</td>
+                <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400 text-xs">{site.utility_type || '—'}</td>
                 <td className="px-3 py-2.5">
                   <TierBadge tier={site.tier} />
                 </td>
-                <td className="px-3 py-2.5 text-white tabular-nums font-mono">
+                <td className="px-3 py-2.5 text-gray-900 dark:text-white tabular-nums font-mono">
                   {site.site_score != null ? site.site_score.toFixed(1) : '—'}
                 </td>
               </tr>
               {expandedId === site.id && site.score_breakdown && (
                 <tr>
-                  <td colSpan={6} className="px-3 py-3 bg-white/[0.02]">
+                  <td colSpan={6} className="px-3 py-3 bg-gray-50 dark:bg-white/[0.02]">
                     <ScoringBreakdown
                       breakdown={site.score_breakdown}
                       permittingCitations={resolveCitations(site.fips_code, countyScores, citationRegistry)}

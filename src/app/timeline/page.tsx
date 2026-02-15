@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Plus, Clock, Trash2, MoreVertical } from 'lucide-react'
+import { Plus, Clock, Trash2, MoreVertical, BarChart3 } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { AuthButton } from '@/components/auth/AuthButton'
@@ -121,19 +121,26 @@ export default function TimelineListPage() {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center justify-between mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Timelines</h1>
-            <button
-              onClick={createNewTimeline}
-              disabled={isGuest}
-              className="flex items-center gap-2 px-4 py-2 bg-nodiac-primary hover:bg-nodiac-primary/80 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
-            >
-              <Plus className="w-5 h-5" />
-              New Timeline
-            </button>
+            {!isGuest && (
+              <button
+                onClick={createNewTimeline}
+                className="flex items-center gap-2 px-4 py-2 bg-nodiac-primary hover:bg-nodiac-primary/80 text-white rounded-lg font-medium transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                New Timeline
+              </button>
+            )}
           </div>
 
           {isGuest ? (
-            <div className="text-center py-16">
-              <p className="text-gray-500 dark:text-gray-400 mb-6">Sign in to create and save timelines</p>
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-nodiac-primary to-nodiac-soft-orchid flex items-center justify-center mb-6">
+                <BarChart3 className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Create project timelines</h2>
+              <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-sm text-center">
+                Build and export professional project timelines for data center development presentations
+              </p>
               <div className="max-w-xs mx-auto">
                 <AuthButton />
               </div>
