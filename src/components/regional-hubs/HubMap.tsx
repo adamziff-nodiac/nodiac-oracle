@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
 import type { CriterionKey, HubRegion } from '@/types/regional-hubs'
+import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -16,6 +17,7 @@ interface HubMapProps {
   onCountyClick?: (fips: string) => void
   onCountyHover?: (fips: string | null) => void
   mapRef?: React.RefObject<MapRef | null>
+  quantileBreaks?: QuantileBreaks | null
 }
 
 export function HubMap({
@@ -25,6 +27,7 @@ export function HubMap({
   onCountyClick,
   onCountyHover,
   mapRef: externalRef,
+  quantileBreaks,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -84,6 +87,7 @@ export function HubMap({
         scoreLookup={scoreLookup}
         scoreRange={scoreRange}
         hoveredFips={hoveredFips}
+        quantileBreaks={quantileBreaks}
       />
       {regions.length > 0 && <HubRegionOverlay regions={regions} />}
     </Map>

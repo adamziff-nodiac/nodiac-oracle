@@ -2,25 +2,39 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
+import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
-// Purple scale: all counties visible, high scores glow Nodiac purple
-const COLOR_LOW = '#2d2233'     // visible muted purple — distinct from base map
-const COLOR_MID = '#5c2d55'     // mid-range purple
-const COLOR_HIGH = '#8b3578'    // bright Nodiac purple
-const COLOR_PEAK = '#b48fc1'    // soft orchid for top scores — max pop
+// Quantile-based purple-to-teal color ramp:
+// Each band holds ~equal number of counties, so the full gradient is visible.
+// Top 5% glow neon teal (Nodiac brand secondary) to pop on dark maps.
+const COLOR_P0   = '#1a1520'   // very dark purple — clearly below average
+const COLOR_P20  = '#2d2233'   // dark purple — below average
+const COLOR_P40  = '#5c2d55'   // medium purple — average
+const COLOR_P60  = '#8b3578'   // bright purple — above average
+const COLOR_P80  = '#b48fc1'   // soft orchid — strong
+const COLOR_P95  = '#4de2e4'   // NEON TEAL — exceptional! Top 5%
+const COLOR_NULL = '#221d28'   // counties with no data
+
+// Legacy exports for backward compatibility (MapLegend uses these)
+const COLOR_LOW = COLOR_P0
+const COLOR_MID = COLOR_P40
+const COLOR_HIGH = COLOR_P80
+const COLOR_PEAK = COLOR_P95
 
 interface CountyChoroplethProps {
   scoreLookup: Map<string, number>
   scoreRange: readonly [number, number]
   hoveredFips: string | null
+  quantileBreaks?: QuantileBreaks | null
 }
 
 export function CountyChoropleth({
   scoreLookup,
   scoreRange,
   hoveredFips,
+  quantileBreaks,
 }: CountyChoroplethProps) {
   const [baseGeojson, setBaseGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
 
@@ -65,8 +79,46 @@ export function CountyChoropleth({
 
   if (!scoredGeojson) return null
 
-  const [minScore, maxScore] = scoreRange
-  const midScore = (minScore + maxScore) / 2
+  // Build the fill-color expression based on quantile breaks or fallback to linear range
+  const fillColorExpression = useMemo(() => {
+    if (quantileBreaks) {
+      // Quantile-based 6-stop ramp: each color band contains ~equal number of counties
+      return [
+        'case',
+        ['==', ['get', 'compositeScore'], null],
+        COLOR_NULL,
+        [
+          'interpolate',
+          ['linear'],
+          ['get', 'compositeScore'],
+          quantileBreaks.min, COLOR_P0,
+          quantileBreaks.p20, COLOR_P20,
+          quantileBreaks.p40, COLOR_P40,
+          quantileBreaks.p60, COLOR_P60,
+          quantileBreaks.p80, COLOR_P80,
+          quantileBreaks.p95, COLOR_P95,
+        ],
+      ] as unknown as string
+    }
+
+    // Fallback: linear 4-stop ramp when quantile breaks aren't available yet
+    const [minScore, maxScore] = scoreRange
+    const midScore = (minScore + maxScore) / 2
+    return [
+      'case',
+      ['==', ['get', 'compositeScore'], null],
+      COLOR_NULL,
+      [
+        'interpolate',
+        ['linear'],
+        ['get', 'compositeScore'],
+        minScore, COLOR_P0,
+        midScore, COLOR_P40,
+        maxScore * 0.8, COLOR_P80,
+        maxScore, COLOR_P95,
+      ],
+    ] as unknown as string
+  }, [quantileBreaks, scoreRange])
 
   return (
     <Source
@@ -78,20 +130,7 @@ export function CountyChoropleth({
         id="county-fill"
         type="fill"
         paint={{
-          'fill-color': [
-            'case',
-            ['==', ['get', 'compositeScore'], null],
-            '#221d28',
-            [
-              'interpolate',
-              ['linear'],
-              ['get', 'compositeScore'],
-              minScore, COLOR_LOW,
-              midScore, COLOR_MID,
-              maxScore * 0.8, COLOR_HIGH,
-              maxScore, COLOR_PEAK,
-            ],
-          ] as unknown as string,
+          'fill-color': fillColorExpression,
           'fill-opacity': fillOpacityExpression as number,
         }}
       />
@@ -108,3 +147,4 @@ export function CountyChoropleth({
 }
 
 export { COLOR_LOW, COLOR_MID, COLOR_HIGH, COLOR_PEAK }
+export { COLOR_P0, COLOR_P20, COLOR_P40, COLOR_P60, COLOR_P80, COLOR_P95, COLOR_NULL }

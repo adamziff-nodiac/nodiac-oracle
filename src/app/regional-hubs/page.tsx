@@ -40,7 +40,7 @@ export default function RegionalHubsPage() {
   const [selectedCounty, setSelectedCounty] = useState<WeightedCountyScore | null>(null)
   const [showMobileWeights, setShowMobileWeights] = useState(false)
 
-  const { weightedScores, scoreLookup, scoreRange } = useWeightedScores(scores, weights)
+  const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights)
 
   const mapExportRef = useRef<HTMLDivElement>(null)
 
@@ -121,8 +121,10 @@ export default function RegionalHubsPage() {
                 or drag individual sliders for custom weighting. Changes are instant — no server calls.
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">Brighter purple = higher score.</strong> The color scale compresses the top 20%
-                for visual pop. Scroll down for narrative context and full methodology.
+                <strong className="text-gray-900 dark:text-white">Quantile-based color scale:</strong> Colors are spread across the actual score distribution
+                so each shade covers an equal number of counties. Purple shades show low-to-strong scores;
+                the top 5% of counties glow <strong className="text-[#4de2e4]">neon teal</strong> so the best locations pop instantly.
+                Scroll down for narrative context and full methodology.
               </p>
             </div>
           </details>
@@ -147,6 +149,7 @@ export default function RegionalHubsPage() {
                   scoreRange={scoreRange}
                   regions={regions}
                   onCountyClick={handleCountyClick}
+                  quantileBreaks={quantileBreaks}
                 />
 
                 {/* Mobile weight toggle */}
@@ -170,7 +173,7 @@ export default function RegionalHubsPage() {
                   />
                 </div>
 
-                <MapLegend scoreRange={scoreRange} />
+                <MapLegend scoreRange={scoreRange} quantileBreaks={quantileBreaks} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
