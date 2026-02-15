@@ -35,7 +35,9 @@ src/
 
 ## Browser Testing
 
-Use `agent-browser` for visual testing and UI review. Run `agent-browser --help` for the full list of commands.
+**ALWAYS visually verify UI changes before committing.** Use `agent-browser` for visual testing and UI review. Start the dev server (`bun run dev`), then use `agent-browser` to navigate and screenshot. Run `agent-browser --help` for the full list of commands.
+
+For Mapbox/WebGL content, fall back to Playwright MCP tools (`mcp__playwright__browser_navigate`, `mcp__playwright__browser_take_screenshot`) since `agent-browser` can't render WebGL in headless mode.
 
 ## Brand Colors
 
