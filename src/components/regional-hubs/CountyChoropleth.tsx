@@ -77,9 +77,8 @@ export function CountyChoropleth({
     ] as mapboxgl.Expression
   }, [hoveredFips])
 
-  if (!scoredGeojson) return null
-
   // Build the fill-color expression based on quantile breaks or fallback to linear range
+  // NOTE: Must be above the early return to satisfy Rules of Hooks
   const fillColorExpression = useMemo(() => {
     if (quantileBreaks) {
       // Quantile-based 6-stop ramp: each color band contains ~equal number of counties
@@ -119,6 +118,8 @@ export function CountyChoropleth({
       ],
     ] as unknown as string
   }, [quantileBreaks, scoreRange])
+
+  if (!scoredGeojson) return null
 
   return (
     <Source
