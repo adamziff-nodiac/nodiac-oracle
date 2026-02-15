@@ -25,7 +25,7 @@
     "clsx": "^2.1.1",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.0.0",
-    "lucide-react": "^0.562.0",
+    "lucide-react": "^0.564.0",
     "mapbox-gl": "^3.18.1",
     "next": "^16.1.1",
     "openai": "^6.16.0",
