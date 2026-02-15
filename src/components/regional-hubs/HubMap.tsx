@@ -139,9 +139,9 @@ export function HubMap({
       ref={ref}
       mapboxAccessToken={MAPBOX_TOKEN}
       initialViewState={{
-        longitude: -96,
+        longitude: -98,
         latitude: 39,
-        zoom: 4,
+        zoom: 3.5,
       }}
       style={{ width: '100%', height: '100%' }}
       mapStyle="mapbox://styles/mapbox/dark-v11"
