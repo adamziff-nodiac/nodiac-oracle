@@ -82,30 +82,53 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect, countyScores, c
       : <ChevronDown className="w-3 h-3 inline ml-1" />
   }
 
-  const columns: [SortKey, string][] = [
-    ['site_name', 'Site'],
-    ['county', 'County'],
-    ['state', 'State'],
-    ['utility_type', 'Utility'],
-    ['tier', 'Tier'],
-    ['site_score', 'Score'],
-  ]
-
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto -mx-4 sm:mx-0">
+      <table className="w-full text-sm min-w-[600px] sm:min-w-0">
         <thead>
           <tr className="border-b border-gray-200 dark:border-white/10 text-left">
-            {columns.map(([key, label]) => (
-              <th
-                key={key}
-                className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
-                onClick={() => toggleSort(key)}
-              >
-                {label}
-                <SortIcon col={key} />
-              </th>
-            ))}
+            <th
+              className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => toggleSort('site_name')}
+            >
+              Site
+              <SortIcon col="site_name" />
+            </th>
+            <th
+              className="hidden md:table-cell px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => toggleSort('county')}
+            >
+              County
+              <SortIcon col="county" />
+            </th>
+            <th
+              className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => toggleSort('state')}
+            >
+              State
+              <SortIcon col="state" />
+            </th>
+            <th
+              className="hidden lg:table-cell px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => toggleSort('utility_type')}
+            >
+              Utility
+              <SortIcon col="utility_type" />
+            </th>
+            <th
+              className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => toggleSort('tier')}
+            >
+              Tier
+              <SortIcon col="tier" />
+            </th>
+            <th
+              className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
+              onClick={() => toggleSort('site_score')}
+            >
+              Score
+              <SortIcon col="site_score" />
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -123,10 +146,10 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect, countyScores, c
                   setExpandedId(expandedId === site.id ? null : site.id)
                 }}
               >
-                <td className="px-3 py-2.5 text-gray-900 dark:text-white font-medium">{site.site_name}</td>
-                <td className="px-3 py-2.5 text-gray-600 dark:text-gray-300">{site.county || '—'}</td>
+                <td className="px-3 py-2.5 text-gray-900 dark:text-white font-medium max-w-[200px] truncate">{site.site_name}</td>
+                <td className="hidden md:table-cell px-3 py-2.5 text-gray-600 dark:text-gray-300">{site.county || '—'}</td>
                 <td className="px-3 py-2.5 text-gray-600 dark:text-gray-300">{site.state || '—'}</td>
-                <td className="px-3 py-2.5 text-gray-500 dark:text-gray-400 text-xs">{site.utility_type || '—'}</td>
+                <td className="hidden lg:table-cell px-3 py-2.5 text-gray-500 dark:text-gray-400 text-xs">{site.utility_type || '—'}</td>
                 <td className="px-3 py-2.5">
                   <TierBadge tier={site.tier} />
                 </td>
