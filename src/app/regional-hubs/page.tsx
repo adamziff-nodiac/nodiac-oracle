@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { SlidersHorizontal, X } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
@@ -23,8 +23,6 @@ import { PresetProfiles } from '@/components/regional-hubs/PresetProfiles'
 import { CountyDetailPanel } from '@/components/regional-hubs/CountyDetailPanel'
 import { MapLegend } from '@/components/regional-hubs/MapLegend'
 import { ExportControls } from '@/components/regional-hubs/ExportControls'
-import { NarrativeSection } from '@/components/regional-hubs/NarrativeSection'
-import { MethodologyDeepDive } from '@/components/regional-hubs/MethodologyDeepDive'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
@@ -40,6 +38,7 @@ export default function RegionalHubsPage() {
   const [selectedCounty, setSelectedCounty] = useState<WeightedCountyScore | null>(null)
   const [showMobileWeights, setShowMobileWeights] = useState(false)
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
+  const [highlightThreshold, setHighlightThreshold] = useState(6.5)
 
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
@@ -92,7 +91,7 @@ export default function RegionalHubsPage() {
             Regional Hub Strategy
           </h1>
           <p className="mt-4 text-xl text-gray-500 dark:text-nodiac-dusty-lilac max-w-2xl leading-relaxed">
-            Scoring every US county across seven criteria to identify optimal locations for
+            Scoring every US county across six criteria to identify optimal locations for
             Nodiac&apos;s distributed data center hubs.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -100,32 +99,32 @@ export default function RegionalHubsPage() {
               href="/docs"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-nodiac-secondary hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
             >
-              📖 Developer Docs
+              Scoring Methodology
             </Link>
             <Link
               href="/screening"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
             >
-              🔍 Screen a Portfolio
+              Screen a Portfolio
             </Link>
           </div>
           <details className="mt-6 group">
             <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none">
-              ℹ️ How to use this map
+              How to use this map
             </summary>
             <div className="mt-3 p-4 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-2 max-w-2xl">
               <p>
-                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all seven criteria.
+                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all six criteria.
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">Use the preset buttons</strong> (top-left panel) to snap weights to strategic profiles,
                 or drag individual sliders for custom weighting. Changes are instant — no server calls.
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">Quantile-based color scale:</strong> Colors are spread across the actual score distribution
-                so each shade covers an equal number of counties. Purple shades show low-to-strong scores;
-                the top 5% of counties glow <strong className="text-[#4de2e4]">neon teal</strong> so the best locations pop instantly.
-                Scroll down for narrative context and full methodology.
+                <strong className="text-gray-900 dark:text-white">Absolute color scale:</strong> Counties are colored on a fixed 0–10 scale.
+                Purple shades show scores below the highlight threshold; counties above the threshold
+                glow <strong className="text-[#4de2e4]">neon teal</strong>. Drag the threshold slider to adjust
+                where the teal transition kicks in (default: 6.5 = Strong Fit).
               </p>
             </div>
           </details>
@@ -150,7 +149,7 @@ export default function RegionalHubsPage() {
                   scoreRange={scoreRange}
                   regions={regions}
                   onCountyClick={handleCountyClick}
-                  quantileBreaks={quantileBreaks}
+                  highlightThreshold={highlightThreshold}
                 />
 
                 {/* Mobile weight toggle */}
@@ -168,15 +167,58 @@ export default function RegionalHubsPage() {
                     activeProfileId={activeProfileId}
                     onSelect={handlePresetSelect}
                   />
-                  <WeightControls
-                    weights={weights}
-                    onWeightChange={handleWeightChange}
-                    scoringMode={scoringMode}
-                    onScoringModeChange={setScoringMode}
-                  />
+
+                  {/* Collapsible advanced controls */}
+                  <details className="group">
+                    <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none flex items-center gap-1.5">
+                      <span className="transition-transform group-open:rotate-90 text-[10px]">&#9654;</span>
+                      Advanced Controls
+                    </summary>
+                    <div className="mt-4 space-y-5">
+                      <WeightControls
+                        weights={weights}
+                        onWeightChange={handleWeightChange}
+                        scoringMode={scoringMode}
+                        onScoringModeChange={setScoringMode}
+                      />
+
+                      {/* Threshold slider */}
+                      <div className="pt-4 border-t border-gray-200 dark:border-white/10 space-y-1">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                            Highlight Threshold
+                          </label>
+                          <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
+                            {highlightThreshold.toFixed(1)}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={10}
+                          step={0.5}
+                          value={highlightThreshold}
+                          onChange={(e) => setHighlightThreshold(parseFloat(e.target.value))}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                            bg-gray-200 dark:bg-white/10
+                            [&::-webkit-slider-thumb]:appearance-none
+                            [&::-webkit-slider-thumb]:w-3.5
+                            [&::-webkit-slider-thumb]:h-3.5
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                            [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
+                            [&::-webkit-slider-thumb]:transition-shadow
+                            [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
+                        />
+                        <p className="text-[10px] text-gray-500">
+                          Counties scoring above this glow teal
+                        </p>
+                      </div>
+                    </div>
+                  </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} quantileBreaks={quantileBreaks} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
@@ -195,16 +237,25 @@ export default function RegionalHubsPage() {
         </div>
       </section>
 
-      {/* Narrative */}
-      <NarrativeSection />
-
-      {/* Divider */}
-      <div className="max-w-4xl mx-auto px-6">
-        <hr className="border-gray-200 dark:border-white/10" />
-      </div>
-
-      {/* Deep Dive Methodology */}
-      <MethodologyDeepDive />
+      {/* Brief usage guide */}
+      <section className="px-6 py-12">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">How it works</h2>
+          <p className="text-gray-500 dark:text-gray-400 leading-relaxed">
+            Each county is scored 0–10 across six criteria (co-op density, grid reliability,
+            curtailment opportunity, permitting environment, IT labor, and fiber availability).
+            Adjust the weight sliders to prioritize what matters most for your deployment strategy,
+            and drag the highlight threshold to control where the teal glow begins.
+            Click any county to inspect its full score breakdown.
+          </p>
+          <p className="text-gray-500 text-sm">
+            For full methodology, data sources, and technical details, see the{' '}
+            <Link href="/docs" className="text-nodiac-secondary hover:underline">
+              Scoring Methodology
+            </Link>.
+          </p>
+        </div>
+      </section>
     </div>
   )
 }

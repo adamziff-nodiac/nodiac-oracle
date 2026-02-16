@@ -2,39 +2,32 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
-import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
-// Quantile-based purple-to-teal color ramp:
-// Each band holds ~equal number of counties, so the full gradient is visible.
-// Top 5% glow neon teal (Nodiac brand secondary) to pop on dark maps.
-const COLOR_P0   = '#1a1520'   // very dark purple — clearly below average
-const COLOR_P20  = '#2d2233'   // dark purple — below average
-const COLOR_P40  = '#5c2d55'   // medium purple — average
-const COLOR_P60  = '#8b3578'   // bright purple — above average
-const COLOR_P80  = '#b48fc1'   // soft orchid — strong
-const COLOR_P95  = '#4de2e4'   // NEON TEAL — exceptional! Top 5%
-const COLOR_NULL = '#221d28'   // counties with no data
-
-// Legacy exports for backward compatibility (MapLegend uses these)
-const COLOR_LOW = COLOR_P0
-const COLOR_MID = COLOR_P40
-const COLOR_HIGH = COLOR_P80
-const COLOR_PEAK = COLOR_P95
+// Absolute-score color ramp (0–10 scale):
+// Smooth purple gradient from 0 up to the highlight threshold,
+// then transitions to neon teal above the threshold.
+const COLOR_LOW      = '#1a1520'   // very dark purple — lowest scores
+const COLOR_MID_LOW  = '#2d2233'   // dark purple
+const COLOR_MID      = '#5c2d55'   // medium purple
+const COLOR_HIGH     = '#8b3578'   // bright purple
+const COLOR_ORCHID   = '#b48fc1'   // soft orchid — at threshold
+const COLOR_PEAK     = '#4de2e4'   // NEON TEAL — above threshold
+const COLOR_NULL     = '#221d28'   // counties with no data
 
 interface CountyChoroplethProps {
   scoreLookup: Map<string, number>
   scoreRange: readonly [number, number]
   hoveredFips: string | null
-  quantileBreaks?: QuantileBreaks | null
+  highlightThreshold?: number
 }
 
 export function CountyChoropleth({
   scoreLookup,
   scoreRange,
   hoveredFips,
-  quantileBreaks,
+  highlightThreshold = 6.5,
 }: CountyChoroplethProps) {
   const [baseGeojson, setBaseGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
 
@@ -77,32 +70,9 @@ export function CountyChoropleth({
     ] as mapboxgl.Expression
   }, [hoveredFips])
 
-  // Build the fill-color expression based on quantile breaks or fallback to linear range
-  // NOTE: Must be above the early return to satisfy Rules of Hooks
+  // Absolute-score color expression: fixed 0–10 scale with threshold-based teal transition
   const fillColorExpression = useMemo(() => {
-    if (quantileBreaks) {
-      // Quantile-based 6-stop ramp: each color band contains ~equal number of counties
-      return [
-        'case',
-        ['==', ['get', 'compositeScore'], null],
-        COLOR_NULL,
-        [
-          'interpolate',
-          ['linear'],
-          ['get', 'compositeScore'],
-          quantileBreaks.min, COLOR_P0,
-          quantileBreaks.p20, COLOR_P20,
-          quantileBreaks.p40, COLOR_P40,
-          quantileBreaks.p60, COLOR_P60,
-          quantileBreaks.p80, COLOR_P80,
-          quantileBreaks.p95, COLOR_P95,
-        ],
-      ] as unknown as string
-    }
-
-    // Fallback: linear 4-stop ramp when quantile breaks aren't available yet
-    const [minScore, maxScore] = scoreRange
-    const midScore = (minScore + maxScore) / 2
+    const t = highlightThreshold
     return [
       'case',
       ['==', ['get', 'compositeScore'], null],
@@ -111,13 +81,15 @@ export function CountyChoropleth({
         'interpolate',
         ['linear'],
         ['get', 'compositeScore'],
-        minScore, COLOR_P0,
-        midScore, COLOR_P40,
-        maxScore * 0.8, COLOR_P80,
-        maxScore, COLOR_P95,
+        0,           COLOR_LOW,
+        t * 0.4,     COLOR_MID_LOW,
+        t * 0.7,     COLOR_MID,
+        t * 0.9,     COLOR_HIGH,
+        t,           COLOR_ORCHID,
+        Math.min(t + 0.5, 10), COLOR_PEAK,
       ],
     ] as unknown as string
-  }, [quantileBreaks, scoreRange])
+  }, [highlightThreshold])
 
   if (!scoredGeojson) return null
 
@@ -147,5 +119,4 @@ export function CountyChoropleth({
   )
 }
 
-export { COLOR_LOW, COLOR_MID, COLOR_HIGH, COLOR_PEAK }
-export { COLOR_P0, COLOR_P20, COLOR_P40, COLOR_P60, COLOR_P80, COLOR_P95, COLOR_NULL }
+export { COLOR_LOW, COLOR_MID_LOW, COLOR_MID, COLOR_HIGH, COLOR_ORCHID, COLOR_PEAK, COLOR_NULL }
