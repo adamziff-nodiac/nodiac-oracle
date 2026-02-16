@@ -278,17 +278,21 @@ scripts/
               <div className="flex gap-4 mt-2">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
-                  <span className="text-sm"><strong className="text-white">Strong Fit:</strong> ≥ 6.5</span>
+                  <span className="text-sm"><strong className="text-white">Strong Fit:</strong> {'\u2265'} 6.5</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-[#b48fc1]" />
-                  <span className="text-sm"><strong className="text-white">Moderate Fit:</strong> ≥ 4.0</span>
+                  <span className="text-sm"><strong className="text-white">Moderate Fit:</strong> {'\u2265'} 4.0</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-[#ef4444]" />
-                  <span className="text-sm"><strong className="text-white">Weak Fit:</strong> &lt; 4.0</span>
+                  <span className="text-sm"><strong className="text-white">Weak Fit:</strong> {'<'} 4.0</span>
                 </div>
               </div>
+              <p className="text-sm text-gray-400 mt-2">
+                On the choropleth map, the &ldquo;Strong Fit&rdquo; threshold (default 6.5) is configurable via a slider.
+                Counties above the threshold glow neon teal; below renders in purple shades.
+              </p>
               <CodeBlock title="src/lib/scoring/site-scorer.ts">{`const TIER_THRESHOLDS = {
   good: 6.5,   // "Strong Fit"
   okay: 4.0,   // "Moderate Fit"
@@ -610,26 +614,43 @@ function normalizeArray(values): number[]`}</CodeBlock>
             </SubSection>
 
             <SubSection title="Color Scale">
+              <p>
+                Uses an <strong className="text-white">absolute-score color ramp</strong> on a fixed 0–10 scale with a configurable
+                highlight threshold (default 6.5). Purple gradient from 0 to the threshold, then neon teal above.
+              </p>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded" style={{ backgroundColor: '#1a1520' }} />
+                  <span className="text-xs text-gray-400">0</span>
+                </div>
+                <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded" style={{ backgroundColor: '#2d2233' }} />
-                  <span className="text-xs text-gray-400">min</span>
+                  <span className="text-xs text-gray-400">~2.6</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded" style={{ backgroundColor: '#5c2d55' }} />
-                  <span className="text-xs text-gray-400">mid</span>
+                  <span className="text-xs text-gray-400">~4.5</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded" style={{ backgroundColor: '#8b3578' }} />
-                  <span className="text-xs text-gray-400">80%</span>
+                  <span className="text-xs text-gray-400">~5.8</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded" style={{ backgroundColor: '#b48fc1' }} />
-                  <span className="text-xs text-gray-400">max</span>
+                  <span className="text-xs text-gray-400">6.5</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded" style={{ backgroundColor: '#4de2e4' }} />
+                  <span className="text-xs text-gray-400">7.0+</span>
                 </div>
               </div>
               <p className="text-sm text-gray-400 mt-2">
-                The 80% stop compresses the upper range so top counties get visual pop. Counties with no data render as #221d28.
+                The threshold is user-adjustable via a slider (range 0–10, step 0.5). Counties scoring above the
+                threshold glow neon teal; below renders in purple shades. Counties with no data render as #221d28.
+              </p>
+              <p className="text-sm text-gray-400">
+                Default threshold of 6.5 aligns with the &ldquo;Strong Fit&rdquo; tier
+                ({'\u2265'} 6.5). Moderate Fit ({'\u2265'} 4.0) and Weak Fit ({'<'} 4.0) remain in purple shades.
               </p>
             </SubSection>
 
