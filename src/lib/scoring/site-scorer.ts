@@ -2,15 +2,16 @@ import type { SiteScoreBreakdown, SiteTier } from '@/types/screening'
 import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
 import { computeWeightedMean } from './weighted-mean'
 
-const TIER_THRESHOLDS = {
-  good: 6.5,
-  okay: 4.0,
-} as const
+const TIER_THRESHOLDS: Record<ScoringMode, { good: number; okay: number }> = {
+  arithmetic: { good: 6.5, okay: 4.0 },
+  geometric:  { good: 4.5, okay: 2.5 },
+}
 
-function assignTier(score: number): SiteTier {
-  return score >= TIER_THRESHOLDS.good
+function assignTier(score: number, mode: ScoringMode = 'arithmetic'): SiteTier {
+  const t = TIER_THRESHOLDS[mode]
+  return score >= t.good
     ? 'good'
-    : score >= TIER_THRESHOLDS.okay
+    : score >= t.okay
       ? 'okay'
       : 'bad'
 }
@@ -51,7 +52,7 @@ export function scoreSite(breakdown: SiteScoreBreakdown): { score: number; tier:
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length
   const score = Math.round(avg * 100) / 10 // 0-10 scale, 1 decimal
 
-  return { score, tier: assignTier(score) }
+  return { score, tier: assignTier(score, 'arithmetic') }
 }
 
 /**
@@ -73,7 +74,7 @@ export function scoreSiteWeighted(
   const raw = computeWeightedMean(entries, mode)
   const score = Math.round(raw * 10) / 10 // 1 decimal
 
-  return { score, tier: assignTier(score) }
+  return { score, tier: assignTier(score, mode) }
 }
 
 /**
