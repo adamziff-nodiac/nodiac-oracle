@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
+import { useIsDark } from '@/hooks/useIsDark'
 import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
@@ -37,6 +38,7 @@ export function HubMap({
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
   const [hoveredFips, setHoveredFips] = useState<string | null>(null)
+  const isDark = useIsDark()
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
@@ -127,7 +129,7 @@ export function HubMap({
 
   if (!MAPBOX_TOKEN) {
     return (
-      <div className="w-full h-full flex items-center justify-center bg-nodiac-dark/50 text-gray-400">
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-nodiac-dark/50 text-gray-500 dark:text-gray-400">
         <p>Set NEXT_PUBLIC_MAPBOX_TOKEN to enable the map</p>
       </div>
     )
@@ -143,7 +145,7 @@ export function HubMap({
         zoom: 3.5,
       }}
       style={{ width: '100%', height: '100%' }}
-      mapStyle="mapbox://styles/mapbox/dark-v11"
+      mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
       interactiveLayerIds={['county-fill']}
       onClick={handleClick}
       onMouseMove={handleHover}

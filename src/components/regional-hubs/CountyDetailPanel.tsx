@@ -45,7 +45,7 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
   return (
     <div
       className={cn(
-        'absolute top-0 right-0 h-full w-80 bg-nodiac-dark/90 backdrop-blur-xl border-l border-white/10 z-20 transition-transform duration-300 ease-out overflow-y-auto',
+        'absolute top-0 right-0 h-full w-80 bg-white/90 dark:bg-nodiac-dark/90 backdrop-blur-xl border-l border-gray-200 dark:border-white/10 z-20 transition-transform duration-300 ease-out overflow-y-auto',
         county ? 'translate-x-0' : 'translate-x-full'
       )}
     >
@@ -53,31 +53,31 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
         <div className="p-6 space-y-6">
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-lg font-bold text-white">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 {county.county_name}
               </h3>
-              <p className="text-sm text-gray-400">{county.state_abbr}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">{county.state_abbr}</p>
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="text-center py-4 border-y border-white/10">
-            <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">
+          <div className="text-center py-4 border-y border-gray-200 dark:border-white/10">
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
               Composite Score
             </p>
-            <p className="text-4xl font-black text-white tabular-nums">
+            <p className="text-4xl font-black text-gray-900 dark:text-white tabular-nums">
               {county.composite_score.toFixed(1)}
-              <span className="text-lg text-gray-500 font-normal">/10</span>
+              <span className="text-lg text-gray-400 dark:text-gray-500 font-normal">/10</span>
             </p>
           </div>
 
           <div className="space-y-3">
-            <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
               Criteria Breakdown
             </h4>
             {ALL_CRITERIA.map((key) => {
@@ -85,12 +85,12 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
               return (
                 <div key={key} className="space-y-1">
                   <div className="flex justify-between text-xs">
-                    <span className="text-gray-300">{CRITERION_LABELS[key]}</span>
-                    <span className="text-white font-medium tabular-nums">
+                    <span className="text-gray-600 dark:text-gray-300">{CRITERION_LABELS[key]}</span>
+                    <span className="text-gray-900 dark:text-white font-medium tabular-nums">
                       {(value * 10).toFixed(1)}
                     </span>
                   </div>
-                  <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                  <div className="h-2 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                     <div
                       className={cn('h-full rounded-full transition-all duration-500', scoreColor(value))}
                       style={{ width: `${value * 100}%` }}
@@ -99,7 +99,7 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
                   {key === 'grid_reliability' && county.grid_reliability_years && (
                     <p className={cn(
                       'text-[10px] mt-0.5',
-                      county.grid_reliability_years >= 5 ? 'text-gray-500' :
+                      county.grid_reliability_years >= 5 ? 'text-gray-400 dark:text-gray-500' :
                       county.grid_reliability_years >= 3 ? 'text-yellow-600' :
                       'text-orange-500'
                     )}>
@@ -126,7 +126,7 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
             />
           )}
 
-          <div className="text-xs text-gray-500">
+          <div className="text-xs text-gray-400 dark:text-gray-500">
             <p>FIPS: {county.fips_code}</p>
             {county.last_permitting_update && (
               <p>

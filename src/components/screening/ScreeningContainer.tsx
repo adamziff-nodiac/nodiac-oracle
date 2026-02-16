@@ -28,15 +28,15 @@ function StepIndicator({ steps }: { steps: ProgressStep[] }) {
             ) : step.status === 'active' ? (
               <Loader2 className="w-5 h-5 text-nodiac-secondary animate-spin" />
             ) : (
-              <div className="w-5 h-5 rounded-full border border-white/20" />
+              <div className="w-5 h-5 rounded-full border border-gray-300 dark:border-white/20" />
             )}
           </div>
           <span
             className={cn(
               'text-sm',
               step.status === 'active' && 'text-gray-900 dark:text-white font-medium',
-              step.status === 'done' && 'text-gray-400',
-              step.status === 'pending' && 'text-gray-500'
+              step.status === 'done' && 'text-gray-500 dark:text-gray-400',
+              step.status === 'pending' && 'text-gray-400 dark:text-gray-500'
             )}
           >
             {step.label}
@@ -87,7 +87,7 @@ export function ScreeningContainer() {
           </p>
           <div className="flex justify-center gap-3 mt-4">
             <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">← Regional Hubs</a>
-            <span className="text-gray-600">·</span>
+            <span className="text-gray-400 dark:text-gray-600">·</span>
             <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">📖 Scoring Methodology</a>
           </div>
         </div>
@@ -127,7 +127,7 @@ export function ScreeningContainer() {
             <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none font-medium">
               ℹ️ How Site Screening Works
             </summary>
-            <div className="mt-3 p-5 rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-3">
+            <div className="mt-3 p-5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-3">
               <p>
                 <strong className="text-gray-900 dark:text-white">1. Upload</strong> — Drop a CSV with site names, lat/lon coordinates, and optionally utility info.
                 Supports Fleet CIR Validated and consolidated formats.
@@ -227,7 +227,7 @@ export function ScreeningContainer() {
 
       {/* Map filter + map */}
       <div className="px-6 py-2 flex items-center gap-1.5 border-b border-gray-200 dark:border-white/10">
-        <span className="text-xs text-gray-500 mr-1">Show:</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Show:</span>
         {ALL_TIERS.map((tier) => {
           const active = visibleTiers.has(tier)
           const color = TIER_COLORS[tier]
@@ -238,8 +238,8 @@ export function ScreeningContainer() {
               className={cn(
                 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                 active
-                  ? 'bg-white/10 text-white'
-                  : 'bg-white/[0.03] text-gray-500 hover:bg-white/5'
+                  ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white'
+                  : 'bg-gray-50 dark:bg-white/[0.03] text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
               )}
             >
               <span

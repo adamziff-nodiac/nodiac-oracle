@@ -69,7 +69,7 @@ export function WeightControls({ weights, onWeightChange, scoringMode, onScoring
             value={weights[key]}
             onChange={(e) => handleChange(key, parseFloat(e.target.value))}
             className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-              bg-white/10
+              bg-gray-200 dark:bg-white/10
               [&::-webkit-slider-thumb]:appearance-none
               [&::-webkit-slider-thumb]:w-3.5
               [&::-webkit-slider-thumb]:h-3.5

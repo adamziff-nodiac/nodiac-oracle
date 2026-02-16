@@ -12,19 +12,19 @@ interface MapLegendProps {
 export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile' }: MapLegendProps) {
   if (colorMode === 'percentile') {
     return (
-      <div className="absolute bottom-4 right-4 bg-nodiac-dark/80 backdrop-blur-xl border border-white/10 rounded-lg px-4 py-3 z-10">
-        <p className="text-xs text-gray-400 mb-2 font-medium tracking-wide uppercase">
+      <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
           Composite Score
         </p>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 tabular-nums">Low</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
           <div
             className="h-3 w-32 rounded-sm"
             style={{
               background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
             }}
           />
-          <span className="text-xs text-gray-400 tabular-nums">High</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
           Quantile scale · Top 5% in <span className="text-[#4de2e4] font-medium">teal</span>
@@ -37,12 +37,12 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
   const thresholdPct = (highlightThreshold / 10) * 100
 
   return (
-    <div className="absolute bottom-4 right-4 bg-nodiac-dark/80 backdrop-blur-xl border border-white/10 rounded-lg px-4 py-3 z-10">
-      <p className="text-xs text-gray-400 mb-2 font-medium tracking-wide uppercase">
+    <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10">
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
         Composite Score
       </p>
       <div className="flex items-center gap-2">
-        <span className="text-xs text-gray-400 tabular-nums">0</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">0</span>
         <div className="relative">
           <div
             className="h-3 w-32 rounded-sm"
@@ -52,17 +52,17 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
           />
           {/* Threshold tick mark */}
           <div
-            className="absolute top-0 h-3 w-px bg-white/60"
+            className="absolute top-0 h-3 w-px bg-black/30 dark:bg-white/60"
             style={{ left: `${thresholdPct}%` }}
           />
           <div
-            className="absolute top-3.5 text-[9px] text-gray-400 tabular-nums -translate-x-1/2"
+            className="absolute top-3.5 text-[9px] text-gray-500 dark:text-gray-400 tabular-nums -translate-x-1/2"
             style={{ left: `${thresholdPct}%` }}
           >
             {highlightThreshold}
           </div>
         </div>
-        <span className="text-xs text-gray-400 tabular-nums">10</span>
+        <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">10</span>
       </div>
       <p className="text-[10px] text-gray-500 mt-3">
         Threshold: {highlightThreshold} · Above glows <span className="text-[#4de2e4] font-medium">teal</span>

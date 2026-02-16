@@ -116,7 +116,7 @@ export function SiteTable({ sites, selectedSiteId, onSiteSelect, countyScores, c
                   'border-b border-gray-100 dark:border-white/5 cursor-pointer transition-colors',
                   selectedSiteId === site.id
                     ? 'bg-nodiac-secondary/10'
-                    : 'hover:bg-gray-50 dark:hover:bg-white/5'
+                    : 'hover:bg-gray-100 dark:hover:bg-white/5'
                 )}
                 onClick={() => {
                   onSiteSelect(site.id)

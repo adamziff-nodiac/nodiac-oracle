@@ -20,7 +20,7 @@ export function PresetProfiles({ activeProfileId, onSelect }: PresetProfilesProp
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-white tracking-wide uppercase">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
         Presets
       </h3>
       <div className="flex flex-wrap gap-1.5">
@@ -32,7 +32,7 @@ export function PresetProfiles({ activeProfileId, onSelect }: PresetProfilesProp
               'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
               activeProfileId === profile.id
                 ? 'bg-nodiac-secondary text-nodiac-dark'
-                : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10'
             )}
             title={profile.description}
           >
