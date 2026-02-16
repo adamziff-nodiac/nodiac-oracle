@@ -623,8 +623,8 @@ export default function ScoringPage() {
             </div>
           </Section>
 
-          {/* ═══ SCORING & TIERING ═══ */}
-          <Section id="scoring" title="Scoring & Tiering">
+          {/* ═══ SCORING & VISUALIZATION ═══ */}
+          <Section id="scoring" title="Scoring & Visualization">
             <SubSection title="Composite Score">
               <p>
                 Each county and site receives a composite score from 0 to 10. Two scoring modes are available:
@@ -681,7 +681,28 @@ export default function ScoringPage() {
               </div>
             </MethodDropdown>
 
-            <SubSection title="Tier Thresholds">
+            <SubSection title="Map Visualization">
+              <p>
+                The county map uses a <strong className="text-gray-900 dark:text-white">continuous color scale</strong> &mdash; not discrete tier buckets. Two modes are available:
+              </p>
+              <p>
+                <strong className="text-gray-900 dark:text-white">Percentile (default):</strong> Counties are ranked by composite score and colored by quantile.
+                The top ~5% appear in neon teal, tapering through orchid to dark purple. This highlights relative
+                standouts regardless of the absolute score distribution. Switching weight profiles or scoring modes
+                re-ranks instantly.
+              </p>
+              <p>
+                <strong className="text-gray-900 dark:text-white">Absolute:</strong> Colors are mapped to a fixed 0&ndash;10 scale
+                with an adjustable highlight threshold (default 6.5). Counties above the threshold appear in teal;
+                those below fade toward purple. This mode is only available with arithmetic scoring &mdash;
+                geometric scores don&rsquo;t distribute evenly on a fixed scale.
+              </p>
+            </SubSection>
+
+            <SubSection title="Site Screening Tiers">
+              <p>
+                When screening individual sites (via CSV upload), each site is assigned a discrete tier based on fixed thresholds:
+              </p>
               <div className="flex flex-wrap gap-4 mt-2">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
@@ -697,7 +718,7 @@ export default function ScoringPage() {
                 </div>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                These thresholds apply to both county-level analysis and individual site screening.
+                These thresholds apply only to the site screening workflow. The county map does not use tier buckets.
               </p>
             </SubSection>
           </Section>
