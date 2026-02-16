@@ -279,6 +279,8 @@ export default function RegionalHubsPage() {
                       <WeightControls
                         weights={weights}
                         onWeightChange={handleWeightChange}
+                        scoringMode={scoringMode}
+                        onScoringModeChange={setScoringMode}
                       />
                     </div>
                   </details>
