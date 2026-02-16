@@ -4,8 +4,10 @@ import { useRef, useCallback, useState } from 'react'
 import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
+import type { ColorMode } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
-import type { CriterionKey, HubRegion } from '@/types/regional-hubs'
+import type { HubRegion } from '@/types/regional-hubs'
+import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -16,6 +18,9 @@ interface HubMapProps {
   onCountyClick?: (fips: string) => void
   onCountyHover?: (fips: string | null) => void
   mapRef?: React.RefObject<MapRef | null>
+  highlightThreshold?: number
+  colorMode?: ColorMode
+  quantileBreaks?: QuantileBreaks | null
 }
 
 export function HubMap({
@@ -25,6 +30,9 @@ export function HubMap({
   onCountyClick,
   onCountyHover,
   mapRef: externalRef,
+  highlightThreshold,
+  colorMode,
+  quantileBreaks,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -84,6 +92,9 @@ export function HubMap({
         scoreLookup={scoreLookup}
         scoreRange={scoreRange}
         hoveredFips={hoveredFips}
+        highlightThreshold={highlightThreshold}
+        colorMode={colorMode}
+        quantileBreaks={quantileBreaks}
       />
       {regions.length > 0 && <HubRegionOverlay regions={regions} />}
     </Map>
