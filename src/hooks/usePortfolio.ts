@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useCallback, useMemo, useEffect } from 'react'
-import type { PortfolioUpload, PortfolioSite } from '@/types/screening'
+import type { PortfolioUpload, PortfolioSite, SiteScoreBreakdown } from '@/types/screening'
 import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
 import { scoreSiteWeighted, assignPercentileTiers } from '@/lib/scoring/site-scorer'
 import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
 import { getProfileById, DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 import { getPortfolioBySlug } from '@/data/portfolio-registry'
+import { useCountyScores } from '@/hooks/useCountyScores'
 
 type ScreeningState = 'idle' | 'uploading' | 'scoring' | 'loading-results' | 'done' | 'error'
 
@@ -25,6 +26,25 @@ export function usePortfolio(prebuiltSlug?: string) {
   const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
   const [isPrebuilt, setIsPrebuilt] = useState(!!prebuiltSlug)
+  const { scores: countyScores } = useCountyScores()
+
+  // Build a FIPS → county score lookup for live scoring
+  const countyScoreLookup = useMemo(() => {
+    const map: Record<string, SiteScoreBreakdown> = {}
+    for (const cs of countyScores) {
+      const qp = cs.queue_pressure_score ?? 0
+      map[cs.fips_code] = {
+        coop_density: cs.coop_density_score,
+        grid_reliability: cs.grid_reliability_score,
+        clipped_curtailed: cs.clipped_curtailed_score,
+        permitting: cs.permitting_score,
+        labor: cs.labor_score,
+        fiber: cs.fiber_score,
+        queue_pressure: qp ?? 0,
+      }
+    }
+    return map
+  }, [countyScores])
 
   // Load pre-built portfolio on mount
   useEffect(() => {
@@ -90,6 +110,8 @@ export function usePortfolio(prebuiltSlug?: string) {
   }, [state, siteCount])
 
   // Recompute site scores client-side, then assign percentile-based tiers.
+  // Always rebuilds score_breakdown from live county-scores.json so portfolio
+  // JSONs don't need to bake in scores.
   const scoredSites = useMemo(() => {
     if (sites.length === 0) return sites
 
@@ -103,17 +125,23 @@ export function usePortfolio(prebuiltSlug?: string) {
         utilityType = derived
       }
 
-      if (!site.score_breakdown) {
+      // Rebuild score_breakdown from live county data if available
+      let breakdown = site.score_breakdown
+      if (site.fips_code && countyScoreLookup[site.fips_code]) {
+        breakdown = countyScoreLookup[site.fips_code]
+      }
+
+      if (!breakdown) {
         return { ...site, utility_type: utilityType }
       }
 
       const score = scoreSiteWeighted(
-        site.score_breakdown,
+        breakdown,
         weights,
         scoringMode
       )
 
-      return { ...site, site_score: score, utility_type: utilityType }
+      return { ...site, score_breakdown: breakdown, site_score: score, utility_type: utilityType }
     })
 
     // Pass 2: assign tiers by percentile rank within the portfolio
