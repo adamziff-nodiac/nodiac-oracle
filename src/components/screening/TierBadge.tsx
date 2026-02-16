@@ -12,7 +12,7 @@ interface TierBadgeProps {
 export function TierBadge({ tier, className }: TierBadgeProps) {
   if (!tier) {
     return (
-      <span className={cn('inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-400', className)}>
+      <span className={cn('inline-flex px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400', className)}>
         Unscored
       </span>
     )
