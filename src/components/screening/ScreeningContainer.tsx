@@ -88,7 +88,7 @@ export function ScreeningContainer() {
           <div className="flex justify-center gap-3 mt-4">
             <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">← Regional Hubs</a>
             <span className="text-gray-600">·</span>
-            <a href="/docs" className="text-sm text-nodiac-secondary hover:underline">📖 Developer Docs</a>
+            <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">📖 Scoring Methodology</a>
           </div>
         </div>
 
@@ -189,10 +189,10 @@ export function ScreeningContainer() {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href="/docs#site-screening"
+            href="/scoring#site-screening"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            📖 Docs
+            📖 Scoring
           </a>
           <button
             onClick={reset}

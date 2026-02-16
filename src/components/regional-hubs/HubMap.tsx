@@ -4,8 +4,10 @@ import { useRef, useCallback, useState } from 'react'
 import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
+import type { ColorMode } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
 import type { HubRegion } from '@/types/regional-hubs'
+import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -17,6 +19,8 @@ interface HubMapProps {
   onCountyHover?: (fips: string | null) => void
   mapRef?: React.RefObject<MapRef | null>
   highlightThreshold?: number
+  colorMode?: ColorMode
+  quantileBreaks?: QuantileBreaks | null
 }
 
 export function HubMap({
@@ -27,6 +31,8 @@ export function HubMap({
   onCountyHover,
   mapRef: externalRef,
   highlightThreshold,
+  colorMode,
+  quantileBreaks,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -61,20 +67,15 @@ export function HubMap({
     const map = (ref as React.RefObject<MapRef>).current?.getMap()
     if (!map) return
 
-    // County layers are added later by react-map-gl <Layer> components.
-    // We wait for them, then add a fresh state-borders layer on top using
-    // Mapbox's built-in composite vector tiles (admin source-layer).
     const addStateBorders = () => {
       if (!map.getLayer('county-fill')) {
         setTimeout(addStateBorders, 200)
         return
       }
       try {
-        // Remove our custom layer if it already exists (hot-reload safety)
         if (map.getLayer('state-borders-bg')) map.removeLayer('state-borders-bg')
         if (map.getLayer('state-borders')) map.removeLayer('state-borders')
 
-        // Background glow (wider, softer)
         map.addLayer({
           id: 'state-borders-bg',
           type: 'line',
@@ -97,7 +98,6 @@ export function HubMap({
           },
         })
 
-        // Crisp foreground line
         map.addLayer({
           id: 'state-borders',
           type: 'line',
@@ -156,6 +156,8 @@ export function HubMap({
         scoreRange={scoreRange}
         hoveredFips={hoveredFips}
         highlightThreshold={highlightThreshold}
+        colorMode={colorMode}
+        quantileBreaks={quantileBreaks}
       />
       {regions.length > 0 && <HubRegionOverlay regions={regions} />}
     </Map>

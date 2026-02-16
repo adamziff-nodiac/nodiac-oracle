@@ -2,25 +2,28 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
+import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
-// Absolute-score color ramp (0–10 scale):
-// Smooth purple gradient from 0 up to the highlight threshold,
-// then transitions to neon teal above the threshold.
+// Color ramp stops (dark purple → bright purple → neon teal)
 const COLOR_LOW      = '#1a1520'   // very dark purple — lowest scores
 const COLOR_MID_LOW  = '#2d2233'   // dark purple
 const COLOR_MID      = '#5c2d55'   // medium purple
 const COLOR_HIGH     = '#8b3578'   // bright purple
 const COLOR_ORCHID   = '#b48fc1'   // soft orchid — at threshold
-const COLOR_PEAK     = '#4de2e4'   // NEON TEAL — above threshold
+const COLOR_PEAK     = '#4de2e4'   // NEON TEAL — above threshold / top percentile
 const COLOR_NULL     = '#221d28'   // counties with no data
+
+export type ColorMode = 'percentile' | 'absolute'
 
 interface CountyChoroplethProps {
   scoreLookup: Map<string, number>
   scoreRange: readonly [number, number]
   hoveredFips: string | null
   highlightThreshold?: number
+  colorMode?: ColorMode
+  quantileBreaks?: QuantileBreaks | null
 }
 
 export function CountyChoropleth({
@@ -28,6 +31,8 @@ export function CountyChoropleth({
   scoreRange,
   hoveredFips,
   highlightThreshold = 6.5,
+  colorMode = 'percentile',
+  quantileBreaks,
 }: CountyChoroplethProps) {
   const [baseGeojson, setBaseGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
 
@@ -70,8 +75,29 @@ export function CountyChoropleth({
     ] as mapboxgl.Expression
   }, [hoveredFips])
 
-  // Absolute-score color expression: fixed 0–10 scale with threshold-based teal transition
+  // Color expression depends on mode
   const fillColorExpression = useMemo(() => {
+    if (colorMode === 'percentile' && quantileBreaks) {
+      // Percentile-based: 6-stop interpolation at quantile breakpoints
+      return [
+        'case',
+        ['==', ['get', 'compositeScore'], null],
+        COLOR_NULL,
+        [
+          'interpolate',
+          ['linear'],
+          ['get', 'compositeScore'],
+          quantileBreaks.min,  COLOR_LOW,
+          quantileBreaks.p20,  COLOR_MID_LOW,
+          quantileBreaks.p40,  COLOR_MID,
+          quantileBreaks.p60,  COLOR_HIGH,
+          quantileBreaks.p80,  COLOR_ORCHID,
+          quantileBreaks.p95,  COLOR_PEAK,
+        ],
+      ] as unknown as string
+    }
+
+    // Absolute-score: fixed 0–10 scale with threshold-based teal transition
     const t = highlightThreshold
     return [
       'case',
@@ -89,7 +115,7 @@ export function CountyChoropleth({
         Math.min(t + 0.5, 10), COLOR_PEAK,
       ],
     ] as unknown as string
-  }, [highlightThreshold])
+  }, [colorMode, quantileBreaks, highlightThreshold])
 
   if (!scoredGeojson) return null
 

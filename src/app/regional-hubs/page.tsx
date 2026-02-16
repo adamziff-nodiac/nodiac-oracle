@@ -27,7 +27,9 @@ import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
 import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
-import type { CriterionKey, ScoringMode, WeightedCountyScore } from '@/types/regional-hubs'
+import type { ScoringMode } from '@/lib/scoring/county-scorer'
+import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
+import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
   const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
@@ -38,6 +40,7 @@ export default function RegionalHubsPage() {
   const [selectedCounty, setSelectedCounty] = useState<WeightedCountyScore | null>(null)
   const [showMobileWeights, setShowMobileWeights] = useState(false)
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
+  const [colorMode, setColorMode] = useState<ColorMode>('percentile')
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
 
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
@@ -46,7 +49,7 @@ export default function RegionalHubsPage() {
 
   const handleWeightChange = useCallback((newWeights: Record<CriterionKey, number>) => {
     setWeights(newWeights)
-    setActiveProfileId(null) // Custom weights break preset association
+    setActiveProfileId(null)
   }, [])
 
   const handlePresetSelect = useCallback((newWeights: Record<CriterionKey, number>, profileId: string) => {
@@ -96,7 +99,7 @@ export default function RegionalHubsPage() {
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
-              href="/docs"
+              href="/scoring"
               className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-nodiac-secondary hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
             >
               Scoring Methodology
@@ -121,10 +124,13 @@ export default function RegionalHubsPage() {
                 or drag individual sliders for custom weighting. Changes are instant — no server calls.
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">Absolute color scale:</strong> Counties are colored on a fixed 0–10 scale.
-                Purple shades show scores below the highlight threshold; counties above the threshold
-                glow <strong className="text-[#4de2e4]">neon teal</strong>. Drag the threshold slider to adjust
-                where the teal transition kicks in (default: 6.5 = Strong Fit).
+                <strong className="text-gray-900 dark:text-white">Color modes:</strong> By default, counties are colored using a <strong className="text-gray-900 dark:text-white">percentile</strong> scale
+                — top 5% glow <strong className="text-[#4de2e4]">neon teal</strong>. Switch to <strong className="text-gray-900 dark:text-white">absolute</strong> mode
+                (in Advanced Controls) for a fixed 0–10 scale with an adjustable threshold.
+              </p>
+              <p>
+                <strong className="text-gray-900 dark:text-white">Scoring modes:</strong> Arithmetic mean (default) averages scores linearly.
+                Geometric mean penalises counties that score near-zero on any criterion, rewarding balanced performance.
               </p>
             </div>
           </details>
@@ -150,6 +156,8 @@ export default function RegionalHubsPage() {
                   regions={regions}
                   onCountyClick={handleCountyClick}
                   highlightThreshold={highlightThreshold}
+                  colorMode={colorMode}
+                  quantileBreaks={quantileBreaks}
                 />
 
                 {/* Mobile weight toggle */}
@@ -175,50 +183,108 @@ export default function RegionalHubsPage() {
                       Advanced Controls
                     </summary>
                     <div className="mt-4 space-y-5">
+                      {/* Scoring Mode toggle */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                          Scoring Mode
+                        </label>
+                        <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                          <button
+                            onClick={() => setScoringMode('arithmetic')}
+                            className={`flex-1 text-xs py-1.5 transition-colors ${
+                              scoringMode === 'arithmetic'
+                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                          >
+                            Arithmetic
+                          </button>
+                          <button
+                            onClick={() => setScoringMode('geometric')}
+                            className={`flex-1 text-xs py-1.5 transition-colors ${
+                              scoringMode === 'geometric'
+                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                          >
+                            Geometric
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Color Mode toggle */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                          Color Mode
+                        </label>
+                        <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                          <button
+                            onClick={() => setColorMode('percentile')}
+                            className={`flex-1 text-xs py-1.5 transition-colors ${
+                              colorMode === 'percentile'
+                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                          >
+                            Percentile
+                          </button>
+                          <button
+                            onClick={() => setColorMode('absolute')}
+                            className={`flex-1 text-xs py-1.5 transition-colors ${
+                              colorMode === 'absolute'
+                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                            }`}
+                          >
+                            Absolute
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Threshold slider — only visible in absolute mode */}
+                      {colorMode === 'absolute' && (
+                        <div className="pt-4 border-t border-gray-200 dark:border-white/10 space-y-1">
+                          <div className="flex justify-between items-center">
+                            <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                              Highlight Threshold
+                            </label>
+                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
+                              {highlightThreshold.toFixed(1)}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={0}
+                            max={10}
+                            step={0.5}
+                            value={highlightThreshold}
+                            onChange={(e) => setHighlightThreshold(parseFloat(e.target.value))}
+                            className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                              bg-gray-200 dark:bg-white/10
+                              [&::-webkit-slider-thumb]:appearance-none
+                              [&::-webkit-slider-thumb]:w-3.5
+                              [&::-webkit-slider-thumb]:h-3.5
+                              [&::-webkit-slider-thumb]:rounded-full
+                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
+                              [&::-webkit-slider-thumb]:transition-shadow
+                              [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
+                          />
+                          <p className="text-[10px] text-gray-500">
+                            Counties scoring above this glow teal
+                          </p>
+                        </div>
+                      )}
+
                       <WeightControls
                         weights={weights}
                         onWeightChange={handleWeightChange}
-                        scoringMode={scoringMode}
-                        onScoringModeChange={setScoringMode}
                       />
-
-                      {/* Threshold slider */}
-                      <div className="pt-4 border-t border-gray-200 dark:border-white/10 space-y-1">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
-                            Highlight Threshold
-                          </label>
-                          <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
-                            {highlightThreshold.toFixed(1)}
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min={0}
-                          max={10}
-                          step={0.5}
-                          value={highlightThreshold}
-                          onChange={(e) => setHighlightThreshold(parseFloat(e.target.value))}
-                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                            bg-gray-200 dark:bg-white/10
-                            [&::-webkit-slider-thumb]:appearance-none
-                            [&::-webkit-slider-thumb]:w-3.5
-                            [&::-webkit-slider-thumb]:h-3.5
-                            [&::-webkit-slider-thumb]:rounded-full
-                            [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                            [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
-                            [&::-webkit-slider-thumb]:transition-shadow
-                            [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
-                        />
-                        <p className="text-[10px] text-gray-500">
-                          Counties scoring above this glow teal
-                        </p>
-                      </div>
                     </div>
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
@@ -250,7 +316,7 @@ export default function RegionalHubsPage() {
           </p>
           <p className="text-gray-500 text-sm">
             For full methodology, data sources, and technical details, see the{' '}
-            <Link href="/docs" className="text-nodiac-secondary hover:underline">
+            <Link href="/scoring" className="text-nodiac-secondary hover:underline">
               Scoring Methodology
             </Link>.
           </p>
