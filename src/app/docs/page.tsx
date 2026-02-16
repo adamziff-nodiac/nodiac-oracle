@@ -3,22 +3,7 @@
 import Link from 'next/link'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
-import { ArrowLeft, ExternalLink } from 'lucide-react'
-
-function CodeBlock({ children, title }: { children: string; title?: string }) {
-  return (
-    <div className="rounded-lg overflow-hidden border border-white/10">
-      {title && (
-        <div className="px-4 py-2 bg-white/5 border-b border-white/10 text-xs text-gray-400 font-mono">
-          {title}
-        </div>
-      )}
-      <pre className="px-4 py-3 bg-white/[0.02] overflow-x-auto text-sm font-mono text-gray-300 leading-relaxed">
-        {children}
-      </pre>
-    </div>
-  )
-}
+import { ArrowLeft } from 'lucide-react'
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -42,20 +27,16 @@ function SubSection({ title, children }: { title: string; children: React.ReactN
 }
 
 const TOC = [
-  { id: 'architecture', label: 'Architecture Overview' },
-  { id: 'data-pipeline', label: 'Data Pipeline' },
+  { id: 'overview', label: 'Model Overview' },
   { id: 'scoring-math', label: 'Scoring Math' },
   { id: 'six-criteria', label: 'The Six Criteria' },
-  { id: 'normalization', label: 'Normalization' },
+  { id: 'normalization', label: 'How Data Is Normalized' },
   { id: 'weight-profiles', label: 'Weight Profiles' },
-  { id: 'site-screening', label: 'Site Screening Flow' },
-  { id: 'utility-classification', label: 'Utility Classification' },
-  { id: 'fips-resolution', label: 'FIPS Resolution' },
-  { id: 'map-rendering', label: 'Map Rendering' },
-  { id: 'api-reference', label: 'API Reference' },
+  { id: 'color-modes', label: 'Map Color Modes' },
+  { id: 'site-screening', label: 'Site Screening' },
+  { id: 'utility-overrides', label: 'Utility Type Overrides' },
   { id: 'data-sources', label: 'Data Sources' },
-  { id: 'limitations', label: 'Known Limitations' },
-  { id: 'extending', label: 'Extending the Model' },
+  { id: 'assumptions', label: 'Assumptions & Limitations' },
 ]
 
 export default function DocsPage() {
@@ -94,7 +75,7 @@ export default function DocsPage() {
           </div>
           <div className="mt-8 pt-6 border-t border-white/10 space-y-2">
             <Link href="/regional-hubs" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
-              <ArrowLeft className="w-3.5 h-3.5" /> Regional Hubs
+              <ArrowLeft className="w-3.5 h-3.5" /> Regional Hubs Map
             </Link>
             <Link href="/screening" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
               <ArrowLeft className="w-3.5 h-3.5" /> Site Screening
@@ -109,133 +90,81 @@ export default function DocsPage() {
             <div className="flex items-center gap-3 mb-4">
               <Link href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">Hubs</Link>
               <span className="text-gray-600">/</span>
-              <Link href="/screening" className="text-sm text-nodiac-secondary hover:underline">Screening</Link>
-              <span className="text-gray-600">/</span>
-              <span className="text-sm text-gray-400">Developer Docs</span>
+              <span className="text-sm text-gray-400">Scoring Methodology</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-              Developer Documentation
+              Scoring Methodology
             </h1>
             <p className="mt-4 text-lg text-nodiac-dusty-lilac max-w-2xl leading-relaxed">
-              Technical reference for the Regional Hub scoring model and Site Screening pipeline.
-              Written for Adam Stratton and Eric Shannon.
+              How every US county is scored, what data feeds the model, and what assumptions are baked in.
             </p>
           </div>
 
-          {/* Architecture */}
-          <Section id="architecture" title="Architecture Overview">
+          {/* Model Overview */}
+          <Section id="overview" title="Model Overview">
             <p>
-              The system has three layers: a <strong className="text-white">data pipeline</strong> (Python, runs offline),
-              a <strong className="text-white">Next.js 15 app</strong> (Bun runtime, Tailwind v4), and
-              a <strong className="text-white">Supabase backend</strong> (Postgres + Auth).
+              The Regional Hub scoring model evaluates every US county (~3,200 total) across
+              <strong className="text-white"> six criteria</strong> relevant to siting distributed data centers
+              on cooperative utility territory near renewable generation. Each criterion produces a score
+              between 0 and 1. These six scores are combined into a single <strong className="text-white">composite score</strong> from
+              0 to 10 using a weighted average.
             </p>
-            <CodeBlock title="Directory Structure">{`src/
-├── app/
-│   ├── regional-hubs/page.tsx    # Choropleth map page
-│   ├── screening/page.tsx        # Portfolio screening page
-│   ├── docs/page.tsx             # This page
-│   └── api/
-│       ├── county-scores/        # GET — all county scores
-│       ├── hub-regions/          # GET — hub region GeoJSON overlays
-│       ├── upload-csv/           # POST — upload IPP portfolio CSV
-│       ├── portfolio/[id]/       # GET — portfolio detail
-│       │   └── score/            # POST — trigger FIPS lookup + scoring
-│       └── summary/              # GET — AI narrative summary
-├── components/
-│   ├── regional-hubs/            # Map, choropleth, weights, methodology
-│   └── screening/                # CSV uploader, table, map, tier badges
-├── hooks/
-│   ├── useCountyScores.ts        # Fetch + cache county scores
-│   ├── useWeightedScores.ts      # Client-side composite scoring
-│   ├── useHubRegions.ts          # Hub region GeoJSON data
-│   └── usePortfolio.ts           # Portfolio upload + scoring flow
-├── lib/
-│   ├── scoring/
-│   │   ├── county-scorer.ts      # computeCompositeScore() — weighted average
-│   │   ├── site-scorer.ts        # scoreSite(), scoreSiteWeighted()
-│   │   ├── normalize.ts          # minMaxNormalize, inverseNormalize
-│   │   ├── weight-profiles.ts    # 4 preset profiles
-│   │   └── utility-classifier.ts # Co-op/IOU/Muni detection from CSV
-│   └── geo/
-│       └── fips-lookup.ts        # FCC Area API → FIPS code
-└── types/
-    ├── regional-hubs.ts          # CriterionKey, CountyScore, WeightProfile
-    └── screening.ts              # SiteTier, PortfolioSite, ParsedSite
-scripts/
-└── build-real-county-scores.py   # Offline data pipeline`}</CodeBlock>
             <p>
-              <strong className="text-white">Key design decision:</strong> All weight changes happen client-side.
-              The API returns raw 0–1 scores per criterion per county. The frontend computes composite scores
-              in <code className="text-nodiac-secondary bg-white/5 px-1 rounded">useMemo</code> — moving a
-              slider recomputes ~3,200 composites in milliseconds with zero network requests.
+              The six criteria were chosen to reflect Nodiac&apos;s thesis: distributed data centers
+              co-located with renewable energy on cooperative territory deliver superior economics,
+              faster interconnection, and lower permitting risk. The criteria are:
             </p>
-          </Section>
-
-          {/* Data Pipeline */}
-          <Section id="data-pipeline" title="Data Pipeline">
+            <ol className="list-decimal list-inside space-y-1 ml-2">
+              <li><strong className="text-white">Co-op Density</strong> — share of county served by electric cooperatives</li>
+              <li><strong className="text-white">Grid Reliability</strong> — grid uptime based on 12 years of outage data</li>
+              <li><strong className="text-white">Clipped/Curtailed</strong> — presence of renewable generation that may be curtailed</li>
+              <li><strong className="text-white">Permitting</strong> — local/state regulatory friendliness toward data centers</li>
+              <li><strong className="text-white">Skilled IT Labor</strong> — tech business density as a proxy for available talent</li>
+              <li><strong className="text-white">Fiber Availability</strong> — fiber-to-the-premises coverage from FCC data</li>
+            </ol>
             <p>
-              The Python script <code className="text-nodiac-secondary bg-white/5 px-1 rounded">scripts/build-real-county-scores.py</code> downloads
-              federal datasets and computes per-county scores. Run with:
+              You can adjust the relative importance of each criterion using weight sliders on the map.
+              Four preset profiles are available for common strategic perspectives, or you can set
+              custom weights. All scoring updates happen instantly — no waiting for recalculation.
             </p>
-            <CodeBlock>{`uv run scripts/build-real-county-scores.py`}</CodeBlock>
-
-            <SubSection title="Pipeline Steps">
-              <ol className="list-decimal list-inside space-y-2 ml-2">
-                <li><strong className="text-white">FIPS crosswalk</strong> — Downloads county name → FIPS code mapping (3,136 entries)</li>
-                <li><strong className="text-white">EIA Form 861</strong> — Downloads ZIPs for 2013–2024 (12 years) → processes <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Service_Territory_2024.xlsx</code> for co-op density and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">Reliability_YYYY.xlsx</code> files for multi-year grid SAIDI averaging</li>
-                <li><strong className="text-white">EIA Form 860</strong> — Downloads ZIP (21 MB, 13 files) → extracts solar/wind generators from Operable + Proposed sheets for curtailment proxy</li>
-                <li><strong className="text-white">Census CBP</strong> — API calls for NAICS 5182, 5415, 517 + population estimates → labor score</li>
-                <li><strong className="text-white">FCC BDC</strong> — ArcGIS Living Atlas query for county-level fiber availability (Dec 2024)</li>
-                <li><strong className="text-white">Census ACS</strong> — API call for B28002 broadband subscriptions → fiber fallback</li>
-                <li><strong className="text-white">Assembly</strong> — Joins all scores by FIPS, writes to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">public/data/county-scores.json</code> and Supabase <code className="text-nodiac-secondary bg-white/5 px-1 rounded">county_scores</code> table</li>
-              </ol>
-            </SubSection>
-
-            <SubSection title="Data Loading in the Frontend">
-              <p>
-                <code className="text-nodiac-secondary bg-white/5 px-1 rounded">useCountyScores</code> tries
-                the Supabase API first (<code className="text-nodiac-secondary bg-white/5 px-1 rounded">/api/county-scores</code>),
-                then falls back to the static JSON file if the API returns fewer than 2,000 rows (Supabase
-                defaults to 1,000 row limit). The API route explicitly sets <code className="text-nodiac-secondary bg-white/5 px-1 rounded">limit(5000)</code>.
-              </p>
-            </SubSection>
           </Section>
 
           {/* Scoring Math */}
           <Section id="scoring-math" title="Scoring Math">
-            <SubSection title="Composite Score Formula">
+            <SubSection title="Arithmetic Mean (Default)">
               <p>
-                Each county has six criterion scores, each in the range [0, 1]. The composite score is a
-                weighted average scaled to [0, 10]:
+                The default composite score is a weighted arithmetic mean. Each county&apos;s six criterion
+                scores (0–1 each) are multiplied by their respective weights, summed, divided by the
+                total weight, and scaled to 0–10:
               </p>
               <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
                 composite = ( Σ criterion_score<sub>i</sub> × weight<sub>i</sub> ) / ( Σ weight<sub>i</sub> ) × 10
               </div>
               <p>
-                If a weight is 0, that criterion is excluded from both numerator and denominator — it&apos;s
-                as if that dimension doesn&apos;t exist. This means zeroing out a criterion never penalizes
-                a county; it just ignores that dimension.
+                If a weight is set to 0, that criterion is excluded from both the numerator and denominator.
+                This means zeroing out a criterion never penalises a county — it simply removes that dimension
+                from consideration entirely.
               </p>
             </SubSection>
 
-            <SubSection title="Implementation">
-              <CodeBlock title="src/lib/scoring/county-scorer.ts">{`export function computeCompositeScore(
-  county: CountyScore,
-  weights: Record<CriterionKey, number>
-): number {
-  let weightedSum = 0
-  let totalWeight = 0
-
-  for (const key of Object.keys(weights) as CriterionKey[]) {
-    const w = weights[key]
-    if (w <= 0) continue
-    weightedSum += getCriterionValue(county, key) * w
-    totalWeight += w
-  }
-
-  if (totalWeight === 0) return 0
-  return (weightedSum / totalWeight) * 10
-}`}</CodeBlock>
+            <SubSection title="Geometric Mean (Optional)">
+              <p>
+                The geometric mean is available as an alternative scoring mode in Advanced Controls.
+                It uses weighted log-space averaging:
+              </p>
+              <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
+                composite = exp( Σ weight<sub>i</sub> × ln(score<sub>i</sub> + ε) / Σ weight<sub>i</sub> ) × 10
+              </div>
+              <p>
+                <strong className="text-white">Why use geometric mean?</strong> It penalises counties that
+                score near zero on <em>any</em> criterion, even if their other scores are high. A county with
+                excellent co-op density but zero curtailment will score much lower under geometric mean than
+                arithmetic mean. This rewards <strong className="text-white">balanced performance</strong> across
+                all dimensions you care about.
+              </p>
+              <p className="text-sm text-gray-400">
+                The epsilon (ε = 0.001) prevents log(0) errors while keeping near-zero scores heavily penalised.
+              </p>
             </SubSection>
 
             <SubSection title="Worked Example">
@@ -271,10 +200,14 @@ scripts/
                   </tbody>
                 </table>
               </div>
+              <p className="text-sm text-gray-400">
+                Notice how Co-op Priority boosts this county&apos;s score from 5.75 to 6.21 because
+                its strongest attribute (co-op density = 0.80) gets 3× weight.
+              </p>
             </SubSection>
 
-            <SubSection title="Site Scoring & Tier Assignment">
-              <p>Sites use the same formula. Tier thresholds:</p>
+            <SubSection title="Tier Thresholds (Site Screening)">
+              <p>When screening individual sites, composite scores map to three tiers:</p>
               <div className="flex gap-4 mt-2">
                 <div className="flex items-center gap-2">
                   <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
@@ -289,123 +222,140 @@ scripts/
                   <span className="text-sm"><strong className="text-white">Weak Fit:</strong> &lt; 4.0</span>
                 </div>
               </div>
-              <CodeBlock title="src/lib/scoring/site-scorer.ts">{`const TIER_THRESHOLDS = {
-  good: 6.5,   // "Strong Fit"
-  okay: 4.0,   // "Moderate Fit"
-}
-// Anything below 4.0 is "Weak Fit" (bad)`}</CodeBlock>
             </SubSection>
           </Section>
 
           {/* Six Criteria */}
           <Section id="six-criteria" title="The Six Criteria">
             <div className="space-y-8">
-              <SubSection title="1. Co-op Density (coop_density_score)">
+              <SubSection title="1. Co-op Density">
                 <p>Share of a county&apos;s electric service territory served by rural electric cooperatives.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> EIA Form 861 (2024) — Service_Territory_2024.xlsx (11,776 rows mapping 2,907 utilities to counties) + Frame_2024.xlsx (3,413 utilities classified by ownership type)</p>
-                  <p><strong className="text-gray-200">Method:</strong> Count distinct utilities per county, calculate fraction that are cooperatives. Score = co-op count / total count.</p>
-                  <p><strong className="text-gray-200">Range:</strong> Natural 0–1 ratio. No normalization needed.</p>
+                  <p><strong className="text-gray-200">Source:</strong> EIA Form 861 (2024) — Service Territory file (11,776 utility-to-county mappings) cross-referenced with the Frame file (3,413 utilities classified by ownership type: cooperative, investor-owned, municipal, etc.).</p>
+                  <p><strong className="text-gray-200">Method:</strong> For each county, count the distinct utilities serving it. Calculate the fraction that are cooperatives. Score = co-op count / total count.</p>
+                  <p><strong className="text-gray-200">Range:</strong> Natural 0–1 ratio. A county with 3 co-ops out of 4 total utilities scores 0.75. No additional normalization needed.</p>
                   <p><strong className="text-gray-200">Coverage:</strong> 3,097 of 3,143 counties (99%). 117 counties are 100% co-op; 540 have zero co-op presence.</p>
+                  <p><strong className="text-gray-200">Assumption:</strong> We count utility <em>presence</em>, not territory area or customer share. A county with one large IOU and one small co-op scores 0.5, even if the IOU serves 95% of load. This was a deliberate simplification — utility service territory boundary data would improve precision but is not freely available at county resolution.</p>
                 </div>
               </SubSection>
 
-              <SubSection title="2. Grid Reliability (grid_reliability_score)">
-                <p>Grid uptime measured by SAIDI (average outage minutes per customer per year). <strong className="text-white">Inverse metric</strong> — lower SAIDI = higher score. Uses <strong className="text-white">multi-year averaging</strong> for robustness.</p>
+              <SubSection title="2. Grid Reliability">
+                <p>Grid uptime measured by SAIDI (System Average Interruption Duration Index — average outage minutes per customer per year). <strong className="text-white">Inverse metric</strong> — lower SAIDI = higher score. Uses <strong className="text-white">multi-year averaging</strong> across up to 12 years of data.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> EIA Form 861 Reliability Data (2013–2024, up to 12 years) — ~900–1,000 utilities report SAIDI per year. Prefers &ldquo;IEEE Without Major Event Days&rdquo; metric.</p>
-                  <p><strong className="text-gray-200">Method:</strong> For each year, map utility SAIDI to service territory counties and average per county. Then average across all available years per county. Inverse percentile rank of multi-year average.</p>
-                  <p><strong className="text-gray-200">Why multi-year:</strong> Single-year SAIDI can be skewed by one bad storm or one good year. Multi-year averages smooth out anomalies and better reflect structural grid quality.</p>
-                  <p><strong className="text-gray-200">Coverage metadata:</strong> Each county includes <code className="text-nodiac-secondary bg-white/5 px-1 rounded">grid_reliability_years</code> (number of years with data) and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">grid_reliability_data_range</code>. Counties with more years of data have more reliable scores.</p>
-                  <p><strong className="text-gray-200">Coverage:</strong> ~3,025 of 3,143 counties (96%). Remaining 4% default to 0.5.</p>
+                  <p><strong className="text-gray-200">Source:</strong> EIA Form 861 Reliability files (2013–2024). Approximately 900–1,000 utilities report SAIDI each year. We use the &ldquo;IEEE Standard, Without Major Event Days&rdquo; metric when available, which excludes extreme outlier events (hurricanes, ice storms) for a clearer picture of day-to-day reliability.</p>
+                  <p><strong className="text-gray-200">Method:</strong> For each year, map each reporting utility&apos;s SAIDI to the counties in its service territory. Average across utilities within each county to get a single annual SAIDI per county. Then average across all available years per county. Finally, inverse percentile rank: the county with the <em>lowest</em> multi-year SAIDI gets a score near 1.0.</p>
+                  <p><strong className="text-gray-200">Why multi-year:</strong> Single-year SAIDI can be skewed by one bad storm or one unusually good year. Averaging across 12 years smooths out anomalies and better reflects structural grid quality — the thing that actually matters for siting a data center.</p>
+                  <p><strong className="text-gray-200">Coverage:</strong> ~3,025 of 3,143 counties (96%). The remaining 4% (mostly very small or rural counties with no reporting utility) default to 0.5 (neutral). Each county includes metadata on how many years of data contributed to its score.</p>
+                  <p><strong className="text-gray-200">Assumption:</strong> We&apos;re measuring utility-reported reliability, not site-specific reliability. A data center with its own substation or redundant feeds may experience better uptime than the county average suggests. Conversely, a county may score well overall but have pockets of weak distribution infrastructure.</p>
                 </div>
               </SubSection>
 
-              <SubSection title="3. Clipped/Curtailed (clipped_curtailed_score)">
-                <p>Presence of variable renewable energy (solar + wind) that may be curtailed — an opportunity for behind-the-meter data centers.</p>
+              <SubSection title="3. Clipped/Curtailed">
+                <p>Presence of variable renewable energy (solar + wind) that may be curtailed — an opportunity for behind-the-meter data centers to absorb excess generation.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> EIA Form 860 (2024) — 8,684 variable renewable generators, 277,437 MW total.</p>
-                  <p><strong className="text-gray-200">Method:</strong> Three-component composite:</p>
-                  <div className="bg-white/5 border border-white/10 rounded px-3 py-2 font-mono text-xs text-nodiac-secondary">
+                  <p><strong className="text-gray-200">Source:</strong> EIA Form 860 (2024) — generator-level data for 8,684 variable renewable generators totalling 277,437 MW.</p>
+                  <p><strong className="text-gray-200">Method:</strong> Three-component composite score:</p>
+                  <div className="bg-white/5 border border-white/10 rounded px-3 py-2 font-mono text-xs text-nodiac-secondary my-2">
                     score = 0.55 × log_norm(installed_MW) + 0.20 × pipeline_pressure + 0.25 × congestion_flag
                   </div>
-                  <p>Congestion bonus for CAISO, ERCOT, MISO, SPP, BPAT balancing authorities.</p>
-                  <p><strong className="text-gray-200">Coverage:</strong> 1,684 of 3,143 counties (54%). Remaining 46% score 0.0 (no renewables).</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
+                    <li><strong className="text-gray-200">Installed MW (55%)</strong> — Total solar + wind capacity in the county, log-transformed and min-max normalized. Log transform prevents extreme outliers (Kern County CA: 8,756 MW) from dominating.</li>
+                    <li><strong className="text-gray-200">Pipeline pressure (20%)</strong> — Ratio of proposed-to-operable generators. Counties with a large buildout pipeline are likely to experience more curtailment as new capacity comes online.</li>
+                    <li><strong className="text-gray-200">Congestion flag (25%)</strong> — Binary bonus for counties within known congestion-prone balancing authorities (CAISO, ERCOT, MISO, SPP, BPAT). These ISOs have documented curtailment issues.</li>
+                  </ul>
+                  <p><strong className="text-gray-200">Coverage:</strong> 1,684 of 3,143 counties (54%). The remaining 46% score 0.0 — they have no variable renewable generation.</p>
+                  <p><strong className="text-gray-200">Key assumption:</strong> This is a <em>proxy</em> for curtailment, not a direct measurement. We measure installed renewable capacity and structural congestion risk, not actual MWh curtailed. CAISO reported ~3.4M MWh curtailed in 2024, but county-level curtailment data is not publicly available. A county with large installed solar doesn&apos;t guarantee curtailment — it depends on transmission capacity, load patterns, and market conditions.</p>
                 </div>
               </SubSection>
 
-              <SubSection title="4. Permitting (permitting_score)">
-                <p>Local government friendliness toward data center development.</p>
+              <SubSection title="4. Permitting">
+                <p>Local and state government friendliness toward data center development.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-emerald-400">✓ Status: Real research-based scores for all 3,143 counties.</strong> 42 verified citation URLs in a per-county citation registry.</p>
-                  <p><strong className="text-gray-200">Sources:</strong> NCSL state incentive database, SDI Alliance policy tracker, H5 Data Centers 2025-2026 state rankings, NAIOP development reports, Data Center Watch moratorium tracker, state regulatory environment assessments.</p>
-                  <p><strong className="text-gray-200">Methodology:</strong> Multi-component scoring: state incentive programs (30%), regulatory environment (25%), moratorium/opposition risk (25%), tax policy (20%). County-level adjustments applied where specific opposition or moratorium data exists (e.g., Loudoun County VA, multiple GA counties).</p>
-                  <p><strong className="text-gray-200">Range:</strong> 0.30 (hostile, active moratoria) → 0.50 (neutral) → 0.85+ (welcoming with strong incentives). TX = 0.85, WY = 0.83, NJ = 0.39.</p>
-                  <p><strong className="text-gray-200">Citations:</strong> Each county links to relevant source URLs via <code className="text-nodiac-secondary bg-white/5 px-1 rounded">permitting_citation_ids</code> referencing the <code className="text-nodiac-secondary bg-white/5 px-1 rounded">permitting_citation_registry</code> array in the data file.</p>
+                  <p><strong className="text-emerald-400">All 3,143 counties scored using research-based methodology.</strong> 42 verified source citations tracked in a per-county citation registry.</p>
+                  <p><strong className="text-gray-200">Sources:</strong> NCSL state incentive database, SDI Alliance policy tracker, H5 Data Centers 2025–2026 state rankings, NAIOP development reports, Data Center Watch moratorium tracker, state regulatory environment assessments.</p>
+                  <p><strong className="text-gray-200">Method:</strong> Multi-component scoring:</p>
+                  <ul className="list-disc list-inside space-y-1 ml-2">
+                    <li><strong className="text-gray-200">State incentive programs (30%)</strong> — tax abatements, enterprise zones, expedited permitting programs</li>
+                    <li><strong className="text-gray-200">Regulatory environment (25%)</strong> — overall state regulatory burden, energy policy stance</li>
+                    <li><strong className="text-gray-200">Moratorium/opposition risk (25%)</strong> — active moratoria, community opposition, pending restrictive legislation</li>
+                    <li><strong className="text-gray-200">Tax policy (20%)</strong> — property tax rates, sales tax exemptions for data center equipment</li>
+                  </ul>
+                  <p><strong className="text-gray-200">Range:</strong> 0.30 (hostile, active moratoria) → 0.50 (neutral) → 0.85+ (welcoming with strong incentives). Examples: TX = 0.85, WY = 0.83, NJ = 0.39.</p>
+                  <p><strong className="text-gray-200">County-level adjustments:</strong> Where specific local data exists, county scores are adjusted. For example, Loudoun County VA is penalised for active moratorium discussions despite Virginia&apos;s otherwise friendly state-level environment. Multiple Georgia counties similarly adjusted for local opposition.</p>
+                  <p><strong className="text-gray-200">Assumption:</strong> Scores are primarily state-level with county-level adjustments where moratorium or opposition data exists. Granular county-by-county zoning and planning board research would improve accuracy significantly, but the current approach captures the most material variations. Permitting environments also change — a score from early 2025 may not reflect recent legislative action.</p>
                 </div>
               </SubSection>
 
-              <SubSection title="5. Skilled IT Labor (labor_score)">
-                <p>Existing tech business presence per capita — a <strong className="text-white">proxy for available talent</strong>, not a direct measure of hireable labor.</p>
+              <SubSection title="5. Skilled IT Labor">
+                <p>Existing tech business density per capita — a <strong className="text-white">proxy for available talent</strong>.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Source:</strong> Census County Business Patterns (CBP) 2023 — counts <em>businesses</em> under NAICS 5182 (Data Processing &amp; Hosting), 5415 (Computer Systems Design), and 517 (Telecommunications). Population from Census 2024 vintage.</p>
-                  <p><strong className="text-gray-200">Method:</strong> Sum employees across all three NAICS per county, divide by population for per-10K density, percentile rank normalize.</p>
-                  <p><strong className="text-gray-200">What it measures:</strong> The density of existing tech/telecom businesses in a county. Counties with more data processing, IT consulting, and telecom firms are likely to have a deeper pool of relevant talent nearby.</p>
-                  <p><strong className="text-gray-200">Limitations:</strong> This is a <em>proxy</em>. CBP counts business establishments, not individual workers available for hire. It doesn&apos;t capture remote workers, freelancers, or talent willing to relocate. A county with one large employer (e.g., a single data center) may score high despite limited labor market depth. Conversely, counties near major metros may have accessible talent that commutes in but isn&apos;t captured here.</p>
-                  <p><strong className="text-gray-200">Coverage:</strong> 100%. 2,222 of 3,143 counties have at least one IT establishment; the remaining 921 score 0.</p>
+                  <p><strong className="text-gray-200">Source:</strong> Census County Business Patterns (CBP) 2023 — counts businesses under NAICS 5182 (Data Processing &amp; Hosting), 5415 (Computer Systems Design), and 517 (Telecommunications). Population from Census 2024 vintage estimates.</p>
+                  <p><strong className="text-gray-200">Method:</strong> Sum employees across all three NAICS codes per county, divide by population for a per-10K density rate, then percentile rank normalize across all counties.</p>
+                  <p><strong className="text-gray-200">What it measures:</strong> The density of existing tech/telecom businesses in a county. Counties with more data processing, IT consulting, and telecom firms are more likely to have a deeper pool of relevant operational talent nearby.</p>
+                  <p><strong className="text-gray-200">Coverage:</strong> 100% of counties. 2,222 of 3,143 have at least one IT establishment; the remaining 921 score 0.</p>
+                  <p><strong className="text-gray-200">Limitations (important):</strong> This is a <em>proxy</em>, not a direct labour market measure. CBP counts business establishments, not individual workers available for hire. It doesn&apos;t capture remote workers, freelancers, or talent willing to relocate. A county with one large employer (e.g., a single data center) may score high despite limited market depth. Conversely, counties near major metros may have accessible commuter talent that isn&apos;t captured here. Census employment counts also include 2–5% noise infusion for disclosure avoidance.</p>
                 </div>
               </SubSection>
 
-              <SubSection title="6. Fiber Availability (fiber_score)">
-                <p>Actual fiber-to-the-premises (FTTP) availability from <strong className="text-white">ISP-reported FCC data</strong> — a direct measure of fiber infrastructure presence at the location level.</p>
+              <SubSection title="6. Fiber Availability">
+                <p>Actual fiber-to-the-premises (FTTP) availability from <strong className="text-white">ISP-reported FCC data</strong>.</p>
                 <div className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 text-sm">
-                  <p><strong className="text-gray-200">Primary Source:</strong> FCC Broadband Data Collection (BDC), December 2024 vintage — county-level summaries via ArcGIS Living Atlas. Measures the percentage of Broadband Serviceable Locations (BSLs) with fiber availability and the number of competing fiber providers per county.</p>
-                  <p><strong className="text-gray-200">Fallback Source:</strong> Census ACS 5-Year (2023), Table B28002 — broadband subscription rates, used only for counties missing from BDC data.</p>
-                  <p><strong className="text-gray-200">Method:</strong> Composite score = 80% × (fiber BSLs ÷ total BSLs) + 20% × (provider competition, capped at 5). Percentile rank normalization across all counties. Provider competition captures market depth — a county with 3 fiber ISPs has more robust infrastructure than one with a single provider.</p>
-                  <p><strong className="text-gray-200">What it measures:</strong> The share of locations in a county where at least one ISP reports fiber-to-the-premises availability, plus the competitive landscape. This is ISP-reported data filed with the FCC — a significant improvement over the previous broadband subscription proxy.</p>
-                  <p><strong className="text-gray-200">Limitations:</strong> ISP-reported data may overstate actual availability (ISPs sometimes report planned coverage). This measures consumer/business FTTP, not enterprise dark fiber, lit fiber routes, or carrier-neutral interconnection points. A county with high residential fiber may still lack the dedicated dark fiber infrastructure data centers need. However, counties with extensive FTTP deployment almost always have better underlying fiber trunk infrastructure.</p>
+                  <p><strong className="text-gray-200">Primary source:</strong> FCC Broadband Data Collection (BDC), December 2024 vintage — county-level summaries via ArcGIS Living Atlas. Measures the percentage of Broadband Serviceable Locations (BSLs) with fiber availability and the number of competing fiber providers per county.</p>
+                  <p><strong className="text-gray-200">Fallback source:</strong> Census ACS 5-Year (2023), Table B28002 — broadband subscription rates. Used only for counties missing from BDC data.</p>
+                  <p><strong className="text-gray-200">Method:</strong> Composite score = 80% × (fiber BSLs ÷ total BSLs) + 20% × (provider competition, capped at 5 providers). Percentile rank normalization across all counties.</p>
+                  <p><strong className="text-gray-200">Why provider competition matters:</strong> A county with 3 fiber ISPs has more robust and redundant infrastructure than one with a single provider. The 20% weight on competition captures market depth beyond simple coverage percentage.</p>
                   <p><strong className="text-gray-200">Coverage:</strong> ~3,234 counties via FCC BDC (primary), remainder via ACS fallback.</p>
+                  <p><strong className="text-gray-200">Limitations (important):</strong> ISP-reported data may overstate actual availability (ISPs sometimes report planned coverage as current). This measures consumer/business FTTP, <strong className="text-white">not enterprise dark fiber</strong>, lit fibre routes, or carrier-neutral interconnection points. A county with high residential fiber may still lack the dedicated dark fiber infrastructure data centers require. However, counties with extensive FTTP deployment almost always have better underlying fiber trunk infrastructure — it&apos;s a strong directional signal even if it doesn&apos;t capture the full picture.</p>
                 </div>
               </SubSection>
             </div>
           </Section>
 
           {/* Normalization */}
-          <Section id="normalization" title="Normalization">
+          <Section id="normalization" title="How Data Is Normalized">
             <p>
-              Raw data arrives in different units. Three normalization strategies are used to produce 0–1 scores:
+              Raw data arrives in wildly different units — outage minutes, installed MW, business counts, percentages.
+              To make scores comparable, each criterion is normalized to a 0–1 scale using one of three strategies:
             </p>
 
-            <SubSection title="1. Direct Ratio">
-              <p>Co-op density is already a natural 0–1 value (fraction of cooperatives). No transform needed.</p>
+            <SubSection title="Direct Ratio">
+              <p>
+                <strong className="text-white">Used for:</strong> Co-op Density.
+                The raw value is already a natural 0–1 fraction (co-op utilities / total utilities). No transformation needed.
+              </p>
             </SubSection>
 
-            <SubSection title="2. Percentile Rank">
-              <p>Used for Grid Reliability, Labor, and Fiber. Produces a uniform distribution:</p>
-              <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
-                score = rank(value) / (N − 1)
-              </div>
-              <p>For inverse metrics (SAIDI): <code className="text-nodiac-secondary bg-white/5 px-1 rounded">1 − rank</code>.</p>
-            </SubSection>
-
-            <SubSection title="3. Log-Transform + Composite">
-              <p>Used for Curtailment. Renewable MW is extremely right-skewed (Kern County CA: 8,756 MW vs. median &lt; 100 MW):</p>
-              <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
-                score = 0.55 × minmax(log1p(MW)) + 0.20 × pipeline_ratio + 0.25 × congestion_flag
-              </div>
-            </SubSection>
-
-            <SubSection title="Client-Side Utilities">
-              <CodeBlock title="src/lib/scoring/normalize.ts">{`// Min-max normalization: [min, max] → [0, 1], clamped
-function minMaxNormalize(value, min, max): number
-
-// Inverse: higher raw → lower score (e.g., outage minutes)
-function inverseNormalize(value, min, max): number
-
-// Normalize an entire array using min/max of that array
-function normalizeArray(values): number[]`}</CodeBlock>
+            <SubSection title="Percentile Rank">
+              <p>
+                <strong className="text-white">Used for:</strong> Grid Reliability, Labor, Fiber.
+                Counties are ranked and converted to a uniform 0–1 distribution. The county with the best value
+                gets 1.0, the worst gets 0.0, and everyone else is evenly spread between.
+              </p>
+              <p>
+                For inverse metrics like SAIDI (where lower is better), the rank is flipped: lowest SAIDI → highest score.
+              </p>
               <p className="text-sm text-gray-400">
-                Note: These utilities exist for client-side use but the main normalization happens in the Python pipeline.
+                Percentile ranking means the score tells you &ldquo;this county is better than X% of all counties&rdquo;
+                rather than an absolute measure. This is useful when the raw distribution is highly skewed.
+              </p>
+            </SubSection>
+
+            <SubSection title="Log-Transform + Composite">
+              <p>
+                <strong className="text-white">Used for:</strong> Curtailment.
+                Renewable installed MW is extremely right-skewed — Kern County CA has 8,756 MW while the median
+                county has less than 100 MW. A straight linear normalization would compress most counties near zero.
+                Log transformation spreads the distribution more evenly, then the three sub-components (installed MW,
+                pipeline pressure, congestion flag) are combined with fixed weights.
+              </p>
+            </SubSection>
+
+            <SubSection title="Permitting (Research-Based)">
+              <p>
+                <strong className="text-white">Used for:</strong> Permitting.
+                Scores are assigned directly from policy research rather than computed from a single dataset.
+                The multi-component methodology (incentives, regulation, moratorium risk, tax policy) produces
+                scores already in the 0–1 range.
               </p>
             </SubSection>
           </Section>
@@ -413,8 +363,9 @@ function normalizeArray(values): number[]`}</CodeBlock>
           {/* Weight Profiles */}
           <Section id="weight-profiles" title="Weight Profiles">
             <p>
-              Four preset profiles snap all six sliders to predefined configurations.
-              Slider range: 0.0–3.0, step: 0.1. Adjusting any slider after selecting a preset switches to &ldquo;Custom&rdquo; mode.
+              Four preset profiles snap all six criteria to predefined weight configurations.
+              Each weight ranges from 0.0 to 3.0. A weight of 0 completely removes that criterion
+              from scoring. Adjusting any slider after selecting a preset switches to custom mode.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -439,7 +390,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
-                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Equal weight baseline</td>
+                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Equal weight baseline — no strategic bias</td>
                   </tr>
                   <tr className="border-b border-white/5">
                     <td className="py-2 pr-3 text-white font-sans font-medium">Co-op Priority</td>
@@ -449,7 +400,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2">1.0</td>
-                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Core thesis: co-op territories + permitting</td>
+                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Core thesis: co-op territories + permitting friendliness</td>
                   </tr>
                   <tr className="border-b border-white/5">
                     <td className="py-2 pr-3 text-white font-sans font-medium">Speed to Deploy</td>
@@ -459,7 +410,7 @@ function normalizeArray(values): number[]`}</CodeBlock>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
-                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Time-to-power constraint</td>
+                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Time-to-power: permitting + reliability + fiber</td>
                   </tr>
                   <tr>
                     <td className="py-2 pr-3 text-white font-sans font-medium">Curtailment Capture</td>
@@ -469,202 +420,132 @@ function normalizeArray(values): number[]`}</CodeBlock>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2">1.0</td>
-                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Renewable arbitrage opportunity</td>
+                    <td className="py-2 pl-3 font-sans text-gray-400 text-xs">Renewable arbitrage: find excess generation</td>
                   </tr>
                 </tbody>
               </table>
             </div>
+          </Section>
 
-            <CodeBlock title="Adding a new profile — src/lib/scoring/weight-profiles.ts">{`// Add to the WEIGHT_PROFILES array:
-{
-  id: 'my-profile',
-  name: 'My Profile',
-  description: 'What this profile optimizes for',
-  weights: {
-    coop_density: 2,
-    grid_reliability: 1,
-    clipped_curtailed: 1.5,
-    permitting: 2,
-    labor: 1,
-    fiber: 0.5,
-  },
-}`}</CodeBlock>
+          {/* Color Modes */}
+          <Section id="color-modes" title="Map Color Modes">
+            <SubSection title="Percentile (Default)">
+              <p>
+                Counties are colored based on their <strong className="text-white">rank relative to all other counties</strong>.
+                The color ramp uses quantile breakpoints (p20, p40, p60, p80, p95) so you always see meaningful
+                variation across the map regardless of how the raw scores are distributed.
+              </p>
+              <p>
+                The top 5% of counties glow <strong className="text-[#4de2e4]">neon teal</strong>. This mode answers
+                the question: <em>&ldquo;which counties are the best relative to the rest?&rdquo;</em>
+              </p>
+            </SubSection>
+
+            <SubSection title="Absolute">
+              <p>
+                Counties are colored on a <strong className="text-white">fixed 0–10 scale</strong>. A threshold slider
+                controls where the purple-to-teal transition occurs (default: 6.5). Counties above the threshold
+                glow teal; below are shades of purple.
+              </p>
+              <p>
+                This mode answers a different question: <em>&ldquo;which counties clear a specific quality bar?&rdquo;</em>
+                Useful when you have a minimum score target in mind. Under some weight configurations, very few
+                counties may glow teal (if the bar is hard to clear) or many may (if the bar is easy).
+              </p>
+            </SubSection>
           </Section>
 
           {/* Site Screening */}
-          <Section id="site-screening" title="Site Screening Flow">
-            <p>The screening pipeline processes an uploaded CSV through several stages:</p>
-
+          <Section id="site-screening" title="Site Screening">
+            <p>
+              When you upload a portfolio CSV (list of sites with locations and utility information),
+              each site is scored through a five-step process:
+            </p>
             <div className="bg-white/5 border border-white/10 rounded-lg p-4">
               <div className="space-y-4 text-sm">
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">1</span>
                   <div>
-                    <p className="text-white font-medium">CSV Upload</p>
-                    <p className="text-gray-400">File parsed by <code className="text-nodiac-secondary bg-white/5 px-1 rounded">parseFleetCSV()</code> → extracts site_name, lat/lon, utility info, raw data.</p>
-                    <p className="text-gray-400">Sites inserted into <code className="text-nodiac-secondary bg-white/5 px-1 rounded">portfolio_sites</code> table with county/state from raw CSV data.</p>
+                    <p className="text-white font-medium">Parse the CSV</p>
+                    <p className="text-gray-400">Extract site name, latitude/longitude, utility name, and any other raw data fields.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">2</span>
                   <div>
-                    <p className="text-white font-medium">FIPS Resolution</p>
-                    <p className="text-gray-400">Three-strategy cascade: (a) county+state name match against county_scores table, (b) FCC Area API batch lookup by lat/lon, (c) null if unresolvable.</p>
+                    <p className="text-white font-medium">Resolve county</p>
+                    <p className="text-gray-400">Determine which county each site is in using county/state name matching, or geocoding lat/lon coordinates via the FCC Area API. If neither works, the site remains unscored.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">3</span>
                   <div>
-                    <p className="text-white font-medium">Score Lookup</p>
-                    <p className="text-gray-400">FIPS code → county_scores row. The site inherits all six criterion scores from its county.</p>
+                    <p className="text-white font-medium">Inherit county scores</p>
+                    <p className="text-gray-400">The site inherits all six criterion scores from its county. This is the baseline — every site in the same county starts with the same scores.</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">4</span>
                   <div>
-                    <p className="text-white font-medium">Utility Blending</p>
-                    <p className="text-gray-400">If CSV identifies the utility type, override coop_density: Co-op → 1.0, IOU → 0.2, Municipal → 0.6.</p>
+                    <p className="text-white font-medium">Apply utility override</p>
+                    <p className="text-gray-400">If the CSV identifies the utility type (co-op, IOU, municipal), the co-op density score is overridden with a site-specific value (see <a href="#utility-overrides" className="text-nodiac-secondary hover:underline">Utility Type Overrides</a> below).</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">5</span>
                   <div>
-                    <p className="text-white font-medium">Scoring & Tiering</p>
-                    <p className="text-gray-400">Server-side: Balanced (equal weight) average → score + tier. Client-side: real-time re-scoring with any weight profile.</p>
+                    <p className="text-white font-medium">Score and assign tier</p>
+                    <p className="text-gray-400">Compute the weighted composite score and assign Strong Fit / Moderate Fit / Weak Fit. You can re-score with different weight profiles instantly.</p>
                   </div>
                 </div>
               </div>
             </div>
           </Section>
 
-          {/* Utility Classification */}
-          <Section id="utility-classification" title="Utility Classification">
+          {/* Utility Overrides */}
+          <Section id="utility-overrides" title="Utility Type Overrides">
             <p>
-              The <code className="text-nodiac-secondary bg-white/5 px-1 rounded">classifyUtilityType()</code> function
-              detects utility type from CSV raw data and applies a co-op density override:
+              When screening a portfolio, if the CSV identifies which utility serves a site, the co-op density
+              score is overridden. This reflects <strong className="text-white">site-level knowledge</strong> — if you
+              know the site is on co-op territory, that&apos;s more precise than the county-wide co-op density average.
             </p>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10">
                     <th className="text-left py-2 pr-3 text-gray-400 font-medium">Detected Type</th>
-                    <th className="text-left py-2 pr-3 text-gray-400 font-medium">Keywords Matched</th>
-                    <th className="text-left py-2 text-gray-400 font-medium">coop_density Override</th>
+                    <th className="text-left py-2 pr-3 text-gray-400 font-medium">Co-op Density Override</th>
+                    <th className="text-left py-2 text-gray-400 font-medium">Rationale</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-white/5">
                     <td className="py-2 pr-3 text-white">Co-op</td>
-                    <td className="py-2 pr-3 text-gray-300 text-xs font-mono">coop, cooperative, co-op</td>
-                    <td className="py-2 text-nodiac-secondary font-mono">1.0</td>
+                    <td className="py-2 pr-3 text-nodiac-secondary font-mono font-bold">1.0</td>
+                    <td className="py-2 text-gray-400">Site is directly on co-op territory — full co-op benefit</td>
                   </tr>
                   <tr className="border-b border-white/5">
-                    <td className="py-2 pr-3 text-white">IOU</td>
-                    <td className="py-2 pr-3 text-gray-300 text-xs font-mono">investor, iou, investor-owned</td>
-                    <td className="py-2 text-gray-300 font-mono">0.2</td>
+                    <td className="py-2 pr-3 text-white">IOU (Investor-Owned)</td>
+                    <td className="py-2 pr-3 text-gray-300 font-mono">0.2</td>
+                    <td className="py-2 text-gray-400">Large utility, typically slower interconnection, less flexible</td>
                   </tr>
                   <tr className="border-b border-white/5">
                     <td className="py-2 pr-3 text-white">Municipal</td>
-                    <td className="py-2 pr-3 text-gray-300 text-xs font-mono">municipal, muni, city of, public power</td>
-                    <td className="py-2 text-gray-300 font-mono">0.6</td>
+                    <td className="py-2 pr-3 text-gray-300 font-mono">0.6</td>
+                    <td className="py-2 text-gray-400">Public power — can be flexible like co-ops, but varies widely</td>
                   </tr>
                   <tr>
                     <td className="py-2 pr-3 text-white">Unknown</td>
-                    <td className="py-2 pr-3 text-gray-300 text-xs font-mono">(no match)</td>
-                    <td className="py-2 text-gray-400 font-mono">null (uses county score)</td>
+                    <td className="py-2 pr-3 text-gray-400 font-mono">county average</td>
+                    <td className="py-2 text-gray-400">Falls back to the county&apos;s co-op density score</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p className="text-sm text-gray-400">
-              This override reflects site-level knowledge: if the CSV says the site is on co-op territory,
-              that&apos;s more precise than the county-wide co-op density average.
+              The IOU override of 0.2 (not 0.0) reflects that even IOU territory has <em>some</em> value —
+              wholesale or special contracts are possible, just less likely and slower than co-op partnerships.
             </p>
-          </Section>
-
-          {/* FIPS Resolution */}
-          <Section id="fips-resolution" title="FIPS Resolution">
-            <p>
-              Every site needs a FIPS code to look up county scores. Resolution uses a three-step cascade:
-            </p>
-            <ol className="list-decimal list-inside space-y-2 ml-2">
-              <li><strong className="text-white">County + State name match</strong> — Normalized lowercase lookup against the county_scores table. Fast, no API call.</li>
-              <li><strong className="text-white">FCC Area API</strong> — <code className="text-nodiac-secondary bg-white/5 px-1 rounded">geo.fcc.gov/api/census/area?lat=X&lon=Y</code> — returns county FIPS from coordinates. Batched with concurrency limit of 5.</li>
-              <li><strong className="text-white">Null</strong> — If both fail, the site gets null scores (unscored).</li>
-            </ol>
-            <CodeBlock title="FCC API call">{`GET https://geo.fcc.gov/api/census/area?lat=37.7749&lon=-122.4194&format=json
-→ { results: [{ county_fips: "06075", county_name: "San Francisco", ... }] }`}</CodeBlock>
-          </Section>
-
-          {/* Map Rendering */}
-          <Section id="map-rendering" title="Map Rendering">
-            <SubSection title="Choropleth (Regional Hubs)">
-              <p>
-                Uses Mapbox GL with a GeoJSON source of ~3,221 US county boundaries (Census TIGER/Line).
-                Composite scores are injected into each feature&apos;s <code className="text-nodiac-secondary bg-white/5 px-1 rounded">properties.compositeScore</code> field,
-                then Mapbox&apos;s <code className="text-nodiac-secondary bg-white/5 px-1 rounded">interpolate</code> expression determines fill color.
-              </p>
-              <p className="text-sm text-gray-400">
-                This avoids the Mapbox <code className="text-nodiac-secondary bg-white/5 px-1 rounded">match</code> expression size limit (~3,000 entries).
-              </p>
-            </SubSection>
-
-            <SubSection title="Color Scale">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded" style={{ backgroundColor: '#2d2233' }} />
-                  <span className="text-xs text-gray-400">min</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded" style={{ backgroundColor: '#5c2d55' }} />
-                  <span className="text-xs text-gray-400">mid</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded" style={{ backgroundColor: '#8b3578' }} />
-                  <span className="text-xs text-gray-400">80%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded" style={{ backgroundColor: '#b48fc1' }} />
-                  <span className="text-xs text-gray-400">max</span>
-                </div>
-              </div>
-              <p className="text-sm text-gray-400 mt-2">
-                The 80% stop compresses the upper range so top counties get visual pop. Counties with no data render as #221d28.
-              </p>
-            </SubSection>
-
-            <SubSection title="Site Markers (Screening)">
-              <p>
-                Sites render as colored circle markers using <code className="text-nodiac-secondary bg-white/5 px-1 rounded">react-map-gl Marker</code> components.
-                Color is determined by tier. Selected sites get a white border and glow effect. Tier filter buttons toggle visibility.
-              </p>
-            </SubSection>
-          </Section>
-
-          {/* API Reference */}
-          <Section id="api-reference" title="API Reference">
-            <div className="space-y-6">
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <p className="font-mono text-sm text-nodiac-secondary mb-2">GET /api/county-scores</p>
-                <p className="text-sm text-gray-400">Returns all ~3,200 county scores. Cached for 1 hour (s-maxage=3600). Falls back to static JSON if Supabase unavailable.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <p className="font-mono text-sm text-nodiac-secondary mb-2">GET /api/hub-regions</p>
-                <p className="text-sm text-gray-400">Returns hub region GeoJSON overlays for the map.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <p className="font-mono text-sm text-nodiac-secondary mb-2">POST /api/upload-csv</p>
-                <p className="text-sm text-gray-400">Upload a CSV file. Requires auth. Returns upload_id and site_count. Body: FormData with &ldquo;file&rdquo; and optional &ldquo;name&rdquo;.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <p className="font-mono text-sm text-nodiac-secondary mb-2">POST /api/portfolio/[id]/score</p>
-                <p className="text-sm text-gray-400">Triggers FIPS resolution + scoring for all sites in the upload. Returns scored results. Requires auth.</p>
-              </div>
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <p className="font-mono text-sm text-nodiac-secondary mb-2">GET /api/portfolio/[id]</p>
-                <p className="text-sm text-gray-400">Returns upload metadata + all sites with scores. Requires auth.</p>
-              </div>
-            </div>
           </Section>
 
           {/* Data Sources */}
@@ -682,111 +563,107 @@ function normalizeArray(values): number[]`}</CodeBlock>
                 <tbody>
                   <tr className="border-b border-white/5">
                     <td className="py-2 pr-3 text-white">EIA Form 861</td>
-                    <td className="py-2 pr-3">Energy Information Admin</td>
-                    <td className="py-2 pr-3">2024</td>
-                    <td className="py-2">Co-op density + Grid reliability</td>
+                    <td className="py-2 pr-3">Energy Information Administration</td>
+                    <td className="py-2 pr-3">2013–2024</td>
+                    <td className="py-2">Co-op density (2024 service territory) + Grid reliability (12-year SAIDI average)</td>
                   </tr>
                   <tr className="border-b border-white/5">
                     <td className="py-2 pr-3 text-white">EIA Form 860</td>
-                    <td className="py-2 pr-3">Energy Information Admin</td>
+                    <td className="py-2 pr-3">Energy Information Administration</td>
                     <td className="py-2 pr-3">2024</td>
-                    <td className="py-2">Curtailment proxy (renewable MW)</td>
+                    <td className="py-2">Curtailment proxy — solar + wind generator MW (operable + proposed)</td>
                   </tr>
                   <tr className="border-b border-white/5">
-                    <td className="py-2 pr-3 text-white">Census CBP</td>
+                    <td className="py-2 pr-3 text-white">FCC Broadband Data Collection</td>
+                    <td className="py-2 pr-3">Federal Communications Commission</td>
+                    <td className="py-2 pr-3">Dec 2024</td>
+                    <td className="py-2">Fiber availability — FTTP coverage % and provider competition per county</td>
+                  </tr>
+                  <tr className="border-b border-white/5">
+                    <td className="py-2 pr-3 text-white">Census County Business Patterns</td>
                     <td className="py-2 pr-3">Census Bureau</td>
                     <td className="py-2 pr-3">2023</td>
-                    <td className="py-2">IT labor density</td>
+                    <td className="py-2">IT labour density — NAICS 5182, 5415, 517 establishments + employees</td>
                   </tr>
                   <tr className="border-b border-white/5">
-                    <td className="py-2 pr-3 text-white">Census ACS B28002</td>
-                    <td className="py-2 pr-3">Census Bureau</td>
-                    <td className="py-2 pr-3">2023 (5-yr)</td>
-                    <td className="py-2">Fiber proxy (broadband)</td>
-                  </tr>
-                  <tr className="border-b border-white/5">
-                    <td className="py-2 pr-3 text-white">Census Population</td>
+                    <td className="py-2 pr-3 text-white">Census Population Estimates</td>
                     <td className="py-2 pr-3">Census Bureau</td>
                     <td className="py-2 pr-3">2024 vintage</td>
-                    <td className="py-2">Labor normalization denominator</td>
+                    <td className="py-2">Labour normalization denominator (per-capita density)</td>
                   </tr>
                   <tr className="border-b border-white/5">
-                    <td className="py-2 pr-3 text-white">TIGER/Line Counties</td>
+                    <td className="py-2 pr-3 text-white">Census ACS 5-Year (B28002)</td>
+                    <td className="py-2 pr-3">Census Bureau</td>
+                    <td className="py-2 pr-3">2023</td>
+                    <td className="py-2">Fiber fallback — broadband subscription rates (used when FCC BDC data is missing)</td>
+                  </tr>
+                  <tr className="border-b border-white/5">
+                    <td className="py-2 pr-3 text-white">Permitting research sources</td>
+                    <td className="py-2 pr-3">NCSL, SDI Alliance, H5, NAIOP, others</td>
+                    <td className="py-2 pr-3">2024–2025</td>
+                    <td className="py-2">Permitting scores — state incentives, moratoria, regulatory environment</td>
+                  </tr>
+                  <tr className="border-b border-white/5">
+                    <td className="py-2 pr-3 text-white">TIGER/Line County Boundaries</td>
                     <td className="py-2 pr-3">Census Bureau</td>
                     <td className="py-2 pr-3">2024</td>
-                    <td className="py-2">County boundary GeoJSON</td>
+                    <td className="py-2">County boundary polygons for map rendering</td>
                   </tr>
                   <tr>
                     <td className="py-2 pr-3 text-white">FCC Area API</td>
-                    <td className="py-2 pr-3">FCC</td>
+                    <td className="py-2 pr-3">Federal Communications Commission</td>
                     <td className="py-2 pr-3">Live</td>
-                    <td className="py-2">Lat/lon → FIPS lookup</td>
+                    <td className="py-2">Geocoding — lat/lon → county FIPS code for site screening</td>
                   </tr>
                 </tbody>
               </table>
             </div>
           </Section>
 
-          {/* Limitations */}
-          <Section id="limitations" title="Known Limitations">
+          {/* Assumptions & Limitations */}
+          <Section id="assumptions" title="Assumptions & Limitations">
+            <p>
+              These are the things you should keep in mind when interpreting scores. No model captures
+              ground truth perfectly — understanding the gaps is as important as understanding the scores.
+            </p>
             <ul className="space-y-3 ml-2">
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Permitting is state-level</strong> — Scores are primarily state-level with county adjustments where moratorium/opposition data exists. Granular county-by-county zoning research would further improve accuracy.</span>
+                <span><strong className="text-white">Curtailment is a proxy, not a measurement.</strong> We measure installed renewable MW and structural congestion risk, not actual MWh curtailed. A county with large solar farms doesn&apos;t guarantee curtailment — it depends on transmission capacity, load patterns, and market conditions. Adding EIA Form 923 capacity factor data would improve this significantly.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Curtailment is a proxy</strong> — Measures installed MW, not actual curtailment. CAISO reports ~3.4M MWh curtailed in 2024. Adding EIA Form 923 capacity factor gaps would improve this.</span>
+                <span><strong className="text-white">46% of counties have zero curtailment score.</strong> Counties with no variable renewable generation score 0.0. This creates a bimodal distribution that can distort the map when curtailment weight is high. Many of these counties may still have viable curtailed power nearby — they just don&apos;t have generators <em>within</em> the county.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Fiber measures FTTP availability, not enterprise dark fiber</strong> — FCC BDC data captures ISP-reported fiber-to-the-premises coverage, which correlates with but doesn&apos;t directly measure enterprise/dark fiber infrastructure. <strong className="text-white">Labor is a proxy</strong> — CBP business counts ≠ hireable labor supply. Both are the best freely available county-level data.</span>
+                <span><strong className="text-white">Fiber measures FTTP, not enterprise dark fiber.</strong> The FCC BDC data captures ISP-reported fiber-to-the-premises coverage, which strongly correlates with but doesn&apos;t directly measure enterprise/dark fiber infrastructure. A county with high residential fiber may still lack the dedicated dark fiber routes data centers need. Adding proximity to long-haul backbone fiber (e.g., InterTubes dataset) would fill this gap.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">No interaction effects</strong> — Weighted average treats criteria independently. A county with high co-op density AND high curtailment is more than additively valuable. Geometric mean or multiplicative model could capture this.</span>
+                <span><strong className="text-white">Labour is a proxy.</strong> CBP business establishment counts are not the same as hireable labour supply. A county near a major metro may have excellent commuter access to talent that our score doesn&apos;t capture. Conversely, a county with one large data center operator may score high but have limited actual talent availability.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Census noise</strong> — CBP employment counts have 2–5% noise infusion for disclosure avoidance.</span>
+                <span><strong className="text-white">Permitting is primarily state-level.</strong> County-level adjustments exist where moratorium or opposition data is available, but most counties inherit their state&apos;s score. Granular county-by-county zoning and planning board research would improve accuracy, especially in states with mixed permitting environments.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">46% zero curtailment</strong> — Counties with no variable renewables score 0.0. Bimodal distribution can distort the map when curtailment weight is high.</span>
+                <span><strong className="text-white">Co-op density counts presence, not territory share.</strong> A county with one large IOU and one small co-op scores 0.5, even if the IOU serves 95% of load. Utility service territory boundary data would fix this but is not freely available at county resolution.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
-                <span><strong className="text-white">Mostly static snapshot</strong> — Grid reliability now uses multi-year averages (2013–2024), but curtailment and permitting are still single-year snapshots.</span>
+                <span><strong className="text-white">Arithmetic mean treats criteria independently.</strong> A county with high co-op density AND high curtailment is more than additively valuable — the combination enables behind-the-meter economics that neither alone provides. The geometric mean scoring option partially addresses this by penalising weak dimensions, but a true multiplicative model would better capture synergies.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
+                <span><strong className="text-white">Grid reliability uses utility-reported data.</strong> SAIDI is what utilities report to EIA, not independent measurements. Utilities may under-report, exclude events, or have inconsistent reporting thresholds. The multi-year average (12 years) reduces the impact of any single year&apos;s data quality issues.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-yellow-400 mt-2 flex-shrink-0" />
+                <span><strong className="text-white">Scores are a snapshot.</strong> Grid reliability uses 12-year averaging, but curtailment, permitting, and fiber data are single-vintage snapshots. Permitting environments can change quickly — a score from early 2025 may not reflect recent legislative action or moratorium developments.</span>
               </li>
             </ul>
-          </Section>
-
-          {/* Extending */}
-          <Section id="extending" title="Extending the Model">
-            <SubSection title="Adding a New Criterion">
-              <ol className="list-decimal list-inside space-y-2 ml-2">
-                <li>Add the key to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">CriterionKey</code> union type in <code className="text-nodiac-secondary bg-white/5 px-1 rounded">src/types/regional-hubs.ts</code></li>
-                <li>Add label + description to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">CRITERION_LABELS</code> and <code className="text-nodiac-secondary bg-white/5 px-1 rounded">CRITERION_DESCRIPTIONS</code></li>
-                <li>Add <code className="text-nodiac-secondary bg-white/5 px-1 rounded">[key]_score: number</code> field to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">CountyScore</code> interface</li>
-                <li>Add to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">ALL_CRITERIA</code> array</li>
-                <li>Update <code className="text-nodiac-secondary bg-white/5 px-1 rounded">getCriterionValue()</code> in <code className="text-nodiac-secondary bg-white/5 px-1 rounded">county-scorer.ts</code></li>
-                <li>Add default weight to all profiles in <code className="text-nodiac-secondary bg-white/5 px-1 rounded">weight-profiles.ts</code></li>
-                <li>Add to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">SiteScoreBreakdown</code> in <code className="text-nodiac-secondary bg-white/5 px-1 rounded">screening.ts</code></li>
-                <li>Add to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">buildSiteBreakdown()</code> in <code className="text-nodiac-secondary bg-white/5 px-1 rounded">site-scorer.ts</code></li>
-                <li>Add column to <code className="text-nodiac-secondary bg-white/5 px-1 rounded">county_scores</code> Supabase table</li>
-                <li>Update the Python pipeline to compute the new score</li>
-              </ol>
-            </SubSection>
-
-            <SubSection title="Planned Upgrades">
-              <ul className="list-disc list-inside space-y-1 ml-2 text-sm">
-                <li><strong className="text-gray-200">EIA Form 923</strong> — Generation data for capacity factor gap analysis (better curtailment proxy)</li>
-                <li><strong className="text-gray-200">Long-haul fiber routes</strong> — Proximity to backbone fiber (e.g., InterTubes dataset) for enterprise/dark fiber scoring</li>
-                <li><strong className="text-gray-200">Permitting enrichment</strong> — Batch web research via Claude skill, prioritizing target hub regions</li>
-                <li><strong className="text-gray-200">Temporal tracking</strong> — Store score history, show trends over time</li>
-                <li><strong className="text-gray-200">Geometric mean option</strong> — Capture interaction effects between criteria</li>
-              </ul>
-            </SubSection>
           </Section>
         </main>
       </div>
