@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -10,8 +10,6 @@ import { PresetProfiles } from '@/components/regional-hubs/PresetProfiles'
 import { CountyDetailPanel } from '@/components/regional-hubs/CountyDetailPanel'
 import { MapLegend } from '@/components/regional-hubs/MapLegend'
 import { ExportControls } from '@/components/regional-hubs/ExportControls'
-import { NarrativeSection } from '@/components/regional-hubs/NarrativeSection'
-import { MethodologyDeepDive } from '@/components/regional-hubs/MethodologyDeepDive'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
@@ -25,6 +23,7 @@ export default function RegionalHubsPage() {
   const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
   const [activeProfileId, setActiveProfileId] = useState<string | null>('balanced')
   const [selectedCounty, setSelectedCounty] = useState<WeightedCountyScore | null>(null)
+  const [highlightThreshold, setHighlightThreshold] = useState(6.5)
 
   const { weightedScores, scoreLookup, scoreRange } = useWeightedScores(scores, weights)
 
@@ -107,8 +106,10 @@ export default function RegionalHubsPage() {
                 or drag individual sliders for custom weighting. Changes are instant — no server calls.
               </p>
               <p>
-                <strong className="text-white">Brighter purple = higher score.</strong> The color scale compresses the top 20%
-                for visual pop. Scroll down for narrative context and full methodology.
+                <strong className="text-white">Absolute color scale:</strong> Counties are colored on a fixed 0–10 scale.
+                Purple shades show scores below the highlight threshold; counties above the threshold
+                glow <strong className="text-[#4de2e4]">neon teal</strong>. Drag the threshold slider to adjust
+                where the teal transition kicks in (default: 6.5 = Strong Fit).
               </p>
             </div>
           </details>
@@ -133,6 +134,7 @@ export default function RegionalHubsPage() {
                   scoreRange={scoreRange}
                   regions={regions}
                   onCountyClick={handleCountyClick}
+                  highlightThreshold={highlightThreshold}
                 />
 
                 {/* Floating weight panel */}
@@ -145,9 +147,42 @@ export default function RegionalHubsPage() {
                     weights={weights}
                     onWeightChange={handleWeightChange}
                   />
+
+                  {/* Threshold slider */}
+                  <div className="pt-4 border-t border-white/10 space-y-1">
+                    <div className="flex justify-between items-center">
+                      <label className="text-xs text-gray-300 font-semibold tracking-wide uppercase">
+                        Highlight Threshold
+                      </label>
+                      <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
+                        {highlightThreshold.toFixed(1)}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={10}
+                      step={0.5}
+                      value={highlightThreshold}
+                      onChange={(e) => setHighlightThreshold(parseFloat(e.target.value))}
+                      className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                        bg-white/10
+                        [&::-webkit-slider-thumb]:appearance-none
+                        [&::-webkit-slider-thumb]:w-3.5
+                        [&::-webkit-slider-thumb]:h-3.5
+                        [&::-webkit-slider-thumb]:rounded-full
+                        [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                        [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
+                        [&::-webkit-slider-thumb]:transition-shadow
+                        [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
+                    />
+                    <p className="text-[10px] text-gray-500">
+                      Counties scoring above this glow teal
+                    </p>
+                  </div>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
@@ -166,16 +201,25 @@ export default function RegionalHubsPage() {
         </div>
       </section>
 
-      {/* Narrative */}
-      <NarrativeSection />
-
-      {/* Divider */}
-      <div className="max-w-4xl mx-auto px-6">
-        <hr className="border-white/10" />
-      </div>
-
-      {/* Deep Dive Methodology */}
-      <MethodologyDeepDive />
+      {/* Brief usage guide */}
+      <section className="px-6 py-12">
+        <div className="max-w-3xl mx-auto space-y-4">
+          <h2 className="text-xl font-bold text-white">How it works</h2>
+          <p className="text-gray-400 leading-relaxed">
+            Each county is scored 0–10 across six criteria (co-op density, grid reliability,
+            curtailment opportunity, permitting environment, IT labor, and fiber availability).
+            Adjust the weight sliders to prioritize what matters most for your deployment strategy,
+            and drag the highlight threshold to control where the teal glow begins.
+            Click any county to inspect its full score breakdown.
+          </p>
+          <p className="text-gray-500 text-sm">
+            For full methodology, data sources, and technical details, see the{' '}
+            <Link href="/docs" className="text-nodiac-secondary hover:underline">
+              Developer Docs
+            </Link>.
+          </p>
+        </div>
+      </section>
     </div>
   )
 }
