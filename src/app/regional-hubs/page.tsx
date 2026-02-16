@@ -220,11 +220,6 @@ export default function RegionalHubsPage() {
                         </div>
                       </div>
 
-                      <WeightControls
-                        weights={weights}
-                        onWeightChange={handleWeightChange}
-                      />
-
                       {/* Threshold slider — only visible in absolute mode */}
                       {colorMode === 'absolute' && (
                         <div className="pt-4 border-t border-white/10 space-y-1">
@@ -259,6 +254,11 @@ export default function RegionalHubsPage() {
                           </p>
                         </div>
                       )}
+
+                      <WeightControls
+                        weights={weights}
+                        onWeightChange={handleWeightChange}
+                      />
                     </div>
                   </details>
                 </div>
