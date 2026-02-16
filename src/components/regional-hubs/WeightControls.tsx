@@ -1,17 +1,15 @@
 'use client'
 
 import { useCallback } from 'react'
-import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
+import type { CriterionKey } from '@/types/regional-hubs'
 import { ALL_CRITERIA, CRITERION_LABELS, CRITERION_DESCRIPTIONS } from '@/types/regional-hubs'
 
 interface WeightControlsProps {
   weights: Record<CriterionKey, number>
   onWeightChange: (weights: Record<CriterionKey, number>) => void
-  scoringMode: ScoringMode
-  onScoringModeChange: (mode: ScoringMode) => void
 }
 
-export function WeightControls({ weights, onWeightChange, scoringMode, onScoringModeChange }: WeightControlsProps) {
+export function WeightControls({ weights, onWeightChange }: WeightControlsProps) {
   const handleChange = useCallback(
     (key: CriterionKey, value: number) => {
       onWeightChange({ ...weights, [key]: value })
@@ -24,32 +22,6 @@ export function WeightControls({ weights, onWeightChange, scoringMode, onScoring
       <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
         Criteria Weights
       </h3>
-
-      {/* Scoring mode toggle */}
-      <div className="flex items-center gap-2 pb-2 border-b border-gray-200 dark:border-white/10">
-        <button
-          onClick={() => onScoringModeChange('arithmetic')}
-          className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
-            scoringMode === 'arithmetic'
-              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-          title="Arithmetic mean: weighted average of scores"
-        >
-          Arithmetic
-        </button>
-        <button
-          onClick={() => onScoringModeChange('geometric')}
-          className={`px-2 py-1 text-xs rounded font-medium transition-colors ${
-            scoringMode === 'geometric'
-              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
-              : 'text-gray-400 hover:text-gray-300'
-          }`}
-          title="Geometric mean: penalizes near-zero scores in any criterion"
-        >
-          Geometric
-        </button>
-      </div>
 
       {ALL_CRITERIA.map((key) => (
         <div key={key} className="space-y-1">

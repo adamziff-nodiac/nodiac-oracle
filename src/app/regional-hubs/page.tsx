@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import { SlidersHorizontal, X } from 'lucide-react'
+import { SlidersHorizontal, X, Info } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import dynamic from 'next/dynamic'
@@ -64,6 +64,13 @@ export default function RegionalHubsPage() {
     },
     [weightedScores]
   )
+
+  const handleScoringModeChange = useCallback((mode: ScoringMode) => {
+    setScoringMode(mode)
+    if (mode === 'geometric') {
+      setColorMode('percentile')
+    }
+  }, [])
 
   const handleCloseDetail = useCallback(() => {
     setSelectedCounty(null)
@@ -185,12 +192,21 @@ export default function RegionalHubsPage() {
                     <div className="mt-4 space-y-5">
                       {/* Scoring Mode toggle */}
                       <div className="space-y-1.5">
-                        <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
-                          Scoring Mode
-                        </label>
+                        <div className="flex items-center gap-1.5">
+                          <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                            Scoring Mode
+                          </label>
+                          <div className="group relative">
+                            <Info className="w-3 h-3 text-gray-400 dark:text-gray-500 cursor-help" />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-52 p-2.5 rounded-lg bg-gray-900 dark:bg-gray-800 text-[11px] text-gray-200 leading-relaxed opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 shadow-lg">
+                              <p><strong className="text-white">Arithmetic</strong> averages scores linearly — good all-rounder.</p>
+                              <p className="mt-1"><strong className="text-white">Geometric</strong> penalizes near-zero scores, rewarding counties that are strong across all criteria.</p>
+                            </div>
+                          </div>
+                        </div>
                         <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
                           <button
-                            onClick={() => setScoringMode('arithmetic')}
+                            onClick={() => handleScoringModeChange('arithmetic')}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               scoringMode === 'arithmetic'
                                 ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
@@ -200,7 +216,7 @@ export default function RegionalHubsPage() {
                             Arithmetic
                           </button>
                           <button
-                            onClick={() => setScoringMode('geometric')}
+                            onClick={() => handleScoringModeChange('geometric')}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               scoringMode === 'geometric'
                                 ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
@@ -230,11 +246,15 @@ export default function RegionalHubsPage() {
                           </button>
                           <button
                             onClick={() => setColorMode('absolute')}
+                            disabled={scoringMode === 'geometric'}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               colorMode === 'absolute'
                                 ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
-                                : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                : scoringMode === 'geometric'
+                                  ? 'bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-600 cursor-not-allowed'
+                                  : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
+                            title={scoringMode === 'geometric' ? 'Absolute mode is not available with geometric scoring' : undefined}
                           >
                             Absolute
                           </button>
@@ -279,8 +299,6 @@ export default function RegionalHubsPage() {
                       <WeightControls
                         weights={weights}
                         onWeightChange={handleWeightChange}
-                        scoringMode={scoringMode}
-                        onScoringModeChange={setScoringMode}
                       />
                     </div>
                   </details>
