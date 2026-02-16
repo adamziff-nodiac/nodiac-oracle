@@ -5,22 +5,29 @@ import { Source, Layer } from 'react-map-gl/mapbox'
 
 const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
-// Purple scale: all counties visible, high scores glow Nodiac purple
-const COLOR_LOW = '#2d2233'     // visible muted purple — distinct from base map
-const COLOR_MID = '#5c2d55'     // mid-range purple
-const COLOR_HIGH = '#8b3578'    // bright Nodiac purple
-const COLOR_PEAK = '#b48fc1'    // soft orchid for top scores — max pop
+// Absolute-score color ramp (0–10 scale):
+// Smooth purple gradient from 0 up to the highlight threshold,
+// then transitions to neon teal above the threshold.
+const COLOR_LOW      = '#1a1520'   // very dark purple — lowest scores
+const COLOR_MID_LOW  = '#2d2233'   // dark purple
+const COLOR_MID      = '#5c2d55'   // medium purple
+const COLOR_HIGH     = '#8b3578'   // bright purple
+const COLOR_ORCHID   = '#b48fc1'   // soft orchid — at threshold
+const COLOR_PEAK     = '#4de2e4'   // NEON TEAL — above threshold
+const COLOR_NULL     = '#221d28'   // counties with no data
 
 interface CountyChoroplethProps {
   scoreLookup: Map<string, number>
   scoreRange: readonly [number, number]
   hoveredFips: string | null
+  highlightThreshold?: number
 }
 
 export function CountyChoropleth({
   scoreLookup,
   scoreRange,
   hoveredFips,
+  highlightThreshold = 6.5,
 }: CountyChoroplethProps) {
   const [baseGeojson, setBaseGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
 
@@ -63,10 +70,28 @@ export function CountyChoropleth({
     ] as mapboxgl.Expression
   }, [hoveredFips])
 
-  if (!scoredGeojson) return null
+  // Absolute-score color expression: fixed 0–10 scale with threshold-based teal transition
+  const fillColorExpression = useMemo(() => {
+    const t = highlightThreshold
+    return [
+      'case',
+      ['==', ['get', 'compositeScore'], null],
+      COLOR_NULL,
+      [
+        'interpolate',
+        ['linear'],
+        ['get', 'compositeScore'],
+        0,           COLOR_LOW,
+        t * 0.4,     COLOR_MID_LOW,
+        t * 0.7,     COLOR_MID,
+        t * 0.9,     COLOR_HIGH,
+        t,           COLOR_ORCHID,
+        Math.min(t + 0.5, 10), COLOR_PEAK,
+      ],
+    ] as unknown as string
+  }, [highlightThreshold])
 
-  const [minScore, maxScore] = scoreRange
-  const midScore = (minScore + maxScore) / 2
+  if (!scoredGeojson) return null
 
   return (
     <Source
@@ -78,20 +103,7 @@ export function CountyChoropleth({
         id="county-fill"
         type="fill"
         paint={{
-          'fill-color': [
-            'case',
-            ['==', ['get', 'compositeScore'], null],
-            '#221d28',
-            [
-              'interpolate',
-              ['linear'],
-              ['get', 'compositeScore'],
-              minScore, COLOR_LOW,
-              midScore, COLOR_MID,
-              maxScore * 0.8, COLOR_HIGH,
-              maxScore, COLOR_PEAK,
-            ],
-          ] as unknown as string,
+          'fill-color': fillColorExpression,
           'fill-opacity': fillOpacityExpression as number,
         }}
       />
@@ -107,4 +119,4 @@ export function CountyChoropleth({
   )
 }
 
-export { COLOR_LOW, COLOR_MID, COLOR_HIGH, COLOR_PEAK }
+export { COLOR_LOW, COLOR_MID_LOW, COLOR_MID, COLOR_HIGH, COLOR_ORCHID, COLOR_PEAK, COLOR_NULL }
