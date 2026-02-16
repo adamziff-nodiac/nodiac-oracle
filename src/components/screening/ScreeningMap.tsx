@@ -45,10 +45,14 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
     }
     const lats = allWithCoords.map(s => Number(s.latitude))
     const lngs = allWithCoords.map(s => Number(s.longitude))
+    // On mobile (< 768px), zoom out more so the full US is visible
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    const defaultZoom = isMobile ? 3 : 5
+
     return {
       longitude: (Math.min(...lngs) + Math.max(...lngs)) / 2,
       latitude: (Math.min(...lats) + Math.max(...lats)) / 2,
-      zoom: allWithCoords.length === 1 ? 8 : 5,
+      zoom: allWithCoords.length === 1 ? (isMobile ? 6 : 8) : defaultZoom,
     }
   }, [sites])
 
