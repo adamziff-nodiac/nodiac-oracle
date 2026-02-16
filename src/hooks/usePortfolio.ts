@@ -128,11 +128,23 @@ export function usePortfolio(prebuiltSlug?: string) {
       // Rebuild score_breakdown from live county data if available
       let breakdown = site.score_breakdown
       if (site.fips_code && countyScoreLookup[site.fips_code]) {
-        breakdown = countyScoreLookup[site.fips_code]
+        breakdown = { ...countyScoreLookup[site.fips_code] }
       }
 
       if (!breakdown) {
         return { ...site, utility_type: utilityType }
+      }
+
+      // For site screening, co-op score is binary (1 or 0) based on utility type.
+      // County-level density is for the regional hubs map; individual sites are
+      // either in co-op territory or not.
+      if (utilityType) {
+        const ut = utilityType.toLowerCase()
+        if (ut.includes('co-op') || ut.includes('coop') || ut.includes('cooperative')) {
+          breakdown.coop_density = 1
+        } else {
+          breakdown.coop_density = 0
+        }
       }
 
       const score = scoreSiteWeighted(
