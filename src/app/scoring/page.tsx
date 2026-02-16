@@ -90,7 +90,6 @@ function CodeBlock({ children, title }: { children: string; title?: string }) {
 const TOC = [
   { id: 'overview', label: 'Overview' },
   { id: 'seven-criteria', label: 'The Seven Criteria' },
-  { id: 'scoring', label: 'Scoring & Tiering' },
   { id: 'weight-profiles', label: 'Weight Profiles' },
   { id: 'site-screening', label: 'Site Screening' },
   { id: 'data-sources', label: 'Data Sources & Quality' },
@@ -623,110 +622,6 @@ export default function ScoringPage() {
             </div>
           </Section>
 
-          {/* ═══ SCORING & VISUALIZATION ═══ */}
-          <Section id="scoring" title="Scoring & Visualization">
-            <SubSection title="Composite Score">
-              <p>
-                Each county and site receives a composite score from 0 to 10. Two scoring modes are available:
-              </p>
-
-              <p><strong className="text-gray-900 dark:text-white">Arithmetic Mean (default):</strong></p>
-              <FormulaBlock>composite = ( &Sigma; criterion_score_i &times; weight_i ) / ( &Sigma; weight_i ) &times; 10</FormulaBlock>
-              <p>
-                Each criterion score is 0&ndash;1. Weights range from 0 to 3. If a weight is set to 0, that criterion is
-                excluded entirely &mdash; it doesn&apos;t penalize the county, it&apos;s simply ignored.
-              </p>
-
-              <p><strong className="text-gray-900 dark:text-white">Geometric Mean:</strong></p>
-              <FormulaBlock>{'composite = exp( Σ(weight_i × ln(score_i + ε)) / Σ(weight_i) ) × 10'}</FormulaBlock>
-              <p>
-                The geometric mean naturally penalizes counties that score near zero on any criterion, rewarding
-                balanced performance across all dimensions. A county scoring 0.0 on co-op density but 1.0 on everything
-                else would be heavily penalized under geometric mean but only slightly affected under arithmetic.
-                Uses epsilon (ε = 0.001) to handle zero scores. Toggle between modes in the Advanced Controls panel.
-              </p>
-            </SubSection>
-
-            <MethodDropdown title="Worked Example">
-              <p>
-                County with: Co-op = 0.80, Grid = 0.65, Curtailment = 0.50, Permitting = 0.50, Labor = 0.50, Fiber = 0.50, Queue = 0.40
-              </p>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-white/10">
-                      <th className="text-left py-2 pr-3 text-gray-500 dark:text-gray-400 font-medium">Profile</th>
-                      <th className="text-left py-2 pr-3 text-gray-500 dark:text-gray-400 font-medium">Weights</th>
-                      <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium">Arithmetic</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-gray-100 dark:border-white/5">
-                      <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Balanced</td>
-                      <td className="py-2 pr-3 text-sm">All = 1.0</td>
-                      <td className="py-2 text-nodiac-secondary font-bold">5.50</td>
-                    </tr>
-                    <tr className="border-b border-gray-100 dark:border-white/5">
-                      <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Co-op Priority</td>
-                      <td className="py-2 pr-3 text-sm">Co-op 3, Permit 2, Queue 0.5, rest 0.5&ndash;1</td>
-                      <td className="py-2 text-nodiac-secondary font-bold">6.04</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Curtailment Capture</td>
-                      <td className="py-2 pr-3 text-sm">Curtail 3, Queue 2, Grid 1.5, rest 0.5&ndash;1</td>
-                      <td className="py-2 text-nodiac-secondary font-bold">5.05</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </MethodDropdown>
-
-            <SubSection title="Map Visualization">
-              <p>
-                The county map uses a <strong className="text-gray-900 dark:text-white">continuous color scale</strong> &mdash; not discrete tier buckets. Two modes are available:
-              </p>
-              <p>
-                <strong className="text-gray-900 dark:text-white">Percentile (default):</strong> Counties are ranked by composite score and colored by quantile.
-                The top ~5% appear in neon teal, tapering through orchid to dark purple. This highlights relative
-                standouts regardless of the absolute score distribution. Switching weight profiles or scoring modes
-                re-ranks instantly.
-              </p>
-              <p>
-                <strong className="text-gray-900 dark:text-white">Absolute:</strong> Colors are mapped to a fixed 0&ndash;10 scale
-                with an adjustable highlight threshold (default 6.5). Counties above the threshold appear in teal;
-                those below fade toward purple. This mode is only available with arithmetic scoring &mdash;
-                geometric scores don&rsquo;t distribute evenly on a fixed scale.
-              </p>
-            </SubSection>
-
-            <SubSection title="Site Screening Tiers" id="site-screening-tiers">
-              <p>
-                When screening individual sites (via CSV upload), each site is assigned a tier
-                based on its <strong className="text-gray-900 dark:text-white">percentile rank within the uploaded portfolio</strong> &mdash;
-                not fixed score thresholds:
-              </p>
-              <div className="flex flex-wrap gap-4 mt-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
-                  <span className="text-sm"><strong className="text-gray-900 dark:text-white">Strong Fit:</strong> top ~33% of sites</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#b48fc1]" />
-                  <span className="text-sm"><strong className="text-gray-900 dark:text-white">Moderate Fit:</strong> middle ~34%</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-[#ef4444]" />
-                  <span className="text-sm"><strong className="text-gray-900 dark:text-white">Weak Fit:</strong> bottom ~33%</span>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
-                This mirrors the county map&apos;s percentile-based color scale. Changing weights
-                or switching between arithmetic and geometric scoring re-ranks the portfolio and
-                tiers shift accordingly &mdash; no score threshold ever becomes &ldquo;unreachable.&rdquo;
-              </p>
-            </SubSection>
-          </Section>
-
           {/* ═══ WEIGHT PROFILES ═══ */}
           <Section id="weight-profiles" title="Weight Profiles">
             <p>
@@ -1031,8 +926,112 @@ export default function ScoringPage() {
           {/* ═══ TECHNICAL REFERENCE ═══ */}
           <Section id="technical" title="Technical Reference">
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Software implementation details for developers maintaining or extending the scoring system.
+              Scoring formulas, visualization modes, and implementation details.
             </p>
+
+            <details className="group mt-4">
+              <summary className="text-sm text-nodiac-secondary cursor-pointer hover:underline select-none font-medium">
+                Composite Score Formulas
+              </summary>
+              <div className="mt-3 space-y-4">
+                <p>
+                  Each county and site receives a composite score from 0 to 10. Two scoring modes are available:
+                </p>
+                <p><strong className="text-gray-900 dark:text-white">Arithmetic Mean (default):</strong></p>
+                <FormulaBlock>composite = ( &Sigma; criterion_score_i &times; weight_i ) / ( &Sigma; weight_i ) &times; 10</FormulaBlock>
+                <p>
+                  Each criterion score is 0&ndash;1. Weights range from 0 to 3. If a weight is set to 0, that criterion is
+                  excluded entirely &mdash; it doesn&apos;t penalize the county, it&apos;s simply ignored.
+                </p>
+                <p><strong className="text-gray-900 dark:text-white">Geometric Mean:</strong></p>
+                <FormulaBlock>{'composite = exp( Σ(weight_i × ln(score_i + ε)) / Σ(weight_i) ) × 10'}</FormulaBlock>
+                <p>
+                  The geometric mean naturally penalizes counties that score near zero on any criterion, rewarding
+                  balanced performance across all dimensions. A county scoring 0.0 on co-op density but 1.0 on everything
+                  else would be heavily penalized under geometric mean but only slightly affected under arithmetic.
+                  Uses epsilon (&epsilon; = 0.001) to handle zero scores. Toggle between modes in the Advanced Controls panel.
+                </p>
+                <p className="text-sm font-medium text-gray-900 dark:text-white mt-4">Worked Example</p>
+                <p>
+                  County with: Co-op = 0.80, Grid = 0.65, Curtailment = 0.50, Permitting = 0.50, Labor = 0.50, Fiber = 0.50, Queue = 0.40
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 dark:border-white/10">
+                        <th className="text-left py-2 pr-3 text-gray-500 dark:text-gray-400 font-medium">Profile</th>
+                        <th className="text-left py-2 pr-3 text-gray-500 dark:text-gray-400 font-medium">Weights</th>
+                        <th className="text-left py-2 text-gray-500 dark:text-gray-400 font-medium">Arithmetic</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="border-b border-gray-100 dark:border-white/5">
+                        <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Balanced</td>
+                        <td className="py-2 pr-3 text-sm">All = 1.0</td>
+                        <td className="py-2 text-nodiac-secondary font-bold">5.50</td>
+                      </tr>
+                      <tr className="border-b border-gray-100 dark:border-white/5">
+                        <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Co-op Priority</td>
+                        <td className="py-2 pr-3 text-sm">Co-op 3, Permit 2, Queue 0.5, rest 0.5&ndash;1</td>
+                        <td className="py-2 text-nodiac-secondary font-bold">6.04</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Curtailment Capture</td>
+                        <td className="py-2 pr-3 text-sm">Curtail 3, Queue 2, Grid 1.5, rest 0.5&ndash;1</td>
+                        <td className="py-2 text-nodiac-secondary font-bold">5.05</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </details>
+
+            <details className="group mt-4">
+              <summary className="text-sm text-nodiac-secondary cursor-pointer hover:underline select-none font-medium">
+                Map Visualization & Site Tiers
+              </summary>
+              <div className="mt-3 space-y-4">
+                <p>
+                  The county map uses a <strong className="text-gray-900 dark:text-white">continuous color scale</strong> &mdash; not discrete tier buckets. Two modes are available:
+                </p>
+                <p>
+                  <strong className="text-gray-900 dark:text-white">Percentile (default):</strong> Counties are ranked by composite score and colored by quantile.
+                  The top ~5% appear in neon teal, tapering through orchid to dark purple. This highlights relative
+                  standouts regardless of the absolute score distribution. Switching weight profiles or scoring modes
+                  re-ranks instantly.
+                </p>
+                <p>
+                  <strong className="text-gray-900 dark:text-white">Absolute:</strong> Colors are mapped to a fixed 0&ndash;10 scale
+                  with an adjustable highlight threshold (default 6.5). Counties above the threshold appear in teal;
+                  those below fade toward purple. This mode is only available with arithmetic scoring &mdash;
+                  geometric scores don&rsquo;t distribute evenly on a fixed scale.
+                </p>
+
+                <p className="text-sm font-medium text-gray-900 dark:text-white mt-4" id="site-screening-tiers">Site Screening Tiers</p>
+                <p>
+                  When screening individual sites (via CSV upload), each site is assigned a tier
+                  based on its <strong className="text-gray-900 dark:text-white">percentile rank within the uploaded portfolio</strong>:
+                </p>
+                <div className="flex flex-wrap gap-4 mt-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
+                    <span className="text-sm"><strong className="text-gray-900 dark:text-white">Strong Fit:</strong> top ~33% of sites</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#b48fc1]" />
+                    <span className="text-sm"><strong className="text-gray-900 dark:text-white">Moderate Fit:</strong> middle ~34%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-[#ef4444]" />
+                    <span className="text-sm"><strong className="text-gray-900 dark:text-white">Weak Fit:</strong> bottom ~33%</span>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  Changing weights or switching between arithmetic and geometric scoring re-ranks the portfolio and
+                  tiers shift accordingly.
+                </p>
+              </div>
+            </details>
 
             <details className="group mt-4">
               <summary className="text-sm text-nodiac-secondary cursor-pointer hover:underline select-none font-medium">
