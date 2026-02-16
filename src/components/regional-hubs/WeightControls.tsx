@@ -19,13 +19,13 @@ export function WeightControls({ weights, onWeightChange }: WeightControlsProps)
 
   return (
     <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-white tracking-wide uppercase">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
         Criteria Weights
       </h3>
       {ALL_CRITERIA.map((key) => (
         <div key={key} className="space-y-1">
           <div className="flex justify-between items-center">
-            <label className="text-xs text-gray-300 font-medium" title={CRITERION_DESCRIPTIONS[key]}>
+            <label className="text-xs text-gray-600 dark:text-gray-300 font-medium" title={CRITERION_DESCRIPTIONS[key]}>
               {CRITERION_LABELS[key]}
             </label>
             <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
@@ -40,7 +40,7 @@ export function WeightControls({ weights, onWeightChange }: WeightControlsProps)
             value={weights[key]}
             onChange={(e) => handleChange(key, parseFloat(e.target.value))}
             className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-              bg-white/10
+              bg-gray-200 dark:bg-white/10
               [&::-webkit-slider-thumb]:appearance-none
               [&::-webkit-slider-thumb]:w-3.5
               [&::-webkit-slider-thumb]:h-3.5

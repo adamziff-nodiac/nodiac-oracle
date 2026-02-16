@@ -28,15 +28,15 @@ function StepIndicator({ steps }: { steps: ProgressStep[] }) {
             ) : step.status === 'active' ? (
               <Loader2 className="w-5 h-5 text-nodiac-secondary animate-spin" />
             ) : (
-              <div className="w-5 h-5 rounded-full border border-white/20" />
+              <div className="w-5 h-5 rounded-full border border-gray-300 dark:border-white/20" />
             )}
           </div>
           <span
             className={cn(
               'text-sm',
-              step.status === 'active' && 'text-white font-medium',
-              step.status === 'done' && 'text-gray-400',
-              step.status === 'pending' && 'text-gray-500'
+              step.status === 'active' && 'text-gray-900 dark:text-white font-medium',
+              step.status === 'done' && 'text-gray-500 dark:text-gray-400',
+              step.status === 'pending' && 'text-gray-400 dark:text-gray-500'
             )}
           >
             {step.label}
@@ -79,15 +79,15 @@ export function ScreeningContainer() {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-6">
         <div className="text-center mb-10">
-          <h2 className="text-3xl font-bold text-white mb-3">
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-3">
             Screen an IPP Portfolio
           </h2>
-          <p className="text-gray-400 max-w-md mx-auto">
+          <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
             Upload a CSV of potential sites to score them against our regional hub criteria
           </p>
           <div className="flex justify-center gap-3 mt-4">
             <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">← Regional Hubs</a>
-            <span className="text-gray-600">·</span>
+            <span className="text-gray-400 dark:text-gray-600">·</span>
             <a href="/docs" className="text-sm text-nodiac-secondary hover:underline">📖 Developer Docs</a>
           </div>
         </div>
@@ -102,29 +102,29 @@ export function ScreeningContainer() {
         {/* How it works */}
         <div className="mt-12 max-w-2xl w-full">
           <details className="group">
-            <summary className="text-sm text-gray-400 cursor-pointer hover:text-white transition-colors select-none font-medium">
+            <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none font-medium">
               ℹ️ How Site Screening Works
             </summary>
-            <div className="mt-3 p-5 rounded-lg bg-white/5 border border-white/10 text-sm text-gray-300 space-y-3">
+            <div className="mt-3 p-5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-3">
               <p>
-                <strong className="text-white">1. Upload</strong> — Drop a CSV with site names, lat/lon coordinates, and optionally utility info.
+                <strong className="text-gray-900 dark:text-white">1. Upload</strong> — Drop a CSV with site names, lat/lon coordinates, and optionally utility info.
                 Supports Fleet CIR Validated and consolidated formats.
               </p>
               <p>
-                <strong className="text-white">2. FIPS Resolution</strong> — Each site&apos;s location is matched to a US county using
+                <strong className="text-gray-900 dark:text-white">2. FIPS Resolution</strong> — Each site&apos;s location is matched to a US county using
                 county/state names or the FCC Area API (lat/lon → FIPS code).
               </p>
               <p>
-                <strong className="text-white">3. Scoring</strong> — Sites inherit their county&apos;s six criterion scores (co-op density,
+                <strong className="text-gray-900 dark:text-white">3. Scoring</strong> — Sites inherit their county&apos;s six criterion scores (co-op density,
                 grid reliability, curtailment, permitting, labor, fiber). If the CSV identifies the utility type,
                 co-op density is overridden: Co-op → 1.0, IOU → 0.2, Municipal → 0.6.
               </p>
               <p>
-                <strong className="text-white">4. Tiering</strong> — Scores are averaged to a 0–10 composite.
+                <strong className="text-gray-900 dark:text-white">4. Tiering</strong> — Scores are averaged to a 0–10 composite.
                 ≥ 6.5 = Strong Fit (teal), ≥ 4.0 = Moderate Fit (orchid), &lt; 4.0 = Weak Fit (red).
               </p>
               <p>
-                <strong className="text-white">5. Re-weighting</strong> — After upload, use the preset buttons to re-score with different
+                <strong className="text-gray-900 dark:text-white">5. Re-weighting</strong> — After upload, use the preset buttons to re-score with different
                 weight profiles. This happens instantly in your browser.
               </p>
             </div>
@@ -139,7 +139,7 @@ export function ScreeningContainer() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="flex flex-col items-center gap-6">
-          <h3 className="text-lg font-semibold text-white">Processing portfolio</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Processing portfolio</h3>
           <StepIndicator steps={steps} />
         </div>
       </div>
@@ -156,25 +156,25 @@ export function ScreeningContainer() {
   return (
     <div className="space-y-0">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-white/10">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-white/10">
         <div>
-          <h2 className="text-lg font-semibold text-white">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
             {upload?.name || 'Portfolio Results'}
           </h2>
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             {sites.length} sites — {tierCounts.good} strong, {tierCounts.okay} moderate, {tierCounts.bad} weak
           </p>
         </div>
         <div className="flex items-center gap-2">
           <a
             href="/docs#site-screening"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             📖 Docs
           </a>
           <button
             onClick={reset}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             <RotateCcw className="w-3.5 h-3.5" />
             New Upload
@@ -183,7 +183,7 @@ export function ScreeningContainer() {
       </div>
 
       {/* Weight presets */}
-      <div className="px-6 py-3 border-b border-white/10">
+      <div className="px-6 py-3 border-b border-gray-200 dark:border-white/10">
         <div className="flex flex-wrap gap-1.5">
           {WEIGHT_PROFILES.map((profile) => (
             <button
@@ -193,7 +193,7 @@ export function ScreeningContainer() {
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
                 selectedProfileId === profile.id
                   ? 'bg-nodiac-secondary text-nodiac-dark'
-                  : 'bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10'
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10'
               )}
               title={profile.description}
             >
@@ -204,8 +204,8 @@ export function ScreeningContainer() {
       </div>
 
       {/* Map filter + map */}
-      <div className="px-6 py-2 flex items-center gap-1.5 border-b border-white/10">
-        <span className="text-xs text-gray-500 mr-1">Show:</span>
+      <div className="px-6 py-2 flex items-center gap-1.5 border-b border-gray-200 dark:border-white/10">
+        <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Show:</span>
         {ALL_TIERS.map((tier) => {
           const active = visibleTiers.has(tier)
           const color = TIER_COLORS[tier]
@@ -216,8 +216,8 @@ export function ScreeningContainer() {
               className={cn(
                 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
                 active
-                  ? 'bg-white/10 text-white'
-                  : 'bg-white/[0.03] text-gray-500 hover:bg-white/5'
+                  ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white'
+                  : 'bg-gray-50 dark:bg-white/[0.03] text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
               )}
             >
               <span
@@ -232,7 +232,7 @@ export function ScreeningContainer() {
           )
         })}
       </div>
-      <div className="h-[40vh] border-b border-white/10">
+      <div className="h-[40vh] border-b border-gray-200 dark:border-white/10">
         <ScreeningMap
           sites={sites}
           selectedSiteId={selectedSiteId}

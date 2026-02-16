@@ -18,7 +18,7 @@ export function Navigation() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex items-center gap-1 bg-nodiac-dark/50 backdrop-blur-sm rounded-full px-2 py-1 border border-white/10">
+    <nav className="flex items-center gap-1 bg-white/70 dark:bg-nodiac-dark/50 backdrop-blur-sm rounded-full px-2 py-1 border border-gray-200 dark:border-white/10">
       {navItems.map((item) => {
         const isActive = pathname === item.href ||
           (item.href !== '/' && pathname.startsWith(item.href))
@@ -32,7 +32,7 @@ export function Navigation() {
               'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
               isActive
                 ? 'bg-nodiac-primary text-white'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
             )}
           >
             <Icon className="w-4 h-4" />

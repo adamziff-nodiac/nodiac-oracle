@@ -39,7 +39,7 @@ export function ExportControls({ targetRef }: ExportControlsProps) {
     <button
       onClick={handleExport}
       disabled={isExporting}
-      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-300 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-50"
+      className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors disabled:opacity-50"
     >
       <Download className="w-3.5 h-3.5" />
       {isExporting ? 'Exporting...' : 'Export PNG'}
