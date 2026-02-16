@@ -2,10 +2,10 @@
 
 import { useState, useCallback, useMemo } from 'react'
 import type { PortfolioUpload, PortfolioSite } from '@/types/screening'
-import type { CriterionKey } from '@/types/regional-hubs'
+import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
 import { scoreSiteWeighted } from '@/lib/scoring/site-scorer'
 import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
-import { getProfileById } from '@/lib/scoring/weight-profiles'
+import { getProfileById, DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 
 type ScreeningState = 'idle' | 'uploading' | 'scoring' | 'loading-results' | 'done' | 'error'
 
@@ -20,7 +20,9 @@ export function usePortfolio() {
   const [sites, setSites] = useState<PortfolioSite[]>([])
   const [error, setError] = useState<string | null>(null)
   const [siteCount, setSiteCount] = useState<number>(0)
-  const [selectedProfileId, setProfileId] = useState<string>('balanced')
+  const [selectedProfileId, setSelectedProfileId] = useState<string | null>('balanced')
+  const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
+  const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
 
   // Build progress steps from current state
   const steps: ProgressStep[] = useMemo(() => {
@@ -33,7 +35,6 @@ export function usePortfolio() {
 
     return all.map((step, i) => {
       if (step.doneAt.includes(state)) return { label: step.label, status: 'done' as const }
-      // The first non-done step is active if we're in a loading state
       const prevAllDone = all.slice(0, i).every(s => s.doneAt.includes(state))
       if (prevAllDone && state !== 'idle' && state !== 'done' && state !== 'error') {
         return { label: step.label, status: 'active' as const }
@@ -42,13 +43,9 @@ export function usePortfolio() {
     })
   }, [state, siteCount])
 
-  // Recompute site scores/tiers client-side when the weight profile changes.
-  // Also derive utility_type from raw_data if not already set (covers old uploads).
+  // Recompute site scores/tiers client-side when weights or scoring mode change.
   const scoredSites = useMemo(() => {
     if (sites.length === 0) return sites
-
-    const profile = getProfileById(selectedProfileId)
-    if (!profile) return sites
 
     return sites.map((site) => {
       // Derive utility_type from raw_data if DB column is empty
@@ -66,12 +63,32 @@ export function usePortfolio() {
 
       const { score, tier } = scoreSiteWeighted(
         site.score_breakdown,
-        profile.weights as Record<CriterionKey, number>
+        weights,
+        scoringMode
       )
 
       return { ...site, site_score: score, tier, utility_type: utilityType }
     })
-  }, [sites, selectedProfileId])
+  }, [sites, weights, scoringMode])
+
+  // Select a preset profile — sets weights and tracks selection
+  const setProfileId = useCallback((id: string) => {
+    const profile = getProfileById(id)
+    if (!profile) return
+    setWeights({ ...profile.weights })
+    setSelectedProfileId(id)
+  }, [])
+
+  // Custom weight change — clears active profile
+  const handleWeightChange = useCallback((newWeights: Record<CriterionKey, number>) => {
+    setWeights(newWeights)
+    setSelectedProfileId(null)
+  }, [])
+
+  // Scoring mode change — auto-switch behavior for geometric
+  const handleScoringModeChange = useCallback((mode: ScoringMode) => {
+    setScoringMode(mode)
+  }, [])
 
   const uploadCSV = useCallback(async (file: File) => {
     setState('uploading')
@@ -120,7 +137,9 @@ export function usePortfolio() {
     setSites([])
     setError(null)
     setSiteCount(0)
-    setProfileId('balanced')
+    setSelectedProfileId('balanced')
+    setWeights({ ...DEFAULT_WEIGHTS })
+    setScoringMode('arithmetic')
   }, [])
 
   return {
@@ -132,6 +151,10 @@ export function usePortfolio() {
     steps,
     selectedProfileId,
     setProfileId,
+    weights,
+    onWeightChange: handleWeightChange,
+    scoringMode,
+    onScoringModeChange: handleScoringModeChange,
     uploadCSV,
     reset,
   }

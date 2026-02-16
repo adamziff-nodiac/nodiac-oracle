@@ -1,6 +1,8 @@
-import type { CountyScore, CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
+import type { CountyScore, CriterionKey, WeightedCountyScore, ScoringMode } from '@/types/regional-hubs'
+import { computeWeightedMean } from './weighted-mean'
 
-export type ScoringMode = 'arithmetic' | 'geometric'
+// Re-export ScoringMode for existing consumers
+export type { ScoringMode }
 
 /**
  * Extract the score value for a given criterion from a CountyScore record.
@@ -19,66 +21,21 @@ function getCriterionValue(county: CountyScore, key: CriterionKey): number {
 }
 
 /**
- * Compute a weighted arithmetic mean composite score for a county.
- * Each criterion score (0-1) is multiplied by its weight,
- * then divided by the sum of weights to produce a 0-1 composite.
- * Final output is scaled to 0-10 for display.
- */
-function computeArithmeticScore(
-  county: CountyScore,
-  weights: Record<CriterionKey, number>
-): number {
-  let weightedSum = 0
-  let totalWeight = 0
-
-  for (const key of Object.keys(weights) as CriterionKey[]) {
-    const w = weights[key]
-    if (w <= 0) continue
-    weightedSum += getCriterionValue(county, key) * w
-    totalWeight += w
-  }
-
-  if (totalWeight === 0) return 0
-  return (weightedSum / totalWeight) * 10
-}
-
-/**
- * Compute a weighted geometric mean composite score for a county.
- * Uses log-space summation: exp(Σ(w_i * ln(v_i + ε)) / Σw_i) * 10
- * Geometric mean penalises counties that score near-zero on any criterion,
- * even if other scores are high — rewarding balanced performance.
- */
-function computeGeometricScore(
-  county: CountyScore,
-  weights: Record<CriterionKey, number>
-): number {
-  const epsilon = 0.001
-  let weightedLogSum = 0
-  let totalWeight = 0
-
-  for (const key of Object.keys(weights) as CriterionKey[]) {
-    const w = weights[key]
-    if (w <= 0) continue
-    const v = getCriterionValue(county, key)
-    weightedLogSum += w * Math.log(v + epsilon)
-    totalWeight += w
-  }
-
-  if (totalWeight === 0) return 0
-  return Math.exp(weightedLogSum / totalWeight) * 10
-}
-
-/**
  * Compute a weighted composite score for a county using the selected mode.
+ * Delegates to the shared computeWeightedMean function.
  */
 export function computeCompositeScore(
   county: CountyScore,
   weights: Record<CriterionKey, number>,
   mode: ScoringMode = 'arithmetic'
 ): number {
-  return mode === 'geometric'
-    ? computeGeometricScore(county, weights)
-    : computeArithmeticScore(county, weights)
+  const entries: Array<{ value: number; weight: number }> = []
+  for (const key of Object.keys(weights) as CriterionKey[]) {
+    const w = weights[key]
+    if (w <= 0) continue
+    entries.push({ value: getCriterionValue(county, key), weight: w })
+  }
+  return computeWeightedMean(entries, mode)
 }
 
 /**

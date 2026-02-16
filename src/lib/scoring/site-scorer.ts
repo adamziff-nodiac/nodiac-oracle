@@ -1,10 +1,38 @@
 import type { SiteScoreBreakdown, SiteTier } from '@/types/screening'
-import type { CriterionKey } from '@/types/regional-hubs'
+import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
+import { computeWeightedMean } from './weighted-mean'
 
 const TIER_THRESHOLDS = {
   good: 6.5,
   okay: 4.0,
 } as const
+
+function assignTier(score: number): SiteTier {
+  return score >= TIER_THRESHOLDS.good
+    ? 'good'
+    : score >= TIER_THRESHOLDS.okay
+      ? 'okay'
+      : 'bad'
+}
+
+/**
+ * Build {value, weight} entries from a breakdown + weights,
+ * skipping null/undefined values and zero-weight criteria.
+ */
+function buildEntries(
+  breakdown: SiteScoreBreakdown,
+  weights: Record<CriterionKey, number>
+): Array<{ value: number; weight: number }> {
+  const entries: Array<{ value: number; weight: number }> = []
+  for (const key of Object.keys(weights) as CriterionKey[]) {
+    const w = weights[key]
+    if (w <= 0) continue
+    const value = breakdown[key]
+    if (value === null || value === undefined) continue
+    entries.push({ value, weight: w })
+  }
+  return entries
+}
 
 /**
  * Score a site based on its criterion breakdown (simple average).
@@ -23,48 +51,29 @@ export function scoreSite(breakdown: SiteScoreBreakdown): { score: number; tier:
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length
   const score = Math.round(avg * 100) / 10 // 0-10 scale, 1 decimal
 
-  const tier: SiteTier =
-    score >= TIER_THRESHOLDS.good
-      ? 'good'
-      : score >= TIER_THRESHOLDS.okay
-        ? 'okay'
-        : 'bad'
-
-  return { score, tier }
+  return { score, tier: assignTier(score) }
 }
 
 /**
- * Score a site using weighted criteria — same logic as county-scorer's computeCompositeScore.
- * Used client-side when the user selects a weight preset.
+ * Score a site using weighted criteria and scoring mode.
+ * Delegates to the shared computeWeightedMean — same math as county scoring.
+ *
+ * The only difference from county scoring is that site breakdowns can have
+ * null values (e.g. when a county has no data for a criterion), which are
+ * skipped rather than treated as zero.
  */
 export function scoreSiteWeighted(
   breakdown: SiteScoreBreakdown,
-  weights: Record<CriterionKey, number>
+  weights: Record<CriterionKey, number>,
+  mode: ScoringMode = 'arithmetic'
 ): { score: number; tier: SiteTier } {
-  let weightedSum = 0
-  let totalWeight = 0
+  const entries = buildEntries(breakdown, weights)
+  if (entries.length === 0) return { score: 0, tier: 'bad' }
 
-  for (const key of Object.keys(weights) as CriterionKey[]) {
-    const w = weights[key]
-    if (w <= 0) continue
-    const value = breakdown[key]
-    if (value === null || value === undefined) continue
-    weightedSum += value * w
-    totalWeight += w
-  }
+  const raw = computeWeightedMean(entries, mode)
+  const score = Math.round(raw * 10) / 10 // 1 decimal
 
-  if (totalWeight === 0) return { score: 0, tier: 'bad' }
-
-  const score = Math.round((weightedSum / totalWeight) * 100) / 10 // 0-10 scale, 1 decimal
-
-  const tier: SiteTier =
-    score >= TIER_THRESHOLDS.good
-      ? 'good'
-      : score >= TIER_THRESHOLDS.okay
-        ? 'okay'
-        : 'bad'
-
-  return { score, tier }
+  return { score, tier: assignTier(score) }
 }
 
 /**

@@ -6,8 +6,9 @@ import { ScreeningMap } from './ScreeningMap'
 import { SiteTable } from './SiteTable'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import type { ProgressStep } from '@/hooks/usePortfolio'
-import { RotateCcw, Check, Loader2 } from 'lucide-react'
+import { RotateCcw, Check, Loader2, Info } from 'lucide-react'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
+import { WeightControls } from '@/components/regional-hubs/WeightControls'
 import type { SiteTier } from '@/types/screening'
 import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
 import { useCountyScores } from '@/hooks/useCountyScores'
@@ -51,6 +52,8 @@ export function ScreeningContainer() {
   const {
     state, upload, sites, error, steps,
     selectedProfileId, setProfileId,
+    weights, onWeightChange,
+    scoringMode, onScoringModeChange,
     uploadCSV, reset,
   } = usePortfolio()
   const { scores: countyScores, citationRegistry } = useCountyScores()
@@ -86,9 +89,9 @@ export function ScreeningContainer() {
             Upload a CSV of potential sites to score them against our regional hub criteria
           </p>
           <div className="flex justify-center gap-3 mt-4">
-            <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">← Regional Hubs</a>
-            <span className="text-gray-400 dark:text-gray-600">·</span>
-            <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">📖 Scoring Methodology</a>
+            <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">&larr; Regional Hubs</a>
+            <span className="text-gray-400 dark:text-gray-600">&middot;</span>
+            <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">Scoring Methodology</a>
           </div>
         </div>
 
@@ -125,29 +128,29 @@ export function ScreeningContainer() {
         <div className="mt-12 max-w-2xl w-full">
           <details className="group">
             <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none font-medium">
-              ℹ️ How Site Screening Works
+              How Site Screening Works
             </summary>
             <div className="mt-3 p-5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-3">
               <p>
-                <strong className="text-gray-900 dark:text-white">1. Upload</strong> — Drop a CSV with site names, lat/lon coordinates, and optionally utility info.
+                <strong className="text-gray-900 dark:text-white">1. Upload</strong> &mdash; Drop a CSV with site names, lat/lon coordinates, and optionally utility info.
                 Supports Fleet CIR Validated and consolidated formats.
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">2. FIPS Resolution</strong> — Each site&apos;s location is matched to a US county using
-                county/state names or the FCC Area API (lat/lon → FIPS code).
+                <strong className="text-gray-900 dark:text-white">2. FIPS Resolution</strong> &mdash; Each site&apos;s location is matched to a US county using
+                county/state names or the FCC Area API (lat/lon &rarr; FIPS code).
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">3. Scoring</strong> — Sites inherit their county&apos;s criterion scores (grid reliability,
-                curtailment, permitting, labor, fiber). Co-op density is determined by a spatial check:
-                if the site&apos;s coordinates fall within a co-op/public power service territory → 1.0, otherwise → 0.0.
+                <strong className="text-gray-900 dark:text-white">3. Scoring</strong> &mdash; Sites inherit their county&apos;s criterion scores (grid reliability,
+                curtailment, permitting, labor, fiber, queue pressure). Co-op density is determined by a spatial check:
+                if the site&apos;s coordinates fall within a co-op/public power service territory &rarr; 1.0, otherwise &rarr; 0.0.
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">4. Tiering</strong> — Scores are averaged to a 0–10 composite.
-                ≥ 6.5 = Strong Fit (teal), ≥ 4.0 = Moderate Fit (orchid), &lt; 4.0 = Weak Fit (red).
+                <strong className="text-gray-900 dark:text-white">4. Tiering</strong> &mdash; Scores are combined into a 0&ndash;10 composite using weighted arithmetic or geometric mean.
+                &ge; 6.5 = Strong Fit, &ge; 4.0 = Moderate Fit, &lt; 4.0 = Weak Fit.
               </p>
               <p>
-                <strong className="text-gray-900 dark:text-white">5. Re-weighting</strong> — After upload, use the preset buttons to re-score with different
-                weight profiles. This happens instantly in your browser.
+                <strong className="text-gray-900 dark:text-white">5. Customization</strong> &mdash; After upload, switch weight presets, adjust individual criterion weights,
+                or toggle between arithmetic and geometric scoring. All re-scoring happens instantly in your browser.
               </p>
             </div>
           </details>
@@ -184,7 +187,7 @@ export function ScreeningContainer() {
             {upload?.name || 'Portfolio Results'}
           </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {sites.length} sites — {tierCounts.good} strong, {tierCounts.okay} moderate, {tierCounts.bad} weak
+            {sites.length} sites &mdash; {tierCounts.good} strong, {tierCounts.okay} moderate, {tierCounts.bad} weak
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -192,7 +195,7 @@ export function ScreeningContainer() {
             href="/scoring#site-screening"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
-            📖 Scoring
+            Scoring
           </a>
           <button
             onClick={reset}
@@ -204,8 +207,8 @@ export function ScreeningContainer() {
         </div>
       </div>
 
-      {/* Weight presets */}
-      <div className="px-6 py-3 border-b border-gray-200 dark:border-white/10">
+      {/* Weight presets + scoring controls */}
+      <div className="px-6 py-3 border-b border-gray-200 dark:border-white/10 space-y-3">
         <div className="flex flex-wrap gap-1.5">
           {WEIGHT_PROFILES.map((profile) => (
             <button
@@ -223,6 +226,59 @@ export function ScreeningContainer() {
             </button>
           ))}
         </div>
+
+        {/* Collapsible advanced controls */}
+        <details className="group">
+          <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none flex items-center gap-1.5">
+            <span className="transition-transform group-open:rotate-90 text-[10px]">&#9654;</span>
+            Advanced Controls
+          </summary>
+          <div className="mt-3 space-y-4">
+            {/* Scoring Mode toggle */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5">
+                <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                  Scoring Mode
+                </label>
+                <div className="group/tip relative">
+                  <Info className="w-3 h-3 text-gray-400 dark:text-gray-500 cursor-help" />
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 w-52 p-2.5 rounded-lg bg-gray-900 dark:bg-gray-800 text-[11px] text-gray-200 leading-relaxed opacity-0 pointer-events-none group-hover/tip:opacity-100 transition-opacity z-50 shadow-lg">
+                    <p><strong className="text-white">Arithmetic</strong> averages scores linearly &mdash; good all-rounder.</p>
+                    <p className="mt-1"><strong className="text-white">Geometric</strong> penalizes near-zero scores, rewarding sites that are strong across all criteria.</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10 max-w-xs">
+                <button
+                  onClick={() => onScoringModeChange('arithmetic')}
+                  className={`flex-1 text-xs py-1.5 transition-colors ${
+                    scoringMode === 'arithmetic'
+                      ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                      : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Arithmetic
+                </button>
+                <button
+                  onClick={() => onScoringModeChange('geometric')}
+                  className={`flex-1 text-xs py-1.5 transition-colors ${
+                    scoringMode === 'geometric'
+                      ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                      : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                >
+                  Geometric
+                </button>
+              </div>
+            </div>
+
+            {/* Weight sliders */}
+            <WeightControls
+              weights={weights}
+              onWeightChange={onWeightChange}
+            />
+          </div>
+        </details>
       </div>
 
       {/* Map filter + map */}

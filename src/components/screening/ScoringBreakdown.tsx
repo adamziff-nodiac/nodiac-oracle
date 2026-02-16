@@ -35,12 +35,12 @@ export function ScoringBreakdown({ breakdown, permittingCitations }: ScoringBrea
           return (
             <div key={key} className="space-y-0.5">
               <div className="flex justify-between text-xs">
-                <span className="text-gray-400">{label}</span>
-                <span className="text-gray-300 tabular-nums">
+                <span className="text-gray-500 dark:text-gray-400">{label}</span>
+                <span className="text-gray-600 dark:text-gray-300 tabular-nums">
                   {value != null ? (value * 10).toFixed(1) : 'N/A'}
                 </span>
               </div>
-              <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+              <div className="h-1.5 bg-gray-200 dark:bg-white/5 rounded-full overflow-hidden">
                 {value != null && (
                   <div
                     className={`h-full rounded-full ${barColor(value)}`}
