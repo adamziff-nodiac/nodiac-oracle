@@ -146,7 +146,7 @@ export function ScreeningContainer() {
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">4. Tiering</strong> &mdash; Scores are combined into a 0&ndash;10 composite using weighted arithmetic or geometric mean.
-                &ge; 6.5 = Strong Fit, &ge; 4.0 = Moderate Fit, &lt; 4.0 = Weak Fit.
+                Sites are ranked by percentile within the portfolio: top ~33% = Strong Fit, middle ~34% = Moderate Fit, bottom ~33% = Weak Fit.
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">5. Customization</strong> &mdash; After upload, switch weight presets, adjust individual criterion weights,

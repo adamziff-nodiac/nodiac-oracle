@@ -2,20 +2,6 @@ import type { SiteScoreBreakdown, SiteTier } from '@/types/screening'
 import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
 import { computeWeightedMean } from './weighted-mean'
 
-const TIER_THRESHOLDS: Record<ScoringMode, { good: number; okay: number }> = {
-  arithmetic: { good: 6.5, okay: 4.0 },
-  geometric:  { good: 4.5, okay: 2.5 },
-}
-
-function assignTier(score: number, mode: ScoringMode = 'arithmetic'): SiteTier {
-  const t = TIER_THRESHOLDS[mode]
-  return score >= t.good
-    ? 'good'
-    : score >= t.okay
-      ? 'okay'
-      : 'bad'
-}
-
 /**
  * Build {value, weight} entries from a breakdown + weights,
  * skipping null/undefined values and zero-weight criteria.
@@ -38,7 +24,8 @@ function buildEntries(
 /**
  * Score a site based on its criterion breakdown (simple average).
  * Each criterion is 0-1; we average available scores and scale to 0-10.
- * Used server-side for default (Balanced) scoring.
+ * Used server-side for initial scoring at upload time.
+ * Tier is a placeholder — client-side re-scoring assigns percentile-based tiers.
  */
 export function scoreSite(breakdown: SiteScoreBreakdown): { score: number; tier: SiteTier } {
   const values = Object.values(breakdown).filter(
@@ -52,29 +39,61 @@ export function scoreSite(breakdown: SiteScoreBreakdown): { score: number; tier:
   const avg = values.reduce((sum, v) => sum + v, 0) / values.length
   const score = Math.round(avg * 100) / 10 // 0-10 scale, 1 decimal
 
-  return { score, tier: assignTier(score, 'arithmetic') }
+  // Placeholder tier — overridden by percentile tiers client-side
+  return { score, tier: 'okay' }
 }
 
 /**
  * Score a site using weighted criteria and scoring mode.
- * Delegates to the shared computeWeightedMean — same math as county scoring.
- *
- * The only difference from county scoring is that site breakdowns can have
- * null values (e.g. when a county has no data for a criterion), which are
- * skipped rather than treated as zero.
+ * Returns only the score — tier assignment is done by assignPercentileTiers()
+ * after all sites in the portfolio have been scored.
  */
 export function scoreSiteWeighted(
   breakdown: SiteScoreBreakdown,
   weights: Record<CriterionKey, number>,
   mode: ScoringMode = 'arithmetic'
-): { score: number; tier: SiteTier } {
+): number {
   const entries = buildEntries(breakdown, weights)
-  if (entries.length === 0) return { score: 0, tier: 'bad' }
+  if (entries.length === 0) return 0
 
   const raw = computeWeightedMean(entries, mode)
-  const score = Math.round(raw * 10) / 10 // 1 decimal
+  return Math.round(raw * 10) / 10 // 1 decimal
+}
 
-  return { score, tier: assignTier(score, mode) }
+/**
+ * Assign tiers based on percentile rank within the portfolio.
+ * Top ~33% = Strong Fit, middle ~34% = Moderate Fit, bottom ~33% = Weak Fit.
+ *
+ * This mirrors the county map's percentile-based color scale — tiers are
+ * relative to the portfolio, not pegged to fixed score thresholds. Changing
+ * weights or scoring mode re-ranks the portfolio and tiers shift accordingly.
+ */
+export function assignPercentileTiers<T extends { site_score: number | null }>(
+  sites: T[]
+): (T & { tier: SiteTier })[] {
+  const scoredSites = sites.filter(s => s.site_score != null)
+  if (scoredSites.length === 0) {
+    return sites.map(s => ({ ...s, tier: 'bad' as SiteTier }))
+  }
+
+  // Sort descending by score to find percentile cutoffs
+  const sorted = scoredSites
+    .map(s => s.site_score!)
+    .sort((a, b) => b - a)
+
+  const p33 = sorted[Math.floor(sorted.length * 0.33)] ?? sorted[sorted.length - 1]
+  const p66 = sorted[Math.floor(sorted.length * 0.66)] ?? sorted[sorted.length - 1]
+
+  return sites.map(s => {
+    if (s.site_score == null) return { ...s, tier: 'bad' as SiteTier }
+
+    const tier: SiteTier =
+      s.site_score >= p33 ? 'good'
+        : s.site_score >= p66 ? 'okay'
+          : 'bad'
+
+    return { ...s, tier }
+  })
 }
 
 /**

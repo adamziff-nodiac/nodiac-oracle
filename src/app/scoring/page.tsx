@@ -188,7 +188,7 @@ export default function ScoringPage() {
             <DataBox>
               <p><Label>Data vintage:</Label> Scores are built from federal datasets (EIA, FCC, Census, LBNL) and ArcGIS spatial data. Most sources are 2023&ndash;2024 vintage. Permitting scores are refreshed quarterly.</p>
               <p><Label>Coverage:</Label> All 3,143 U.S. counties are scored. Individual criterion coverage ranges from 54% (curtailment &mdash; counties with no renewables score 0) to 100% (co-op density, labor, fiber).</p>
-              <p><Label>Tier thresholds:</Label> Tier cutoffs adjust by scoring mode. Arithmetic: &ge; 6.5 / &ge; 4.0. Geometric: &ge; 4.5 / &ge; 2.5. See <a href="#site-screening-tiers" className="text-nodiac-secondary hover:underline">Site Screening Tiers</a> for details.</p>
+              <p><Label>Tiering:</Label> Both the county map and site screening use percentile-based ranking &mdash; no fixed score thresholds. Tiers reflect relative position within the dataset, so they stay meaningful regardless of scoring mode or weight profile.</p>
             </DataBox>
           </Section>
 
@@ -701,49 +701,28 @@ export default function ScoringPage() {
 
             <SubSection title="Site Screening Tiers" id="site-screening-tiers">
               <p>
-                When screening individual sites (via CSV upload), each site is assigned a tier.
-                Because geometric scoring compresses the scale (near-zero scores on any criterion
-                pull the composite down), tier thresholds adjust by mode:
+                When screening individual sites (via CSV upload), each site is assigned a tier
+                based on its <strong className="text-gray-900 dark:text-white">percentile rank within the uploaded portfolio</strong> &mdash;
+                not fixed score thresholds:
               </p>
-              <div className="overflow-x-auto mt-3">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-gray-200 dark:border-white/10">
-                      <th className="text-left py-2 pr-4 text-gray-500 dark:text-gray-400 font-medium">Tier</th>
-                      <th className="text-left py-2 px-4 text-gray-500 dark:text-gray-400 font-medium">Arithmetic</th>
-                      <th className="text-left py-2 px-4 text-gray-500 dark:text-gray-400 font-medium">Geometric</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-gray-100 dark:border-white/5">
-                      <td className="py-2 pr-4 flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
-                        <strong className="text-gray-900 dark:text-white">Strong Fit</strong>
-                      </td>
-                      <td className="py-2 px-4">&ge; 6.5</td>
-                      <td className="py-2 px-4">&ge; 4.5</td>
-                    </tr>
-                    <tr className="border-b border-gray-100 dark:border-white/5">
-                      <td className="py-2 pr-4 flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-[#b48fc1]" />
-                        <strong className="text-gray-900 dark:text-white">Moderate Fit</strong>
-                      </td>
-                      <td className="py-2 px-4">&ge; 4.0</td>
-                      <td className="py-2 px-4">&ge; 2.5</td>
-                    </tr>
-                    <tr>
-                      <td className="py-2 pr-4 flex items-center gap-2">
-                        <span className="w-3 h-3 rounded-full bg-[#ef4444]" />
-                        <strong className="text-gray-900 dark:text-white">Weak Fit</strong>
-                      </td>
-                      <td className="py-2 px-4">&lt; 4.0</td>
-                      <td className="py-2 px-4">&lt; 2.5</td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div className="flex flex-wrap gap-4 mt-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#4de2e4]" />
+                  <span className="text-sm"><strong className="text-gray-900 dark:text-white">Strong Fit:</strong> top ~33% of sites</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#b48fc1]" />
+                  <span className="text-sm"><strong className="text-gray-900 dark:text-white">Moderate Fit:</strong> middle ~34%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-[#ef4444]" />
+                  <span className="text-sm"><strong className="text-gray-900 dark:text-white">Weak Fit:</strong> bottom ~33%</span>
+                </div>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                These tiers apply to the site screening workflow only. The county map uses a continuous color scale (percentile or absolute) without discrete tier buckets.
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                This mirrors the county map&apos;s percentile-based color scale. Changing weights
+                or switching between arithmetic and geometric scoring re-ranks the portfolio and
+                tiers shift accordingly &mdash; no score threshold ever becomes &ldquo;unreachable.&rdquo;
               </p>
             </SubSection>
           </Section>

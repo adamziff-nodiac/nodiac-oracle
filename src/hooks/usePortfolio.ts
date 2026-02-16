@@ -3,7 +3,7 @@
 import { useState, useCallback, useMemo } from 'react'
 import type { PortfolioUpload, PortfolioSite } from '@/types/screening'
 import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
-import { scoreSiteWeighted } from '@/lib/scoring/site-scorer'
+import { scoreSiteWeighted, assignPercentileTiers } from '@/lib/scoring/site-scorer'
 import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
 import { getProfileById, DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 
@@ -43,12 +43,12 @@ export function usePortfolio() {
     })
   }, [state, siteCount])
 
-  // Recompute site scores/tiers client-side when weights or scoring mode change.
+  // Recompute site scores client-side, then assign percentile-based tiers.
   const scoredSites = useMemo(() => {
     if (sites.length === 0) return sites
 
-    return sites.map((site) => {
-      // Derive utility_type from raw_data if DB column is empty
+    // Pass 1: score each site
+    const withScores = sites.map((site) => {
       let utilityType = site.utility_type
       if (!utilityType && site.raw_data) {
         const { utilityType: derived } = classifyUtilityType(
@@ -61,14 +61,17 @@ export function usePortfolio() {
         return { ...site, utility_type: utilityType }
       }
 
-      const { score, tier } = scoreSiteWeighted(
+      const score = scoreSiteWeighted(
         site.score_breakdown,
         weights,
         scoringMode
       )
 
-      return { ...site, site_score: score, tier, utility_type: utilityType }
+      return { ...site, site_score: score, utility_type: utilityType }
     })
+
+    // Pass 2: assign tiers by percentile rank within the portfolio
+    return assignPercentileTiers(withScores)
   }, [sites, weights, scoringMode])
 
   // Select a preset profile — sets weights and tracks selection
