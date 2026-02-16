@@ -1,7 +1,7 @@
 {
   "name": "Greenbacker Full Portfolio",
   "slug": "greenbacker-full",
-  "generatedAt": "2026-02-16T19:06:36.853Z",
+  "generatedAt": "2026-02-16T19:15:13.649Z",
   "siteCount": 462,
   "sites": [
     {
@@ -3041,17 +3041,9 @@
         "Capacity_MW_AC": "0.1685",
         "Capacity_MW_DC": "0.1685"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -4889,7 +4881,7 @@
         "Capacity_MW_AC": "0.38304",
         "Capacity_MW_DC": "0.38304"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
       "score_breakdown": null,
       "utility_type": null
@@ -9853,17 +9845,9 @@
         "Capacity_MW_AC": "2.0288",
         "Capacity_MW_DC": "2.0288"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -12623,17 +12607,9 @@
         "Capacity_MW_AC": "2.202",
         "Capacity_MW_DC": "2.202"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -14698,17 +14674,9 @@
         "Capacity_MW_AC": "1.4958",
         "Capacity_MW_DC": "1.4958"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -16369,7 +16337,7 @@
         "Capacity_MW_AC": "0.56002",
         "Capacity_MW_DC": "0.56002"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
       "score_breakdown": null,
       "utility_type": null
@@ -17417,17 +17385,9 @@
         "Capacity_MW_AC": "0.1636",
         "Capacity_MW_DC": "0.1636"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -17460,17 +17420,9 @@
         "Capacity_MW_AC": "0.1389",
         "Capacity_MW_DC": "0.1389"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -17503,17 +17455,9 @@
         "Capacity_MW_AC": "0.2197",
         "Capacity_MW_DC": "0.2197"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -18532,7 +18476,7 @@
         "Investment Status": "Closed",
         "Status": "Operating"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
       "score_breakdown": null,
       "utility_type": null
@@ -18554,7 +18498,7 @@
         "Investment Status": "Closed",
         "Status": "Operating"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
       "score_breakdown": null,
       "utility_type": null

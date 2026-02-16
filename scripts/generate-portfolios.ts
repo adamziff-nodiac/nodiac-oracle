@@ -544,12 +544,15 @@ async function processPortfolio(
     const countyScores = fips_code ? scoresByFips.get(fips_code) ?? null : null
     const breakdown = buildSiteBreakdown(countyScores)
 
-    // Co-op territory override
+    // Co-op territory override — only apply when site has county scores
     const coopCheck = coopResults.get(i)
     let utilityType: string | null = null
+    const hasCountyScores = countyScores !== null
 
     if (coopCheck) {
-      breakdown.coop_density = coopCheck.inCoopTerritory ? 1.0 : 0.0
+      if (hasCountyScores) {
+        breakdown.coop_density = coopCheck.inCoopTerritory ? 1.0 : 0.0
+      }
       if (coopCheck.inCoopTerritory) {
         utilityType = coopCheck.utilityName ? `Co-op: ${coopCheck.utilityName}` : 'Co-op'
       }
@@ -557,12 +560,12 @@ async function processPortfolio(
       // No coords or non-US — fall back to CSV keyword classification
       const classified = classifyUtilityType(site.raw_data as Record<string, unknown>)
       utilityType = classified.utilityType
-      if (classified.coopOverride !== null) {
+      if (hasCountyScores && classified.coopOverride !== null) {
         breakdown.coop_density = classified.coopOverride
       }
     }
 
-    const score = scoreSite(breakdown)
+    const score = hasCountyScores ? scoreSite(breakdown) : null
 
     portfolioSites.push({
       id: `${config.slug}-${String(i).padStart(4, '0')}`,
@@ -576,8 +579,7 @@ async function processPortfolio(
       raw_data: site.raw_data,
       site_score: score,
       tier: null, // Client-side percentile tiering
-      score_breakdown: breakdown.coop_density === null &&
-        breakdown.grid_reliability === null ? null : breakdown,
+      score_breakdown: hasCountyScores ? breakdown : null,
       utility_type: utilityType,
     })
   }

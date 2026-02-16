@@ -1,7 +1,7 @@
 {
   "name": "Powerbank Portfolio",
   "slug": "powerbank",
-  "generatedAt": "2026-02-16T19:06:39.804Z",
+  "generatedAt": "2026-02-16T19:15:16.811Z",
   "siteCount": 53,
   "sites": [
     {
@@ -331,17 +331,9 @@
         "Geolocation \n (Latitude)": "43.693333",
         "Geolocation \n (Longitude)": "-79.725833"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -365,17 +357,9 @@
         "Geolocation \n (Latitude)": "43.435556",
         "Geolocation \n (Longitude)": "-79.710556"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -399,17 +383,9 @@
         "Geolocation \n (Latitude)": "43.821111",
         "Geolocation \n (Longitude)": "-79.339167"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -433,17 +409,9 @@
         "Geolocation \n (Latitude)": "42.388333",
         "Geolocation \n (Longitude)": "-82.165278"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -467,17 +435,9 @@
         "Geolocation \n (Latitude)": "44.001667",
         "Geolocation \n (Longitude)": "-79.449722"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -501,17 +461,9 @@
         "Geolocation \n (Latitude)": "43.821944",
         "Geolocation \n (Longitude)": "-79.255"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -535,17 +487,9 @@
         "Geolocation \n (Latitude)": "44.367778",
         "Geolocation \n (Longitude)": "-76.95"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -569,17 +513,9 @@
         "Geolocation \n (Latitude)": "44.503",
         "Geolocation \n (Longitude)": "-77.547"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -603,17 +539,9 @@
         "Geolocation \n (Latitude)": "44.427222",
         "Geolocation \n (Longitude)": "-76.981944"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -637,17 +565,9 @@
         "Geolocation \n (Latitude)": "44.44",
         "Geolocation \n (Longitude)": "-79.070556"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -671,17 +591,9 @@
         "Geolocation \n (Latitude)": "43.850278",
         "Geolocation \n (Longitude)": "-79.39"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -705,17 +617,9 @@
         "Geolocation \n (Latitude)": "43.828333",
         "Geolocation \n (Longitude)": "-79.263333"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -739,17 +643,9 @@
         "Geolocation \n (Latitude)": "44.576111",
         "Geolocation \n (Longitude)": "-78.727778"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -773,17 +669,9 @@
         "Geolocation \n (Latitude)": "44.823889",
         "Geolocation \n (Longitude)": "-81.216944"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -807,17 +695,9 @@
         "Geolocation \n (Latitude)": "43.873333",
         "Geolocation \n (Longitude)": "-79.023056"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -841,17 +721,9 @@
         "Geolocation \n (Latitude)": "43.161944",
         "Geolocation \n (Longitude)": "-80.249722"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -875,17 +747,9 @@
         "Geolocation \n (Latitude)": "43.154167",
         "Geolocation \n (Longitude)": "-80.220556"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -909,17 +773,9 @@
         "Geolocation \n (Latitude)": "44.605556",
         "Geolocation \n (Longitude)": "-79.408611"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -943,17 +799,9 @@
         "Geolocation \n (Latitude)": "47.438889",
         "Geolocation \n (Longitude)": "-79.631944"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -977,17 +825,9 @@
         "Geolocation \n (Latitude)": "43.653889",
         "Geolocation \n (Longitude)": "-79.895"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1011,17 +851,9 @@
         "Geolocation \n (Latitude)": "44.366111",
         "Geolocation \n (Longitude)": "-76.864722"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1045,17 +877,9 @@
         "Geolocation \n (Latitude)": "43.83",
         "Geolocation \n (Longitude)": "-79.256111"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1079,17 +903,9 @@
         "Geolocation \n (Latitude)": "43.493056",
         "Geolocation \n (Longitude)": "-80.542222"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1113,17 +929,9 @@
         "Geolocation \n (Latitude)": "43.493056",
         "Geolocation \n (Longitude)": "-80.542222"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1147,17 +955,9 @@
         "Geolocation \n (Latitude)": "43.493056",
         "Geolocation \n (Longitude)": "-80.542222"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1181,17 +981,9 @@
         "Geolocation \n (Latitude)": "44.021111",
         "Geolocation \n (Longitude)": "-77.894167"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1215,17 +1007,9 @@
         "Geolocation \n (Latitude)": "43.381111",
         "Geolocation \n (Longitude)": "-79.782778"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1249,17 +1033,9 @@
         "Geolocation \n (Latitude)": "43.707222",
         "Geolocation \n (Longitude)": "-79.805"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1283,17 +1059,9 @@
         "Geolocation \n (Latitude)": "43.778333",
         "Geolocation \n (Longitude)": "-79.279167"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1317,17 +1085,9 @@
         "Geolocation \n (Latitude)": "43.783889",
         "Geolocation \n (Longitude)": "-79.563333"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1351,17 +1111,9 @@
         "Geolocation \n (Latitude)": "43.766389",
         "Geolocation \n (Longitude)": "-79.549444"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1385,17 +1137,9 @@
         "Geolocation \n (Latitude)": "43.603333",
         "Geolocation \n (Longitude)": "-79.525556"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1419,17 +1163,9 @@
         "Geolocation \n (Latitude)": "43.601944",
         "Geolocation \n (Longitude)": "-79.589444"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1453,17 +1189,9 @@
         "Geolocation \n (Latitude)": "43.8025",
         "Geolocation \n (Longitude)": "-79.188333"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1487,17 +1215,9 @@
         "Geolocation \n (Latitude)": "43.952778",
         "Geolocation \n (Longitude)": "-77.145556"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1521,17 +1241,9 @@
         "Geolocation \n (Latitude)": "45.415278",
         "Geolocation \n (Longitude)": "-76.144167"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1555,17 +1267,9 @@
         "Geolocation \n (Latitude)": "44.369167",
         "Geolocation \n (Longitude)": "-76.865833"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1589,17 +1293,9 @@
         "Geolocation \n (Latitude)": "44.2675",
         "Geolocation \n (Longitude)": "-80.0625"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1623,17 +1319,9 @@
         "Geolocation \n (Latitude)": "43.797778",
         "Geolocation \n (Longitude)": "-79.515278"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1657,17 +1345,9 @@
         "Geolocation \n (Latitude)": "43.7675",
         "Geolocation \n (Longitude)": "-79.535278"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1691,17 +1371,9 @@
         "Geolocation \n (Latitude)": "44.546667",
         "Geolocation \n (Longitude)": "-76.676667"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1725,17 +1397,9 @@
         "Geolocation \n (Latitude)": "45.426389",
         "Geolocation \n (Longitude)": "-79.249444"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1759,17 +1423,9 @@
         "Geolocation \n (Latitude)": "45.596389",
         "Geolocation \n (Longitude)": "-79.405556"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
@@ -1793,17 +1449,9 @@
         "Geolocation \n (Latitude)": "45.232778",
         "Geolocation \n (Longitude)": "-76.0775"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     }
   ]

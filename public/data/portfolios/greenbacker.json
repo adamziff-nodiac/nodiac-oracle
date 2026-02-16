@@ -1,7 +1,7 @@
 {
   "name": "Greenbacker Portfolio",
   "slug": "greenbacker",
-  "generatedAt": "2026-02-16T19:06:18.980Z",
+  "generatedAt": "2026-02-16T19:14:53.879Z",
   "siteCount": 135,
   "sites": [
     {
@@ -2208,17 +2208,9 @@
         "Natural Gas Distance (miles)": "16",
         "Inverter Loading Ratio": "1.35"
       },
-      "site_score": 0,
+      "site_score": null,
       "tier": null,
-      "score_breakdown": {
-        "coop_density": 0,
-        "grid_reliability": null,
-        "clipped_curtailed": null,
-        "permitting": null,
-        "labor": null,
-        "fiber": null,
-        "queue_pressure": null
-      },
+      "score_breakdown": null,
       "utility_type": null
     },
     {
