@@ -394,6 +394,12 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           selectedSiteId={selectedSiteId}
           onSiteSelect={handleSiteSelect}
           visibleTiers={visibleTiers}
+          countySaidi={Object.fromEntries(
+            countyScores.map(cs => [cs.fips_code, {
+              avg_saidi: cs.grid_reliability_avg_saidi ?? null,
+              years: cs.grid_reliability_years ?? null,
+            }])
+          )}
         />
       </div>
 

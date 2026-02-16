@@ -110,7 +110,7 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
                         : `⚠️ Based on only ${county.grid_reliability_years} year${county.grid_reliability_years > 1 ? 's' : ''} of data`
                       }
                       {county.grid_reliability_avg_saidi != null && (
-                        <> · Avg {county.grid_reliability_avg_saidi} min/yr</>
+                        <> · Avg {county.grid_reliability_avg_saidi} min/yr ({(100 - (county.grid_reliability_avg_saidi / 525960) * 100).toFixed(county.grid_reliability_avg_saidi < 1000 ? 3 : 2)}% uptime)</>
                       )}
                     </p>
                   )}

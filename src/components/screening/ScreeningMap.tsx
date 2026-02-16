@@ -19,14 +19,20 @@ const CRITERION_LABELS: Record<string, string> = {
   coop_density: 'Co-op Density',
 }
 
+interface CountySaidiData {
+  avg_saidi: number | null
+  years: number | null
+}
+
 interface ScreeningMapProps {
   sites: PortfolioSite[]
   selectedSiteId: string | null
   onSiteSelect: (siteId: string) => void
   visibleTiers: Set<SiteTier>
+  countySaidi?: Record<string, CountySaidiData>
 }
 
-export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers }: ScreeningMapProps) {
+export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers, countySaidi }: ScreeningMapProps) {
   const [popupSite, setPopupSite] = useState<PortfolioSite | null>(null)
   const [expanded, setExpanded] = useState(false)
   const isDark = useIsDark()
@@ -160,6 +166,18 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
                 </span>
               </div>
             )}
+
+            {/* Projected uptime from county SAIDI data */}
+            {popupSite.fips_code && countySaidi?.[popupSite.fips_code]?.avg_saidi != null && (() => {
+              const saidi = countySaidi[popupSite.fips_code].avg_saidi!
+              const uptime = (100 - (saidi / 525960) * 100)
+              return (
+                <p className="text-[10px] text-gray-500 mt-1">
+                  Projected grid uptime: <span className="font-medium text-gray-700">{uptime.toFixed(saidi < 1000 ? 3 : 2)}%</span>
+                  <span className="text-gray-400"> ({saidi.toFixed(0)} min/yr outage)</span>
+                </p>
+              )
+            })()}
 
             {/* Top criteria (always show top 3) */}
             {breakdownRows.length > 0 && (
