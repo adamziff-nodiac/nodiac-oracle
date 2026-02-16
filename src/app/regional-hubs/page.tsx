@@ -143,43 +143,53 @@ export default function RegionalHubsPage() {
                     activeProfileId={activeProfileId}
                     onSelect={handlePresetSelect}
                   />
-                  <WeightControls
-                    weights={weights}
-                    onWeightChange={handleWeightChange}
-                  />
 
-                  {/* Threshold slider */}
-                  <div className="pt-4 border-t border-white/10 space-y-1">
-                    <div className="flex justify-between items-center">
-                      <label className="text-xs text-gray-300 font-semibold tracking-wide uppercase">
-                        Highlight Threshold
-                      </label>
-                      <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
-                        {highlightThreshold.toFixed(1)}
-                      </span>
+                  {/* Collapsible advanced controls */}
+                  <details className="group">
+                    <summary className="text-xs text-gray-400 cursor-pointer hover:text-white transition-colors select-none flex items-center gap-1.5">
+                      <span className="transition-transform group-open:rotate-90 text-[10px]">&#9654;</span>
+                      Advanced Controls
+                    </summary>
+                    <div className="mt-4 space-y-5">
+                      <WeightControls
+                        weights={weights}
+                        onWeightChange={handleWeightChange}
+                      />
+
+                      {/* Threshold slider */}
+                      <div className="pt-4 border-t border-white/10 space-y-1">
+                        <div className="flex justify-between items-center">
+                          <label className="text-xs text-gray-300 font-semibold tracking-wide uppercase">
+                            Highlight Threshold
+                          </label>
+                          <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
+                            {highlightThreshold.toFixed(1)}
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={0}
+                          max={10}
+                          step={0.5}
+                          value={highlightThreshold}
+                          onChange={(e) => setHighlightThreshold(parseFloat(e.target.value))}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                            bg-white/10
+                            [&::-webkit-slider-thumb]:appearance-none
+                            [&::-webkit-slider-thumb]:w-3.5
+                            [&::-webkit-slider-thumb]:h-3.5
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                            [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
+                            [&::-webkit-slider-thumb]:transition-shadow
+                            [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
+                        />
+                        <p className="text-[10px] text-gray-500">
+                          Counties scoring above this glow teal
+                        </p>
+                      </div>
                     </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={10}
-                      step={0.5}
-                      value={highlightThreshold}
-                      onChange={(e) => setHighlightThreshold(parseFloat(e.target.value))}
-                      className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                        bg-white/10
-                        [&::-webkit-slider-thumb]:appearance-none
-                        [&::-webkit-slider-thumb]:w-3.5
-                        [&::-webkit-slider-thumb]:h-3.5
-                        [&::-webkit-slider-thumb]:rounded-full
-                        [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                        [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
-                        [&::-webkit-slider-thumb]:transition-shadow
-                        [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
-                    />
-                    <p className="text-[10px] text-gray-500">
-                      Counties scoring above this glow teal
-                    </p>
-                  </div>
+                  </details>
                 </div>
 
                 <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} />
