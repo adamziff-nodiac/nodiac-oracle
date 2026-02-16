@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import type { PortfolioUpload, PortfolioSite } from '@/types/screening'
 import type { CriterionKey, ScoringMode } from '@/types/regional-hubs'
 import { scoreSiteWeighted, assignPercentileTiers } from '@/lib/scoring/site-scorer'
 import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
 import { getProfileById, DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
+import { getPortfolioBySlug } from '@/data/portfolio-registry'
 
 type ScreeningState = 'idle' | 'uploading' | 'scoring' | 'loading-results' | 'done' | 'error'
 
@@ -14,8 +15,8 @@ export type ProgressStep = {
   status: 'pending' | 'active' | 'done'
 }
 
-export function usePortfolio() {
-  const [state, setState] = useState<ScreeningState>('idle')
+export function usePortfolio(prebuiltSlug?: string) {
+  const [state, setState] = useState<ScreeningState>(prebuiltSlug ? 'loading-results' : 'idle')
   const [upload, setUpload] = useState<PortfolioUpload | null>(null)
   const [sites, setSites] = useState<PortfolioSite[]>([])
   const [error, setError] = useState<string | null>(null)
@@ -23,6 +24,51 @@ export function usePortfolio() {
   const [selectedProfileId, setSelectedProfileId] = useState<string | null>('balanced')
   const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
+  const [isPrebuilt, setIsPrebuilt] = useState(!!prebuiltSlug)
+
+  // Load pre-built portfolio on mount
+  useEffect(() => {
+    if (!prebuiltSlug) return
+
+    const portfolio = getPortfolioBySlug(prebuiltSlug)
+    if (!portfolio) {
+      setError(`Portfolio "${prebuiltSlug}" not found`)
+      setState('error')
+      return
+    }
+
+    let cancelled = false
+
+    async function load() {
+      try {
+        const res = await fetch(portfolio!.jsonPath)
+        if (!res.ok) throw new Error('Failed to load portfolio data')
+        const data = await res.json()
+
+        if (cancelled) return
+
+        setUpload({
+          id: portfolio!.slug,
+          user_id: 'prebuilt',
+          name: data.name,
+          site_count: data.siteCount,
+          created_at: data.generatedAt,
+          updated_at: data.generatedAt,
+        })
+        setSites(data.sites)
+        setSiteCount(data.siteCount)
+        setIsPrebuilt(true)
+        setState('done')
+      } catch (err) {
+        if (cancelled) return
+        setError(err instanceof Error ? err.message : 'Failed to load portfolio')
+        setState('error')
+      }
+    }
+
+    load()
+    return () => { cancelled = true }
+  }, [prebuiltSlug])
 
   // Build progress steps from current state
   const steps: ProgressStep[] = useMemo(() => {
@@ -143,6 +189,7 @@ export function usePortfolio() {
     setSelectedProfileId('balanced')
     setWeights({ ...DEFAULT_WEIGHTS })
     setScoringMode('arithmetic')
+    setIsPrebuilt(false)
   }, [])
 
   return {
@@ -160,5 +207,6 @@ export function usePortfolio() {
     onScoringModeChange: handleScoringModeChange,
     uploadCSV,
     reset,
+    isPrebuilt,
   }
 }

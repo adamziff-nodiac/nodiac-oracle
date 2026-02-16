@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useCallback } from 'react'
+import Link from 'next/link'
 import { CsvUploader } from './CsvUploader'
 import { ScreeningMap } from './ScreeningMap'
 import { SiteTable } from './SiteTable'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import type { ProgressStep } from '@/hooks/usePortfolio'
-import { RotateCcw, Check, Loader2, Info } from 'lucide-react'
+import { RotateCcw, Check, Loader2, Info, ArrowLeft } from 'lucide-react'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
 import { WeightControls } from '@/components/regional-hubs/WeightControls'
 import type { SiteTier } from '@/types/screening'
 import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
+import { PREBUILT_PORTFOLIOS } from '@/data/portfolio-registry'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { cn } from '@/lib/utils'
 
@@ -48,14 +50,18 @@ function StepIndicator({ steps }: { steps: ProgressStep[] }) {
   )
 }
 
-export function ScreeningContainer() {
+interface ScreeningContainerProps {
+  prebuiltSlug?: string
+}
+
+export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
   const {
     state, upload, sites, error, steps,
     selectedProfileId, setProfileId,
     weights, onWeightChange,
     scoringMode, onScoringModeChange,
-    uploadCSV, reset,
-  } = usePortfolio()
+    uploadCSV, reset, isPrebuilt,
+  } = usePortfolio(prebuiltSlug)
   const { scores: countyScores, citationRegistry } = useCountyScores()
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [visibleTiers, setVisibleTiers] = useState<Set<SiteTier>>(new Set(ALL_TIERS))
@@ -68,7 +74,6 @@ export function ScreeningContainer() {
     setVisibleTiers(prev => {
       const next = new Set(prev)
       if (next.has(tier)) {
-        // Don't allow deselecting all — keep at least one
         if (next.size > 1) next.delete(tier)
       } else {
         next.add(tier)
@@ -78,7 +83,7 @@ export function ScreeningContainer() {
   }, [])
 
   // Upload phase
-  if (state === 'idle' || state === 'error') {
+  if (state === 'idle' || (state === 'error' && !isPrebuilt)) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center px-6">
         <div className="text-center mb-10">
@@ -93,6 +98,41 @@ export function ScreeningContainer() {
             <span className="text-gray-400 dark:text-gray-600">&middot;</span>
             <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">Scoring Methodology</a>
           </div>
+        </div>
+
+        {/* Pre-built portfolios */}
+        <div className="w-full max-w-lg mb-10">
+          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide font-semibold mb-3 text-center">
+            View Existing Portfolios
+          </p>
+          <div className="grid gap-2">
+            {PREBUILT_PORTFOLIOS.map((p) => (
+              <Link
+                key={p.slug}
+                href={`/screening/${p.slug}`}
+                className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/20 transition-all group"
+              >
+                <div>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-nodiac-secondary transition-colors">
+                    {p.name}
+                  </span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {p.description}
+                  </p>
+                </div>
+                <span className="text-xs text-gray-400 dark:text-gray-500 group-hover:text-nodiac-secondary transition-colors">
+                  View &rarr;
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 w-full max-w-lg mb-10">
+          <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
+          <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-wide">or upload your own</span>
+          <div className="flex-1 h-px bg-gray-200 dark:bg-white/10" />
         </div>
 
         {/* Workflow steps */}
@@ -164,8 +204,11 @@ export function ScreeningContainer() {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
         <div className="flex flex-col items-center gap-6">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Processing portfolio</h3>
-          <StepIndicator steps={steps} />
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {isPrebuilt ? 'Loading portfolio' : 'Processing portfolio'}
+          </h3>
+          {!isPrebuilt && <StepIndicator steps={steps} />}
+          {isPrebuilt && <Loader2 className="w-6 h-6 text-nodiac-secondary animate-spin" />}
         </div>
       </div>
     )
@@ -181,34 +224,45 @@ export function ScreeningContainer() {
   return (
     <div className="space-y-0">
       {/* Header bar */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-white/10">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+      <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 dark:border-white/10">
+        <div className="min-w-0">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white truncate">
             {upload?.name || 'Portfolio Results'}
           </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             {sites.length} sites &mdash; {tierCounts.good} strong, {tierCounts.okay} moderate, {tierCounts.bad} weak
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
           <a
             href="/scoring#site-screening"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
           >
             Scoring
           </a>
-          <button
-            onClick={reset}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            New Upload
-          </button>
+          {isPrebuilt ? (
+            <Link
+              href="/screening"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">All Portfolios</span>
+              <span className="sm:hidden">Back</span>
+            </Link>
+          ) : (
+            <button
+              onClick={reset}
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              New Upload
+            </button>
+          )}
         </div>
       </div>
 
       {/* Weight presets + scoring controls */}
-      <div className="px-6 py-3 border-b border-gray-200 dark:border-white/10 space-y-3">
+      <div className="px-4 sm:px-6 py-3 border-b border-gray-200 dark:border-white/10 space-y-3">
         <div className="flex flex-wrap gap-1.5">
           {WEIGHT_PROFILES.map((profile) => (
             <button
@@ -282,7 +336,7 @@ export function ScreeningContainer() {
       </div>
 
       {/* Map filter + map */}
-      <div className="px-6 py-2 flex items-center gap-1.5 border-b border-gray-200 dark:border-white/10">
+      <div className="px-4 sm:px-6 py-2 flex items-center gap-1.5 border-b border-gray-200 dark:border-white/10">
         <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Show:</span>
         {ALL_TIERS.map((tier) => {
           const active = visibleTiers.has(tier)
@@ -310,7 +364,7 @@ export function ScreeningContainer() {
           )
         })}
       </div>
-      <div className="h-[30vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
+      <div className="h-[35vh] sm:h-[30vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
         <ScreeningMap
           sites={sites}
           selectedSiteId={selectedSiteId}
@@ -320,7 +374,7 @@ export function ScreeningContainer() {
       </div>
 
       {/* Table */}
-      <div className="px-6 py-4">
+      <div className="px-4 sm:px-6 py-4">
         <SiteTable
           sites={sites}
           selectedSiteId={selectedSiteId}
