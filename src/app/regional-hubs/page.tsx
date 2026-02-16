@@ -101,7 +101,7 @@ export default function RegionalHubsPage() {
             Regional Hub Strategy
           </h1>
           <p className="mt-4 text-xl text-gray-600 dark:text-nodiac-dusty-lilac max-w-2xl leading-relaxed">
-            Scoring every US county across six criteria to identify optimal locations for
+            Scoring every US county across seven criteria to identify optimal locations for
             Nodiac&apos;s distributed data center hubs.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -124,7 +124,7 @@ export default function RegionalHubsPage() {
             </summary>
             <div className="mt-3 p-4 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-2 max-w-2xl">
               <p>
-                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all six criteria.
+                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all seven criteria.
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">Use the preset buttons</strong> (top-left panel) to snap weights to strategic profiles,
@@ -328,8 +328,8 @@ export default function RegionalHubsPage() {
         <div className="max-w-3xl mx-auto space-y-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">How it works</h2>
           <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-            Each county is scored 0–10 across six criteria (co-op density, grid reliability,
-            curtailment opportunity, permitting environment, IT labor, and fiber availability).
+            Each county is scored 0–10 across seven criteria (co-op density, grid reliability,
+            curtailment opportunity, permitting environment, IT labor, fiber availability, and queue pressure).
             Adjust the weight sliders to prioritize what matters most for your deployment strategy,
             and drag the highlight threshold to control where the teal glow begins.
             Click any county to inspect its full score breakdown.
