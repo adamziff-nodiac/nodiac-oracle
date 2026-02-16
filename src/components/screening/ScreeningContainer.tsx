@@ -388,7 +388,7 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           )
         })}
       </div>
-      <div className="h-[35vh] sm:h-[30vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
+      <div className="h-[50vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
         <ScreeningMap
           sites={sites}
           selectedSiteId={selectedSiteId}

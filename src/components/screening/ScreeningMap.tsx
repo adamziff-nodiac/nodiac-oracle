@@ -88,6 +88,7 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
       initialViewState={initialView}
       style={{ width: '100%', height: '100%' }}
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
+      onClick={() => { setPopupSite(null); setExpanded(false) }}
     >
       {sitesWithCoords.map((site) => {
         const color = TIER_COLORS[site.tier as SiteTier] || '#666'
@@ -131,8 +132,8 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
         <Popup
           longitude={Number(popupSite.longitude)}
           latitude={Number(popupSite.latitude)}
-          anchor="bottom"
-          offset={20}
+          anchor="top"
+          offset={14}
           closeButton={true}
           closeOnClick={false}
           onClose={handlePopupClose}
