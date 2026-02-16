@@ -16,6 +16,7 @@ interface HubMapProps {
   onCountyClick?: (fips: string) => void
   onCountyHover?: (fips: string | null) => void
   mapRef?: React.RefObject<MapRef | null>
+  highlightThreshold?: number
 }
 
 export function HubMap({
@@ -25,6 +26,7 @@ export function HubMap({
   onCountyClick,
   onCountyHover,
   mapRef: externalRef,
+  highlightThreshold,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -84,6 +86,7 @@ export function HubMap({
         scoreLookup={scoreLookup}
         scoreRange={scoreRange}
         hoveredFips={hoveredFips}
+        highlightThreshold={highlightThreshold}
       />
       {regions.length > 0 && <HubRegionOverlay regions={regions} />}
     </Map>
