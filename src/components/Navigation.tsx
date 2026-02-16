@@ -11,7 +11,7 @@ const navItems = [
   { href: '/timeline', label: 'Timelines', icon: BarChart3 },
   { href: '/regional-hubs', label: 'Hubs', icon: Map },
   { href: '/screening', label: 'Screening', icon: FileSearch },
-  { href: '/docs', label: 'Docs', icon: BookOpen },
+  { href: '/scoring', label: 'Scoring', icon: BookOpen },
 ]
 
 export function Navigation() {

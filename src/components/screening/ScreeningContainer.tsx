@@ -88,7 +88,7 @@ export function ScreeningContainer() {
           <div className="flex justify-center gap-3 mt-4">
             <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">← Regional Hubs</a>
             <span className="text-gray-600">·</span>
-            <a href="/docs" className="text-sm text-nodiac-secondary hover:underline">📖 Developer Docs</a>
+            <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">📖 Scoring Methodology</a>
           </div>
         </div>
         <CsvUploader
@@ -167,10 +167,10 @@ export function ScreeningContainer() {
         </div>
         <div className="flex items-center gap-2">
           <a
-            href="/docs#site-screening"
+            href="/scoring#site-screening"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs text-gray-400 hover:bg-white/10 hover:text-white transition-colors"
           >
-            📖 Docs
+            📖 Scoring
           </a>
           <button
             onClick={reset}
