@@ -59,9 +59,9 @@ export interface FipsLookupResult {
 }
 
 export const TIER_COLORS: Record<SiteTier, string> = {
-  good: '#4de2e4',    // nodiac-secondary (teal)
-  okay: '#b48fc1',    // nodiac-soft-orchid
-  bad: '#ef4444',     // muted red
+  good: '#4de2e4',    // nodiac-secondary (teal/blue)
+  okay: '#b48fc1',    // nodiac-soft-orchid (purple)
+  bad: '#9ca3af',     // gray-400 (de-emphasized)
 }
 
 export const TIER_LABELS: Record<SiteTier, string> = {
