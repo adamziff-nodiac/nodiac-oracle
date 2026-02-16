@@ -9,6 +9,16 @@ import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
+const CRITERION_LABELS: Record<string, string> = {
+  grid_reliability: 'Grid Reliability',
+  clipped_curtailed: 'Curtailment',
+  permitting: 'Permitting',
+  labor: 'Labor',
+  fiber: 'Fiber',
+  queue_pressure: 'Queue Pressure',
+  coop_density: 'Co-op Density',
+}
+
 interface ScreeningMapProps {
   sites: PortfolioSite[]
   selectedSiteId: string | null
@@ -17,7 +27,8 @@ interface ScreeningMapProps {
 }
 
 export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers }: ScreeningMapProps) {
-  const [hoveredSite, setHoveredSite] = useState<PortfolioSite | null>(null)
+  const [popupSite, setPopupSite] = useState<PortfolioSite | null>(null)
+  const [expanded, setExpanded] = useState(false)
   const isDark = useIsDark()
 
   const sitesWithCoords = useMemo(
@@ -27,7 +38,6 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
     [sites, visibleTiers]
   )
 
-  // Compute bounds for initial view
   const initialView = useMemo(() => {
     const allWithCoords = sites.filter(s => s.latitude != null && s.longitude != null)
     if (allWithCoords.length === 0) {
@@ -42,12 +52,15 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
     }
   }, [sites])
 
-  const handleMouseEnter = useCallback((site: PortfolioSite) => {
-    setHoveredSite(site)
-  }, [])
+  const handleMarkerClick = useCallback((site: PortfolioSite) => {
+    setPopupSite(prev => prev?.id === site.id ? null : site)
+    setExpanded(false)
+    onSiteSelect(site.id)
+  }, [onSiteSelect])
 
-  const handleMouseLeave = useCallback(() => {
-    setHoveredSite(null)
+  const handlePopupClose = useCallback(() => {
+    setPopupSite(null)
+    setExpanded(false)
   }, [])
 
   if (!MAPBOX_TOKEN) {
@@ -57,6 +70,13 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
       </div>
     )
   }
+
+  // Build score breakdown rows for popup
+  const breakdownRows = popupSite?.score_breakdown
+    ? Object.entries(popupSite.score_breakdown)
+        .filter(([, v]) => v != null)
+        .sort(([, a], [, b]) => (b as number) - (a as number))
+    : []
 
   return (
     <Map
@@ -76,50 +96,103 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
             anchor="center"
             onClick={(e) => {
               e.originalEvent.stopPropagation()
-              onSiteSelect(site.id)
+              handleMarkerClick(site)
             }}
           >
+            {/* Enlarged invisible hit area for mobile tap targets */}
             <div
-              className="rounded-full border-2 transition-all cursor-pointer"
-              style={{
-                width: isSelected ? 16 : 12,
-                height: isSelected ? 16 : 12,
-                backgroundColor: color,
-                borderColor: isSelected ? '#fff' : 'transparent',
-                boxShadow: isSelected ? `0 0 12px ${color}` : `0 0 6px ${color}60`,
+              className="relative flex items-center justify-center cursor-pointer"
+              style={{ width: 40, height: 40 }}
+              onTouchEnd={(e) => {
+                e.stopPropagation()
+                handleMarkerClick(site)
               }}
-              onMouseEnter={() => handleMouseEnter(site)}
-              onMouseLeave={handleMouseLeave}
-            />
+            >
+              <div
+                className="rounded-full border-2 transition-all pointer-events-none"
+                style={{
+                  width: isSelected ? 16 : 12,
+                  height: isSelected ? 16 : 12,
+                  backgroundColor: color,
+                  borderColor: isSelected ? '#fff' : 'transparent',
+                  boxShadow: isSelected ? `0 0 12px ${color}` : `0 0 6px ${color}60`,
+                }}
+              />
+            </div>
           </Marker>
         )
       })}
 
-      {hoveredSite && hoveredSite.latitude && hoveredSite.longitude && (
+      {popupSite && popupSite.latitude && popupSite.longitude && (
         <Popup
-          longitude={Number(hoveredSite.longitude)}
-          latitude={Number(hoveredSite.latitude)}
+          longitude={Number(popupSite.longitude)}
+          latitude={Number(popupSite.latitude)}
           anchor="bottom"
-          offset={12}
-          closeButton={false}
+          offset={20}
+          closeButton={true}
           closeOnClick={false}
+          onClose={handlePopupClose}
           className="screening-tooltip"
+          maxWidth="280px"
         >
           <div className="px-2 py-1.5 text-xs">
-            <p className="font-semibold text-gray-900">{hoveredSite.site_name}</p>
+            <p className="font-semibold text-gray-900 text-sm">{popupSite.site_name}</p>
             <p className="text-gray-500">
-              {[hoveredSite.county, hoveredSite.state].filter(Boolean).join(', ') || 'Unknown location'}
+              {[popupSite.county, popupSite.state].filter(Boolean).join(', ') || 'Unknown location'}
             </p>
-            {hoveredSite.site_score != null && (
-              <p className="mt-0.5">
+
+            {popupSite.site_score != null && (
+              <div className="mt-1.5 flex items-center gap-1.5">
                 <span
-                  className="inline-block w-2 h-2 rounded-full mr-1"
-                  style={{ backgroundColor: TIER_COLORS[hoveredSite.tier as SiteTier] || '#666' }}
+                  className="inline-block w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: TIER_COLORS[popupSite.tier as SiteTier] || '#666' }}
                 />
-                <span className="text-gray-700">
-                  {TIER_LABELS[hoveredSite.tier as SiteTier] || 'Unscored'} ({hoveredSite.site_score.toFixed(1)})
+                <span className="font-medium text-gray-800">
+                  {TIER_LABELS[popupSite.tier as SiteTier] || 'Unscored'}
                 </span>
-              </p>
+                <span className="text-gray-500">
+                  — {popupSite.site_score.toFixed(1)} / 10
+                </span>
+              </div>
+            )}
+
+            {/* Top criteria (always show top 3) */}
+            {breakdownRows.length > 0 && (
+              <div className="mt-2 space-y-1">
+                <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Score Breakdown</p>
+                {(expanded ? breakdownRows : breakdownRows.slice(0, 3)).map(([key, val]) => (
+                  <div key={key} className="flex items-center gap-1.5">
+                    <div className="flex-1 flex items-center gap-1.5">
+                      <span className="text-gray-600 truncate">{CRITERION_LABELS[key] || key}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <div className="w-14 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${((val as number) * 100).toFixed(0)}%`,
+                            backgroundColor: TIER_COLORS[popupSite.tier as SiteTier] || '#666',
+                          }}
+                        />
+                      </div>
+                      <span className="text-gray-500 w-7 text-right tabular-nums">
+                        {((val as number) * 10).toFixed(1)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+                {breakdownRows.length > 3 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setExpanded(!expanded)
+                    }}
+                    className="text-[10px] text-nodiac-secondary hover:underline mt-0.5"
+                  >
+                    {expanded ? 'Show less' : `+${breakdownRows.length - 3} more`}
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </Popup>

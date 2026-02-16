@@ -106,25 +106,49 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
             View Existing Portfolios
           </p>
           <div className="grid gap-2">
-            {PREBUILT_PORTFOLIOS.map((p) => (
-              <Link
-                key={p.slug}
-                href={`/screening/${p.slug}`}
-                className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/20 transition-all group"
-              >
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-nodiac-secondary transition-colors">
-                    {p.name}
+            {PREBUILT_PORTFOLIOS.map((p) =>
+              p.disabled ? (
+                <div
+                  key={p.slug}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 opacity-50 cursor-not-allowed"
+                >
+                  <div>
+                    <span className="text-sm font-medium text-gray-400 dark:text-gray-500">
+                      {p.name}
+                    </span>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                      {p.description}
+                    </p>
+                    {p.disabledReason && (
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1 italic">
+                        {p.disabledReason}
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-300 dark:text-gray-600">
+                    Unavailable
                   </span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                    {p.description}
-                  </p>
                 </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500 group-hover:text-nodiac-secondary transition-colors">
-                  View &rarr;
-                </span>
-              </Link>
-            ))}
+              ) : (
+                <Link
+                  key={p.slug}
+                  href={`/screening/${p.slug}`}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 hover:bg-gray-100 dark:hover:bg-white/[0.06] hover:border-gray-300 dark:hover:border-white/20 transition-all group"
+                >
+                  <div>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white group-hover:text-nodiac-secondary transition-colors">
+                      {p.name}
+                    </span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                      {p.description}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 group-hover:text-nodiac-secondary transition-colors">
+                    View &rarr;
+                  </span>
+                </Link>
+              )
+            )}
           </div>
         </div>
 

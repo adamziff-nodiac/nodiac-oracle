@@ -7,6 +7,8 @@ export interface PrebuiltPortfolio {
   name: string
   description: string
   jsonPath: string // Path relative to public/
+  disabled?: boolean
+  disabledReason?: string
 }
 
 export const PREBUILT_PORTFOLIOS: PrebuiltPortfolio[] = [
@@ -27,6 +29,8 @@ export const PREBUILT_PORTFOLIOS: PrebuiltPortfolio[] = [
     name: 'Powerbank Portfolio',
     description: '53 sites across US and Canada',
     jsonPath: '/data/portfolios/powerbank.json',
+    disabled: true,
+    disabledReason: 'Canadian sites — US analysis only',
   },
 ]
 
