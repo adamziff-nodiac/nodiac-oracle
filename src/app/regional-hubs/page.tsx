@@ -23,6 +23,7 @@ import { PresetProfiles } from '@/components/regional-hubs/PresetProfiles'
 import { CountyDetailPanel } from '@/components/regional-hubs/CountyDetailPanel'
 import { MapLegend } from '@/components/regional-hubs/MapLegend'
 import { ExportControls } from '@/components/regional-hubs/ExportControls'
+import { CountyRankingGrid } from '@/components/regional-hubs/CountyRankingGrid'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
@@ -322,6 +323,31 @@ export default function RegionalHubsPage() {
           </div>
         </div>
       </section>
+
+      {/* County Ranking Grid */}
+      {!scoresLoading && weightedScores.length > 0 && (
+        <section className="px-4 sm:px-6 pb-8">
+          <div className="max-w-[1600px] mx-auto">
+            <details className="group">
+              <summary className="flex items-center gap-2 cursor-pointer select-none py-3">
+                <span className="transition-transform group-open:rotate-90 text-xs text-gray-400 dark:text-gray-500">&#9654;</span>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                  County Rankings
+                </h2>
+                <span className="text-xs text-gray-400 dark:text-gray-500 ml-1">
+                  {weightedScores.length.toLocaleString()} counties
+                </span>
+              </summary>
+              <div className="mt-2 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/[0.02] p-4">
+                <CountyRankingGrid
+                  weightedScores={weightedScores}
+                  onCountyClick={handleCountyClick}
+                />
+              </div>
+            </details>
+          </div>
+        </section>
+      )}
 
       {/* Brief usage guide */}
       <section className="px-6 py-12">
