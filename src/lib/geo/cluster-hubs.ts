@@ -237,6 +237,59 @@ function splitOversizedCluster(
   return result
 }
 
+// --- Merge adjacent clusters ---
+
+function minInterClusterDist(a: CountyCentroid[], b: CountyCentroid[]): number {
+  let best = Infinity
+  for (const ca of a) {
+    for (const cb of b) {
+      const d = haversineKm(ca.lat, ca.lng, cb.lat, cb.lng)
+      if (d < best) best = d
+    }
+  }
+  return best
+}
+
+function fitsInRadius(members: CountyCentroid[], maxRadiusKm: number): boolean {
+  const centroid = computeClusterCentroid(members)
+  for (const c of members) {
+    if (haversineKm(centroid.lat, centroid.lng, c.lat, c.lng) > maxRadiusKm) return false
+  }
+  return true
+}
+
+function mergeAdjacentClusters(
+  groups: CountyCentroid[][],
+  maxDistKm: number,
+  maxRadiusKm: number
+): CountyCentroid[][] {
+  // Merge threshold: clusters whose nearest members are within 2x the link
+  // distance are candidates (the gap between them is at most one "hop").
+  const mergeDist = maxDistKm * 2
+
+  let merged = [...groups]
+  let changed = true
+  while (changed) {
+    changed = false
+    for (let i = 0; i < merged.length; i++) {
+      for (let j = i + 1; j < merged.length; j++) {
+        const dist = minInterClusterDist(merged[i], merged[j])
+        if (dist <= mergeDist) {
+          const combined = [...merged[i], ...merged[j]]
+          if (fitsInRadius(combined, maxRadiusKm)) {
+            merged[i] = combined
+            merged.splice(j, 1)
+            changed = true
+            break
+          }
+        }
+      }
+      if (changed) break
+    }
+  }
+  return merged
+}
+
 // --- Main clustering function ---
 
 export function clusterHubs(
@@ -295,11 +348,14 @@ export function clusterHubs(
     splitGroups.push(...splitOversizedCluster(members, maxRadiusKm))
   }
 
+  // 5b. Merge adjacent clusters that fit within maxRadiusKm
+  const mergedGroups = mergeAdjacentClusters(splitGroups, maxDistKm, maxRadiusKm)
+
   // 6. Build cluster objects
   const clusters: HubCluster[] = []
   let clusterId = 0
 
-  for (const members of splitGroups) {
+  for (const members of mergedGroups) {
     if (members.length < minClusterSize) continue
 
     const scores = members.map(c => scoreLookup.get(c.fips) || 0)
