@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { SlidersHorizontal, X, Info } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
@@ -46,8 +46,18 @@ export default function RegionalHubsPage() {
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
   const [viewMode, setViewMode] = useState<ViewMode>('county')
   const [topPercent, setTopPercent] = useState(20)
+  const [clusterTopPercent, setClusterTopPercent] = useState(20)
+  const [clusterMinSize, setClusterMinSize] = useState(5)
+  const [clusterLinkDist, setClusterLinkDist] = useState(150)
+  const [clusterCount, setClusterCount] = useState(0)
 
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
+
+  const clusterOptions = useMemo(() => ({
+    topPercent: clusterTopPercent,
+    minClusterSize: clusterMinSize,
+    maxDistKm: clusterLinkDist,
+  }), [clusterTopPercent, clusterMinSize, clusterLinkDist])
 
   const mapExportRef = useRef<HTMLDivElement>(null)
 
@@ -171,6 +181,8 @@ export default function RegionalHubsPage() {
                   quantileBreaks={quantileBreaks}
                   viewMode={viewMode}
                   topPercent={topPercent}
+                  clusterOptions={clusterOptions}
+                  onClusterCount={setClusterCount}
                 />
 
                 {/* Mobile weight toggle */}
@@ -239,6 +251,86 @@ export default function RegionalHubsPage() {
                             [&::-webkit-slider-thumb]:bg-nodiac-secondary
                             [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
                         />
+                      </div>
+                    )}
+                    {/* Cluster tuning sliders — only visible in clusters mode */}
+                    {viewMode === 'clusters' && (
+                      <div className="mt-2 space-y-2.5">
+                        {/* Top percent */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">Top counties</span>
+                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                              {clusterTopPercent}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={10}
+                            max={40}
+                            step={5}
+                            value={clusterTopPercent}
+                            onChange={(e) => setClusterTopPercent(parseInt(e.target.value))}
+                            className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                              bg-gray-200 dark:bg-white/10
+                              [&::-webkit-slider-thumb]:appearance-none
+                              [&::-webkit-slider-thumb]:w-3.5
+                              [&::-webkit-slider-thumb]:h-3.5
+                              [&::-webkit-slider-thumb]:rounded-full
+                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                          />
+                        </div>
+                        {/* Min cluster size */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">Min cluster size</span>
+                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                              {clusterMinSize}
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={3}
+                            max={15}
+                            step={1}
+                            value={clusterMinSize}
+                            onChange={(e) => setClusterMinSize(parseInt(e.target.value))}
+                            className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                              bg-gray-200 dark:bg-white/10
+                              [&::-webkit-slider-thumb]:appearance-none
+                              [&::-webkit-slider-thumb]:w-3.5
+                              [&::-webkit-slider-thumb]:h-3.5
+                              [&::-webkit-slider-thumb]:rounded-full
+                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                          />
+                        </div>
+                        {/* Link distance */}
+                        <div className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span className="text-[10px] text-gray-500 dark:text-gray-400">Link distance</span>
+                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                              {clusterLinkDist}km <span className="text-gray-400 dark:text-gray-500 font-normal">~{Math.round(clusterLinkDist * 0.621)}mi</span>
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min={50}
+                            max={250}
+                            step={25}
+                            value={clusterLinkDist}
+                            onChange={(e) => setClusterLinkDist(parseInt(e.target.value))}
+                            className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                              bg-gray-200 dark:bg-white/10
+                              [&::-webkit-slider-thumb]:appearance-none
+                              [&::-webkit-slider-thumb]:w-3.5
+                              [&::-webkit-slider-thumb]:h-3.5
+                              [&::-webkit-slider-thumb]:rounded-full
+                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                          />
+                        </div>
                       </div>
                     )}
                   </div>
@@ -369,7 +461,7 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} topPercent={topPercent} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} topPercent={topPercent} clusterCount={viewMode === 'clusters' ? clusterCount : undefined} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">

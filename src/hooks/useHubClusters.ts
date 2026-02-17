@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import { computeCentroids } from '@/lib/geo/compute-centroids'
-import { clusterHubs, type HubCluster } from '@/lib/geo/cluster-hubs'
+import { clusterHubs, type HubCluster, type ClusterOptions } from '@/lib/geo/cluster-hubs'
 
 export interface ClusterGeoData {
   hullsGeojson: GeoJSON.FeatureCollection
@@ -16,7 +16,8 @@ export interface ClusterGeoData {
  */
 export function useHubClusters(
   geojson: GeoJSON.FeatureCollection | null,
-  scoreLookup: Map<string, number>
+  scoreLookup: Map<string, number>,
+  clusterOptions?: ClusterOptions
 ): ClusterGeoData | null {
   const centroids = useMemo(() => {
     if (!geojson) return null
@@ -26,7 +27,7 @@ export function useHubClusters(
   return useMemo(() => {
     if (!centroids || scoreLookup.size === 0) return null
 
-    const clusters = clusterHubs(centroids, scoreLookup)
+    const clusters = clusterHubs(centroids, scoreLookup, clusterOptions)
     if (clusters.length === 0) return null
 
     // Hull polygons
@@ -65,5 +66,5 @@ export function useHubClusters(
       labelsGeojson: { type: 'FeatureCollection' as const, features: labelFeatures },
       clusters,
     }
-  }, [centroids, scoreLookup])
+  }, [centroids, scoreLookup, clusterOptions])
 }

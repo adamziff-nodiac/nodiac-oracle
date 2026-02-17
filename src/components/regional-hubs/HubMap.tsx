@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useState, useMemo } from 'react'
+import { useRef, useCallback, useState, useMemo, useEffect } from 'react'
 import Map, { type MapRef, type MapMouseEvent, Source, Layer } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
@@ -15,6 +15,7 @@ import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHeatmapData } from '@/hooks/useHeatmapData'
 import { useHubClusters } from '@/hooks/useHubClusters'
 import { useHexGridData } from '@/hooks/useHexGridData'
+import type { ClusterOptions } from '@/lib/geo/cluster-hubs'
 import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
@@ -34,6 +35,8 @@ interface HubMapProps {
   quantileBreaks?: QuantileBreaks | null
   viewMode?: ViewMode
   topPercent?: number
+  clusterOptions?: ClusterOptions
+  onClusterCount?: (count: number) => void
 }
 
 export function HubMap({
@@ -48,6 +51,8 @@ export function HubMap({
   quantileBreaks,
   viewMode = 'county',
   topPercent = 20,
+  clusterOptions,
+  onClusterCount,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -56,8 +61,12 @@ export function HubMap({
 
   const { geojson: baseGeojson } = useCountyGeoJson()
   const heatmapData = useHeatmapData(baseGeojson, scoreLookup)
-  const clusterData = useHubClusters(baseGeojson, scoreLookup)
+  const clusterData = useHubClusters(baseGeojson, scoreLookup, clusterOptions)
   const hexData = useHexGridData(baseGeojson, scoreLookup)
+
+  useEffect(() => {
+    onClusterCount?.(clusterData?.clusters.length ?? 0)
+  }, [clusterData, onClusterCount])
 
   const isCountyMode = viewMode === 'county'
   const needsDarkBase = viewMode === 'top-counties'

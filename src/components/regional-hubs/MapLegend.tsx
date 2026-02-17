@@ -10,11 +10,12 @@ interface MapLegendProps {
   colorMode?: ColorMode
   viewMode?: ViewMode
   topPercent?: number
+  clusterCount?: number
 }
 
 const legendBox = "absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10"
 
-export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', topPercent = 20 }: MapLegendProps) {
+export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', topPercent = 20, clusterCount }: MapLegendProps) {
   // --- Hub (heatmap) mode ---
   if (viewMode === 'hub') {
     return (
@@ -81,7 +82,7 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
           <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
-          Auto-detected clusters of top-scoring counties
+          {clusterCount != null ? `${clusterCount} hub region${clusterCount !== 1 ? 's' : ''} detected` : 'Auto-detected clusters of top-scoring counties'}
         </p>
       </div>
     )

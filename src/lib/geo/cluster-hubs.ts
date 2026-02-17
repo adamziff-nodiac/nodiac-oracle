@@ -17,11 +17,11 @@ export interface HubCluster {
   states: string[]
 }
 
-interface ClusterOptions {
+export interface ClusterOptions {
   topPercent?: number     // default 20
-  maxDistKm?: number      // default 100
+  maxDistKm?: number      // default 150
   maxRadiusKm?: number    // default 320 (~200mi) — enforced post-clustering
-  minClusterSize?: number // default 3
+  minClusterSize?: number // default 5
 }
 
 // --- Union-Find ---
@@ -156,24 +156,36 @@ function deriveClusterName(centroids: CountyCentroid[]): { name: string; states:
   // Sort by frequency
   const sorted = [...stateCounts.entries()].sort((a, b) => b[1] - a[1])
   const states = sorted.map(([s]) => s)
-  const topStates = states.slice(0, 2)
+  const dominantState = sorted[0]?.[0] || ''
+  const dominantPct = sorted[0] ? sorted[0][1] / centroids.length : 0
 
   // Geographic descriptor based on centroid position
   let descriptor = ''
-  if (avgLat > 43 && avgLng < -85) descriptor = 'Upper Midwest'
-  else if (avgLat > 43 && avgLng > -85) descriptor = 'Northeast'
-  else if (avgLat > 37 && avgLng < -100) descriptor = 'Northern Plains'
-  else if (avgLat < 33 && avgLng > -90) descriptor = 'Southeast'
+  if (avgLat > 43 && avgLng < -85 && avgLng > -100) descriptor = 'Upper Midwest'
+  else if (avgLat > 43 && avgLng <= -100) descriptor = 'Northern Plains'
+  else if (avgLat > 43 && avgLng >= -85) descriptor = 'Great Lakes'
+  else if (avgLat > 40 && avgLng > -80) descriptor = 'Northeast'
+  else if (avgLat > 37 && avgLng > -85 && avgLng <= -75) descriptor = 'Mid-Atlantic'
+  else if (avgLat > 35 && avgLat <= 40 && avgLng > -90 && avgLng <= -80) descriptor = 'Appalachian'
+  else if (avgLat > 35 && avgLat <= 43 && avgLng <= -100 && avgLng > -110) descriptor = 'Great Plains'
+  else if (avgLng < -115 && avgLat > 42) descriptor = 'Pacific Northwest'
+  else if (avgLng <= -110 && avgLng > -115 && avgLat > 37) descriptor = 'Intermountain'
+  else if (avgLng <= -110 && avgLat <= 37) descriptor = 'Southwest'
+  else if (avgLat <= 33 && avgLng > -100 && avgLng < -85) descriptor = 'Gulf Coast'
+  else if (avgLat <= 35 && avgLng >= -85) descriptor = 'Southeast'
+  else if (avgLat <= 35 && avgLng >= -85) descriptor = 'Piedmont'
+  else if (avgLng < -100 && avgLng >= -110 && avgLat > 35 && avgLat <= 43) descriptor = 'Front Range'
   else if (avgLat < 33 && avgLng < -100) descriptor = 'Southwest'
-  else if (avgLng < -110) descriptor = 'Mountain West'
-  else if (avgLat > 37 && avgLng > -85) descriptor = 'Mid-Atlantic'
   else descriptor = 'Central'
 
-  // Build name
-  if (topStates.length === 1) {
-    return { name: `${descriptor} ${topStates[0]}`, states }
+  // Build name: single-state dominant → "Central TX"; multi-state → descriptor only
+  if (dominantPct >= 0.65 && states.length <= 2) {
+    // Use lat within state for a directional prefix
+    const dir = avgLat > 40 ? 'Northern' : avgLat < 33 ? 'Southern' : 'Central'
+    return { name: `${dir} ${dominantState}`, states }
   }
-  return { name: `${descriptor} (${topStates.join('/')})`, states }
+  // Multi-state cluster: use regional descriptor alone
+  return { name: descriptor, states }
 }
 
 // --- Split oversized clusters ---
@@ -234,9 +246,9 @@ export function clusterHubs(
 ): HubCluster[] {
   const {
     topPercent = 20,
-    maxDistKm = 100,
+    maxDistKm = 150,
     maxRadiusKm = 320,  // ~200mi
-    minClusterSize = 3,
+    minClusterSize = 5,
   } = options
 
   // 1. Compute score threshold
