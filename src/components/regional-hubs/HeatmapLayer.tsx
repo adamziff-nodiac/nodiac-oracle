@@ -20,13 +20,13 @@ export function HeatmapLayer({ data, visible = true }: HeatmapLayerProps) {
           // Weight each point by its curved, area-dampened score
           'heatmap-weight': ['get', 'weight'],
 
-          // Radius sized for regional blending — nearby high-scoring
-          // counties overlap to form cohesive hub zones
+          // Wider radius for regional blending — fills gaps between
+          // neighboring counties to form cohesive hub zones
           'heatmap-radius': [
             'interpolate', ['linear'], ['zoom'],
-            3, 30,
-            5, 20,
-            7, 14,
+            3, 35,
+            5, 22,
+            7, 15,
             9, 10,
           ],
 
@@ -39,13 +39,15 @@ export function HeatmapLayer({ data, visible = true }: HeatmapLayerProps) {
             9, 1.4,
           ],
 
-          // Color ramp: transparent lingers, then purple → orchid → teal
+          // Color ramp: faint purple appears early for regional wash,
+          // bright colors reserved for true hotspots
           'heatmap-color': [
             'interpolate',
             ['linear'],
             ['heatmap-density'],
             0,    'rgba(0, 0, 0, 0)',
-            0.2,  'rgba(26, 21, 32, 0.5)',   // faint dark purple
+            0.1,  'rgba(26, 21, 32, 0.4)',   // very faint dark purple
+            0.25, '#2d2233',                   // dark purple wash
             0.4,  '#5c2d55',                   // medium purple
             0.6,  '#8b3578',                   // bright purple
             0.8,  '#b48fc1',                   // orchid
