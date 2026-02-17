@@ -17,46 +17,47 @@ export function HeatmapLayer({ data, visible = true }: HeatmapLayerProps) {
         type="heatmap"
         layout={{ visibility }}
         paint={{
-          // Weight each point by its area-dampened normalized score
+          // Weight each point by its curved, area-dampened score
           'heatmap-weight': ['get', 'weight'],
 
-          // Zoom-dependent radius: wide at low zoom, tight at high zoom
+          // Radius sized for regional blending — nearby high-scoring
+          // counties overlap to form cohesive hub zones
           'heatmap-radius': [
             'interpolate', ['linear'], ['zoom'],
-            3, 40,
-            5, 25,
-            7, 15,
+            3, 30,
+            5, 20,
+            7, 14,
             9, 10,
           ],
 
-          // Zoom-dependent intensity
+          // Moderate intensity — the power curve does the selectivity
           'heatmap-intensity': [
             'interpolate', ['linear'], ['zoom'],
             3, 0.8,
             5, 1.0,
-            7, 1.3,
-            9, 1.5,
+            7, 1.2,
+            9, 1.4,
           ],
 
-          // Brand color ramp: transparent → dark purple → purple → orchid → teal
+          // Color ramp: transparent lingers, then purple → orchid → teal
           'heatmap-color': [
             'interpolate',
             ['linear'],
             ['heatmap-density'],
             0,    'rgba(0, 0, 0, 0)',
-            0.15, '#1a1520',    // dark purple
-            0.35, '#5c2d55',    // medium purple
-            0.55, '#8b3578',    // bright purple
-            0.75, '#b48fc1',    // orchid
-            1.0,  '#4de2e4',    // neon teal
+            0.2,  'rgba(26, 21, 32, 0.5)',   // faint dark purple
+            0.4,  '#5c2d55',                   // medium purple
+            0.6,  '#8b3578',                   // bright purple
+            0.8,  '#b48fc1',                   // orchid
+            1.0,  '#4de2e4',                   // neon teal
           ],
 
-          // Opacity: slightly transparent at high zoom for cleaner overlays
+          // Opacity
           'heatmap-opacity': [
             'interpolate', ['linear'], ['zoom'],
-            3, 0.9,
-            7, 0.8,
-            10, 0.7,
+            3, 0.85,
+            7, 0.75,
+            10, 0.65,
           ],
         }}
       />
