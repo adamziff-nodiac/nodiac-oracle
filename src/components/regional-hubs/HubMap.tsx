@@ -165,6 +165,7 @@ export function HubMap({
       }}
       style={{ width: '100%', height: '100%' }}
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
+      preserveDrawingBuffer={true}
       interactiveLayerIds={isCountyMode ? ['county-fill'] : []}
       onClick={handleClick}
       onMouseMove={handleHover}
