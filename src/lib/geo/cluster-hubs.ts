@@ -19,7 +19,8 @@ export interface HubCluster {
 
 interface ClusterOptions {
   topPercent?: number     // default 20
-  maxDistKm?: number      // default 150
+  maxDistKm?: number      // default 100
+  maxRadiusKm?: number    // default 320 (~200mi) — enforced post-clustering
   minClusterSize?: number // default 3
 }
 
@@ -175,6 +176,55 @@ function deriveClusterName(centroids: CountyCentroid[]): { name: string; states:
   return { name: `${descriptor} (${topStates.join('/')})`, states }
 }
 
+// --- Split oversized clusters ---
+
+function computeClusterCentroid(members: CountyCentroid[]): { lng: number; lat: number } {
+  let cx = 0, cy = 0
+  for (const c of members) { cx += c.lng; cy += c.lat }
+  return { lng: cx / members.length, lat: cy / members.length }
+}
+
+function splitOversizedCluster(
+  members: CountyCentroid[],
+  maxRadiusKm: number
+): CountyCentroid[][] {
+  const centroid = computeClusterCentroid(members)
+
+  // Check if cluster fits within max radius
+  let maxDist = 0
+  for (const c of members) {
+    const d = haversineKm(centroid.lat, centroid.lng, c.lat, c.lng)
+    if (d > maxDist) maxDist = d
+  }
+  if (maxDist <= maxRadiusKm) return [members]
+
+  // Split: find the two most distant members as seeds
+  let bestDist = 0
+  let seedA = 0, seedB = 1
+  for (let i = 0; i < members.length; i++) {
+    for (let j = i + 1; j < members.length; j++) {
+      const d = haversineKm(members[i].lat, members[i].lng, members[j].lat, members[j].lng)
+      if (d > bestDist) { bestDist = d; seedA = i; seedB = j }
+    }
+  }
+
+  // Assign each member to nearest seed
+  const groupA: CountyCentroid[] = []
+  const groupB: CountyCentroid[] = []
+  for (const c of members) {
+    const dA = haversineKm(c.lat, c.lng, members[seedA].lat, members[seedA].lng)
+    const dB = haversineKm(c.lat, c.lng, members[seedB].lat, members[seedB].lng)
+    if (dA <= dB) groupA.push(c)
+    else groupB.push(c)
+  }
+
+  // Recursively split if still too large
+  const result: CountyCentroid[][] = []
+  if (groupA.length >= 3) result.push(...splitOversizedCluster(groupA, maxRadiusKm))
+  if (groupB.length >= 3) result.push(...splitOversizedCluster(groupB, maxRadiusKm))
+  return result
+}
+
 // --- Main clustering function ---
 
 export function clusterHubs(
@@ -184,7 +234,8 @@ export function clusterHubs(
 ): HubCluster[] {
   const {
     topPercent = 20,
-    maxDistKm = 150,
+    maxDistKm = 100,
+    maxRadiusKm = 320,  // ~200mi
     minClusterSize = 3,
   } = options
 
@@ -224,23 +275,25 @@ export function clusterHubs(
     groups.get(root)!.push(i)
   }
 
-  // 5. Build cluster objects
+  // 5. Split oversized clusters that exceeded maxRadiusKm
+  const splitGroups: CountyCentroid[][] = []
+  for (const indices of groups.values()) {
+    if (indices.length < minClusterSize) continue
+    const members = indices.map(i => topCentroids[i])
+    splitGroups.push(...splitOversizedCluster(members, maxRadiusKm))
+  }
+
+  // 6. Build cluster objects
   const clusters: HubCluster[] = []
   let clusterId = 0
 
-  for (const indices of groups.values()) {
-    if (indices.length < minClusterSize) continue
+  for (const members of splitGroups) {
+    if (members.length < minClusterSize) continue
 
-    const members = indices.map(i => topCentroids[i])
     const scores = members.map(c => scoreLookup.get(c.fips) || 0)
     const avgScore = scores.reduce((sum, s) => sum + s, 0) / scores.length
 
-    // Centroid
-    let cx = 0, cy = 0
-    for (const c of members) {
-      cx += c.lng
-      cy += c.lat
-    }
+    const centroid = computeClusterCentroid(members)
 
     // Convex hull
     const points: [number, number][] = members.map(c => [c.lng, c.lat])
@@ -256,7 +309,7 @@ export function clusterHubs(
       counties: members,
       avgScore,
       countyCount: members.length,
-      centroid: { lng: cx / members.length, lat: cy / members.length },
+      centroid,
       hull: bufferedHull,
       states,
     })

@@ -18,7 +18,7 @@ import { useHexGridData } from '@/hooks/useHexGridData'
 import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
-export type ViewMode = 'county' | 'hub' | 'top-counties' | 'clusters' | 'dots' | 'hex' | 'contours'
+export type ViewMode = 'county' | 'hub' | 'top-counties' | 'clusters' | 'dots' | 'hex'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -33,6 +33,7 @@ interface HubMapProps {
   colorMode?: ColorMode
   quantileBreaks?: QuantileBreaks | null
   viewMode?: ViewMode
+  topPercent?: number
 }
 
 export function HubMap({
@@ -46,6 +47,7 @@ export function HubMap({
   colorMode,
   quantileBreaks,
   viewMode = 'county',
+  topPercent = 20,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -58,27 +60,14 @@ export function HubMap({
   const hexData = useHexGridData(baseGeojson, scoreLookup)
 
   const isCountyMode = viewMode === 'county'
-  // Overlay modes need county-boundaries source but not the scored fill
-  const needsDarkBase = viewMode === 'top-counties' || viewMode === 'contours'
+  const needsDarkBase = viewMode === 'top-counties'
 
-  // Compute p80 threshold for top-counties mode
+  // Compute threshold for top-counties mode based on configurable percent
   const topCountyThreshold = useMemo(() => {
     if (scoreLookup.size === 0) return 7
     const scores = [...scoreLookup.values()].sort((a, b) => a - b)
-    return scores[Math.floor(scores.length * 0.8)]
-  }, [scoreLookup])
-
-  // Contour band thresholds (4 nested levels)
-  const contourThresholds = useMemo(() => {
-    if (scoreLookup.size === 0) return [5, 6, 7, 8]
-    const scores = [...scoreLookup.values()].sort((a, b) => a - b)
-    return [
-      scores[Math.floor(scores.length * 0.5)],  // p50
-      scores[Math.floor(scores.length * 0.65)],  // p65
-      scores[Math.floor(scores.length * 0.8)],   // p80
-      scores[Math.floor(scores.length * 0.92)],  // p92
-    ]
-  }, [scoreLookup])
+    return scores[Math.floor(scores.length * (1 - topPercent / 100))]
+  }, [scoreLookup, topPercent])
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
@@ -233,22 +222,6 @@ export function HubMap({
         visible={viewMode === 'top-counties'}
       />
 
-      {/* Contour Bands: 4 nested fill layers for topographic effect */}
-      {(['contour-band-0', 'contour-band-1', 'contour-band-2', 'contour-band-3'] as const).map((id, i) => (
-        <Layer
-          key={id}
-          id={id}
-          source="county-boundaries"
-          type="fill"
-          layout={{ visibility: viewMode === 'contours' ? 'visible' : 'none' }}
-          filter={['>=', ['get', 'compositeScore'], contourThresholds[i]]}
-          paint={{
-            'fill-color': ['#3d2255', '#6b3580', '#b48fc1', '#4de2e4'][i],
-            'fill-opacity': [0.35, 0.4, 0.5, 0.7][i],
-          }}
-        />
-      ))}
-
       {heatmapData && (
         <HeatmapLayer data={heatmapData} visible={viewMode === 'hub'} />
       )}
@@ -275,14 +248,15 @@ export function HubMap({
             paint={{
               'fill-color': [
                 'interpolate', ['linear'], ['get', 'avgScore'],
-                0, '#1a1520',
-                3, '#2d2233',
-                5, '#5c2d55',
-                7, '#8b3578',
-                8, '#b48fc1',
-                9, '#4de2e4',
+                0, '#0d0b12',
+                3, '#1a1520',
+                4.5, '#2d2233',
+                5.5, '#5c2d55',
+                6.5, '#8b3578',
+                7.2, '#b48fc1',
+                8, '#4de2e4',
               ],
-              'fill-opacity': 0.75,
+              'fill-opacity': 0.85,
             }}
           />
           <Layer

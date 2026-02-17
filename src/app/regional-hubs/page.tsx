@@ -45,6 +45,7 @@ export default function RegionalHubsPage() {
   const [colorMode, setColorMode] = useState<ColorMode>('percentile')
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
   const [viewMode, setViewMode] = useState<ViewMode>('county')
+  const [topPercent, setTopPercent] = useState(20)
 
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
@@ -169,6 +170,7 @@ export default function RegionalHubsPage() {
                   colorMode={colorMode}
                   quantileBreaks={quantileBreaks}
                   viewMode={viewMode}
+                  topPercent={topPercent}
                 />
 
                 {/* Mobile weight toggle */}
@@ -195,7 +197,6 @@ export default function RegionalHubsPage() {
                         { id: 'clusters', label: 'Clusters' },
                         { id: 'dots', label: 'Dots' },
                         { id: 'hex', label: 'Hex' },
-                        { id: 'contours', label: 'Contours' },
                       ] as const).map(({ id, label }) => (
                         <button
                           key={id}
@@ -213,6 +214,33 @@ export default function RegionalHubsPage() {
                         </button>
                       ))}
                     </div>
+                    {/* Top N% slider — only visible in top-counties mode */}
+                    {viewMode === 'top-counties' && (
+                      <div className="mt-2 space-y-1">
+                        <div className="flex justify-between items-center">
+                          <span className="text-[10px] text-gray-500 dark:text-gray-400">Showing top</span>
+                          <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                            {topPercent}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min={5}
+                          max={50}
+                          step={5}
+                          value={topPercent}
+                          onChange={(e) => setTopPercent(parseInt(e.target.value))}
+                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                            bg-gray-200 dark:bg-white/10
+                            [&::-webkit-slider-thumb]:appearance-none
+                            [&::-webkit-slider-thumb]:w-3.5
+                            [&::-webkit-slider-thumb]:h-3.5
+                            [&::-webkit-slider-thumb]:rounded-full
+                            [&::-webkit-slider-thumb]:bg-nodiac-secondary
+                            [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <PresetProfiles
@@ -341,7 +369,7 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} topPercent={topPercent} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">

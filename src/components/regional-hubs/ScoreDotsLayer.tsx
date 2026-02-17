@@ -52,24 +52,31 @@ export function ScoreDotsLayer({ geojson, scoreLookup, visible = true }: ScoreDo
         layout={{ visibility }}
         paint={{
           'circle-radius': [
-            'interpolate', ['linear'], ['get', 'score'],
-            3, 2,
-            5, 4,
-            7, 6,
-            9, 10,
-            10, 14,
+            'interpolate', ['exponential', 1.8], ['get', 'score'],
+            3, 1.5,
+            5, 2.5,
+            7, 5,
+            8, 8,
+            9, 13,
+            10, 18,
           ],
           'circle-color': [
             'interpolate', ['linear'], ['get', 'score'],
             3, '#2d2233',
-            5, '#5c2d55',
+            5, '#3d2255',
             7, '#8b3578',
             8, '#b48fc1',
             9, '#4de2e4',
           ],
-          'circle-opacity': 0.8,
+          'circle-opacity': [
+            'interpolate', ['linear'], ['get', 'score'],
+            3, 0.4,
+            6, 0.55,
+            8, 0.8,
+            9, 0.95,
+          ],
           'circle-stroke-width': 0.5,
-          'circle-stroke-color': 'rgba(255, 255, 255, 0.15)',
+          'circle-stroke-color': 'rgba(255, 255, 255, 0.08)',
         }}
       />
     </Source>

@@ -71,7 +71,8 @@ export function CountyChoropleth({
   // Color expression depends on mode
   const fillColorExpression = useMemo(() => {
     if (colorMode === 'percentile' && quantileBreaks) {
-      // Percentile-based: 6-stop interpolation at quantile breakpoints
+      // Percentile-based: starker ramp — most of the range stays dark,
+      // only top counties transition to bright purple/orchid/teal
       return [
         'case',
         ['==', ['get', 'compositeScore'], null],
@@ -81,11 +82,11 @@ export function CountyChoropleth({
           ['linear'],
           ['get', 'compositeScore'],
           quantileBreaks.min,  COLOR_LOW,
-          quantileBreaks.p20,  COLOR_MID_LOW,
-          quantileBreaks.p40,  COLOR_MID,
-          quantileBreaks.p60,  COLOR_HIGH,
-          quantileBreaks.p80,  COLOR_ORCHID,
-          quantileBreaks.p95,  COLOR_PEAK,
+          quantileBreaks.p40,  COLOR_LOW,       // bottom 40% stays very dark
+          quantileBreaks.p60,  COLOR_MID_LOW,   // p40-p60: subtle dark purple
+          quantileBreaks.p80,  COLOR_MID,       // p60-p80: medium purple
+          quantileBreaks.p95,  COLOR_ORCHID,    // p80-p95: orchid
+          quantileBreaks.max,  COLOR_PEAK,      // top 5%: neon teal
         ],
       ] as unknown as string
     }

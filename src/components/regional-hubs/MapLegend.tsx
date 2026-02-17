@@ -9,11 +9,12 @@ interface MapLegendProps {
   highlightThreshold?: number
   colorMode?: ColorMode
   viewMode?: ViewMode
+  topPercent?: number
 }
 
 const legendBox = "absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10"
 
-export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county' }: MapLegendProps) {
+export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', topPercent = 20 }: MapLegendProps) {
   // --- Hub (heatmap) mode ---
   if (viewMode === 'hub') {
     return (
@@ -56,7 +57,7 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
           </div>
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
-          Top 20% of counties by composite score
+          Top {topPercent}% of counties by composite score
         </p>
       </div>
     )
@@ -91,20 +92,20 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
     return (
       <div className={legendBox}>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          Score Density
+          County Score Dots
         </p>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
           <div
             className="h-3 w-32 rounded-sm"
             style={{
-              background: `linear-gradient(to right, ${COLOR_MID_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
+              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_PEAK})`,
             }}
           />
           <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
-          Circle size + color encode score · Above median shown
+          One dot per county · Larger = higher score
         </p>
       </div>
     )
@@ -129,33 +130,6 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
           ~50mi hexagons · Average of contained counties
-        </p>
-      </div>
-    )
-  }
-
-  // --- Contours mode ---
-  if (viewMode === 'contours') {
-    return (
-      <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          Score Contours
-        </p>
-        <div className="flex items-center gap-1.5">
-          {[
-            { color: '#3d2255', label: 'p50+' },
-            { color: '#6b3580', label: 'p65+' },
-            { color: '#b48fc1', label: 'p80+' },
-            { color: '#4de2e4', label: 'p92+' },
-          ].map(({ color, label }) => (
-            <div key={label} className="flex flex-col items-center gap-0.5">
-              <div className="w-6 h-3 rounded-sm" style={{ background: color }} />
-              <span className="text-[9px] text-gray-500 dark:text-gray-400">{label}</span>
-            </div>
-          ))}
-        </div>
-        <p className="text-[10px] text-gray-500 mt-2">
-          Nested bands · Brightest at score peaks
         </p>
       </div>
     )
