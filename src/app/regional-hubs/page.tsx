@@ -182,35 +182,36 @@ export default function RegionalHubsPage() {
 
                 {/* Floating weight panel */}
                 <div className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} md:block md:top-4`}>
-                  {/* View Mode toggle */}
+                  {/* View Mode pill row */}
                   <div className="space-y-1.5">
                     <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
                       View Mode
                     </label>
-                    <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
-                      <button
-                        onClick={() => setViewMode('county')}
-                        className={`flex-1 text-xs py-1.5 transition-colors ${
-                          viewMode === 'county'
-                            ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
-                            : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                        }`}
-                      >
-                        County
-                      </button>
-                      <button
-                        onClick={() => {
-                          setViewMode('hub')
-                          setSelectedCounty(null)
-                        }}
-                        className={`flex-1 text-xs py-1.5 transition-colors ${
-                          viewMode === 'hub'
-                            ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
-                            : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                        }`}
-                      >
-                        Hub
-                      </button>
+                    <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
+                      {([
+                        { id: 'county', label: 'County' },
+                        { id: 'hub', label: 'Heatmap' },
+                        { id: 'top-counties', label: 'Top N%' },
+                        { id: 'clusters', label: 'Clusters' },
+                        { id: 'dots', label: 'Dots' },
+                        { id: 'hex', label: 'Hex' },
+                        { id: 'contours', label: 'Contours' },
+                      ] as const).map(({ id, label }) => (
+                        <button
+                          key={id}
+                          onClick={() => {
+                            setViewMode(id)
+                            if (id !== 'county') setSelectedCounty(null)
+                          }}
+                          className={`whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                            viewMode === id
+                              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                              : 'bg-white/5 text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
