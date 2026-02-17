@@ -1,10 +1,8 @@
 'use client'
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
-
-const COUNTIES_GEOJSON_URL = '/data/us-counties.json'
 
 // Color ramp stops (dark purple → bright purple → neon teal)
 const COLOR_LOW      = '#1a1520'   // very dark purple — lowest scores
@@ -18,35 +16,30 @@ const COLOR_NULL     = '#221d28'   // counties with no data
 export type ColorMode = 'percentile' | 'absolute'
 
 interface CountyChoroplethProps {
+  baseGeojson: GeoJSON.FeatureCollection
   scoreLookup: Map<string, number>
   scoreRange: readonly [number, number]
   hoveredFips: string | null
   highlightThreshold?: number
   colorMode?: ColorMode
   quantileBreaks?: QuantileBreaks | null
+  visible?: boolean
 }
 
 export function CountyChoropleth({
+  baseGeojson,
   scoreLookup,
   scoreRange,
   hoveredFips,
   highlightThreshold = 6.5,
   colorMode = 'percentile',
   quantileBreaks,
+  visible = true,
 }: CountyChoroplethProps) {
-  const [baseGeojson, setBaseGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
-
-  useEffect(() => {
-    fetch(COUNTIES_GEOJSON_URL)
-      .then(res => res.json())
-      .then(data => setBaseGeojson(data))
-      .catch(err => console.error('Failed to load county boundaries:', err))
-  }, [])
-
   // Inject composite scores directly into GeoJSON feature properties.
   // This avoids the Mapbox match-expression size limit (~3k entries).
   const scoredGeojson = useMemo(() => {
-    if (!baseGeojson || scoreLookup.size === 0) return baseGeojson
+    if (scoreLookup.size === 0) return baseGeojson
 
     return {
       ...baseGeojson,
@@ -117,7 +110,7 @@ export function CountyChoropleth({
     ] as unknown as string
   }, [colorMode, quantileBreaks, highlightThreshold])
 
-  if (!scoredGeojson) return null
+  const visibility = visible ? 'visible' : 'none'
 
   return (
     <Source
@@ -128,6 +121,7 @@ export function CountyChoropleth({
       <Layer
         id="county-fill"
         type="fill"
+        layout={{ visibility }}
         paint={{
           'fill-color': fillColorExpression,
           'fill-opacity': fillOpacityExpression as number,
@@ -136,6 +130,7 @@ export function CountyChoropleth({
       <Layer
         id="county-outline"
         type="line"
+        layout={{ visibility }}
         paint={{
           'line-color': 'rgba(255, 255, 255, 0.06)',
           'line-width': 0.5,

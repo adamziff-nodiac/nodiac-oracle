@@ -30,6 +30,7 @@ import { useWeightedScores } from '@/hooks/useWeightedScores'
 import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
+import type { ViewMode } from '@/components/regional-hubs/HubMap'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
@@ -43,6 +44,7 @@ export default function RegionalHubsPage() {
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
   const [colorMode, setColorMode] = useState<ColorMode>('percentile')
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
+  const [viewMode, setViewMode] = useState<ViewMode>('county')
 
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
@@ -166,6 +168,7 @@ export default function RegionalHubsPage() {
                   highlightThreshold={highlightThreshold}
                   colorMode={colorMode}
                   quantileBreaks={quantileBreaks}
+                  viewMode={viewMode}
                 />
 
                 {/* Mobile weight toggle */}
@@ -179,6 +182,38 @@ export default function RegionalHubsPage() {
 
                 {/* Floating weight panel */}
                 <div className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} md:block md:top-4`}>
+                  {/* View Mode toggle */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                      View Mode
+                    </label>
+                    <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-white/10">
+                      <button
+                        onClick={() => setViewMode('county')}
+                        className={`flex-1 text-xs py-1.5 transition-colors ${
+                          viewMode === 'county'
+                            ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                            : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        County
+                      </button>
+                      <button
+                        onClick={() => {
+                          setViewMode('hub')
+                          setSelectedCounty(null)
+                        }}
+                        className={`flex-1 text-xs py-1.5 transition-colors ${
+                          viewMode === 'hub'
+                            ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                            : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                        }`}
+                      >
+                        Hub
+                      </button>
+                    </div>
+                  </div>
+
                   <PresetProfiles
                     activeProfileId={activeProfileId}
                     onSelect={handlePresetSelect}
@@ -305,11 +340,11 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
-                  <ExportControls targetRef={mapExportRef} />
+                  <ExportControls targetRef={mapExportRef} viewMode={viewMode} />
                 </div>
 
                 {/* County detail panel */}

@@ -6,9 +6,14 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
+import { HeatmapLayer } from './HeatmapLayer'
 import { useIsDark } from '@/hooks/useIsDark'
+import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
+import { useHeatmapData } from '@/hooks/useHeatmapData'
 import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
+
+export type ViewMode = 'county' | 'hub'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -22,6 +27,7 @@ interface HubMapProps {
   highlightThreshold?: number
   colorMode?: ColorMode
   quantileBreaks?: QuantileBreaks | null
+  viewMode?: ViewMode
 }
 
 export function HubMap({
@@ -34,30 +40,42 @@ export function HubMap({
   highlightThreshold,
   colorMode,
   quantileBreaks,
+  viewMode = 'county',
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
   const [hoveredFips, setHoveredFips] = useState<string | null>(null)
   const isDark = useIsDark()
 
+  const { geojson: baseGeojson } = useCountyGeoJson()
+  const heatmapData = useHeatmapData(baseGeojson, scoreLookup)
+
+  const isCountyMode = viewMode === 'county'
+
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
+      if (!isCountyMode) return
       const feature = e.features?.[0]
       if (feature?.properties?.FIPS) {
         onCountyClick?.(feature.properties.FIPS)
       }
     },
-    [onCountyClick]
+    [onCountyClick, isCountyMode]
   )
 
   const handleHover = useCallback(
     (e: MapMouseEvent) => {
+      if (!isCountyMode) {
+        setHoveredFips(null)
+        onCountyHover?.(null)
+        return
+      }
       const feature = e.features?.[0]
       const fips = feature?.properties?.FIPS || null
       setHoveredFips(fips)
       onCountyHover?.(fips)
     },
-    [onCountyHover]
+    [onCountyHover, isCountyMode]
   )
 
   const handleMouseLeave = useCallback(() => {
@@ -70,7 +88,8 @@ export function HubMap({
     if (!map) return
 
     const addStateBorders = () => {
-      if (!map.getLayer('county-fill')) {
+      // Wait for either county-fill or hub-heatmap layer to exist
+      if (!map.getLayer('county-fill') && !map.getLayer('hub-heatmap')) {
         setTimeout(addStateBorders, 200)
         return
       }
@@ -146,21 +165,28 @@ export function HubMap({
       }}
       style={{ width: '100%', height: '100%' }}
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
-      interactiveLayerIds={['county-fill']}
+      interactiveLayerIds={isCountyMode ? ['county-fill'] : []}
       onClick={handleClick}
       onMouseMove={handleHover}
       onMouseLeave={handleMouseLeave}
-      cursor={hoveredFips ? 'pointer' : 'grab'}
+      cursor={isCountyMode && hoveredFips ? 'pointer' : 'grab'}
       onLoad={handleStyleLoad}
     >
-      <CountyChoropleth
-        scoreLookup={scoreLookup}
-        scoreRange={scoreRange}
-        hoveredFips={hoveredFips}
-        highlightThreshold={highlightThreshold}
-        colorMode={colorMode}
-        quantileBreaks={quantileBreaks}
-      />
+      {baseGeojson && (
+        <CountyChoropleth
+          baseGeojson={baseGeojson}
+          scoreLookup={scoreLookup}
+          scoreRange={scoreRange}
+          hoveredFips={hoveredFips}
+          highlightThreshold={highlightThreshold}
+          colorMode={colorMode}
+          quantileBreaks={quantileBreaks}
+          visible={isCountyMode}
+        />
+      )}
+      {heatmapData && (
+        <HeatmapLayer data={heatmapData} visible={!isCountyMode} />
+      )}
       {regions.length > 0 && <HubRegionOverlay regions={regions} />}
     </Map>
   )

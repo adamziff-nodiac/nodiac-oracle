@@ -2,14 +2,39 @@
 
 import { COLOR_LOW, COLOR_MID_LOW, COLOR_MID, COLOR_HIGH, COLOR_ORCHID, COLOR_PEAK } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
+import type { ViewMode } from './HubMap'
 
 interface MapLegendProps {
   scoreRange: readonly [number, number]
   highlightThreshold?: number
   colorMode?: ColorMode
+  viewMode?: ViewMode
 }
 
-export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile' }: MapLegendProps) {
+export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county' }: MapLegendProps) {
+  if (viewMode === 'hub') {
+    return (
+      <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+          Hub Region Intensity
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
+          <div
+            className="h-3 w-32 rounded-sm"
+            style={{
+              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
+            }}
+          />
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
+        </div>
+        <p className="text-[10px] text-gray-500 mt-3">
+          Blended from county scores
+        </p>
+      </div>
+    )
+  }
+
   if (colorMode === 'percentile') {
     return (
       <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10">
