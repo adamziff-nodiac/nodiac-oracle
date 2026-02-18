@@ -88,49 +88,29 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
     )
   }
 
-  // --- Dots mode ---
-  if (viewMode === 'dots') {
+  // --- Regions mode ---
+  if (viewMode === 'regions') {
     return (
       <div className={legendBox}>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          County Score Dots
+          Hub Regions
         </p>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
-          <div
-            className="h-3 w-32 rounded-sm"
-            style={{
-              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_PEAK})`,
-            }}
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#4de2e4]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">Top county</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#4a2565]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">In region</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#0d0b12]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">Outside</span>
+          </div>
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
-          One dot per county · Larger = higher score
-        </p>
-      </div>
-    )
-  }
-
-  // --- Hex mode ---
-  if (viewMode === 'hex') {
-    return (
-      <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          Hex Grid Average
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
-          <div
-            className="h-3 w-32 rounded-sm"
-            style={{
-              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
-            }}
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
-        </div>
-        <p className="text-[10px] text-gray-500 mt-3">
-          ~50mi hexagons · Average of contained counties
+          {clusterCount != null ? `${clusterCount} hub region${clusterCount !== 1 ? 's' : ''} detected` : 'County-level cluster membership'}
         </p>
       </div>
     )

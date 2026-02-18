@@ -1,25 +1,24 @@
 'use client'
 
 import { useRef, useCallback, useState, useMemo, useEffect } from 'react'
-import Map, { type MapRef, type MapMouseEvent, Source, Layer } from 'react-map-gl/mapbox'
+import Map, { type MapRef, type MapMouseEvent, Layer } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import { HubRegionOverlay } from './HubRegionOverlay'
 import { HeatmapLayer } from './HeatmapLayer'
 import { TopCountiesLayer } from './TopCountiesLayer'
-import { ScoreDotsLayer } from './ScoreDotsLayer'
 import { HubClustersLayer } from './HubClustersLayer'
+import { ClusterRegionsLayer } from './ClusterRegionsLayer'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHeatmapData } from '@/hooks/useHeatmapData'
 import { useHubClusters } from '@/hooks/useHubClusters'
-import { useHexGridData } from '@/hooks/useHexGridData'
 import type { ClusterOptions } from '@/lib/geo/cluster-hubs'
 import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
-export type ViewMode = 'county' | 'hub' | 'top-counties' | 'clusters' | 'dots' | 'hex'
+export type ViewMode = 'county' | 'hub' | 'top-counties' | 'clusters' | 'regions'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -62,7 +61,6 @@ export function HubMap({
   const { geojson: baseGeojson } = useCountyGeoJson()
   const heatmapData = useHeatmapData(baseGeojson, scoreLookup)
   const clusterData = useHubClusters(baseGeojson, scoreLookup, clusterOptions)
-  const hexData = useHexGridData(baseGeojson, scoreLookup)
 
   useEffect(() => {
     onClusterCount?.(clusterData?.clusters.length ?? 0)
@@ -235,49 +233,18 @@ export function HubMap({
         <HeatmapLayer data={heatmapData} visible={viewMode === 'hub'} />
       )}
 
-      {/* Score Dots: proportional circles at county centroids */}
-      <ScoreDotsLayer
-        geojson={baseGeojson}
-        scoreLookup={scoreLookup}
-        visible={viewMode === 'dots'}
-      />
-
       {/* Hub Clusters: convex hull boundaries + labels */}
       {clusterData && (
         <HubClustersLayer data={clusterData} visible={viewMode === 'clusters'} />
       )}
 
-      {/* Hex Grid: regular hexagonal tiles */}
-      {hexData && (
-        <Source id="hex-grid-source" type="geojson" data={hexData}>
-          <Layer
-            id="hex-grid-fill"
-            type="fill"
-            layout={{ visibility: viewMode === 'hex' ? 'visible' : 'none' }}
-            paint={{
-              'fill-color': [
-                'interpolate', ['linear'], ['get', 'avgScore'],
-                0, '#0d0b12',
-                3, '#1a1520',
-                4.5, '#2d2233',
-                5.5, '#5c2d55',
-                6.5, '#8b3578',
-                7.2, '#b48fc1',
-                8, '#4de2e4',
-              ],
-              'fill-opacity': 0.85,
-            }}
-          />
-          <Layer
-            id="hex-grid-outline"
-            type="line"
-            layout={{ visibility: viewMode === 'hex' ? 'visible' : 'none' }}
-            paint={{
-              'line-color': 'rgba(255, 255, 255, 0.1)',
-              'line-width': 0.5,
-            }}
-          />
-        </Source>
+      {/* Cluster Regions: county-level cluster membership */}
+      {clusterData && (
+        <ClusterRegionsLayer
+          regionsGeojson={clusterData.regionsGeojson}
+          labelsGeojson={clusterData.labelsGeojson}
+          visible={viewMode === 'regions'}
+        />
       )}
 
       {regions.length > 0 && <HubRegionOverlay regions={regions} />}

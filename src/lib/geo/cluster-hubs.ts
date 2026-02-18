@@ -77,7 +77,7 @@ function cross(o: [number, number], a: [number, number], b: [number, number]): n
   return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
 }
 
-function convexHull(points: [number, number][]): [number, number][] {
+export function convexHull(points: [number, number][]): [number, number][] {
   const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1])
   if (sorted.length <= 2) return sorted
 

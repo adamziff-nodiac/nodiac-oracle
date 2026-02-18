@@ -207,8 +207,7 @@ export default function RegionalHubsPage() {
                         { id: 'hub', label: 'Heatmap' },
                         { id: 'top-counties', label: 'Top N%' },
                         { id: 'clusters', label: 'Clusters' },
-                        { id: 'dots', label: 'Dots' },
-                        { id: 'hex', label: 'Hex' },
+                        { id: 'regions', label: 'Regions' },
                       ] as const).map(({ id, label }) => (
                         <button
                           key={id}
@@ -253,8 +252,8 @@ export default function RegionalHubsPage() {
                         />
                       </div>
                     )}
-                    {/* Cluster tuning sliders — only visible in clusters mode */}
-                    {viewMode === 'clusters' && (
+                    {/* Cluster tuning sliders — visible in clusters and regions modes */}
+                    {(viewMode === 'clusters' || viewMode === 'regions') && (
                       <div className="mt-2 space-y-2.5">
                         {/* Top percent */}
                         <div className="space-y-1">
@@ -461,7 +460,7 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} topPercent={topPercent} clusterCount={viewMode === 'clusters' ? clusterCount : undefined} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} topPercent={topPercent} clusterCount={(viewMode === 'clusters' || viewMode === 'regions') ? clusterCount : undefined} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
