@@ -65,7 +65,7 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
         layout={{ visibility }}
         filter={['>', ['get', 'regionStatus'], 0]}
         paint={{
-          'circle-radius': 16,
+          'circle-radius': 22,
           'circle-color': '#4de2e4',
           'circle-opacity': 0.15,
           'circle-blur': 0.8,
@@ -79,9 +79,9 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
         paint={{
           'circle-radius': [
             'match', ['get', 'regionStatus'],
-            2, 8,     // member county: larger
-            1, 7,     // fill county: medium
-            4.5,      // outside: small
+            2, 11,    // member county: larger
+            1, 9.5,   // fill county: medium
+            6,        // outside: small
           ],
           'circle-color': [
             'match', ['get', 'regionStatus'],
