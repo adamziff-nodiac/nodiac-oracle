@@ -159,29 +159,37 @@ function deriveClusterName(centroids: CountyCentroid[]): { name: string; states:
   const dominantState = sorted[0]?.[0] || ''
   const dominantPct = sorted[0] ? sorted[0][1] / centroids.length : 0
 
-  // Geographic descriptor based on centroid position
+  // Geographic descriptor based on centroid position — more granular regions
+  // to reduce "Central" fallback collisions
   let descriptor = ''
-  if (avgLat > 43 && avgLng < -85 && avgLng > -100) descriptor = 'Upper Midwest'
-  else if (avgLat > 43 && avgLng <= -100) descriptor = 'Northern Plains'
-  else if (avgLat > 43 && avgLng >= -85) descriptor = 'Great Lakes'
-  else if (avgLat > 40 && avgLng > -80) descriptor = 'Northeast'
-  else if (avgLat > 37 && avgLng > -85 && avgLng <= -75) descriptor = 'Mid-Atlantic'
-  else if (avgLat > 35 && avgLat <= 40 && avgLng > -90 && avgLng <= -80) descriptor = 'Appalachian'
+  if (avgLat > 45 && avgLng < -85 && avgLng > -100) descriptor = 'Upper Midwest'
+  else if (avgLat > 43 && avgLat <= 45 && avgLng < -85 && avgLng > -100) descriptor = 'Midwest'
+  else if (avgLat > 45 && avgLng <= -100) descriptor = 'Northern Plains'
+  else if (avgLat > 43 && avgLat <= 45 && avgLng <= -100 && avgLng > -110) descriptor = 'Dakotas'
+  else if (avgLat > 43 && avgLng >= -85 && avgLng < -75) descriptor = 'Great Lakes'
+  else if (avgLat > 42 && avgLng >= -75) descriptor = 'New England'
+  else if (avgLat > 40 && avgLat <= 42 && avgLng > -80) descriptor = 'Northeast'
+  else if (avgLat > 37 && avgLat <= 40 && avgLng > -82 && avgLng <= -75) descriptor = 'Mid-Atlantic'
+  else if (avgLat > 35 && avgLat <= 40 && avgLng > -90 && avgLng <= -82) descriptor = 'Ohio Valley'
   else if (avgLat > 35 && avgLat <= 43 && avgLng <= -100 && avgLng > -110) descriptor = 'Great Plains'
   else if (avgLng < -115 && avgLat > 42) descriptor = 'Pacific Northwest'
   else if (avgLng <= -110 && avgLng > -115 && avgLat > 37) descriptor = 'Intermountain'
+  else if (avgLng <= -115 && avgLat <= 42 && avgLat > 35) descriptor = 'West Coast'
   else if (avgLng <= -110 && avgLat <= 37) descriptor = 'Southwest'
-  else if (avgLat <= 33 && avgLng > -100 && avgLng < -85) descriptor = 'Gulf Coast'
-  else if (avgLat <= 35 && avgLng >= -85) descriptor = 'Southeast'
-  else if (avgLat <= 35 && avgLng >= -85) descriptor = 'Piedmont'
+  else if (avgLat <= 33 && avgLng > -100 && avgLng < -88) descriptor = 'Gulf Coast'
+  else if (avgLat <= 33 && avgLng >= -88 && avgLng < -82) descriptor = 'Deep South'
+  else if (avgLat > 33 && avgLat <= 37 && avgLng >= -88 && avgLng < -78) descriptor = 'Piedmont'
+  else if (avgLat <= 35 && avgLng >= -82) descriptor = 'Southeast'
   else if (avgLng < -100 && avgLng >= -110 && avgLat > 35 && avgLat <= 43) descriptor = 'Front Range'
   else if (avgLat < 33 && avgLng < -100) descriptor = 'Southwest'
-  else descriptor = 'Central'
+  else if (avgLat > 37 && avgLat <= 43 && avgLng > -90 && avgLng <= -85) descriptor = 'Heartland'
+  else if (avgLat > 33 && avgLat <= 37 && avgLng > -100 && avgLng <= -90) descriptor = 'Ozarks'
+  else descriptor = 'Interior'
 
-  // Build name: single-state dominant → "Central TX"; multi-state → descriptor only
+  // Build name: single-state dominant → "Northern TX"; multi-state → descriptor
   if (dominantPct >= 0.65 && states.length <= 2) {
     // Use lat within state for a directional prefix
-    const dir = avgLat > 40 ? 'Northern' : avgLat < 33 ? 'Southern' : 'Central'
+    const dir = avgLat > 40 ? 'Northern' : avgLat < 33 ? 'Southern' : avgLat > 36 ? 'Central' : 'Southern'
     return { name: `${dir} ${dominantState}`, states }
   }
   // Multi-state cluster: use regional descriptor alone
@@ -237,6 +245,46 @@ function splitOversizedCluster(
   return result
 }
 
+// --- Cluster compactness ---
+
+/** Mean nearest-neighbor distance among cluster members (km). */
+function meanNearestNeighborDist(members: CountyCentroid[]): number {
+  if (members.length <= 1) return Infinity
+  let totalNN = 0
+  for (let i = 0; i < members.length; i++) {
+    let nearest = Infinity
+    for (let j = 0; j < members.length; j++) {
+      if (i === j) continue
+      const d = haversineKm(members[i].lat, members[i].lng, members[j].lat, members[j].lng)
+      if (d < nearest) nearest = d
+    }
+    totalNN += nearest
+  }
+  return totalNN / members.length
+}
+
+/**
+ * Density-aware minimum size for a cluster.
+ * Compact clusters (adjacent counties, mean NN ~40-60km) need fewer members.
+ * Sprawling clusters (mean NN >100km) need the full minClusterSize.
+ *
+ * Adjacent US counties typically have centroids 40-70km apart.
+ * We use 60km as the "compact" reference point.
+ */
+function effectiveMinSize(members: CountyCentroid[], minClusterSize: number): number {
+  const COMPACT_NN_KM = 60   // adjacent-county reference distance
+  const HARD_MINIMUM = 3     // never drop below 3 members
+
+  const meanNN = meanNearestNeighborDist(members)
+  // ratio: 1.0 for perfectly compact, >1.0 for spread out
+  const sprawlRatio = meanNN / COMPACT_NN_KM
+  // Scale the required size: compact clusters need fewer members
+  // e.g. sprawlRatio=0.8 → need 80% of minClusterSize
+  //      sprawlRatio=2.0 → need 200% (capped at minClusterSize * 1.5)
+  const scaledMin = minClusterSize * Math.min(sprawlRatio, 1.5)
+  return Math.max(HARD_MINIMUM, Math.round(scaledMin))
+}
+
 // --- Merge adjacent clusters ---
 
 function minInterClusterDist(a: CountyCentroid[], b: CountyCentroid[]): number {
@@ -290,6 +338,57 @@ function mergeAdjacentClusters(
   return merged
 }
 
+// --- Name disambiguation ---
+
+/** Disambiguate clusters that share a name by appending directional or state-based suffixes. */
+function deduplicateNames(clusters: HubCluster[]): void {
+  // Group by name
+  const byName = new Map<string, HubCluster[]>()
+  for (const c of clusters) {
+    if (!byName.has(c.name)) byName.set(c.name, [])
+    byName.get(c.name)!.push(c)
+  }
+
+  for (const [, group] of byName) {
+    if (group.length <= 1) continue
+
+    // Sort by latitude descending (northernmost first)
+    group.sort((a, b) => b.centroid.lat - a.centroid.lat)
+
+    // Compute group centroid for relative positioning
+    const groupLat = group.reduce((s, c) => s + c.centroid.lat, 0) / group.length
+    const groupLng = group.reduce((s, c) => s + c.centroid.lng, 0) / group.length
+
+    const suffixes: string[] = []
+    for (const c of group) {
+      const dLat = c.centroid.lat - groupLat
+      const dLng = c.centroid.lng - groupLng
+
+      // Pick the dominant direction
+      if (Math.abs(dLat) > Math.abs(dLng)) {
+        suffixes.push(dLat > 0 ? 'North' : 'South')
+      } else {
+        suffixes.push(dLng < 0 ? 'West' : 'East')
+      }
+    }
+
+    // Check for duplicate suffixes — fall back to state abbreviation
+    const suffixCounts = new Map<string, number>()
+    for (const s of suffixes) suffixCounts.set(s, (suffixCounts.get(s) || 0) + 1)
+    for (let i = 0; i < group.length; i++) {
+      if ((suffixCounts.get(suffixes[i]) || 0) > 1) {
+        // Use dominant state as fallback
+        suffixes[i] = group[i].states[0] || suffixes[i]
+      }
+    }
+
+    // Apply suffixes
+    for (let i = 0; i < group.length; i++) {
+      group[i].name = `${group[i].name} ${suffixes[i]}`
+    }
+  }
+}
+
 // --- Main clustering function ---
 
 export function clusterHubs(
@@ -341,9 +440,10 @@ export function clusterHubs(
   }
 
   // 5. Split oversized clusters that exceeded maxRadiusKm
+  //    Use a lenient pre-filter (hard min of 3) — density check happens in step 6
   const splitGroups: CountyCentroid[][] = []
   for (const indices of groups.values()) {
-    if (indices.length < minClusterSize) continue
+    if (indices.length < 3) continue
     const members = indices.map(i => topCentroids[i])
     splitGroups.push(...splitOversizedCluster(members, maxRadiusKm))
   }
@@ -356,7 +456,9 @@ export function clusterHubs(
   let clusterId = 0
 
   for (const members of mergedGroups) {
-    if (members.length < minClusterSize) continue
+    // Density-aware filter: compact clusters need fewer members to qualify
+    const reqSize = effectiveMinSize(members, minClusterSize)
+    if (members.length < reqSize) continue
 
     const scores = members.map(c => scoreLookup.get(c.fips) || 0)
     const avgScore = scores.reduce((sum, s) => sum + s, 0) / scores.length
@@ -382,6 +484,9 @@ export function clusterHubs(
       states,
     })
   }
+
+  // --- Deduplicate cluster names ---
+  deduplicateNames(clusters)
 
   // Sort by score descending
   clusters.sort((a, b) => b.avgScore - a.avgScore)

@@ -60,15 +60,16 @@ export function HubClustersLayer({ data, visible = true }: HubClustersLayerProps
             visibility,
             'text-field': ['get', 'name'],
             'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-            'text-size': 14,
+            'text-size': 15,
             'text-anchor': 'bottom',
-            'text-offset': [0, -0.5],
-            'text-allow-overlap': true,
+            'text-offset': [0, -1.2] as [number, number],
+            'text-allow-overlap': false,
+            'text-padding': 4,
           }}
           paint={{
             'text-color': '#ffffff',
-            'text-halo-color': 'rgba(0, 0, 0, 0.7)',
-            'text-halo-width': 1.5,
+            'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+            'text-halo-width': 2,
           }}
         />
         <Layer
@@ -80,13 +81,14 @@ export function HubClustersLayer({ data, visible = true }: HubClustersLayerProps
             'text-font': ['DIN Pro Regular', 'Arial Unicode MS Regular'],
             'text-size': 11,
             'text-anchor': 'top',
-            'text-offset': [0, 0.3],
-            'text-allow-overlap': true,
+            'text-offset': [0, -0.8] as [number, number],
+            'text-allow-overlap': false,
+            'text-padding': 2,
           }}
           paint={{
-            'text-color': 'rgba(255, 255, 255, 0.7)',
-            'text-halo-color': 'rgba(0, 0, 0, 0.5)',
-            'text-halo-width': 1,
+            'text-color': 'rgba(255, 255, 255, 0.75)',
+            'text-halo-color': 'rgba(0, 0, 0, 0.7)',
+            'text-halo-width': 1.5,
           }}
         />
       </Source>
