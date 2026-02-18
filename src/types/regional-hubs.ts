@@ -25,7 +25,7 @@ export const CRITERION_DESCRIPTIONS: Record<CriterionKey, string> = {
   clipped_curtailed: 'Renewable curtailment indicating excess capacity',
   permitting: 'Local permitting friendliness for data centers',
   labor: 'Tech business density per capita (proxy for available talent)',
-  fiber: 'Household broadband adoption (proxy for fiber infrastructure)',
+  fiber: 'Fiber infrastructure availability (FCC BDC + NTIA Middle Mile grants)',
   queue_pressure: 'Interconnection queue congestion from LBNL Queued Up data',
 }
 
@@ -59,6 +59,9 @@ export interface CountyScore {
   grid_reliability_years?: number
   grid_reliability_data_range?: string
   grid_reliability_avg_saidi?: number
+  ntia_middle_mile_grants?: number
+  ntia_middle_mile_amount?: number
+  ntia_middle_mile_recipients?: string[]
 }
 
 export interface WeightProfile {

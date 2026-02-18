@@ -18,6 +18,7 @@ Data Sources:
     - Labor:             Census County Business Patterns (2023) — NAICS 5182/5415/517
     - Fiber:             FCC BDC Dec 2024 (primary) — Fiber availability at BSLs via ArcGIS
                          Census ACS 5-Year 2023 (fallback) — Broadband subscriptions proxy
+                         NTIA Middle Mile grants (CFDA 11.033) — Middle-mile fiber infrastructure
     - Permitting:        State DC incentive data (NCSL, SDI Alliance, H5, NAIOP, Data Center Watch)
 
 Output:
@@ -30,6 +31,7 @@ import io
 import json
 import math
 import os
+import re
 import sys
 import tempfile
 import zipfile
@@ -186,6 +188,30 @@ EXPECTED_CF_WIND = {
     "VA": 0.26, "NC": 0.26, "WV": 0.26, "AR": 0.28, "LA": 0.25,
     "AL": 0.25, "GA": 0.25, "SC": 0.25, "FL": 0.22, "MS": 0.25,
     "TN": 0.25, "KY": 0.25, "DE": 0.25, "HI": 0.30, "AK": 0.28,
+}
+
+# NTIA Enabling Middle Mile Broadband Infrastructure Program (CFDA 11.033)
+# USAspending.gov API for federal grant data
+USASPENDING_SEARCH_URL = "https://api.usaspending.gov/api/v2/search/spending_by_award/"
+USASPENDING_AWARD_URL = "https://api.usaspending.gov/api/v2/awards/"
+NTIA_MIDDLE_MILE_CFDA = "11.033"
+
+# State name -> abbreviation mapping (for parsing grant descriptions)
+STATE_NAME_TO_ABBR: dict[str, str] = {
+    "ALABAMA": "AL", "ALASKA": "AK", "ARIZONA": "AZ", "ARKANSAS": "AR",
+    "CALIFORNIA": "CA", "COLORADO": "CO", "CONNECTICUT": "CT", "DELAWARE": "DE",
+    "FLORIDA": "FL", "GEORGIA": "GA", "HAWAII": "HI", "IDAHO": "ID",
+    "ILLINOIS": "IL", "INDIANA": "IN", "IOWA": "IA", "KANSAS": "KS",
+    "KENTUCKY": "KY", "LOUISIANA": "LA", "MAINE": "ME", "MARYLAND": "MD",
+    "MASSACHUSETTS": "MA", "MICHIGAN": "MI", "MINNESOTA": "MN",
+    "MISSISSIPPI": "MS", "MISSOURI": "MO", "MONTANA": "MT", "NEBRASKA": "NE",
+    "NEVADA": "NV", "NEW HAMPSHIRE": "NH", "NEW JERSEY": "NJ",
+    "NEW MEXICO": "NM", "NEW YORK": "NY", "NORTH CAROLINA": "NC",
+    "NORTH DAKOTA": "ND", "OHIO": "OH", "OKLAHOMA": "OK", "OREGON": "OR",
+    "PENNSYLVANIA": "PA", "RHODE ISLAND": "RI", "SOUTH CAROLINA": "SC",
+    "SOUTH DAKOTA": "SD", "TENNESSEE": "TN", "TEXAS": "TX", "UTAH": "UT",
+    "VERMONT": "VT", "VIRGINIA": "VA", "WASHINGTON": "WA",
+    "WEST VIRGINIA": "WV", "WISCONSIN": "WI", "WYOMING": "WY",
 }
 
 # Output path
@@ -1605,11 +1631,16 @@ def blend_labor_with_neighbors(
 # Step 6: Fiber / Broadband from Census ACS
 # ============================================================
 
-def compute_fiber_fcc_bdc() -> tuple[dict[str, float], dict[str, dict]]:
+def compute_fiber_fcc_bdc(
+    ntia_scores: dict[str, float] | None = None,
+) -> tuple[dict[str, float], dict[str, dict]]:
     """Compute fiber availability from FCC BDC county-level data (Dec 2024).
 
     Primary fiber source: ISP-reported fiber-to-the-premises availability
     at the location level, aggregated to county via ArcGIS Living Atlas.
+
+    When ntia_scores are provided, the composite formula changes from
+    80/20 (BDC rate / providers) to 60/15/25 (BDC rate / providers / NTIA).
 
     Returns:
         (scores, metadata) where:
@@ -1687,9 +1718,14 @@ def compute_fiber_fcc_bdc() -> tuple[dict[str, float], dict[str, dict]]:
     if not fiber_rates:
         return {}, {}
 
-    # Composite score: 80% fiber availability rate + 20% provider competition
-    # Provider competition matters: 1 provider = monopoly, 3+ = healthy market
-    max_providers = max((m["fiber_providers"] for m in fiber_metadata.values()), default=1)
+    # Composite score weights depend on whether NTIA middle-mile data is available
+    # Without NTIA: 80% fiber availability rate + 20% provider competition
+    # With NTIA:    60% fiber availability rate + 15% provider competition + 25% NTIA middle mile
+    has_ntia = ntia_scores and len(ntia_scores) > 0
+    if has_ntia:
+        log("Blending NTIA Middle Mile data into fiber composite (60/15/25 weights)")
+    else:
+        log("No NTIA data — using standard fiber composite (80/20 weights)")
 
     fips_list = sorted(fiber_rates.keys())
     raw_scores: list[float] = []
@@ -1698,7 +1734,11 @@ def compute_fiber_fcc_bdc() -> tuple[dict[str, float], dict[str, dict]]:
         providers = fiber_metadata[fips]["fiber_providers"]
         # Normalize providers: diminishing returns after ~5
         provider_score = min(providers / 5.0, 1.0)
-        composite = 0.80 * rate + 0.20 * provider_score
+        if has_ntia:
+            ntia = ntia_scores.get(fips, 0.0)
+            composite = 0.60 * rate + 0.15 * provider_score + 0.25 * ntia
+        else:
+            composite = 0.80 * rate + 0.20 * provider_score
         raw_scores.append(composite)
 
     # Percentile rank normalization
@@ -1765,17 +1805,22 @@ def compute_fiber_acs_fallback() -> dict[str, float]:
     return scores
 
 
-def compute_fiber_score() -> tuple[dict[str, float], dict[str, dict], dict[str, str]]:
+def compute_fiber_score(
+    ntia_scores: dict[str, float] | None = None,
+) -> tuple[dict[str, float], dict[str, dict], dict[str, str]]:
     """Compute fiber score using FCC BDC as primary, ACS as fallback.
+
+    When ntia_scores are provided, they are blended into the BDC composite
+    at 25% weight (reducing BDC rate from 80% to 60% and providers from 20% to 15%).
 
     Returns:
         (scores, metadata, source_map) where:
         - scores: {fips: fiber_score}
         - metadata: {fips: {...}} (only for BDC counties)
-        - source_map: {fips: "FCC BDC Dec 2024" | "Census ACS 2023 (fallback)"}
+        - source_map: {fips: "FCC BDC Dec 2024..." | "Census ACS 2023 (fallback)"}
     """
-    # Primary: FCC BDC
-    bdc_scores, bdc_metadata = compute_fiber_fcc_bdc()
+    # Primary: FCC BDC (with optional NTIA blending)
+    bdc_scores, bdc_metadata = compute_fiber_fcc_bdc(ntia_scores=ntia_scores)
 
     # Fallback: Census ACS
     acs_scores = compute_fiber_acs_fallback()
@@ -1788,10 +1833,16 @@ def compute_fiber_score() -> tuple[dict[str, float], dict[str, dict], dict[str, 
     bdc_used = 0
     acs_used = 0
 
+    bdc_source_label = (
+        "FCC BDC Dec 2024 + NTIA Middle Mile grants (USAspending.gov)"
+        if ntia_scores
+        else "FCC BDC Dec 2024 (fiber availability at BSLs via ArcGIS Living Atlas)"
+    )
+
     for fips in all_fips:
         if fips in bdc_scores:
             scores[fips] = bdc_scores[fips]
-            source_map[fips] = "FCC BDC Dec 2024 (fiber availability at BSLs via ArcGIS Living Atlas)"
+            source_map[fips] = bdc_source_label
             bdc_used += 1
         elif fips in acs_scores:
             scores[fips] = acs_scores[fips]
@@ -1800,6 +1851,298 @@ def compute_fiber_score() -> tuple[dict[str, float], dict[str, dict], dict[str, 
 
     log(f"\nFiber scoring summary: {bdc_used} BDC + {acs_used} ACS fallback = {len(scores)} total")
     return scores, bdc_metadata, source_map
+
+
+# ============================================================
+# Step 6a-ii: NTIA Enabling Middle Mile Broadband Infrastructure
+# ============================================================
+
+def _parse_counties_from_description(
+    description: str, pop_state: str | None, fips_lookup: dict
+) -> list[tuple[str, str]]:
+    """Parse county names and states from an NTIA grant description.
+
+    Descriptions are ALL-CAPS and use varied formats:
+      - "BARRON, POLK, AND WASHBURN COUNTIES IN WISCONSIN"
+      - "LOVING COUNTY, TX"
+      - "BERRIEN COUNTY"
+      - "CUMBERLAND AND SALEM COUNTIES"
+
+    Returns list of (state_abbr, county_name) pairs.
+    """
+    text = description.upper()
+    results: list[tuple[str, str]] = []
+
+    # Pattern 1: "[county], [county], AND [county] COUNTIES IN [state]"
+    # e.g., "BARRON, POLK, BURNETT, AND WASHBURN COUNTIES IN WISCONSIN"
+    pat1 = re.findall(
+        r'((?:[A-Z][A-Z .\']+(?:,\s*)?)+(?:,?\s*AND\s+[A-Z][A-Z .\']+))\s+COUNT(?:Y|IES)\s+IN\s+'
+        r'((?:NEW\s+)?(?:NORTH\s+)?(?:SOUTH\s+)?(?:WEST\s+)?(?:RHODE\s+)?[A-Z]+)',
+        text,
+    )
+    for county_group, state_name in pat1:
+        state_name = state_name.strip()
+        abbr = STATE_NAME_TO_ABBR.get(state_name)
+        if not abbr:
+            continue
+        # Split "BARRON, POLK, BURNETT, AND WASHBURN"
+        names = re.split(r',\s*|\s+AND\s+', county_group)
+        for name in names:
+            name = name.strip().rstrip(',')
+            if name and len(name) > 1:
+                results.append((abbr, name.title()))
+
+    # Pattern 2: "[county] COUNTY, [state_abbr]"
+    # e.g., "LOVING COUNTY, TX"
+    pat2 = re.findall(r'([A-Z][A-Z .\']+?)\s+COUNTY,?\s+([A-Z]{2})\b', text)
+    for county_name, state_abbr in pat2:
+        county_name = county_name.strip()
+        if state_abbr in STATE_NAME_TO_ABBR.values() and len(county_name) > 1:
+            results.append((state_abbr, county_name.title()))
+
+    # Pattern 3: "[county] AND [county] COUNTIES" (no state — use pop_state)
+    if pop_state:
+        pat3 = re.findall(
+            r'([A-Z][A-Z .\']+?)\s+AND\s+([A-Z][A-Z .\']+?)\s+COUNT(?:Y|IES)',
+            text,
+        )
+        for c1, c2 in pat3:
+            c1, c2 = c1.strip(), c2.strip()
+            if len(c1) > 1:
+                results.append((pop_state, c1.title()))
+            if len(c2) > 1:
+                results.append((pop_state, c2.title()))
+
+    # Pattern 4: Standalone "[county] COUNTY" (singular, use pop_state)
+    if pop_state:
+        pat4 = re.findall(r'(?<![,\w])\s([A-Z][A-Z .\']{2,}?)\s+COUNTY(?!\s*,?\s*[A-Z]{2}\b)', text)
+        for county_name in pat4:
+            county_name = county_name.strip()
+            # Skip false positives (common words that precede COUNTY)
+            if county_name in ("THE", "EACH", "EVERY", "ONE", "THIS", "THAT", "PER", "UNSERVED"):
+                continue
+            if len(county_name) > 1:
+                results.append((pop_state, county_name.title()))
+
+    # Deduplicate
+    seen: set[tuple[str, str]] = set()
+    deduped: list[tuple[str, str]] = []
+    for pair in results:
+        key = (pair[0], pair[1].lower())
+        if key not in seen:
+            seen.add(key)
+            deduped.append(pair)
+
+    return deduped
+
+
+def compute_ntia_middle_mile(
+    fips_lookup: dict,
+) -> tuple[dict[str, float], dict[str, dict]]:
+    """Fetch NTIA Enabling Middle Mile grants and compute per-county scores.
+
+    Uses USAspending.gov API to fetch all CFDA 11.033 grants, then maps
+    each grant to the counties it serves using Place of Performance data
+    and description parsing.
+
+    Returns:
+        (scores, metadata) where:
+        - scores: {fips: ntia_score} (0-1, log-normalized grant amount)
+        - metadata: {fips: {grant_count, total_amount, recipients: [...]}}
+    """
+    print("\n=== Computing NTIA Middle Mile Score (USAspending.gov) ===", flush=True)
+
+    # Step 1: Fetch all grants from search API
+    log("Fetching NTIA Middle Mile grants (CFDA 11.033)...")
+    payload = {
+        "filters": {"program_numbers": [NTIA_MIDDLE_MILE_CFDA]},
+        "fields": [
+            "Award ID", "Recipient Name", "Award Amount",
+            "Place of Performance State Code",
+            "generated_internal_id",
+        ],
+        "limit": 100,
+        "page": 1,
+        "sort": "Award Amount",
+        "order": "desc",
+    }
+
+    try:
+        resp = requests.post(USASPENDING_SEARCH_URL, json=payload, timeout=60)
+        resp.raise_for_status()
+        search_data = resp.json()
+    except Exception as e:
+        log(f"WARNING: USAspending search failed: {e}")
+        return {}, {}
+
+    results = search_data.get("results", [])
+    log(f"Found {len(results)} NTIA Middle Mile grants")
+
+    if not results:
+        return {}, {}
+
+    # Step 2: Fetch individual award details for geographic data + descriptions
+    grants: list[dict] = []
+    for i, award in enumerate(results):
+        amount = award.get("Award Amount") or 0
+        if amount <= 0:
+            continue
+
+        internal_id = award.get("generated_internal_id", "")
+        recipient = award.get("Recipient Name", "Unknown")
+        pop_state = award.get("Place of Performance State Code")
+
+        # Fetch award detail for description and county-level geography
+        detail = None
+        if internal_id:
+            try:
+                detail_url = f"{USASPENDING_AWARD_URL}{internal_id}/"
+                detail_resp = requests.get(detail_url, timeout=30)
+                detail_resp.raise_for_status()
+                detail = detail_resp.json()
+            except Exception:
+                pass  # Fall back to search-level data
+
+        description = ""
+        pop_county_code = None
+        pop_state_code = None
+
+        if detail:
+            description = detail.get("description", "") or ""
+            pop = detail.get("place_of_performance") or {}
+            pop_county_code = pop.get("county_code")
+            pop_state_code = pop.get("state_code") or pop_state
+
+            # Also check recipient location for state
+            recipient_loc = (detail.get("recipient") or {}).get("location") or {}
+            if not pop_state_code:
+                pop_state_code = recipient_loc.get("state_code")
+        else:
+            pop_state_code = pop_state
+
+        grants.append({
+            "award_id": award.get("Award ID", ""),
+            "recipient": recipient,
+            "amount": amount,
+            "description": description,
+            "pop_state": pop_state_code,
+            "pop_county_code": pop_county_code,
+        })
+
+        if (i + 1) % 10 == 0:
+            log(f"  Fetched details for {i + 1}/{len(results)} grants...")
+
+    log(f"Grants with non-zero amounts: {len(grants)}")
+
+    # Step 3: Map grants to counties
+    # For each grant, resolve: (a) Place of Performance county, (b) counties parsed from description
+    county_grants: dict[str, list[dict]] = defaultdict(list)  # fips -> [grant_info, ...]
+
+    for grant in grants:
+        matched_fips: set[str] = set()
+
+        # (a) Place of Performance county (single county — HQ or primary site)
+        if grant["pop_county_code"] and grant["pop_state"]:
+            # Build 5-digit FIPS from state abbreviation + 3-digit county code
+            state_abbr = grant["pop_state"]
+            # We need state FIPS from abbreviation — scan fips_lookup
+            state_fips = None
+            for (st, _), fips_code in fips_lookup.items():
+                if st == state_abbr:
+                    state_fips = fips_code[:2]
+                    break
+            if state_fips:
+                pop_fips = state_fips + grant["pop_county_code"].zfill(3)
+                matched_fips.add(pop_fips)
+
+        # (b) Parse county names from description
+        if grant["description"]:
+            parsed_counties = _parse_counties_from_description(
+                grant["description"], grant["pop_state"], fips_lookup,
+            )
+            for state_abbr, county_name in parsed_counties:
+                fips = resolve_fips(state_abbr, county_name, fips_lookup)
+                if fips:
+                    matched_fips.add(fips)
+
+        # If no counties matched, try the pop_state as a state-wide signal
+        # (spreads to no specific county — skip these)
+        if not matched_fips:
+            log(f"  WARNING: No counties matched for {grant['recipient']} "
+                f"(${grant['amount']:,.0f})")
+            continue
+
+        # Classify recipient type
+        recipient_lower = grant["recipient"].lower()
+        if any(kw in recipient_lower for kw in ("cooperative", "co-op", "coop")):
+            rtype = "cooperative"
+        elif any(kw in recipient_lower for kw in ("utility", "power", "electric", "energy")):
+            rtype = "utility"
+        elif any(kw in recipient_lower for kw in ("tel", "telecom", "communications", "broadband", "fiber")):
+            rtype = "telco"
+        else:
+            rtype = "other"
+
+        grant_info = {
+            "recipient": grant["recipient"],
+            "amount": grant["amount"],
+            "recipient_type": rtype,
+            "award_id": grant["award_id"],
+        }
+
+        # Assign grant to all matched counties
+        for fips in matched_fips:
+            county_grants[fips].append(grant_info)
+
+    log(f"Counties with NTIA Middle Mile grants: {len(county_grants)}")
+
+    if not county_grants:
+        return {}, {}
+
+    # Step 4: Compute per-county scores
+    # Score = log-normalized total grant amount (similar to queue_pressure)
+    county_amounts: dict[str, float] = {}
+    ntia_metadata: dict[str, dict] = {}
+
+    for fips, grant_list in county_grants.items():
+        total_amount = sum(g["amount"] for g in grant_list)
+        recipients = list({g["recipient"] for g in grant_list})
+        recipient_types = list({g["recipient_type"] for g in grant_list})
+
+        county_amounts[fips] = total_amount
+        ntia_metadata[fips] = {
+            "grant_count": len(grant_list),
+            "total_amount": round(total_amount, 2),
+            "recipients": recipients,
+            "recipient_types": recipient_types,
+        }
+
+    # Log-normalize and percentile-rank
+    fips_list = sorted(county_amounts.keys())
+    log_amounts = [math.log1p(county_amounts[f]) for f in fips_list]
+    ranks = percentile_rank(log_amounts)
+
+    scores: dict[str, float] = {}
+    for fips, rank in zip(fips_list, ranks):
+        scores[fips] = round(rank, 4)
+
+    # Stats
+    total_grant_dollars = sum(county_amounts.values())
+    coop_counties = sum(
+        1 for m in ntia_metadata.values()
+        if "cooperative" in m["recipient_types"]
+    )
+    log(f"Total grant dollars mapped: ${total_grant_dollars:,.0f}")
+    log(f"Counties with cooperative recipients: {coop_counties}")
+
+    # Spot-check Dairyland
+    for fips, meta in ntia_metadata.items():
+        for r in meta["recipients"]:
+            if "DAIRYLAND" in r.upper():
+                log(f"  Dairyland Power mapped to FIPS {fips} "
+                    f"(${meta['total_amount']:,.0f}, score={scores.get(fips, 0):.4f})")
+
+    return scores, ntia_metadata
 
 
 # ============================================================
@@ -2231,6 +2574,7 @@ def assemble_scores(
     grid_metadata: dict[str, dict] | None = None,
     fiber_metadata: dict[str, dict] | None = None,
     fiber_source_map: dict[str, str] | None = None,
+    ntia_metadata: dict[str, dict] | None = None,
 ) -> list[dict]:
     """Assemble all criterion scores into final county records."""
     print("\n=== Assembling Final Scores ===", flush=True)
@@ -2360,6 +2704,13 @@ def assemble_scores(
                 else str(gm['min_year'])
             )
             county_record["grid_reliability_avg_saidi"] = gm["avg_saidi"]
+
+        # Add NTIA Middle Mile metadata if available
+        nm = (ntia_metadata or {}).get(fips)
+        if nm:
+            county_record["ntia_middle_mile_grants"] = nm["grant_count"]
+            county_record["ntia_middle_mile_amount"] = nm["total_amount"]
+            county_record["ntia_middle_mile_recipients"] = nm["recipients"]
 
         counties.append(county_record)
 
@@ -2515,7 +2866,13 @@ def main():
         curtail_scores, plant_info = compute_curtailment_score(tmpdir, fips_lookup)
         labor_scores_raw = compute_labor_score()
         labor_scores = blend_labor_with_neighbors(labor_scores_raw)
-        fiber_scores, fiber_metadata, fiber_source_map = compute_fiber_score()
+
+        # NTIA Middle Mile grants (computed before fiber so it can be blended in)
+        ntia_scores, ntia_metadata = compute_ntia_middle_mile(fips_lookup)
+
+        fiber_scores, fiber_metadata, fiber_source_map = compute_fiber_score(
+            ntia_scores=ntia_scores,
+        )
         queue_scores = compute_queue_pressure(tmpdir, fips_lookup)
 
         # Enhance curtailment with negative LMP frequency (optional)
@@ -2542,6 +2899,7 @@ def main():
             grid_metadata,
             fiber_metadata,
             fiber_source_map,
+            ntia_metadata,
         )
 
         # Build permitting citations
