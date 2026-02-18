@@ -75,13 +75,16 @@ export function HubMap({
     onClusters?.(clusterData?.clusters ?? [])
   }, [clusterData, onClusterCount, onClusters])
 
-  // Build FIPS → clusterId lookup from cluster member data
+  // Build FIPS → clusterId lookup from all cluster counties (member + fill)
   const fipsToClusterId = useMemo(() => {
     if (!clusterData) return null
     const lookup: Record<string, number> = {}
-    for (const cluster of clusterData.clusters) {
-      for (const c of cluster.counties) {
-        lookup[c.fips] = cluster.id
+    for (const feature of clusterData.regionsGeojson.features) {
+      const fips = feature.properties?.FIPS as string | undefined
+      const clusterId = feature.properties?.clusterId as number
+      const status = feature.properties?.clusterStatus as number
+      if (fips && status > 0 && clusterId >= 0) {
+        lookup[fips] = clusterId
       }
     }
     return lookup
