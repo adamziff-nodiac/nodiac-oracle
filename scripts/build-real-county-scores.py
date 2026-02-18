@@ -1873,41 +1873,68 @@ def _parse_counties_from_description(
     text = description.upper()
     results: list[tuple[str, str]] = []
 
-    # Pattern 1: "[county], [county], AND [county] COUNTIES IN [state]"
+    # Build state name pattern (sorted longest-first to match "NEW MEXICO" before "NEW")
+    state_names_sorted = sorted(STATE_NAME_TO_ABBR.keys(), key=len, reverse=True)
+    state_pattern = "|".join(re.escape(s) for s in state_names_sorted)
+    valid_abbrs = set(STATE_NAME_TO_ABBR.values())
+
+    # A "county word" is 1-3 capitalized words (e.g., "TOM GREEN", "ST. CLAIR")
+    CW = r'[A-Z][A-Z.\'-]+(?:\s+[A-Z][A-Z.\'-]+){0,2}'
+
+    # Pattern 1: "COUNTIES IN [state]" — two-step: find anchor, then scan backwards
     # e.g., "BARRON, POLK, BURNETT, AND WASHBURN COUNTIES IN WISCONSIN"
-    pat1 = re.findall(
-        r'((?:[A-Z][A-Z .\']+(?:,\s*)?)+(?:,?\s*AND\s+[A-Z][A-Z .\']+))\s+COUNT(?:Y|IES)\s+IN\s+'
-        r'((?:NEW\s+)?(?:NORTH\s+)?(?:SOUTH\s+)?(?:WEST\s+)?(?:RHODE\s+)?[A-Z]+)',
-        text,
-    )
-    for county_group, state_name in pat1:
-        state_name = state_name.strip()
+    # Find all "COUNT(Y|IES) IN STATE" positions first, then extract between them
+    # Allow optional geographic modifiers before state name
+    # e.g., "FAR SOUTHWEST VIRGINIA", "EAST TENNESSEE", "CENTRAL IOWA"
+    GEO_MOD = r'(?:(?:FAR|EAST|WEST|NORTH|SOUTH|CENTRAL|EASTERN|WESTERN|NORTHERN|SOUTHERN|NORTHEAST|NORTHWEST|SOUTHEAST|SOUTHWEST|RURAL|REMOTE)\s+){0,2}'
+    anchors = list(re.finditer(
+        r'COUNT(?:Y|IES)\s+IN\s+' + GEO_MOD + r'(' + state_pattern + r')\b', text,
+    ))
+    for i, m in enumerate(anchors):
+        state_name = m.group(1)
         abbr = STATE_NAME_TO_ABBR.get(state_name)
         if not abbr:
             continue
-        # Split "BARRON, POLK, BURNETT, AND WASHBURN"
-        names = re.split(r',\s*|\s+AND\s+', county_group)
+        # Determine start of this county list: after prev anchor's end, or sentence start
+        if i > 0:
+            seg_start = anchors[i - 1].end()
+        else:
+            seg_start = max(0, m.start() - 300)
+        preceding = text[seg_start:m.start()].rstrip()
+        # Strip up to the last sentence/clause boundary, but keep any county
+        # name that follows boundary words like "ACROSS"
+        boundary = re.search(r'.*[.;:()\n]', preceding)
+        if boundary:
+            preceding = preceding[boundary.end():]
+        # Strip boundary verbs that introduce county lists (keep text after them)
+        verb_boundary = re.search(
+            r'\b(?:ACROSS|THROUGH|ALONG|WITHIN|COVERING|SERVING|INCLUDING)\s+',
+            preceding,
+        )
+        if verb_boundary:
+            preceding = preceding[verb_boundary.end():]
+        # Strip leading commas, "AND", whitespace
+        preceding = re.sub(r'^[\s,]+(?:AND\s+)?', '', preceding)
+        # Now split by commas and AND to get individual county names
+        names = re.split(r',\s*(?:AND\s+)?|\s+AND\s+', preceding.strip())
         for name in names:
-            name = name.strip().rstrip(',')
-            if name and len(name) > 1:
+            name = name.strip()
+            # County names are typically 1-3 words, all caps
+            if re.match(r'^[A-Z][A-Z.\'-]+(?:\s+[A-Z][A-Z.\'-]+){0,2}$', name) and len(name) > 1:
                 results.append((abbr, name.title()))
 
     # Pattern 2: "[county] COUNTY, [state_abbr]"
-    # e.g., "LOVING COUNTY, TX"
-    pat2 = re.findall(r'([A-Z][A-Z .\']+?)\s+COUNTY,?\s+([A-Z]{2})\b', text)
-    for county_name, state_abbr in pat2:
-        county_name = county_name.strip()
-        if state_abbr in STATE_NAME_TO_ABBR.values() and len(county_name) > 1:
+    # e.g., "LOVING COUNTY, TX" or "AND HARDING COUNTY, NM"
+    for m in re.finditer(r'(?:AND\s+)?(' + CW + r')\s+COUNTY,?\s+([A-Z]{2})\b', text):
+        county_name = m.group(1).strip()
+        state_abbr = m.group(2)
+        if state_abbr in valid_abbrs and len(county_name) > 1:
             results.append((state_abbr, county_name.title()))
 
     # Pattern 3: "[county] AND [county] COUNTIES" (no state — use pop_state)
     if pop_state:
-        pat3 = re.findall(
-            r'([A-Z][A-Z .\']+?)\s+AND\s+([A-Z][A-Z .\']+?)\s+COUNT(?:Y|IES)',
-            text,
-        )
-        for c1, c2 in pat3:
-            c1, c2 = c1.strip(), c2.strip()
+        for m in re.finditer(r'\b(' + CW + r')\s+AND\s+(' + CW + r')\s+COUNT(?:Y|IES)\b', text):
+            c1, c2 = m.group(1).strip(), m.group(2).strip()
             if len(c1) > 1:
                 results.append((pop_state, c1.title()))
             if len(c2) > 1:
@@ -1915,11 +1942,11 @@ def _parse_counties_from_description(
 
     # Pattern 4: Standalone "[county] COUNTY" (singular, use pop_state)
     if pop_state:
-        pat4 = re.findall(r'(?<![,\w])\s([A-Z][A-Z .\']{2,}?)\s+COUNTY(?!\s*,?\s*[A-Z]{2}\b)', text)
-        for county_name in pat4:
-            county_name = county_name.strip()
-            # Skip false positives (common words that precede COUNTY)
-            if county_name in ("THE", "EACH", "EVERY", "ONE", "THIS", "THAT", "PER", "UNSERVED"):
+        skip_words = {"THE", "EACH", "EVERY", "ONE", "THIS", "THAT", "PER",
+                       "UNSERVED", "IN", "A", "ANY", "OF", "BY"}
+        for m in re.finditer(r'\b(' + CW + r')\s+COUNTY\b', text):
+            county_name = m.group(1).strip()
+            if county_name in skip_words:
                 continue
             if len(county_name) > 1:
                 results.append((pop_state, county_name.title()))
@@ -1955,7 +1982,11 @@ def compute_ntia_middle_mile(
     # Step 1: Fetch all grants from search API
     log("Fetching NTIA Middle Mile grants (CFDA 11.033)...")
     payload = {
-        "filters": {"program_numbers": [NTIA_MIDDLE_MILE_CFDA]},
+        "filters": {
+            "program_numbers": [NTIA_MIDDLE_MILE_CFDA],
+            # award_type_codes for grants/cooperative agreements (required by API)
+            "award_type_codes": ["02", "03", "04", "05"],
+        },
         "fields": [
             "Award ID", "Recipient Name", "Award Amount",
             "Place of Performance State Code",
