@@ -49,6 +49,7 @@ export default function RegionalHubsPage() {
   const [clusterLinkDist, setClusterLinkDist] = useState(250)
   const [clusterCount, setClusterCount] = useState(0)
   const [showPortfolio, setShowPortfolio] = useState(false)
+  const [showLabels, setShowLabels] = useState(true)
 
   const { sites: portfolioSites } = usePortfolioSites()
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
@@ -183,6 +184,7 @@ export default function RegionalHubsPage() {
                   onClusterCount={setClusterCount}
                   showPortfolio={showPortfolio}
                   portfolioSites={portfolioSites}
+                  showLabels={showLabels}
                 />
 
                 {/* Mobile weight toggle */}
@@ -302,9 +304,19 @@ export default function RegionalHubsPage() {
                         </div>
                       </div>
                     )}
-                    {/* Portfolio overlay toggle — visible in regions mode */}
+                    {/* Toggles — visible in regions mode */}
                     {viewMode === 'regions' && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10">
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
+                        <button
+                          onClick={() => setShowLabels(!showLabels)}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            showLabels
+                              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                              : 'bg-white/5 text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          <span>Hub Names</span>
+                        </button>
                         <button
                           onClick={() => setShowPortfolio(!showPortfolio)}
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -313,7 +325,7 @@ export default function RegionalHubsPage() {
                               : 'bg-white/5 text-gray-400 hover:text-white'
                           }`}
                         >
-                          <span>Show Portfolio Sites</span>
+                          <span>Portfolio Sites</span>
                           <span className="tabular-nums font-mono text-[10px]">
                             {portfolioSites.length} sites
                           </span>

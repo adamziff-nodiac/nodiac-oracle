@@ -31,6 +31,7 @@ interface HubMapProps {
   onClusterCount?: (count: number) => void
   showPortfolio?: boolean
   portfolioSites?: { latitude: number | null; longitude: number | null; fips_code: string | null; site_name: string; site_score: number | null }[]
+  showLabels?: boolean
 }
 
 export function HubMap({
@@ -47,6 +48,7 @@ export function HubMap({
   onClusterCount,
   showPortfolio = false,
   portfolioSites = [],
+  showLabels = true,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -233,6 +235,7 @@ export function HubMap({
           labelsGeojson={clusterData.labelsGeojson}
           visible={viewMode === 'regions'}
           populatedClusterIds={populatedClusterIds}
+          showLabels={showLabels}
         />
       )}
 

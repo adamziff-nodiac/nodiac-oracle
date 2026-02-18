@@ -9,6 +9,7 @@ interface ClusterRegionsLayerProps {
   visible?: boolean
   /** When set, clusters NOT in this set are visually muted */
   populatedClusterIds?: Set<number> | null
+  showLabels?: boolean
 }
 
 /**
@@ -19,8 +20,9 @@ interface ClusterRegionsLayerProps {
  *  - Teal: top-scoring county in a cluster (member)
  * When populatedClusterIds is provided, clusters without portfolio sites are dimmed.
  */
-export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = true, populatedClusterIds }: ClusterRegionsLayerProps) {
+export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = true, populatedClusterIds, showLabels = true }: ClusterRegionsLayerProps) {
   const visibility = visible ? 'visible' : 'none'
+  const labelVisibility = visible && showLabels ? 'visible' : 'none'
 
   // Enrich features with populated flag when portfolio overlay is active
   const processedGeojson = useMemo(() => {
@@ -109,7 +111,7 @@ export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = t
           id="cluster-regions-labels"
           type="symbol"
           layout={{
-            visibility,
+            visibility: labelVisibility,
             'text-field': ['get', 'name'],
             'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
             'text-size': 15,
@@ -128,7 +130,7 @@ export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = t
           id="cluster-regions-subtitles"
           type="symbol"
           layout={{
-            visibility,
+            visibility: labelVisibility,
             'text-field': ['get', 'subtitle'],
             'text-font': ['DIN Pro Regular', 'Arial Unicode MS Regular'],
             'text-size': 11,
