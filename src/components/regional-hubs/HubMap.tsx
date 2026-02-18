@@ -34,6 +34,8 @@ interface HubMapProps {
   portfolioSites?: { latitude: number | null; longitude: number | null; fips_code: string | null; site_name: string; site_score: number | null }[]
   showLabels?: boolean
   nameOverrides?: Record<number, string>
+  positionOverrides?: Record<number, { lng: number; lat: number }>
+  onPositionOverride?: (clusterId: number, pos: { lng: number; lat: number }) => void
   onClusters?: (clusters: HubCluster[]) => void
 }
 
@@ -53,12 +55,17 @@ export function HubMap({
   portfolioSites = [],
   showLabels = true,
   nameOverrides,
+  positionOverrides,
+  onPositionOverride,
   onClusters,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
   const [hoveredFips, setHoveredFips] = useState<string | null>(null)
   const isDark = useIsDark()
+  const [isDragging, setIsDragging] = useState(false)
+  const onPositionOverrideRef = useRef(onPositionOverride)
+  onPositionOverrideRef.current = onPositionOverride
 
   const { geojson: baseGeojson } = useCountyGeoJson()
   const clusterData = useHubClusters(baseGeojson, scoreLookup, clusterOptions)
@@ -191,6 +198,40 @@ export function HubMap({
       }
     }
     addStateBorders()
+
+    // Label dragging
+    const dragState: { clusterId: number | null } = { clusterId: null }
+
+    map.on('mousedown', (e) => {
+      if (!map.getLayer('cluster-regions-labels')) return
+      const features = map.queryRenderedFeatures(e.point, { layers: ['cluster-regions-labels'] })
+      if (!features.length) return
+      const clusterId = features[0].properties?.id
+      if (clusterId == null) return
+      e.preventDefault()
+      dragState.clusterId = clusterId
+      map.dragPan.disable()
+      setIsDragging(true)
+    })
+
+    map.on('mousemove', (e) => {
+      if (dragState.clusterId == null) return
+      onPositionOverrideRef.current?.(dragState.clusterId, { lng: e.lngLat.lng, lat: e.lngLat.lat })
+    })
+
+    map.on('mouseup', () => {
+      if (dragState.clusterId == null) return
+      dragState.clusterId = null
+      map.dragPan.enable()
+      setIsDragging(false)
+    })
+
+    map.on('mouseout', () => {
+      if (dragState.clusterId == null) return
+      dragState.clusterId = null
+      map.dragPan.enable()
+      setIsDragging(false)
+    })
   }, [ref])
 
   if (!MAPBOX_TOKEN) {
@@ -217,7 +258,7 @@ export function HubMap({
       onClick={handleClick}
       onMouseMove={handleHover}
       onMouseLeave={handleMouseLeave}
-      cursor={isCountyMode && hoveredFips ? 'pointer' : 'grab'}
+      cursor={isDragging ? 'grabbing' : isCountyMode && hoveredFips ? 'pointer' : 'grab'}
       onLoad={handleStyleLoad}
     >
       {/* Always render CountyChoropleth to keep county-boundaries source alive */}
@@ -259,6 +300,7 @@ export function HubMap({
           labelsGeojson={clusterData.labelsGeojson}
           visible={viewMode === 'regions' && showLabels}
           nameOverrides={nameOverrides}
+          positionOverrides={positionOverrides}
         />
       )}
     </Map>

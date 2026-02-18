@@ -27,7 +27,7 @@ import { CountyRankingGrid } from '@/components/regional-hubs/CountyRankingGrid'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
 import { usePortfolioSites } from '@/hooks/usePortfolioSites'
-import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
+import { DEFAULT_WEIGHTS, getProfileById } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
 import type { ViewMode } from '@/components/regional-hubs/HubMap'
@@ -37,8 +37,11 @@ import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 export default function RegionalHubsPage() {
   const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
 
-  const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
-  const [activeProfileId, setActiveProfileId] = useState<string | null>('balanced')
+  const [weights, setWeights] = useState<Record<CriterionKey, number>>(() => {
+    const profile = getProfileById('speed-to-deploy')
+    return profile ? { ...profile.weights } : { ...DEFAULT_WEIGHTS }
+  })
+  const [activeProfileId, setActiveProfileId] = useState<string | null>('speed-to-deploy')
   const [selectedCounty, setSelectedCounty] = useState<WeightedCountyScore | null>(null)
   const [showMobileWeights, setShowMobileWeights] = useState(false)
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
@@ -46,12 +49,13 @@ export default function RegionalHubsPage() {
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
   const [viewMode, setViewMode] = useState<ViewMode>('county')
   const [clusterTopPercent, setClusterTopPercent] = useState(10)
-  const [clusterMinSize, setClusterMinSize] = useState(10)
+  const [clusterMinSize, setClusterMinSize] = useState(5)
   const [clusterLinkDist, setClusterLinkDist] = useState(250)
   const [clusterCount, setClusterCount] = useState(0)
   const [showPortfolio, setShowPortfolio] = useState(false)
   const [showLabels, setShowLabels] = useState(true)
   const [nameOverrides, setNameOverrides] = useState<Record<number, string>>({})
+  const [positionOverrides, setPositionOverrides] = useState<Record<number, { lng: number; lat: number }>>({})
   const [editingNames, setEditingNames] = useState(false)
   const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
 
@@ -196,6 +200,8 @@ export default function RegionalHubsPage() {
                   portfolioSites={portfolioSites}
                   showLabels={showLabels}
                   nameOverrides={nameOverrides}
+                  positionOverrides={positionOverrides}
+                  onPositionOverride={(id, pos) => setPositionOverrides(prev => ({ ...prev, [id]: pos }))}
                   onClusters={handleClusters}
                 />
 
@@ -356,14 +362,24 @@ export default function RegionalHubsPage() {
                                 className="w-full px-2 py-1 text-xs rounded bg-white/5 border border-white/10 text-gray-200 placeholder-gray-500 focus:border-nodiac-secondary/50 focus:outline-none"
                               />
                             ))}
-                            {Object.keys(nameOverrides).length > 0 && (
-                              <button
-                                onClick={() => setNameOverrides({})}
-                                className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
-                              >
-                                Reset all names
-                              </button>
-                            )}
+                            <div className="flex gap-3">
+                              {Object.keys(nameOverrides).length > 0 && (
+                                <button
+                                  onClick={() => setNameOverrides({})}
+                                  className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+                                >
+                                  Reset names
+                                </button>
+                              )}
+                              {Object.keys(positionOverrides).length > 0 && (
+                                <button
+                                  onClick={() => setPositionOverrides({})}
+                                  className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+                                >
+                                  Reset positions
+                                </button>
+                              )}
+                            </div>
                           </div>
                         )}
                         <button

@@ -7,27 +7,40 @@ interface ClusterLabelsLayerProps {
   labelsGeojson: GeoJSON.FeatureCollection
   visible?: boolean
   nameOverrides?: Record<number, string>
+  positionOverrides?: Record<number, { lng: number; lat: number }>
 }
 
 /**
  * Hub name + subtitle labels rendered as a separate layer
  * so they can be ordered above portfolio dots in the layer stack.
  */
-export function ClusterLabelsLayer({ labelsGeojson, visible = true, nameOverrides }: ClusterLabelsLayerProps) {
+export function ClusterLabelsLayer({ labelsGeojson, visible = true, nameOverrides, positionOverrides }: ClusterLabelsLayerProps) {
   const visibility = visible ? 'visible' : 'none'
 
   const processedLabels = useMemo(() => {
-    if (!nameOverrides || Object.keys(nameOverrides).length === 0) return labelsGeojson
+    const hasNameOverrides = nameOverrides && Object.keys(nameOverrides).length > 0
+    const hasPositionOverrides = positionOverrides && Object.keys(positionOverrides).length > 0
+    if (!hasNameOverrides && !hasPositionOverrides) return labelsGeojson
     return {
       ...labelsGeojson,
       features: labelsGeojson.features.map(f => {
         const clusterId = f.properties?.id as number
-        const override = nameOverrides[clusterId]
-        if (override == null) return f
-        return { ...f, properties: { ...f.properties, name: override } }
+        const nameOverride = nameOverrides?.[clusterId]
+        const posOverride = positionOverrides?.[clusterId]
+        if (nameOverride == null && !posOverride) return f
+        return {
+          ...f,
+          ...(posOverride ? {
+            geometry: { type: 'Point' as const, coordinates: [posOverride.lng, posOverride.lat] },
+          } : {}),
+          properties: {
+            ...f.properties,
+            ...(nameOverride != null ? { name: nameOverride } : {}),
+          },
+        }
       }),
     }
-  }, [labelsGeojson, nameOverrides])
+  }, [labelsGeojson, nameOverrides, positionOverrides])
 
   return (
     <Source id="cluster-labels-source" type="geojson" data={processedLabels}>
