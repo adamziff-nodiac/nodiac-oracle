@@ -61,15 +61,6 @@ export interface CountyScore {
   grid_reliability_avg_saidi?: number
 }
 
-export interface HubRegion {
-  id: string
-  name: string
-  description: string | null
-  geojson: GeoJSON.Feature | GeoJSON.FeatureCollection
-  color: string
-  priority_rank: number | null
-}
-
 export interface WeightProfile {
   id: string
   name: string

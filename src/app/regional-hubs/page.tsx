@@ -25,7 +25,6 @@ import { MapLegend } from '@/components/regional-hubs/MapLegend'
 import { ExportControls } from '@/components/regional-hubs/ExportControls'
 import { CountyRankingGrid } from '@/components/regional-hubs/CountyRankingGrid'
 import { useCountyScores } from '@/hooks/useCountyScores'
-import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
 import { usePortfolioSites } from '@/hooks/usePortfolioSites'
 import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
@@ -36,7 +35,6 @@ import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
   const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
-  const { regions } = useHubRegions()
 
   const [weights, setWeights] = useState<Record<CriterionKey, number>>({ ...DEFAULT_WEIGHTS })
   const [activeProfileId, setActiveProfileId] = useState<string | null>('balanced')
@@ -46,7 +44,6 @@ export default function RegionalHubsPage() {
   const [colorMode, setColorMode] = useState<ColorMode>('percentile')
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
   const [viewMode, setViewMode] = useState<ViewMode>('county')
-  const [topPercent, setTopPercent] = useState(20)
   const [clusterTopPercent, setClusterTopPercent] = useState(10)
   const [clusterMinSize, setClusterMinSize] = useState(10)
   const [clusterLinkDist, setClusterLinkDist] = useState(250)
@@ -177,13 +174,11 @@ export default function RegionalHubsPage() {
                 <HubMap
                   scoreLookup={scoreLookup}
                   scoreRange={scoreRange}
-                  regions={regions}
                   onCountyClick={handleCountyClick}
                   highlightThreshold={highlightThreshold}
                   colorMode={colorMode}
                   quantileBreaks={quantileBreaks}
                   viewMode={viewMode}
-                  topPercent={topPercent}
                   clusterOptions={clusterOptions}
                   onClusterCount={setClusterCount}
                   showPortfolio={showPortfolio}
@@ -209,9 +204,6 @@ export default function RegionalHubsPage() {
                     <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
                       {([
                         { id: 'county', label: 'County' },
-                        { id: 'hub', label: 'Heatmap' },
-                        { id: 'top-counties', label: 'Top N%' },
-                        { id: 'clusters', label: 'Clusters' },
                         { id: 'regions', label: 'Regions' },
                       ] as const).map(({ id, label }) => (
                         <button
@@ -230,35 +222,8 @@ export default function RegionalHubsPage() {
                         </button>
                       ))}
                     </div>
-                    {/* Top N% slider — only visible in top-counties mode */}
-                    {viewMode === 'top-counties' && (
-                      <div className="mt-2 space-y-1">
-                        <div className="flex justify-between items-center">
-                          <span className="text-[10px] text-gray-500 dark:text-gray-400">Showing top</span>
-                          <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
-                            {topPercent}%
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min={5}
-                          max={50}
-                          step={5}
-                          value={topPercent}
-                          onChange={(e) => setTopPercent(parseInt(e.target.value))}
-                          className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                            bg-gray-200 dark:bg-white/10
-                            [&::-webkit-slider-thumb]:appearance-none
-                            [&::-webkit-slider-thumb]:w-3.5
-                            [&::-webkit-slider-thumb]:h-3.5
-                            [&::-webkit-slider-thumb]:rounded-full
-                            [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                            [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
-                        />
-                      </div>
-                    )}
-                    {/* Cluster tuning sliders — visible in clusters and regions modes */}
-                    {(viewMode === 'clusters' || viewMode === 'regions') && (
+                    {/* Cluster tuning sliders — visible in regions mode */}
+                    {viewMode === 'regions' && (
                       <div className="mt-2 space-y-2.5">
                         {/* Top percent */}
                         <div className="space-y-1">
@@ -337,8 +302,8 @@ export default function RegionalHubsPage() {
                         </div>
                       </div>
                     )}
-                    {/* Portfolio overlay toggle — visible in clusters and regions modes */}
-                    {(viewMode === 'clusters' || viewMode === 'regions') && (
+                    {/* Portfolio overlay toggle — visible in regions mode */}
+                    {viewMode === 'regions' && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10">
                         <button
                           onClick={() => setShowPortfolio(!showPortfolio)}
@@ -483,7 +448,7 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} topPercent={topPercent} clusterCount={(viewMode === 'clusters' || viewMode === 'regions') ? clusterCount : undefined} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} clusterCount={viewMode === 'regions' ? clusterCount : undefined} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">

@@ -1,32 +1,25 @@
 'use client'
 
 import { useRef, useCallback, useState, useMemo, useEffect } from 'react'
-import Map, { type MapRef, type MapMouseEvent, Layer } from 'react-map-gl/mapbox'
+import Map, { type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
-import { HubRegionOverlay } from './HubRegionOverlay'
-import { HeatmapLayer } from './HeatmapLayer'
-import { TopCountiesLayer } from './TopCountiesLayer'
-import { HubClustersLayer } from './HubClustersLayer'
 import { ClusterRegionsLayer } from './ClusterRegionsLayer'
 import { PortfolioOverlay } from './PortfolioOverlay'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
-import { useHeatmapData } from '@/hooks/useHeatmapData'
 import { useHubClusters } from '@/hooks/useHubClusters'
 import type { ClusterOptions } from '@/lib/geo/cluster-hubs'
-import type { HubRegion } from '@/types/regional-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
-export type ViewMode = 'county' | 'hub' | 'top-counties' | 'clusters' | 'regions'
+export type ViewMode = 'county' | 'regions'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
 interface HubMapProps {
   scoreLookup: Map<string, number>
   scoreRange: readonly [number, number]
-  regions: HubRegion[]
   onCountyClick?: (fips: string) => void
   onCountyHover?: (fips: string | null) => void
   mapRef?: React.RefObject<MapRef | null>
@@ -34,7 +27,6 @@ interface HubMapProps {
   colorMode?: ColorMode
   quantileBreaks?: QuantileBreaks | null
   viewMode?: ViewMode
-  topPercent?: number
   clusterOptions?: ClusterOptions
   onClusterCount?: (count: number) => void
   showPortfolio?: boolean
@@ -44,7 +36,6 @@ interface HubMapProps {
 export function HubMap({
   scoreLookup,
   scoreRange,
-  regions,
   onCountyClick,
   onCountyHover,
   mapRef: externalRef,
@@ -52,7 +43,6 @@ export function HubMap({
   colorMode,
   quantileBreaks,
   viewMode = 'county',
-  topPercent = 20,
   clusterOptions,
   onClusterCount,
   showPortfolio = false,
@@ -64,7 +54,6 @@ export function HubMap({
   const isDark = useIsDark()
 
   const { geojson: baseGeojson } = useCountyGeoJson()
-  const heatmapData = useHeatmapData(baseGeojson, scoreLookup)
   const clusterData = useHubClusters(baseGeojson, scoreLookup, clusterOptions)
 
   useEffect(() => {
@@ -96,14 +85,6 @@ export function HubMap({
   }, [fipsToClusterId, showPortfolio, portfolioSites])
 
   const isCountyMode = viewMode === 'county'
-  const needsDarkBase = viewMode === 'top-counties'
-
-  // Compute threshold for top-counties mode based on configurable percent
-  const topCountyThreshold = useMemo(() => {
-    if (scoreLookup.size === 0) return 7
-    const scores = [...scoreLookup.values()].sort((a, b) => a - b)
-    return scores[Math.floor(scores.length * (1 - topPercent / 100))]
-  }, [scoreLookup, topPercent])
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
@@ -245,33 +226,6 @@ export function HubMap({
         />
       )}
 
-      {/* Dark base fill for overlay modes (top-counties, contours) */}
-      <Layer
-        id="dark-base-fill"
-        source="county-boundaries"
-        type="fill"
-        layout={{ visibility: needsDarkBase ? 'visible' : 'none' }}
-        paint={{
-          'fill-color': '#1a1520',
-          'fill-opacity': 0.9,
-        }}
-      />
-
-      {/* Top Counties: teal overlay on qualifying counties */}
-      <TopCountiesLayer
-        threshold={topCountyThreshold}
-        visible={viewMode === 'top-counties'}
-      />
-
-      {heatmapData && (
-        <HeatmapLayer data={heatmapData} visible={viewMode === 'hub'} />
-      )}
-
-      {/* Hub Clusters: convex hull boundaries + labels */}
-      {clusterData && (
-        <HubClustersLayer data={clusterData} visible={viewMode === 'clusters'} />
-      )}
-
       {/* Cluster Regions: county-level cluster membership */}
       {clusterData && (
         <ClusterRegionsLayer
@@ -288,11 +242,9 @@ export function HubMap({
           sites={portfolioSites}
           fipsClusterStatus={clusterData.fipsClusterStatus}
           scoreLookup={scoreLookup}
-          visible={showPortfolio && (viewMode === 'regions' || viewMode === 'clusters')}
+          visible={showPortfolio && viewMode === 'regions'}
         />
       )}
-
-      {regions.length > 0 && <HubRegionOverlay regions={regions} />}
     </Map>
   )
 }

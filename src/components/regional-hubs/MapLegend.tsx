@@ -9,85 +9,12 @@ interface MapLegendProps {
   highlightThreshold?: number
   colorMode?: ColorMode
   viewMode?: ViewMode
-  topPercent?: number
   clusterCount?: number
 }
 
 const legendBox = "absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10"
 
-export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', topPercent = 20, clusterCount }: MapLegendProps) {
-  // --- Hub (heatmap) mode ---
-  if (viewMode === 'hub') {
-    return (
-      <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          Hub Region Intensity
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
-          <div
-            className="h-3 w-32 rounded-sm"
-            style={{
-              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
-            }}
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
-        </div>
-        <p className="text-[10px] text-gray-500 mt-3">
-          Blended from county scores
-        </p>
-      </div>
-    )
-  }
-
-  // --- Top Counties mode ---
-  if (viewMode === 'top-counties') {
-    return (
-      <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          Top Counties
-        </p>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-[#4de2e4] opacity-60" />
-            <span className="text-xs text-gray-500 dark:text-gray-400">Above threshold</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm" style={{ background: COLOR_LOW }} />
-            <span className="text-xs text-gray-500 dark:text-gray-400">Below</span>
-          </div>
-        </div>
-        <p className="text-[10px] text-gray-500 mt-3">
-          Top {topPercent}% of counties by composite score
-        </p>
-      </div>
-    )
-  }
-
-  // --- Clusters mode ---
-  if (viewMode === 'clusters') {
-    return (
-      <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
-          Hub Clusters
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
-          <div
-            className="h-3 w-32 rounded-sm"
-            style={{
-              background: `linear-gradient(to right, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
-            }}
-          />
-          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
-        </div>
-        <p className="text-[10px] text-gray-500 mt-3">
-          {clusterCount != null ? `${clusterCount} hub region${clusterCount !== 1 ? 's' : ''} detected` : 'Auto-detected clusters of top-scoring counties'}
-        </p>
-      </div>
-    )
-  }
-
+export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', clusterCount }: MapLegendProps) {
   // --- Regions mode ---
   if (viewMode === 'regions') {
     return (
