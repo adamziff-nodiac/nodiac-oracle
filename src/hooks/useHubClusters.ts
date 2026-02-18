@@ -9,6 +9,8 @@ export interface ClusterGeoData {
   labelsGeojson: GeoJSON.FeatureCollection
   regionsGeojson: GeoJSON.FeatureCollection
   clusters: HubCluster[]
+  /** FIPS → clusterStatus (0=outside, 1=fill, 2=member) for fast lookups */
+  fipsClusterStatus: Map<string, number>
 }
 
 // --- Point-in-polygon (ray casting) ---
@@ -139,11 +141,20 @@ export function useHubClusters(
       return { ...feature, properties: { ...feature.properties, clusterStatus: 0, clusterId: -1 } }
     })
 
+    // Build FIPS → clusterStatus lookup for portfolio overlay
+    const fipsClusterStatus = new Map<string, number>()
+    for (const f of regionFeatures) {
+      const fips = f.properties?.FIPS as string | undefined
+      const status = f.properties?.clusterStatus as number
+      if (fips) fipsClusterStatus.set(fips, status)
+    }
+
     return {
       hullsGeojson: { type: 'FeatureCollection' as const, features: hullFeatures },
       labelsGeojson: { type: 'FeatureCollection' as const, features: labelFeatures },
       regionsGeojson: { type: 'FeatureCollection' as const, features: regionFeatures },
       clusters,
+      fipsClusterStatus,
     }
   }, [centroids, scoreLookup, clusterOptions, geojson])
 }

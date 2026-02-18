@@ -27,6 +27,7 @@ import { CountyRankingGrid } from '@/components/regional-hubs/CountyRankingGrid'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useHubRegions } from '@/hooks/useHubRegions'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
+import { usePortfolioSites } from '@/hooks/usePortfolioSites'
 import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
@@ -50,7 +51,9 @@ export default function RegionalHubsPage() {
   const [clusterMinSize, setClusterMinSize] = useState(10)
   const [clusterLinkDist, setClusterLinkDist] = useState(250)
   const [clusterCount, setClusterCount] = useState(0)
+  const [showPortfolio, setShowPortfolio] = useState(false)
 
+  const { sites: portfolioSites } = usePortfolioSites()
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
   const clusterOptions = useMemo(() => ({
@@ -183,6 +186,8 @@ export default function RegionalHubsPage() {
                   topPercent={topPercent}
                   clusterOptions={clusterOptions}
                   onClusterCount={setClusterCount}
+                  showPortfolio={showPortfolio}
+                  portfolioSites={portfolioSites}
                 />
 
                 {/* Mobile weight toggle */}
@@ -330,6 +335,24 @@ export default function RegionalHubsPage() {
                               [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
                           />
                         </div>
+                      </div>
+                    )}
+                    {/* Portfolio overlay toggle — visible in clusters and regions modes */}
+                    {(viewMode === 'clusters' || viewMode === 'regions') && (
+                      <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10">
+                        <button
+                          onClick={() => setShowPortfolio(!showPortfolio)}
+                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            showPortfolio
+                              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                              : 'bg-white/5 text-gray-400 hover:text-white'
+                          }`}
+                        >
+                          <span>Show Portfolio Sites</span>
+                          <span className="tabular-nums font-mono text-[10px]">
+                            {portfolioSites.length} sites
+                          </span>
+                        </button>
                       </div>
                     )}
                   </div>

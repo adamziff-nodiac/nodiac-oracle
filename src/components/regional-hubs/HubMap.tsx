@@ -10,6 +10,7 @@ import { HeatmapLayer } from './HeatmapLayer'
 import { TopCountiesLayer } from './TopCountiesLayer'
 import { HubClustersLayer } from './HubClustersLayer'
 import { ClusterRegionsLayer } from './ClusterRegionsLayer'
+import { PortfolioOverlay } from './PortfolioOverlay'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHeatmapData } from '@/hooks/useHeatmapData'
@@ -36,6 +37,8 @@ interface HubMapProps {
   topPercent?: number
   clusterOptions?: ClusterOptions
   onClusterCount?: (count: number) => void
+  showPortfolio?: boolean
+  portfolioSites?: { latitude: number | null; longitude: number | null; fips_code: string | null; site_name: string; site_score: number | null }[]
 }
 
 export function HubMap({
@@ -52,6 +55,8 @@ export function HubMap({
   topPercent = 20,
   clusterOptions,
   onClusterCount,
+  showPortfolio = false,
+  portfolioSites = [],
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -244,6 +249,16 @@ export function HubMap({
           regionsGeojson={clusterData.regionsGeojson}
           labelsGeojson={clusterData.labelsGeojson}
           visible={viewMode === 'regions'}
+        />
+      )}
+
+      {/* Portfolio sites overlay */}
+      {showPortfolio && clusterData && portfolioSites.length > 0 && (
+        <PortfolioOverlay
+          sites={portfolioSites}
+          fipsClusterStatus={clusterData.fipsClusterStatus}
+          scoreLookup={scoreLookup}
+          visible={showPortfolio && (viewMode === 'regions' || viewMode === 'clusters')}
         />
       )}
 
