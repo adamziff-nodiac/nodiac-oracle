@@ -71,6 +71,30 @@ export function HubMap({
     onClusterCount?.(clusterData?.clusters.length ?? 0)
   }, [clusterData, onClusterCount])
 
+  // Build FIPS → clusterId lookup from cluster member data
+  const fipsToClusterId = useMemo(() => {
+    if (!clusterData) return null
+    const lookup: Record<string, number> = {}
+    for (const cluster of clusterData.clusters) {
+      for (const c of cluster.counties) {
+        lookup[c.fips] = cluster.id
+      }
+    }
+    return lookup
+  }, [clusterData])
+
+  // Compute which cluster IDs contain at least one portfolio site
+  const populatedClusterIds = useMemo(() => {
+    if (!fipsToClusterId || !showPortfolio || portfolioSites.length === 0) return null
+    const ids = new Set<number>()
+    for (const site of portfolioSites) {
+      if (!site.fips_code) continue
+      const clusterId = fipsToClusterId[site.fips_code]
+      if (clusterId != null) ids.add(clusterId)
+    }
+    return ids
+  }, [fipsToClusterId, showPortfolio, portfolioSites])
+
   const isCountyMode = viewMode === 'county'
   const needsDarkBase = viewMode === 'top-counties'
 
@@ -115,6 +139,11 @@ export function HubMap({
   const handleStyleLoad = useCallback(() => {
     const map = (ref as React.RefObject<MapRef>).current?.getMap()
     if (!map) return
+
+    // Tame scroll zoom: enable smooth animation and reduce wheel sensitivity
+    const scrollZoom = map.scrollZoom
+    scrollZoom.setWheelZoomRate(1 / 200)
+    scrollZoom.setZoomRate(1 / 200)
 
     const addStateBorders = () => {
       // Wait for either county-fill or hub-heatmap layer to exist
@@ -249,6 +278,7 @@ export function HubMap({
           regionsGeojson={clusterData.regionsGeojson}
           labelsGeojson={clusterData.labelsGeojson}
           visible={viewMode === 'regions'}
+          populatedClusterIds={populatedClusterIds}
         />
       )}
 

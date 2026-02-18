@@ -60,11 +60,13 @@ export function ExportControls({ targetRef, viewMode = 'county' }: ExportControl
     setShowPresets(false)
     try {
       const { width, height } = getExportDimensions()
-      const dataUrl = await toPng(targetRef.current, {
+      const el = targetRef.current
+      const elRect = el.getBoundingClientRect()
+      // Scale to match export dimensions while preserving aspect ratio
+      const scale = Math.max(width / elRect.width, height / elRect.height)
+      const dataUrl = await toPng(el, {
         cacheBust: true,
-        pixelRatio: 2,
-        width,
-        height,
+        pixelRatio: scale,
         backgroundColor: '#0f0f1a',
       })
 
