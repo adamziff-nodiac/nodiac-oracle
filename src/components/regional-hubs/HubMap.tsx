@@ -6,6 +6,7 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import { ClusterRegionsLayer } from './ClusterRegionsLayer'
+import { ClusterLabelsLayer } from './ClusterLabelsLayer'
 import { PortfolioOverlay } from './PortfolioOverlay'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
@@ -237,11 +238,8 @@ export function HubMap({
       {clusterData && (
         <ClusterRegionsLayer
           regionsGeojson={clusterData.regionsGeojson}
-          labelsGeojson={clusterData.labelsGeojson}
           visible={viewMode === 'regions'}
           populatedClusterIds={populatedClusterIds}
-          showLabels={showLabels}
-          nameOverrides={nameOverrides}
         />
       )}
 
@@ -252,6 +250,15 @@ export function HubMap({
           fipsClusterStatus={clusterData.fipsClusterStatus}
           scoreLookup={scoreLookup}
           visible={showPortfolio && viewMode === 'regions'}
+        />
+      )}
+
+      {/* Hub labels — rendered AFTER portfolio dots so they appear on top */}
+      {clusterData && (
+        <ClusterLabelsLayer
+          labelsGeojson={clusterData.labelsGeojson}
+          visible={viewMode === 'regions' && showLabels}
+          nameOverrides={nameOverrides}
         />
       )}
     </Map>
