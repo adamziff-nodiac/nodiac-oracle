@@ -21,14 +21,17 @@ const DIMENSION_PRESETS: DimensionPreset[] = [
 interface ExportControlsProps {
   targetRef: React.RefObject<HTMLDivElement | null>
   viewMode?: ViewMode
+  /** Elements to hide when "Include panel" is unchecked */
+  hideOnExportRefs?: React.RefObject<HTMLElement | null>[]
 }
 
-export function ExportControls({ targetRef, viewMode = 'county' }: ExportControlsProps) {
+export function ExportControls({ targetRef, viewMode = 'county', hideOnExportRefs = [] }: ExportControlsProps) {
   const [isExporting, setIsExporting] = useState(false)
   const [showPresets, setShowPresets] = useState(false)
   const [selectedPreset, setSelectedPreset] = useState(0)
   const [customWidth, setCustomWidth] = useState('')
   const [customHeight, setCustomHeight] = useState('')
+  const [includePanel, setIncludePanel] = useState(false)
   const popoverRef = useRef<HTMLDivElement>(null)
 
   // Close popover on outside click
@@ -58,6 +61,23 @@ export function ExportControls({ targetRef, viewMode = 'county' }: ExportControl
 
     setIsExporting(true)
     setShowPresets(false)
+
+    // Hide elements that shouldn't appear in the export
+    const hidden: HTMLElement[] = []
+    // Always hide export button itself
+    if (popoverRef.current) {
+      popoverRef.current.style.display = 'none'
+      hidden.push(popoverRef.current)
+    }
+    if (!includePanel) {
+      for (const ref of hideOnExportRefs) {
+        if (ref.current) {
+          ref.current.style.display = 'none'
+          hidden.push(ref.current)
+        }
+      }
+    }
+
     try {
       const { width, height } = getExportDimensions()
       const el = targetRef.current
@@ -77,9 +97,13 @@ export function ExportControls({ targetRef, viewMode = 'county' }: ExportControl
     } catch (err) {
       console.error('Export failed:', err)
     } finally {
+      // Restore hidden elements
+      for (const el of hidden) {
+        el.style.display = ''
+      }
       setIsExporting(false)
     }
-  }, [targetRef, isExporting, getExportDimensions, viewMode])
+  }, [targetRef, isExporting, getExportDimensions, viewMode, includePanel, hideOnExportRefs])
 
   const currentLabel = selectedPreset === -1
     ? `${customWidth || 1920} × ${customHeight || 1080}`
@@ -122,6 +146,17 @@ export function ExportControls({ targetRef, viewMode = 'county' }: ExportControl
               {preset.label}
             </button>
           ))}
+          <div className="border-t border-gray-200 dark:border-white/10 px-3 py-2">
+            <label className="flex items-center gap-2 cursor-pointer py-1">
+              <input
+                type="checkbox"
+                checked={includePanel}
+                onChange={e => setIncludePanel(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-gray-300 dark:border-white/20 text-nodiac-secondary focus:ring-nodiac-secondary/30 bg-transparent"
+              />
+              <span className="text-xs text-gray-600 dark:text-gray-300">Include side panel</span>
+            </label>
+          </div>
           <div className="border-t border-gray-200 dark:border-white/10 px-3 py-2">
             <button
               onClick={() => setSelectedPreset(-1)}

@@ -65,6 +65,8 @@ export default function RegionalHubsPage() {
   }), [clusterTopPercent, clusterMinSize, clusterLinkDist])
 
   const mapExportRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const mobileBtnRef = useRef<HTMLButtonElement>(null)
 
   const handleWeightChange = useCallback((newWeights: Record<CriterionKey, number>) => {
     setWeights(newWeights)
@@ -199,6 +201,7 @@ export default function RegionalHubsPage() {
 
                 {/* Mobile weight toggle */}
                 <button
+                  ref={mobileBtnRef}
                   onClick={() => setShowMobileWeights(!showMobileWeights)}
                   className="absolute top-4 left-4 z-20 md:hidden flex items-center gap-2 px-3 py-2 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
@@ -207,7 +210,7 @@ export default function RegionalHubsPage() {
                 </button>
 
                 {/* Floating weight panel */}
-                <div className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} md:block md:top-4`}>
+                <div ref={panelRef} className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} md:block md:top-4`}>
                   {/* View Mode pill row */}
                   <div className="space-y-1.5">
                     <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
@@ -510,7 +513,7 @@ export default function RegionalHubsPage() {
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">
-                  <ExportControls targetRef={mapExportRef} viewMode={viewMode} />
+                  <ExportControls targetRef={mapExportRef} viewMode={viewMode} hideOnExportRefs={[panelRef, mobileBtnRef]} />
                 </div>
 
                 {/* County detail panel */}
