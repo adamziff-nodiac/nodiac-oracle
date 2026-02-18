@@ -74,6 +74,7 @@ export function useHubClusters(
         coordinates: [c.centroid.lng, c.centroid.lat],
       },
       properties: {
+        id: c.id,
         name: c.name,
         subtitle: `${c.countyCount} counties · ${c.avgScore.toFixed(1)} avg`,
       },

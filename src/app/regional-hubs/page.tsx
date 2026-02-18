@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { SlidersHorizontal, X, Info } from 'lucide-react'
+import { SlidersHorizontal, X, Info, Pencil } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import dynamic from 'next/dynamic'
@@ -31,6 +31,7 @@ import { DEFAULT_WEIGHTS } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
 import type { ViewMode } from '@/components/regional-hubs/HubMap'
+import type { HubCluster } from '@/lib/geo/cluster-hubs'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
@@ -50,6 +51,9 @@ export default function RegionalHubsPage() {
   const [clusterCount, setClusterCount] = useState(0)
   const [showPortfolio, setShowPortfolio] = useState(false)
   const [showLabels, setShowLabels] = useState(true)
+  const [nameOverrides, setNameOverrides] = useState<Record<number, string>>({})
+  const [editingNames, setEditingNames] = useState(false)
+  const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
 
   const { sites: portfolioSites } = usePortfolioSites()
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
@@ -85,6 +89,10 @@ export default function RegionalHubsPage() {
     if (mode === 'geometric') {
       setColorMode('percentile')
     }
+  }, [])
+
+  const handleClusters = useCallback((clusters: HubCluster[]) => {
+    setClusterNames(clusters.map(c => ({ id: c.id, name: c.name })))
   }, [])
 
   const handleCloseDetail = useCallback(() => {
@@ -185,6 +193,8 @@ export default function RegionalHubsPage() {
                   showPortfolio={showPortfolio}
                   portfolioSites={portfolioSites}
                   showLabels={showLabels}
+                  nameOverrides={nameOverrides}
+                  onClusters={handleClusters}
                 />
 
                 {/* Mobile weight toggle */}
@@ -307,16 +317,52 @@ export default function RegionalHubsPage() {
                     {/* Toggles — visible in regions mode */}
                     {viewMode === 'regions' && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
-                        <button
-                          onClick={() => setShowLabels(!showLabels)}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            showLabels
-                              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
-                              : 'bg-white/5 text-gray-400 hover:text-white'
-                          }`}
-                        >
-                          <span>Hub Names</span>
-                        </button>
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setShowLabels(!showLabels)}
+                            className={`flex-1 flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                              showLabels
+                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                : 'bg-white/5 text-gray-400 hover:text-white'
+                            }`}
+                          >
+                            <span>Hub Names</span>
+                          </button>
+                          {showLabels && clusterNames.length > 0 && (
+                            <button
+                              onClick={() => setEditingNames(!editingNames)}
+                              className={`flex items-center px-2 py-1.5 rounded-md text-xs transition-colors ${
+                                editingNames
+                                  ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                  : 'bg-white/5 text-gray-400 hover:text-white'
+                              }`}
+                              title="Edit hub names"
+                            >
+                              <Pencil className="w-3 h-3" />
+                            </button>
+                          )}
+                        </div>
+                        {editingNames && showLabels && clusterNames.length > 0 && (
+                          <div className="space-y-1 pt-1">
+                            {clusterNames.map((c) => (
+                              <input
+                                key={c.id}
+                                type="text"
+                                value={nameOverrides[c.id] ?? c.name}
+                                onChange={(e) => setNameOverrides(prev => ({ ...prev, [c.id]: e.target.value }))}
+                                className="w-full px-2 py-1 text-xs rounded bg-white/5 border border-white/10 text-gray-200 placeholder-gray-500 focus:border-nodiac-secondary/50 focus:outline-none"
+                              />
+                            ))}
+                            {Object.keys(nameOverrides).length > 0 && (
+                              <button
+                                onClick={() => setNameOverrides({})}
+                                className="text-[10px] text-gray-500 hover:text-gray-300 transition-colors"
+                              >
+                                Reset all names
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <button
                           onClick={() => setShowPortfolio(!showPortfolio)}
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${

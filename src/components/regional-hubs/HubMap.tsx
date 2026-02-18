@@ -10,7 +10,7 @@ import { PortfolioOverlay } from './PortfolioOverlay'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHubClusters } from '@/hooks/useHubClusters'
-import type { ClusterOptions } from '@/lib/geo/cluster-hubs'
+import type { ClusterOptions, HubCluster } from '@/lib/geo/cluster-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
 export type ViewMode = 'county' | 'regions'
@@ -32,6 +32,8 @@ interface HubMapProps {
   showPortfolio?: boolean
   portfolioSites?: { latitude: number | null; longitude: number | null; fips_code: string | null; site_name: string; site_score: number | null }[]
   showLabels?: boolean
+  nameOverrides?: Record<number, string>
+  onClusters?: (clusters: HubCluster[]) => void
 }
 
 export function HubMap({
@@ -49,6 +51,8 @@ export function HubMap({
   showPortfolio = false,
   portfolioSites = [],
   showLabels = true,
+  nameOverrides,
+  onClusters,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -60,7 +64,8 @@ export function HubMap({
 
   useEffect(() => {
     onClusterCount?.(clusterData?.clusters.length ?? 0)
-  }, [clusterData, onClusterCount])
+    onClusters?.(clusterData?.clusters ?? [])
+  }, [clusterData, onClusterCount, onClusters])
 
   // Build FIPS → clusterId lookup from cluster member data
   const fipsToClusterId = useMemo(() => {
@@ -236,6 +241,7 @@ export function HubMap({
           visible={viewMode === 'regions'}
           populatedClusterIds={populatedClusterIds}
           showLabels={showLabels}
+          nameOverrides={nameOverrides}
         />
       )}
 

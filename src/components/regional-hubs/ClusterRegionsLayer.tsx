@@ -10,6 +10,8 @@ interface ClusterRegionsLayerProps {
   /** When set, clusters NOT in this set are visually muted */
   populatedClusterIds?: Set<number> | null
   showLabels?: boolean
+  /** Override cluster names by cluster id for export tweaking */
+  nameOverrides?: Record<number, string>
 }
 
 /**
@@ -20,9 +22,23 @@ interface ClusterRegionsLayerProps {
  *  - Teal: top-scoring county in a cluster (member)
  * When populatedClusterIds is provided, clusters without portfolio sites are dimmed.
  */
-export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = true, populatedClusterIds, showLabels = true }: ClusterRegionsLayerProps) {
+export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = true, populatedClusterIds, showLabels = true, nameOverrides }: ClusterRegionsLayerProps) {
   const visibility = visible ? 'visible' : 'none'
   const labelVisibility = visible && showLabels ? 'visible' : 'none'
+
+  // Apply name overrides to label features
+  const processedLabels = useMemo(() => {
+    if (!nameOverrides || Object.keys(nameOverrides).length === 0) return labelsGeojson
+    return {
+      ...labelsGeojson,
+      features: labelsGeojson.features.map(f => {
+        const clusterId = f.properties?.id as number
+        const override = nameOverrides[clusterId]
+        if (override == null) return f
+        return { ...f, properties: { ...f.properties, name: override } }
+      }),
+    }
+  }, [labelsGeojson, nameOverrides])
 
   // Enrich features with populated flag when portfolio overlay is active
   const processedGeojson = useMemo(() => {
@@ -106,7 +122,7 @@ export function ClusterRegionsLayer({ regionsGeojson, labelsGeojson, visible = t
       </Source>
 
       {/* Labels at cluster centroids — offset well above centroid to avoid portfolio dots */}
-      <Source id="cluster-regions-labels-source" type="geojson" data={labelsGeojson}>
+      <Source id="cluster-regions-labels-source" type="geojson" data={processedLabels}>
         <Layer
           id="cluster-regions-labels"
           type="symbol"
