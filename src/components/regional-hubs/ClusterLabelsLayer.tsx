@@ -8,26 +8,32 @@ interface ClusterLabelsLayerProps {
   visible?: boolean
   nameOverrides?: Record<number, string>
   positionOverrides?: Record<number, { lng: number; lat: number }>
+  siteCounts?: Record<number, number> | null
 }
 
 /**
  * Hub name + subtitle labels rendered as a separate layer
  * so they can be ordered above portfolio dots in the layer stack.
  */
-export function ClusterLabelsLayer({ labelsGeojson, visible = true, nameOverrides, positionOverrides }: ClusterLabelsLayerProps) {
+export function ClusterLabelsLayer({ labelsGeojson, visible = true, nameOverrides, positionOverrides, siteCounts }: ClusterLabelsLayerProps) {
   const visibility = visible ? 'visible' : 'none'
 
   const processedLabels = useMemo(() => {
     const hasNameOverrides = nameOverrides && Object.keys(nameOverrides).length > 0
     const hasPositionOverrides = positionOverrides && Object.keys(positionOverrides).length > 0
-    if (!hasNameOverrides && !hasPositionOverrides) return labelsGeojson
+    const hasSiteCounts = siteCounts && Object.keys(siteCounts).length > 0
+    if (!hasNameOverrides && !hasPositionOverrides && !hasSiteCounts) return labelsGeojson
     return {
       ...labelsGeojson,
       features: labelsGeojson.features.map(f => {
         const clusterId = f.properties?.id as number
         const nameOverride = nameOverrides?.[clusterId]
         const posOverride = positionOverrides?.[clusterId]
-        if (nameOverride == null && !posOverride) return f
+        const siteCount = siteCounts?.[clusterId]
+        if (nameOverride == null && !posOverride && siteCount == null) return f
+        const subtitle = siteCount != null
+          ? `${f.properties?.subtitle} · ${siteCount} sites`
+          : f.properties?.subtitle
         return {
           ...f,
           ...(posOverride ? {
@@ -35,12 +41,13 @@ export function ClusterLabelsLayer({ labelsGeojson, visible = true, nameOverride
           } : {}),
           properties: {
             ...f.properties,
+            subtitle,
             ...(nameOverride != null ? { name: nameOverride } : {}),
           },
         }
       }),
     }
-  }, [labelsGeojson, nameOverrides, positionOverrides])
+  }, [labelsGeojson, nameOverrides, positionOverrides, siteCounts])
 
   return (
     <Source id="cluster-labels-source" type="geojson" data={processedLabels}>

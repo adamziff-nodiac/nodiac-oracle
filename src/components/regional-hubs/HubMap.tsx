@@ -87,16 +87,21 @@ export function HubMap({
     return lookup
   }, [clusterData])
 
-  // Compute which cluster IDs contain at least one portfolio site
-  const populatedClusterIds = useMemo(() => {
-    if (!fipsToClusterId || !showPortfolio || portfolioSites.length === 0) return null
+  // Compute which cluster IDs contain at least one portfolio site + per-cluster site counts
+  const { populatedClusterIds, clusterSiteCounts } = useMemo(() => {
+    if (!fipsToClusterId || !showPortfolio || portfolioSites.length === 0)
+      return { populatedClusterIds: null, clusterSiteCounts: null }
     const ids = new Set<number>()
+    const counts: Record<number, number> = {}
     for (const site of portfolioSites) {
       if (!site.fips_code) continue
       const clusterId = fipsToClusterId[site.fips_code]
-      if (clusterId != null) ids.add(clusterId)
+      if (clusterId != null) {
+        ids.add(clusterId)
+        counts[clusterId] = (counts[clusterId] ?? 0) + 1
+      }
     }
-    return ids
+    return { populatedClusterIds: ids, clusterSiteCounts: counts }
   }, [fipsToClusterId, showPortfolio, portfolioSites])
 
   const isCountyMode = viewMode === 'county'
@@ -301,6 +306,7 @@ export function HubMap({
           visible={viewMode === 'regions' && showLabels}
           nameOverrides={nameOverrides}
           positionOverrides={positionOverrides}
+          siteCounts={clusterSiteCounts}
         />
       )}
     </Map>
