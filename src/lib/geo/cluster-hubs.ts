@@ -18,10 +18,10 @@ export interface HubCluster {
 }
 
 export interface ClusterOptions {
-  topPercent?: number     // default 20
-  maxDistKm?: number      // default 150
-  maxRadiusKm?: number    // default 320 (~200mi) — enforced post-clustering
-  minClusterSize?: number // default 5
+  topPercent?: number     // default 10
+  maxDistKm?: number      // default 250
+  maxRadiusKm?: number    // default 500 (~310mi) — enforced post-clustering
+  minClusterSize?: number // default 10
 }
 
 // --- Union-Find ---
@@ -263,9 +263,9 @@ function mergeAdjacentClusters(
   maxDistKm: number,
   maxRadiusKm: number
 ): CountyCentroid[][] {
-  // Merge threshold: clusters whose nearest members are within 2x the link
-  // distance are candidates (the gap between them is at most one "hop").
-  const mergeDist = maxDistKm * 2
+  // Merge threshold: clusters whose nearest members are within 3x the link
+  // distance are candidates — aggressive enough to bridge sparse gaps.
+  const mergeDist = maxDistKm * 3
 
   let merged = [...groups]
   let changed = true
@@ -298,10 +298,10 @@ export function clusterHubs(
   options: ClusterOptions = {}
 ): HubCluster[] {
   const {
-    topPercent = 20,
-    maxDistKm = 150,
-    maxRadiusKm = 320,  // ~200mi
-    minClusterSize = 5,
+    topPercent = 10,
+    maxDistKm = 250,
+    maxRadiusKm = 500,  // ~310mi
+    minClusterSize = 10,
   } = options
 
   // 1. Compute score threshold

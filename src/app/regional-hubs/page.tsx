@@ -46,9 +46,9 @@ export default function RegionalHubsPage() {
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
   const [viewMode, setViewMode] = useState<ViewMode>('county')
   const [topPercent, setTopPercent] = useState(20)
-  const [clusterTopPercent, setClusterTopPercent] = useState(20)
-  const [clusterMinSize, setClusterMinSize] = useState(5)
-  const [clusterLinkDist, setClusterLinkDist] = useState(150)
+  const [clusterTopPercent, setClusterTopPercent] = useState(10)
+  const [clusterMinSize, setClusterMinSize] = useState(10)
+  const [clusterLinkDist, setClusterLinkDist] = useState(250)
   const [clusterCount, setClusterCount] = useState(0)
 
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
@@ -266,8 +266,8 @@ export default function RegionalHubsPage() {
                           </div>
                           <input
                             type="range"
-                            min={10}
-                            max={40}
+                            min={5}
+                            max={30}
                             step={5}
                             value={clusterTopPercent}
                             onChange={(e) => setClusterTopPercent(parseInt(e.target.value))}
@@ -292,7 +292,7 @@ export default function RegionalHubsPage() {
                           <input
                             type="range"
                             min={3}
-                            max={15}
+                            max={30}
                             step={1}
                             value={clusterMinSize}
                             onChange={(e) => setClusterMinSize(parseInt(e.target.value))}
@@ -316,8 +316,8 @@ export default function RegionalHubsPage() {
                           </div>
                           <input
                             type="range"
-                            min={50}
-                            max={250}
+                            min={100}
+                            max={500}
                             step={25}
                             value={clusterLinkDist}
                             onChange={(e) => setClusterLinkDist(parseInt(e.target.value))}
