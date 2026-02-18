@@ -76,7 +76,7 @@ export function useHubClusters(
       properties: {
         id: c.id,
         name: c.name,
-        subtitle: `${c.countyCount} counties · ${c.avgScore.toFixed(1)} avg`,
+        subtitle: `${c.countyCount} counties`,
       },
     }))
 
