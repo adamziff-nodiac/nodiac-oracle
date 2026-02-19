@@ -7,6 +7,8 @@ import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import { ClusterRegionsLayer } from './ClusterRegionsLayer'
 import { ClusterLabelsLayer } from './ClusterLabelsLayer'
+import { GradientHubsLayer } from './GradientHubsLayer'
+import { TierHubsLayer } from './TierHubsLayer'
 import { PortfolioOverlay } from './PortfolioOverlay'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
@@ -14,7 +16,7 @@ import { useHubClusters } from '@/hooks/useHubClusters'
 import type { ClusterOptions, HubCluster } from '@/lib/geo/cluster-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
-export type ViewMode = 'county' | 'regions'
+export type ViewMode = 'county' | 'regions' | 'gradient' | 'tiers'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -292,13 +294,33 @@ export function HubMap({
         />
       )}
 
-      {/* Portfolio sites overlay */}
+      {/* Gradient Hubs: score-based gradient within hub regions */}
+      {clusterData && (
+        <GradientHubsLayer
+          regionsGeojson={clusterData.regionsGeojson}
+          scoreLookup={scoreLookup}
+          quantileBreaks={quantileBreaks ?? null}
+          visible={viewMode === 'gradient'}
+        />
+      )}
+
+      {/* Tier Hubs: 4-tier percentile bands within hub regions */}
+      {clusterData && (
+        <TierHubsLayer
+          regionsGeojson={clusterData.regionsGeojson}
+          scoreLookup={scoreLookup}
+          visible={viewMode === 'tiers'}
+        />
+      )}
+
+      {/* Portfolio sites overlay — visible in all hub-based modes */}
       {showPortfolio && clusterData && portfolioSites.length > 0 && (
         <PortfolioOverlay
           sites={portfolioSites}
           fipsClusterStatus={clusterData.fipsClusterStatus}
           scoreLookup={scoreLookup}
-          visible={showPortfolio && viewMode === 'regions'}
+          visible={showPortfolio && viewMode !== 'county'}
+          viewMode={viewMode}
         />
       )}
 
@@ -306,7 +328,7 @@ export function HubMap({
       {clusterData && (
         <ClusterLabelsLayer
           labelsGeojson={clusterData.labelsGeojson}
-          visible={viewMode === 'regions' && showLabels}
+          visible={viewMode !== 'county' && showLabels}
           nameOverrides={nameOverrides}
           positionOverrides={positionOverrides}
           siteCounts={clusterSiteCounts}
