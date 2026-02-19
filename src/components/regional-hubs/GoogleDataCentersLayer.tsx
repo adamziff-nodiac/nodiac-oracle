@@ -50,30 +50,62 @@ export function GoogleDataCentersLayer({
     if (m.hasImage('google-g-icon')) return
 
     const dpr = 2
+    const deg2rad = (d: number) => d * Math.PI / 180
 
-    // Individual point icon: white circle + blue G
+    /**
+     * Draw the multicolored Google "G" logo on a canvas.
+     * The G is an annular ring (4 colored quadrants) with a gap on
+     * the upper-right and a horizontal blue bar at the 3-o'clock position.
+     */
+    function drawGoogleG(ctx: CanvasRenderingContext2D, s: number) {
+      const cx = s / 2
+      const cy = s / 2
+      const outerR = s * 0.44
+      const innerR = s * 0.24
+      const barH = outerR - innerR
+
+      // Helper: draw a filled annular sector
+      function sector(startDeg: number, endDeg: number, color: string) {
+        ctx.beginPath()
+        ctx.arc(cx, cy, outerR, deg2rad(startDeg), deg2rad(endDeg))
+        ctx.arc(cx, cy, innerR, deg2rad(endDeg), deg2rad(startDeg), true)
+        ctx.closePath()
+        ctx.fillStyle = color
+        ctx.fill()
+      }
+
+      // Four colored quadrants of the ring
+      // Canvas angles: 0°=east/right, clockwise
+      sector(1, 90, '#34A853')     // Green: bottom-right (3 o'clock → 6 o'clock)
+      sector(90, 180, '#FBBC05')   // Yellow: bottom-left (6 o'clock → 9 o'clock)
+      sector(180, 270, '#EA4335')  // Red: top-left (9 o'clock → 12 o'clock)
+      sector(270, 330, '#4285F4')  // Blue: top-right (12 o'clock → ~1:30, stops at gap)
+
+      // Blue horizontal bar (the crossbar of the G)
+      ctx.fillStyle = '#4285F4'
+      ctx.fillRect(cx, cy - barH / 2, outerR, barH)
+    }
+
+    // Individual point icon: white circle background + Google G
     const size = 32
     const canvas = document.createElement('canvas')
     canvas.width = size * dpr
     canvas.height = size * dpr
     const ctx = canvas.getContext('2d')!
     ctx.scale(dpr, dpr)
+    // White circle background
     ctx.beginPath()
     ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2)
     ctx.fillStyle = '#ffffff'
     ctx.fill()
-    ctx.strokeStyle = 'rgba(0,0,0,0.15)'
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)'
     ctx.lineWidth = 1
     ctx.stroke()
-    ctx.font = `bold ${size * 0.55}px Arial, sans-serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillStyle = '#4285F4'
-    ctx.fillText('G', size / 2, size / 2 + 1)
+    drawGoogleG(ctx, size)
     const imgData = ctx.getImageData(0, 0, size * dpr, size * dpr)
     m.addImage('google-g-icon', { width: size * dpr, height: size * dpr, data: new Uint8Array(imgData.data) }, { pixelRatio: dpr })
 
-    // Cluster icon: blue circle + white G
+    // Cluster icon: larger white circle + Google G
     const cSize = 40
     const cCanvas = document.createElement('canvas')
     cCanvas.width = cSize * dpr
@@ -82,16 +114,12 @@ export function GoogleDataCentersLayer({
     cCtx.scale(dpr, dpr)
     cCtx.beginPath()
     cCtx.arc(cSize / 2, cSize / 2, cSize / 2 - 1, 0, Math.PI * 2)
-    cCtx.fillStyle = '#4285F4'
-    cCtx.fill()
-    cCtx.strokeStyle = '#ffffff'
-    cCtx.lineWidth = 2
-    cCtx.stroke()
-    cCtx.font = `bold ${cSize * 0.5}px Arial, sans-serif`
-    cCtx.textAlign = 'center'
-    cCtx.textBaseline = 'middle'
     cCtx.fillStyle = '#ffffff'
-    cCtx.fillText('G', cSize / 2, cSize / 2 + 1)
+    cCtx.fill()
+    cCtx.strokeStyle = 'rgba(0,0,0,0.12)'
+    cCtx.lineWidth = 1.5
+    cCtx.stroke()
+    drawGoogleG(cCtx, cSize)
     const cImgData = cCtx.getImageData(0, 0, cSize * dpr, cSize * dpr)
     m.addImage('google-g-cluster', { width: cSize * dpr, height: cSize * dpr, data: new Uint8Array(cImgData.data) }, { pixelRatio: dpr })
   }, [map])
