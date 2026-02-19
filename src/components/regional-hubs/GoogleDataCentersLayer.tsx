@@ -60,8 +60,8 @@ export function GoogleDataCentersLayer({
     function drawGoogleG(ctx: CanvasRenderingContext2D, s: number) {
       const cx = s / 2
       const cy = s / 2
-      const outerR = s * 0.44
-      const innerR = s * 0.24
+      const outerR = s / 2       // fill to canvas edge — no transparent ring
+      const innerR = s * 0.27
       const barH = outerR - innerR
 
       // Helper: draw a filled annular sector
