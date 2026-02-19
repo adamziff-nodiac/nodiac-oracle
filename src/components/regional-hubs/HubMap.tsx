@@ -7,6 +7,7 @@ import { CountyChoropleth } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import { ClusterRegionsLayer } from './ClusterRegionsLayer'
 import { ClusterLabelsLayer } from './ClusterLabelsLayer'
+import { OutlineHullsLayer } from './OutlineHullsLayer'
 import { PortfolioOverlay } from './PortfolioOverlay'
 import { GoogleDataCentersLayer, type GoogleDCDisplayMode } from './GoogleDataCentersLayer'
 import { useIsDark } from '@/hooks/useIsDark'
@@ -15,7 +16,7 @@ import { useHubClusters } from '@/hooks/useHubClusters'
 import type { ClusterOptions, HubCluster } from '@/lib/geo/cluster-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
-export type ViewMode = 'county' | 'regions'
+export type ViewMode = 'county' | 'regions' | 'outline'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -297,13 +298,22 @@ export function HubMap({
         />
       )}
 
-      {/* Portfolio sites overlay */}
+      {/* Outline view: muted county background + hull outlines with glow */}
+      {clusterData && (
+        <OutlineHullsLayer
+          hullsGeojson={clusterData.hullsGeojson}
+          regionsGeojson={clusterData.regionsGeojson}
+          visible={viewMode === 'outline'}
+        />
+      )}
+
+      {/* Portfolio sites overlay — visible in regions and outline modes */}
       {showPortfolio && clusterData && portfolioSites.length > 0 && (
         <PortfolioOverlay
           sites={portfolioSites}
           fipsClusterStatus={clusterData.fipsClusterStatus}
           scoreLookup={scoreLookup}
-          visible={showPortfolio && viewMode === 'regions'}
+          visible={showPortfolio && (viewMode === 'regions' || viewMode === 'outline')}
         />
       )}
 
@@ -311,7 +321,7 @@ export function HubMap({
       {clusterData && (
         <ClusterLabelsLayer
           labelsGeojson={clusterData.labelsGeojson}
-          visible={viewMode === 'regions' && showLabels}
+          visible={(viewMode === 'regions' || viewMode === 'outline') && showLabels}
           nameOverrides={nameOverrides}
           positionOverrides={positionOverrides}
           siteCounts={clusterSiteCounts}
