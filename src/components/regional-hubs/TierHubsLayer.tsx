@@ -5,9 +5,9 @@ import { Source, Layer } from 'react-map-gl/mapbox'
 
 // Tier color constants
 export const TIER_1_COLOR = '#4de2e4' // Top 10%: bright neon teal
-export const TIER_2_COLOR = '#3b82f6' // Top 25%: electric blue
-export const TIER_3_COLOR = '#b48fc1' // Top 50%: soft orchid/purple
-export const TIER_4_COLOR = '#4a3d55' // Other (bottom 50%): muted gray-purple
+export const TIER_2_COLOR = '#2a9d8f' // Top 25%: muted teal
+export const TIER_3_COLOR = '#6b4d7a' // Top 50%: soft purple
+export const TIER_4_COLOR = '#2d2233' // Other (bottom 50%): very dark purple
 export const TIER_OUTSIDE_COLOR = '#0d0b12' // Outside hubs: very dark
 export const TIER_NULL_COLOR = '#221d28' // No data
 

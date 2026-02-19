@@ -145,8 +145,8 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
     ? [
         'case',
         ['==', ['get', 'tier'], 1], '#4de2e4',
-        ['==', ['get', 'tier'], 2], '#3b82f6',
-        '#b48fc1',
+        ['==', ['get', 'tier'], 2], '#2a9d8f',
+        '#6b4d7a',
       ] as unknown as string
     : '#4de2e4'
 
