@@ -2,6 +2,8 @@
 
 import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
+import type { ViewMode } from './HubMap'
+import { computeTierBreaks, getTier, getTierColor } from './TierHubsLayer'
 
 interface PortfolioSiteMinimal {
   latitude: number | null
@@ -16,6 +18,7 @@ interface PortfolioOverlayProps {
   fipsClusterStatus: Map<string, number>
   scoreLookup: Map<string, number>
   visible?: boolean
+  viewMode?: ViewMode
 }
 
 /**
@@ -26,8 +29,13 @@ interface PortfolioOverlayProps {
  *  2 = site in a "member" county (top-scoring cluster county)
  *  1 = site in a "fill" county (within cluster hull)
  *  0 = site outside all cluster regions
+ *
+ * In gradient mode, sites are colored by their score gradient.
+ * In tiers mode, sites are colored by their county's tier color.
  */
-export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visible = true }: PortfolioOverlayProps) {
+export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visible = true, viewMode = 'regions' }: PortfolioOverlayProps) {
+  const tierBreaks = useMemo(() => computeTierBreaks(scoreLookup), [scoreLookup])
+
   const geojson = useMemo(() => {
     const features: GeoJSON.Feature[] = []
 
@@ -36,6 +44,14 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
 
       const regionStatus = site.fips_code ? (fipsClusterStatus.get(site.fips_code) ?? 0) : 0
       const countyScore = site.fips_code ? (scoreLookup.get(site.fips_code) ?? 0) : 0
+      const score = site.site_score ?? countyScore
+
+      let tier: number | null = null
+      let tierColor: string | null = null
+      if (tierBreaks && regionStatus > 0) {
+        tier = getTier(score, tierBreaks)
+        tierColor = getTierColor(tier)
+      }
 
       features.push({
         type: 'Feature',
@@ -45,20 +61,97 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
         },
         properties: {
           name: site.site_name,
-          score: site.site_score ?? countyScore,
+          score,
           regionStatus,
+          tier,
+          tierColor,
         },
       })
     }
 
     return { type: 'FeatureCollection' as const, features }
-  }, [sites, fipsClusterStatus, scoreLookup])
+  }, [sites, fipsClusterStatus, scoreLookup, tierBreaks])
 
   const visibility = visible ? 'visible' : 'none'
 
+  const GRAD_LOW = '#1a1520'
+  const GRAD_MID_LOW = '#2d2233'
+  const GRAD_MID = '#5c2d55'
+  const GRAD_HIGH = '#8b3578'
+  const GRAD_ORCHID = '#b48fc1'
+  const GRAD_PEAK = '#4de2e4'
+
+  const isGradient = viewMode === 'gradient'
+  const isTiers = viewMode === 'tiers'
+
+  const dotColorExpression = useMemo(() => {
+    if (isTiers) {
+      return [
+        'case',
+        ['==', ['get', 'regionStatus'], 0], '#555555',
+        ['has', 'tierColor'], ['get', 'tierColor'],
+        '#555555',
+      ] as unknown as string
+    }
+    if (isGradient) {
+      return [
+        'case',
+        ['==', ['get', 'regionStatus'], 0], '#555555',
+        [
+          'interpolate',
+          ['linear'],
+          ['get', 'score'],
+          0, GRAD_LOW,
+          2, GRAD_MID_LOW,
+          4, GRAD_MID,
+          6, GRAD_HIGH,
+          7.5, GRAD_ORCHID,
+          10, GRAD_PEAK,
+        ],
+      ] as unknown as string
+    }
+    return [
+      'match', ['get', 'regionStatus'],
+      2, '#ffffff',
+      1, '#d4c8e0',
+      '#555555',
+    ] as unknown as string
+  }, [isGradient, isTiers])
+
+  const strokeColorExpression = useMemo(() => {
+    if (isTiers) {
+      return [
+        'case',
+        ['==', ['get', 'regionStatus'], 0], '#333333',
+        'rgba(255, 255, 255, 0.6)',
+      ] as unknown as string
+    }
+    if (isGradient) {
+      return [
+        'case',
+        ['==', ['get', 'regionStatus'], 0], '#333333',
+        'rgba(255, 255, 255, 0.5)',
+      ] as unknown as string
+    }
+    return [
+      'match', ['get', 'regionStatus'],
+      2, '#4de2e4',
+      1, '#8b3578',
+      '#333333',
+    ] as unknown as string
+  }, [isGradient, isTiers])
+
+  const glowColor = isTiers
+    ? [
+        'case',
+        ['==', ['get', 'tier'], 1], '#4de2e4',
+        ['==', ['get', 'tier'], 2], '#2a9d8f',
+        '#6b4d7a',
+      ] as unknown as string
+    : '#4de2e4'
+
   return (
     <Source id="portfolio-sites-source" type="geojson" data={geojson}>
-      {/* Outer glow for in-region sites */}
       <Layer
         id="portfolio-sites-glow"
         type="circle"
@@ -66,12 +159,11 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
         filter={['>', ['get', 'regionStatus'], 0]}
         paint={{
           'circle-radius': 22,
-          'circle-color': '#4de2e4',
+          'circle-color': glowColor,
           'circle-opacity': 0.15,
           'circle-blur': 0.8,
         }}
       />
-      {/* Site dots */}
       <Layer
         id="portfolio-sites-dots"
         type="circle"
@@ -79,16 +171,11 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
         paint={{
           'circle-radius': [
             'match', ['get', 'regionStatus'],
-            2, 11,    // member county: larger
-            1, 9.5,   // fill county: medium
-            6,        // outside: small
+            2, 11,
+            1, 9.5,
+            6,
           ],
-          'circle-color': [
-            'match', ['get', 'regionStatus'],
-            2, '#ffffff',  // in member county: white
-            1, '#d4c8e0',  // in fill county: light purple
-            '#555555',     // outside: dull gray
-          ],
+          'circle-color': dotColorExpression,
           'circle-opacity': [
             'match', ['get', 'regionStatus'],
             2, 0.95,
@@ -101,12 +188,7 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
             1, 1,
             0.5,
           ],
-          'circle-stroke-color': [
-            'match', ['get', 'regionStatus'],
-            2, '#4de2e4',
-            1, '#8b3578',
-            '#333333',
-          ],
+          'circle-stroke-color': strokeColorExpression,
         }}
       />
     </Source>

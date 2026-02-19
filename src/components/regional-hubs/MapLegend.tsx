@@ -39,6 +39,38 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
     )
   }
 
+  // --- Gradient mode ---
+  if (viewMode === 'gradient') {
+    const GRAD_LOW = '#1a1520'
+    const GRAD_MID_LOW = '#2d2233'
+    const GRAD_HIGH = '#8b3578'
+    const GRAD_PEAK = '#4de2e4'
+    return (
+      <div className={legendBox}>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+          Hub Gradient
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">Low</span>
+          <div
+            className="h-3 w-32 rounded-sm"
+            style={{
+              background: `linear-gradient(to right, ${GRAD_LOW}, ${GRAD_MID_LOW}, ${GRAD_HIGH}, ${GRAD_PEAK})`,
+            }}
+          />
+          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
+        </div>
+        <div className="flex items-center gap-1.5 mt-2">
+          <div className="w-3 h-3 rounded-sm bg-[#0d0b12]" />
+          <span className="text-xs text-gray-500 dark:text-gray-400">Outside hubs</span>
+        </div>
+        <p className="text-[10px] text-gray-500 mt-2">
+          {clusterCount != null ? `${clusterCount} hub region${clusterCount !== 1 ? 's' : ''}` : 'Score gradient within hubs'}
+        </p>
+      </div>
+    )
+  }
+
   // --- Regions mode ---
   if (viewMode === 'regions') {
     return (
