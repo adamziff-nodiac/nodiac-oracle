@@ -55,7 +55,7 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
           <div
             className="h-3 w-32 rounded-sm"
             style={{
-              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID_LOW}, ${COLOR_MID}, ${COLOR_HIGH}, ${COLOR_ORCHID}, ${COLOR_PEAK})`,
+              background: `linear-gradient(to right, ${COLOR_LOW}, ${COLOR_MID_LOW}, ${COLOR_HIGH}, ${COLOR_PEAK})`,
             }}
           />
           <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
