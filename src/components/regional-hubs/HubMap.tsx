@@ -8,6 +8,7 @@ import type { ColorMode } from './CountyChoropleth'
 import { ClusterRegionsLayer } from './ClusterRegionsLayer'
 import { ClusterLabelsLayer } from './ClusterLabelsLayer'
 import { PortfolioOverlay } from './PortfolioOverlay'
+import { GoogleDataCentersLayer, type GoogleDCDisplayMode } from './GoogleDataCentersLayer'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHubClusters } from '@/hooks/useHubClusters'
@@ -33,6 +34,8 @@ interface HubMapProps {
   showPortfolio?: boolean
   portfolioSites?: { latitude: number | null; longitude: number | null; fips_code: string | null; site_name: string; site_score: number | null }[]
   showLabels?: boolean
+  showGoogleDC?: boolean
+  googleDCDisplayMode?: GoogleDCDisplayMode
   nameOverrides?: Record<number, string>
   positionOverrides?: Record<number, { lng: number; lat: number }>
   onPositionOverride?: (clusterId: number, pos: { lng: number; lat: number }) => void
@@ -54,6 +57,8 @@ export function HubMap({
   showPortfolio = false,
   portfolioSites = [],
   showLabels = true,
+  showGoogleDC = false,
+  googleDCDisplayMode = 'logo',
   nameOverrides,
   positionOverrides,
   onPositionOverride,
@@ -310,6 +315,14 @@ export function HubMap({
           nameOverrides={nameOverrides}
           positionOverrides={positionOverrides}
           siteCounts={clusterSiteCounts}
+        />
+      )}
+
+      {/* Google data center overlay */}
+      {showGoogleDC && (
+        <GoogleDataCentersLayer
+          visible={showGoogleDC}
+          displayMode={googleDCDisplayMode}
         />
       )}
     </Map>

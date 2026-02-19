@@ -31,6 +31,7 @@ import { DEFAULT_WEIGHTS, getProfileById } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
 import type { ViewMode } from '@/components/regional-hubs/HubMap'
+import type { GoogleDCDisplayMode } from '@/components/regional-hubs/GoogleDataCentersLayer'
 import type { HubCluster } from '@/lib/geo/cluster-hubs'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
 
@@ -58,6 +59,8 @@ export default function RegionalHubsPage() {
   const [positionOverrides, setPositionOverrides] = useState<Record<number, { lng: number; lat: number }>>({})
   const [editingNames, setEditingNames] = useState(false)
   const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
+  const [showGoogleDC, setShowGoogleDC] = useState(false)
+  const [googleDCDisplayMode, setGoogleDCDisplayMode] = useState<GoogleDCDisplayMode>('logo')
 
   const { sites: portfolioSites } = usePortfolioSites()
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
@@ -203,6 +206,8 @@ export default function RegionalHubsPage() {
                   positionOverrides={positionOverrides}
                   onPositionOverride={(id, pos) => setPositionOverrides(prev => ({ ...prev, [id]: pos }))}
                   onClusters={handleClusters}
+                  showGoogleDC={showGoogleDC}
+                  googleDCDisplayMode={googleDCDisplayMode}
                 />
 
                 {/* Mobile weight toggle */}
@@ -397,6 +402,47 @@ export default function RegionalHubsPage() {
                         </button>
                       </div>
                     )}
+                    {/* Google Data Centers toggle — always visible */}
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
+                      <button
+                        onClick={() => setShowGoogleDC(!showGoogleDC)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          showGoogleDC
+                            ? 'bg-[#4285F4]/20 text-[#4285F4]'
+                            : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <span className="font-bold text-[#4285F4]">G</span>
+                          Google DCs
+                        </span>
+                        <span className="tabular-nums font-mono text-[10px]">47</span>
+                      </button>
+                      {showGoogleDC && (
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => setGoogleDCDisplayMode('logo')}
+                            className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                              googleDCDisplayMode === 'logo'
+                                ? 'bg-[#4285F4]/20 text-[#4285F4]'
+                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            Logo only
+                          </button>
+                          <button
+                            onClick={() => setGoogleDCDisplayMode('logo-label')}
+                            className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                              googleDCDisplayMode === 'logo-label'
+                                ? 'bg-[#4285F4]/20 text-[#4285F4]'
+                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            Logo + Name
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <PresetProfiles
