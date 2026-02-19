@@ -226,6 +226,7 @@ export default function RegionalHubsPage() {
                       {([
                         { id: 'county', label: 'County' },
                         { id: 'regions', label: 'Regions' },
+                        { id: 'outline', label: 'Outline' },
                       ] as const).map(({ id, label }) => (
                         <button
                           key={id}
@@ -243,8 +244,8 @@ export default function RegionalHubsPage() {
                         </button>
                       ))}
                     </div>
-                    {/* Cluster tuning sliders — visible in regions mode */}
-                    {viewMode === 'regions' && (
+                    {/* Cluster tuning sliders — visible in regions and outline modes */}
+                    {(viewMode === 'regions' || viewMode === 'outline') && (
                       <div className="mt-2 space-y-2.5">
                         {/* Top percent */}
                         <div className="space-y-1">
@@ -323,8 +324,8 @@ export default function RegionalHubsPage() {
                         </div>
                       </div>
                     )}
-                    {/* Toggles — visible in regions mode */}
-                    {viewMode === 'regions' && (
+                    {/* Toggles — visible in regions and outline modes */}
+                    {(viewMode === 'regions' || viewMode === 'outline') && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
                         <div className="flex gap-1">
                           <button
@@ -525,7 +526,7 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} clusterCount={viewMode === 'regions' ? clusterCount : undefined} />
+                <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} clusterCount={viewMode === 'regions' || viewMode === 'outline' ? clusterCount : undefined} />
 
                 {/* Export button */}
                 <div className="absolute top-4 right-4 z-10">

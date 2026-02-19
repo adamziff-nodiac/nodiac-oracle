@@ -15,6 +15,30 @@ interface MapLegendProps {
 const legendBox = "absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10"
 
 export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', clusterCount }: MapLegendProps) {
+  // --- Outline mode ---
+  if (viewMode === 'outline') {
+    return (
+      <div className={legendBox}>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+          Hub Outlines
+        </p>
+        <div className="flex flex-col gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm border-2 border-[#4de2e4] bg-[#490f42]/30" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">Hub region</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-3 h-3 rounded-sm bg-[#0a0810]" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">Outside</span>
+          </div>
+        </div>
+        <p className="text-[10px] text-gray-500 mt-3">
+          {clusterCount != null ? `${clusterCount} hub region${clusterCount !== 1 ? 's' : ''} detected` : 'Convex hull outlines'}
+        </p>
+      </div>
+    )
+  }
+
   // --- Regions mode ---
   if (viewMode === 'regions') {
     return (
