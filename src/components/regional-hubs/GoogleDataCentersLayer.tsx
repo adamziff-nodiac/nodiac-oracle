@@ -81,6 +81,12 @@ export function GoogleDataCentersLayer({
       sector(180, 270, '#EA4335')  // Red: top-left (9 o'clock → 12 o'clock)
       sector(270, 330, '#4285F4')  // Blue: top-right (12 o'clock → ~1:30, stops at gap)
 
+      // White center fill
+      ctx.beginPath()
+      ctx.arc(cx, cy, innerR, 0, Math.PI * 2)
+      ctx.fillStyle = '#ffffff'
+      ctx.fill()
+
       // Blue horizontal bar (the crossbar of the G)
       ctx.fillStyle = '#4285F4'
       ctx.fillRect(cx, cy - barH / 2, outerR, barH)
