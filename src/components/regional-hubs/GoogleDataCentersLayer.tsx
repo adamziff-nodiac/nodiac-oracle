@@ -86,39 +86,24 @@ export function GoogleDataCentersLayer({
       ctx.fillRect(cx, cy - barH / 2, outerR, barH)
     }
 
-    // Individual point icon: white circle background + Google G
+    // Individual point icon: Google G on transparent background
     const size = 32
     const canvas = document.createElement('canvas')
     canvas.width = size * dpr
     canvas.height = size * dpr
     const ctx = canvas.getContext('2d')!
     ctx.scale(dpr, dpr)
-    // White circle background
-    ctx.beginPath()
-    ctx.arc(size / 2, size / 2, size / 2 - 1, 0, Math.PI * 2)
-    ctx.fillStyle = '#ffffff'
-    ctx.fill()
-    ctx.strokeStyle = 'rgba(0,0,0,0.12)'
-    ctx.lineWidth = 1
-    ctx.stroke()
     drawGoogleG(ctx, size)
     const imgData = ctx.getImageData(0, 0, size * dpr, size * dpr)
     m.addImage('google-g-icon', { width: size * dpr, height: size * dpr, data: new Uint8Array(imgData.data) }, { pixelRatio: dpr })
 
-    // Cluster icon: larger white circle + Google G
+    // Cluster icon: larger Google G on transparent background
     const cSize = 40
     const cCanvas = document.createElement('canvas')
     cCanvas.width = cSize * dpr
     cCanvas.height = cSize * dpr
     const cCtx = cCanvas.getContext('2d')!
     cCtx.scale(dpr, dpr)
-    cCtx.beginPath()
-    cCtx.arc(cSize / 2, cSize / 2, cSize / 2 - 1, 0, Math.PI * 2)
-    cCtx.fillStyle = '#ffffff'
-    cCtx.fill()
-    cCtx.strokeStyle = 'rgba(0,0,0,0.12)'
-    cCtx.lineWidth = 1.5
-    cCtx.stroke()
     drawGoogleG(cCtx, cSize)
     const cImgData = cCtx.getImageData(0, 0, cSize * dpr, cSize * dpr)
     m.addImage('google-g-cluster', { width: cSize * dpr, height: cSize * dpr, data: new Uint8Array(cImgData.data) }, { pixelRatio: dpr })
