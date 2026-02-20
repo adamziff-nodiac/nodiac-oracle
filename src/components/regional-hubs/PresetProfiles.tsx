@@ -31,7 +31,7 @@ export function PresetProfiles({ activeProfileId, onSelect }: PresetProfilesProp
             className={cn(
               'px-3 py-1.5 rounded-full text-xs font-medium transition-all',
               activeProfileId === profile.id
-                ? 'bg-nodiac-secondary text-nodiac-dark'
+                ? 'bg-[#c77dba] text-white'
                 : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10'
             )}
             title={profile.description}

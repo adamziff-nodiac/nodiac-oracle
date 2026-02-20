@@ -58,7 +58,7 @@ export function MethodologyDeepDive() {
             using a weighted average. The composite score is what drives the choropleth color on the map.
           </p>
           <p>The formula is:</p>
-          <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
+          <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-[#c77dba]">
             composite = ( &Sigma; criterion_score<sub>i</sub> &times; weight<sub>i</sub> ) / ( &Sigma; weight<sub>i</sub> ) &times; 10
           </div>
           <p>
@@ -72,17 +72,17 @@ export function MethodologyDeepDive() {
             and all other scores are 0.50, with Balanced weights (all 1.0):
           </p>
           <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-300">
-            (0.80&times;1 + 0.65&times;1 + 0.50&times;1 + 0.50&times;1 + 0.50&times;1 + 0.50&times;1) / 6 &times; 10 = <span className="text-nodiac-secondary">5.75</span>
+            (0.80&times;1 + 0.65&times;1 + 0.50&times;1 + 0.50&times;1 + 0.50&times;1 + 0.50&times;1) / 6 &times; 10 = <span className="text-[#c77dba]">5.75</span>
           </div>
           <p>
             Changing to Co-op Priority (Co-op weight = 3, Permitting = 2, Labor = 0.5, others = 1):
           </p>
           <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-300">
-            (0.80&times;3 + 0.65&times;1 + 0.50&times;1 + 0.50&times;2 + 0.50&times;0.5 + 0.50&times;1) / 8.5 &times; 10 = <span className="text-nodiac-secondary">6.21</span>
+            (0.80&times;3 + 0.65&times;1 + 0.50&times;1 + 0.50&times;2 + 0.50&times;0.5 + 0.50&times;1) / 8.5 &times; 10 = <span className="text-[#c77dba]">6.21</span>
           </div>
           <p>
             The reweighting happens <strong className="text-gray-900 dark:text-white">entirely client-side</strong> in your browser
-            using <code className="text-nodiac-secondary bg-white/5 px-1 rounded">useMemo</code>. Moving a slider
+            using <code className="text-[#c77dba] bg-white/5 px-1 rounded">useMemo</code>. Moving a slider
             doesn&apos;t make a network request&mdash;it recomputes all ~3,200 composite scores in milliseconds
             and updates the map instantly.
           </p>
@@ -120,27 +120,27 @@ export function MethodologyDeepDive() {
                 </tr>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white font-sans font-medium">Co-op Priority</td>
-                  <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                  <td className="text-center py-2 px-2 text-[#c77dba] font-bold">3.0</td>
                   <td className="text-center py-2 px-2">1.0</td>
                   <td className="text-center py-2 px-2">1.0</td>
-                  <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
+                  <td className="text-center py-2 px-2 text-[#c77dba] font-bold">2.0</td>
                   <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                   <td className="text-center py-2 px-2">1.0</td>
                 </tr>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white font-sans font-medium">Speed to Deploy</td>
                   <td className="text-center py-2 px-2 text-gray-500">0.5</td>
-                  <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
+                  <td className="text-center py-2 px-2 text-[#c77dba] font-bold">2.0</td>
                   <td className="text-center py-2 px-2 text-gray-500">0.5</td>
-                  <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                  <td className="text-center py-2 px-2 text-[#c77dba] font-bold">3.0</td>
                   <td className="text-center py-2 px-2">1.0</td>
-                  <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
+                  <td className="text-center py-2 px-2 text-[#c77dba] font-bold">2.0</td>
                 </tr>
                 <tr>
                   <td className="py-2 pr-3 text-gray-900 dark:text-white font-sans font-medium">Curtailment Capture</td>
                   <td className="text-center py-2 px-2">1.0</td>
                   <td className="text-center py-2 px-2">1.5</td>
-                  <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                  <td className="text-center py-2 px-2 text-[#c77dba] font-bold">3.0</td>
                   <td className="text-center py-2 px-2">1.0</td>
                   <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                   <td className="text-center py-2 px-2">1.0</td>
@@ -184,7 +184,7 @@ export function MethodologyDeepDive() {
                 a spatial point-in-polygon query. If the site falls within a co-op/public power territory,
                 the score is 1.0 (binary). If not, it&apos;s 0.0. This replaces the previous keyword-matching approach.
               </p>
-              <p className="mt-1 text-sm text-nodiac-secondary">
+              <p className="mt-1 text-sm text-[#c77dba]">
                 Status: Real data (spatial). 833 service territory polygons. County scores range 0&ndash;1
                 based on area overlap. Site scores are binary (in territory or not).
               </p>
@@ -210,7 +210,7 @@ export function MethodologyDeepDive() {
                 service territory counties, average across utilities per county, then apply percentile-based
                 inverse ranking. Median county SAIDI is ~158 minutes/year.
               </p>
-              <p className="mt-1 text-sm text-nodiac-secondary">
+              <p className="mt-1 text-sm text-[#c77dba]">
                 Status: Real data. 96% county coverage (3,025 of 3,143). 905 utilities with valid SAIDI data.
                 Remaining 4% default to 0.5 (neutral).
               </p>
@@ -238,7 +238,7 @@ export function MethodologyDeepDive() {
                 (3) congestion flag from balancing authority (25% weight) &mdash; counties in CAISO, ERCOT,
                 MISO, SPP, or BPAT territories get a congestion bonus.
               </p>
-              <p className="mt-1 text-sm text-nodiac-secondary">
+              <p className="mt-1 text-sm text-[#c77dba]">
                 Status: Real data. 54% county coverage (1,684 of 3,143). Remaining 46% have no variable
                 renewable generation and score 0.0 (no curtailment opportunity). Top counties: Kern CA,
                 Riverside CA, Clark NV, Nolan TX.
@@ -255,7 +255,7 @@ export function MethodologyDeepDive() {
               </p>
               <p className="mt-2">
                 <strong className="text-gray-700 dark:text-gray-200">Data source:</strong> Claude Code skill
-                (<code className="text-nodiac-secondary bg-white/5 px-1 rounded">permitting-sentiment</code>)
+                (<code className="text-[#c77dba] bg-white/5 px-1 rounded">permitting-sentiment</code>)
                 that systematically searches for &ldquo;[County] [State] data center moratorium,&rdquo;
                 &ldquo;zoning ordinance,&rdquo; &ldquo;approved,&rdquo; etc. and produces a sentiment
                 score (0 = hostile/moratorium, 0.5 = neutral, 1 = actively welcoming with incentives).
@@ -289,7 +289,7 @@ export function MethodologyDeepDive() {
                 percentile rank normalization. Counties with zero IT establishments score at the 0th
                 percentile. 2,222 of 3,143 counties have at least one IT establishment.
               </p>
-              <p className="mt-1 text-sm text-nodiac-secondary">
+              <p className="mt-1 text-sm text-[#c77dba]">
                 Status: Real data. 100% county coverage. Percentile rank normalization produces a
                 uniform distribution from 0 to 1.
               </p>
@@ -316,7 +316,7 @@ export function MethodologyDeepDive() {
                 Percentile rank normalization across all counties. Provider competition captures market
                 depth &mdash; multiple fiber ISPs indicate robust underlying infrastructure.
               </p>
-              <p className="mt-1 text-sm text-nodiac-secondary">
+              <p className="mt-1 text-sm text-[#c77dba]">
                 Status: Real data (direct measure). ~3,234 counties via FCC BDC, remainder via ACS fallback.
                 Significant upgrade from previous broadband subscription proxy.
               </p>
@@ -341,23 +341,23 @@ export function MethodologyDeepDive() {
           </p>
 
           <h4 className="text-gray-900 dark:text-white font-semibold mt-4 mb-1">2. Percentile Rank (Grid, Labor, Fiber)</h4>
-          <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
+          <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-[#c77dba]">
             score = rank(value) / (N &minus; 1)
           </div>
           <p>
             Produces a uniform distribution where each county gets a score proportional to how many other
             counties it outranks. Used when raw distributions are heavily skewed (e.g., labor density is
             dominated by a few metro counties). For inverse metrics like grid SAIDI, we use{' '}
-            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">1 &minus; rank</code> so that
+            <code className="text-[#c77dba] bg-white/5 px-1 rounded">1 &minus; rank</code> so that
             the best (lowest SAIDI) gets the highest score.
           </p>
 
           <h4 className="text-gray-900 dark:text-white font-semibold mt-4 mb-1">3. Log-Transform + Composite (Curtailment)</h4>
-          <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-nodiac-secondary">
+          <div className="bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 font-mono text-sm text-[#c77dba]">
             score = 0.55 &times; log_norm(renewable_MW) + 0.20 &times; pipeline_pressure + 0.25 &times; congestion_flag
           </div>
           <p>
-            Curtailment uses <code className="text-nodiac-secondary bg-white/5 px-1 rounded">log1p(MW)</code>{' '}
+            Curtailment uses <code className="text-[#c77dba] bg-white/5 px-1 rounded">log1p(MW)</code>{' '}
             normalization because renewable capacity is extremely right-skewed (Kern County CA has 8,756 MW
             while most counties have under 100 MW). The log transform preserves meaningful differences at
             the low end without letting California dominate the entire scale.
@@ -416,9 +416,9 @@ export function MethodologyDeepDive() {
         {/* 6. DATA PIPELINE */}
         <Collapsible title="Data Pipeline and Current Status">
           <p>
-            The data pipeline (<code className="text-nodiac-secondary bg-white/5 px-1 rounded">scripts/build-real-county-scores.py</code>)
+            The data pipeline (<code className="text-[#c77dba] bg-white/5 px-1 rounded">scripts/build-real-county-scores.py</code>)
             downloads and processes public datasets from federal agencies to compute per-county scores.
-            Run with <code className="text-nodiac-secondary bg-white/5 px-1 rounded">uv run scripts/build-real-county-scores.py</code>.
+            Run with <code className="text-[#c77dba] bg-white/5 px-1 rounded">uv run scripts/build-real-county-scores.py</code>.
           </p>
 
           <h4 className="text-gray-900 dark:text-white font-semibold mt-4 mb-1">Pipeline Steps</h4>
@@ -448,19 +448,19 @@ export function MethodologyDeepDive() {
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Co-op Density</td>
                   <td className="py-2 pr-3">ArcGIS Co-op Territories (ORNL/LANL/INL)</td>
                   <td className="py-2 pr-3">100%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data (spatial)</td>
+                  <td className="py-2 text-[#c77dba]">Real data (spatial)</td>
                 </tr>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Grid Reliability</td>
                   <td className="py-2 pr-3">EIA Form 861 SAIDI (2024)</td>
                   <td className="py-2 pr-3">96%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data</td>
+                  <td className="py-2 text-[#c77dba]">Real data</td>
                 </tr>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Clipped/Curtailed</td>
                   <td className="py-2 pr-3">EIA Form 860 (2024)</td>
                   <td className="py-2 pr-3">54%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data</td>
+                  <td className="py-2 text-[#c77dba]">Real data</td>
                 </tr>
                 <tr className="border-b border-gray-100 dark:border-white/5">
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Permitting</td>
@@ -472,13 +472,13 @@ export function MethodologyDeepDive() {
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Skilled IT Labor</td>
                   <td className="py-2 pr-3">Census CBP 2023</td>
                   <td className="py-2 pr-3">100%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data</td>
+                  <td className="py-2 text-[#c77dba]">Real data</td>
                 </tr>
                 <tr>
                   <td className="py-2 pr-3 text-gray-900 dark:text-white">Fiber</td>
                   <td className="py-2 pr-3">FCC BDC Dec 2024 + ACS fallback</td>
                   <td className="py-2 pr-3">100%</td>
-                  <td className="py-2 text-nodiac-secondary">Real data (direct)</td>
+                  <td className="py-2 text-[#c77dba]">Real data (direct)</td>
                 </tr>
               </tbody>
             </table>
@@ -506,7 +506,7 @@ export function MethodologyDeepDive() {
           <p>
             The map uses a GeoJSON file of all US county boundaries (~3,221 features) sourced from the
             Census Bureau&apos;s TIGER/Line shapefiles (via plotly/datasets). Each feature has a{' '}
-            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">FIPS</code> property &mdash;
+            <code className="text-[#c77dba] bg-white/5 px-1 rounded">FIPS</code> property &mdash;
             a 5-digit code where the first 2 digits are the state and the last 3 are the county
             (e.g., 27053 = Hennepin County, MN).
           </p>
@@ -514,10 +514,10 @@ export function MethodologyDeepDive() {
             The choropleth rendering works by joining the GeoJSON features to the score data on FIPS code.
             Composite scores are injected directly into each GeoJSON feature&apos;s properties, then
             Mapbox GL&apos;s data-driven styling evaluates the{' '}
-            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">interpolate</code> expression
+            <code className="text-[#c77dba] bg-white/5 px-1 rounded">interpolate</code> expression
             per-feature to determine the fill color. This avoids the Mapbox style expression size limit
             (~3,000 entries in a{' '}
-            <code className="text-nodiac-secondary bg-white/5 px-1 rounded">match</code> expression)
+            <code className="text-[#c77dba] bg-white/5 px-1 rounded">match</code> expression)
             and keeps rendering performant.
           </p>
         </Collapsible>
@@ -566,7 +566,7 @@ export function MethodologyDeepDive() {
             <li>
               <strong className="text-gray-900 dark:text-white">No temporal dimension</strong> &mdash; scores are static
               snapshots. Grid reliability, curtailment, and permitting all change over time. Future
-              versions will track <code className="text-nodiac-secondary bg-white/5 px-1 rounded">last_permitting_update</code> timestamps.
+              versions will track <code className="text-[#c77dba] bg-white/5 px-1 rounded">last_permitting_update</code> timestamps.
             </li>
           </ul>
         </Collapsible>

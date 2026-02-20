@@ -29,7 +29,7 @@ export function WeightControls({ weights, onWeightChange }: WeightControlsProps)
             <label className="text-xs text-gray-600 dark:text-gray-300 font-medium" title={CRITERION_DESCRIPTIONS[key]}>
               {CRITERION_LABELS[key]}
             </label>
-            <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
+            <span className="text-xs text-[#c77dba] tabular-nums font-mono">
               {weights[key].toFixed(1)}
             </span>
           </div>
@@ -46,10 +46,10 @@ export function WeightControls({ weights, onWeightChange }: WeightControlsProps)
               [&::-webkit-slider-thumb]:w-3.5
               [&::-webkit-slider-thumb]:h-3.5
               [&::-webkit-slider-thumb]:rounded-full
-              [&::-webkit-slider-thumb]:bg-nodiac-secondary
-              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
+              [&::-webkit-slider-thumb]:bg-[#c77dba]
+              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(199,125,186,0.4)]
               [&::-webkit-slider-thumb]:transition-shadow
-              [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
+              [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(199,125,186,0.6)]"
           />
         </div>
       ))}

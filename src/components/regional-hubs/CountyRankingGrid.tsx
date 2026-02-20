@@ -29,11 +29,11 @@ const SHORT_LABELS: Record<CriterionKey, string> = {
 }
 
 function ScoreCell({ value }: { value: number }) {
-  // Color intensity: 0 = red/gray, 1 = bright teal
+  // Color intensity: 0 = gray, 1 = bright orchid
   const intensity = value
-  const r = Math.round(156 - intensity * 79)   // 156 → 77
-  const g = Math.round(163 + intensity * 63)    // 163 → 226
-  const b = Math.round(175 + intensity * 53)    // 175 → 228
+  const r = Math.round(100 + intensity * 99)    // 100 → 199
+  const g = Math.round(100 + intensity * 25)    // 100 → 125
+  const b = Math.round(120 + intensity * 66)    // 120 → 186
   const bg = `rgba(${r}, ${g}, ${b}, ${0.15 + intensity * 0.2})`
 
   return (
@@ -119,7 +119,7 @@ export function CountyRankingGrid({ weightedScores, onCountyClick }: CountyRanki
                     {county.state_abbr}
                   </td>
                   <td className="px-3 py-2 text-center">
-                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold tabular-nums bg-nodiac-secondary/20 text-nodiac-secondary">
+                    <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-bold tabular-nums bg-[#c77dba]/20 text-[#c77dba]">
                       {county.composite_score.toFixed(1)}
                     </span>
                   </td>

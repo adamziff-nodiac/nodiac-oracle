@@ -139,7 +139,7 @@ export function ExportControls({ targetRef, viewMode = 'county', hideOnExportRef
               onClick={() => { setSelectedPreset(i); setShowPresets(false) }}
               className={`w-full text-left px-3 py-1.5 text-xs transition-colors ${
                 selectedPreset === i
-                  ? 'bg-nodiac-secondary/10 text-nodiac-secondary'
+                  ? 'bg-[#c77dba]/10 text-[#c77dba]'
                   : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5'
               }`}
             >
@@ -152,7 +152,7 @@ export function ExportControls({ targetRef, viewMode = 'county', hideOnExportRef
                 type="checkbox"
                 checked={includePanel}
                 onChange={e => setIncludePanel(e.target.checked)}
-                className="w-3.5 h-3.5 rounded border-gray-300 dark:border-white/20 text-nodiac-secondary focus:ring-nodiac-secondary/30 bg-transparent"
+                className="w-3.5 h-3.5 rounded border-gray-300 dark:border-white/20 text-[#c77dba] focus:ring-[#c77dba]/30 bg-transparent"
               />
               <span className="text-xs text-gray-600 dark:text-gray-300">Include side panel</span>
             </label>
@@ -162,7 +162,7 @@ export function ExportControls({ targetRef, viewMode = 'county', hideOnExportRef
               onClick={() => setSelectedPreset(-1)}
               className={`text-xs mb-1.5 ${
                 selectedPreset === -1
-                  ? 'text-nodiac-secondary font-medium'
+                  ? 'text-[#c77dba] font-medium'
                   : 'text-gray-500 dark:text-gray-400'
               }`}
             >

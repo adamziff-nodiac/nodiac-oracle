@@ -12,7 +12,7 @@ const HubMap = dynamic(() => import('@/components/regional-hubs/HubMap').then(mo
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-nodiac-dark/50">
       <div className="text-center">
-        <div className="w-8 h-8 border-2 border-nodiac-secondary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <div className="w-8 h-8 border-2 border-[#c77dba] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
         <p className="text-gray-500 dark:text-gray-400 text-sm">Loading map...</p>
       </div>
     </div>
@@ -140,7 +140,7 @@ export default function RegionalHubsPage() {
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link
               href="/scoring"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-nodiac-secondary hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-[#c77dba] hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
             >
               Scoring Methodology
             </Link>
@@ -165,7 +165,7 @@ export default function RegionalHubsPage() {
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">Color modes:</strong> By default, counties are colored using a <strong className="text-gray-900 dark:text-white">percentile</strong> scale
-                — top 5% glow <strong className="text-[#4de2e4]">neon teal</strong>. Switch to <strong className="text-gray-900 dark:text-white">absolute</strong> mode
+                — top 10% glow <strong className="text-[#c77dba]">orchid</strong>. Switch to <strong className="text-gray-900 dark:text-white">absolute</strong> mode
                 (in Advanced Controls) for a fixed 0–10 scale with an adjustable threshold.
               </p>
               <p>
@@ -184,7 +184,7 @@ export default function RegionalHubsPage() {
             {scoresLoading ? (
               <div className="w-full h-full flex items-center justify-center bg-white/50 dark:bg-nodiac-dark/50">
                 <div className="text-center">
-                  <div className="w-8 h-8 border-2 border-nodiac-secondary border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <div className="w-8 h-8 border-2 border-[#c77dba] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
                   <p className="text-gray-500 dark:text-gray-400 text-sm">Loading county data...</p>
                 </div>
               </div>
@@ -244,7 +244,7 @@ export default function RegionalHubsPage() {
                           }}
                           className={`whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                             viewMode === id
-                              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                              ? 'bg-[#c77dba]/20 text-[#c77dba]'
                               : 'bg-white/5 text-gray-400 hover:text-white'
                           }`}
                         >
@@ -259,7 +259,7 @@ export default function RegionalHubsPage() {
                         <div className="space-y-1">
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">Top counties</span>
-                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                            <span className="text-xs text-[#c77dba] tabular-nums font-mono font-semibold">
                               {clusterTopPercent}%
                             </span>
                           </div>
@@ -276,15 +276,15 @@ export default function RegionalHubsPage() {
                               [&::-webkit-slider-thumb]:w-3.5
                               [&::-webkit-slider-thumb]:h-3.5
                               [&::-webkit-slider-thumb]:rounded-full
-                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                              [&::-webkit-slider-thumb]:bg-[#c77dba]
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(199,125,186,0.4)]"
                           />
                         </div>
                         {/* Min cluster size */}
                         <div className="space-y-1">
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">Min cluster size</span>
-                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                            <span className="text-xs text-[#c77dba] tabular-nums font-mono font-semibold">
                               {clusterMinSize}
                             </span>
                           </div>
@@ -301,15 +301,15 @@ export default function RegionalHubsPage() {
                               [&::-webkit-slider-thumb]:w-3.5
                               [&::-webkit-slider-thumb]:h-3.5
                               [&::-webkit-slider-thumb]:rounded-full
-                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                              [&::-webkit-slider-thumb]:bg-[#c77dba]
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(199,125,186,0.4)]"
                           />
                         </div>
                         {/* Link distance */}
                         <div className="space-y-1">
                           <div className="flex justify-between items-center">
                             <span className="text-[10px] text-gray-500 dark:text-gray-400">Link distance</span>
-                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono font-semibold">
+                            <span className="text-xs text-[#c77dba] tabular-nums font-mono font-semibold">
                               {clusterLinkDist}km <span className="text-gray-400 dark:text-gray-500 font-normal">~{Math.round(clusterLinkDist * 0.621)}mi</span>
                             </span>
                           </div>
@@ -326,8 +326,8 @@ export default function RegionalHubsPage() {
                               [&::-webkit-slider-thumb]:w-3.5
                               [&::-webkit-slider-thumb]:h-3.5
                               [&::-webkit-slider-thumb]:rounded-full
-                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]"
+                              [&::-webkit-slider-thumb]:bg-[#c77dba]
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(199,125,186,0.4)]"
                           />
                         </div>
                       </div>
@@ -340,7 +340,7 @@ export default function RegionalHubsPage() {
                             onClick={() => setShowLabels(!showLabels)}
                             className={`flex-1 flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                               showLabels
-                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                ? 'bg-[#c77dba]/20 text-[#c77dba]'
                                 : 'bg-white/5 text-gray-400 hover:text-white'
                             }`}
                           >
@@ -351,7 +351,7 @@ export default function RegionalHubsPage() {
                               onClick={() => setEditingNames(!editingNames)}
                               className={`flex items-center px-2 py-1.5 rounded-md text-xs transition-colors ${
                                 editingNames
-                                  ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                  ? 'bg-[#c77dba]/20 text-[#c77dba]'
                                   : 'bg-white/5 text-gray-400 hover:text-white'
                               }`}
                               title="Edit hub names"
@@ -368,7 +368,7 @@ export default function RegionalHubsPage() {
                                 type="text"
                                 value={nameOverrides[c.id] ?? c.name}
                                 onChange={(e) => setNameOverrides(prev => ({ ...prev, [c.id]: e.target.value }))}
-                                className="w-full px-2 py-1 text-xs rounded bg-white/5 border border-white/10 text-gray-200 placeholder-gray-500 focus:border-nodiac-secondary/50 focus:outline-none"
+                                className="w-full px-2 py-1 text-xs rounded bg-white/5 border border-white/10 text-gray-200 placeholder-gray-500 focus:border-[#c77dba]/50 focus:outline-none"
                               />
                             ))}
                             <div className="flex gap-3">
@@ -395,7 +395,7 @@ export default function RegionalHubsPage() {
                           onClick={() => setShowPortfolio(!showPortfolio)}
                           className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
                             showPortfolio
-                              ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                              ? 'bg-[#c77dba]/20 text-[#c77dba]'
                               : 'bg-white/5 text-gray-400 hover:text-white'
                           }`}
                         >
@@ -480,7 +480,7 @@ export default function RegionalHubsPage() {
                             onClick={() => handleScoringModeChange('arithmetic')}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               scoringMode === 'arithmetic'
-                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                ? 'bg-[#c77dba]/20 text-[#c77dba]'
                                 : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                           >
@@ -490,7 +490,7 @@ export default function RegionalHubsPage() {
                             onClick={() => handleScoringModeChange('geometric')}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               scoringMode === 'geometric'
-                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                ? 'bg-[#c77dba]/20 text-[#c77dba]'
                                 : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                           >
@@ -509,7 +509,7 @@ export default function RegionalHubsPage() {
                             onClick={() => setColorMode('percentile')}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               colorMode === 'percentile'
-                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                ? 'bg-[#c77dba]/20 text-[#c77dba]'
                                 : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
                             }`}
                           >
@@ -520,7 +520,7 @@ export default function RegionalHubsPage() {
                             disabled={scoringMode === 'geometric'}
                             className={`flex-1 text-xs py-1.5 transition-colors ${
                               colorMode === 'absolute'
-                                ? 'bg-nodiac-secondary/20 text-nodiac-secondary'
+                                ? 'bg-[#c77dba]/20 text-[#c77dba]'
                                 : scoringMode === 'geometric'
                                   ? 'bg-gray-50 dark:bg-white/5 text-gray-400 dark:text-gray-600 cursor-not-allowed'
                                   : 'bg-gray-50 dark:bg-white/5 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -539,7 +539,7 @@ export default function RegionalHubsPage() {
                             <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
                               Highlight Threshold
                             </label>
-                            <span className="text-xs text-nodiac-secondary tabular-nums font-mono">
+                            <span className="text-xs text-[#c77dba] tabular-nums font-mono">
                               {highlightThreshold.toFixed(1)}
                             </span>
                           </div>
@@ -556,13 +556,13 @@ export default function RegionalHubsPage() {
                               [&::-webkit-slider-thumb]:w-3.5
                               [&::-webkit-slider-thumb]:h-3.5
                               [&::-webkit-slider-thumb]:rounded-full
-                              [&::-webkit-slider-thumb]:bg-nodiac-secondary
-                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(77,226,228,0.4)]
+                              [&::-webkit-slider-thumb]:bg-[#c77dba]
+                              [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(199,125,186,0.4)]
                               [&::-webkit-slider-thumb]:transition-shadow
                               [&::-webkit-slider-thumb]:hover:shadow-[0_0_10px_rgba(77,226,228,0.6)]"
                           />
                           <p className="text-[10px] text-gray-500">
-                            Counties scoring above this glow teal
+                            Counties scoring above this glow orchid
                           </p>
                         </div>
                       )}
@@ -631,12 +631,12 @@ export default function RegionalHubsPage() {
             Each county is scored 0–10 across seven criteria (co-op density, grid reliability,
             curtailment opportunity, permitting environment, IT labor, fiber availability, and queue pressure).
             Adjust the weight sliders to prioritize what matters most for your deployment strategy,
-            and drag the highlight threshold to control where the teal glow begins.
+            and drag the highlight threshold to control where the orchid glow begins.
             Click any county to inspect its full score breakdown.
           </p>
           <p className="text-gray-500 text-sm">
             For full methodology, data sources, and technical details, see the{' '}
-            <Link href="/scoring" className="text-nodiac-secondary hover:underline">
+            <Link href="/scoring" className="text-[#c77dba] hover:underline">
               Scoring Methodology
             </Link>.
           </p>
