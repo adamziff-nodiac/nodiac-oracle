@@ -24,7 +24,7 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
         </p>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm border-2 border-[#4de2e4] bg-[#490f42]/30" />
+            <div className="w-3 h-3 rounded-sm border-2 border-[#c77dba] bg-[#490f42]/30" />
             <span className="text-xs text-gray-500 dark:text-gray-400">Hub region</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -41,10 +41,10 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
 
   // --- Gradient mode ---
   if (viewMode === 'gradient') {
-    const GRAD_LOW = '#1a1520'
-    const GRAD_MID_LOW = '#2d2233'
-    const GRAD_HIGH = '#8b3578'
-    const GRAD_PEAK = '#4de2e4'
+    const GRAD_LOW = '#1e1e24'
+    const GRAD_MID_LOW = '#1a2040'
+    const GRAD_HIGH = '#6b1f5a'
+    const GRAD_PEAK = '#c77dba'
     return (
       <div className={legendBox}>
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
@@ -80,11 +80,11 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
         </p>
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-[#4de2e4]" />
+            <div className="w-3 h-3 rounded-sm bg-[#c77dba]" />
             <span className="text-xs text-gray-500 dark:text-gray-400">Top county</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded-sm bg-[#4a2565]" />
+            <div className="w-3 h-3 rounded-sm bg-[#3a2050]" />
             <span className="text-xs text-gray-500 dark:text-gray-400">In region</span>
           </div>
           <div className="flex items-center gap-1.5">
@@ -117,7 +117,7 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
           <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">High</span>
         </div>
         <p className="text-[10px] text-gray-500 mt-3">
-          Quantile scale · Top 5% in <span className="text-[#4de2e4] font-medium">teal</span>
+          Quantile scale · Top 10% in <span className="text-[#c77dba] font-medium">orchid</span>
         </p>
       </div>
     )
@@ -155,7 +155,7 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
         <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">10</span>
       </div>
       <p className="text-[10px] text-gray-500 mt-3">
-        Threshold: {highlightThreshold} · Above glows <span className="text-[#4de2e4] font-medium">teal</span>
+        Threshold: {highlightThreshold} · Above glows <span className="text-[#c77dba] font-medium">orchid</span>
       </p>
     </div>
   )

@@ -4,14 +4,14 @@ import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 
-// Own color constants — same gradient as county view (dark purple -> orchid -> teal)
-const GRADIENT_LOW = '#1a1520'
-const GRADIENT_MID_LOW = '#2d2233'
-const GRADIENT_MID = '#5c2d55'
-const GRADIENT_HIGH = '#8b3578'
-const GRADIENT_ORCHID = '#b48fc1'
-const GRADIENT_PEAK = '#4de2e4'
-const GRADIENT_NULL = '#221d28'
+// Own color constants — same gradient as county view (gray → navy → orchid)
+const GRADIENT_LOW = '#1e1e24'
+const GRADIENT_MID_LOW = '#1a2040'
+const GRADIENT_MID = '#2a3060'
+const GRADIENT_HIGH = '#6b1f5a'
+const GRADIENT_ORCHID = '#c77dba'
+const GRADIENT_PEAK = '#dbb0d4'
+const GRADIENT_NULL = '#1a1a20'
 const OUTSIDE_COLOR = '#0d0b12'
 
 interface GradientHubsLayerProps {
@@ -130,7 +130,7 @@ export function GradientHubsLayer({
         layout={{ visibility }}
         filter={['==', ['get', 'clusterStatus'], 2]}
         paint={{
-          'line-color': 'rgba(77, 226, 228, 0.3)',
+          'line-color': 'rgba(199, 125, 186, 0.4)',
           'line-width': 1.5,
         }}
       />

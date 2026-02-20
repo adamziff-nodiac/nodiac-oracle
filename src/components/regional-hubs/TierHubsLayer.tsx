@@ -3,13 +3,13 @@
 import { useMemo } from 'react'
 import { Source, Layer } from 'react-map-gl/mapbox'
 
-// Tier color constants
-export const TIER_1_COLOR = '#4de2e4' // Top 10%: bright neon teal
-export const TIER_2_COLOR = '#2a9d8f' // Top 25%: muted teal
-export const TIER_3_COLOR = '#6b4d7a' // Top 50%: soft purple
-export const TIER_4_COLOR = '#2d2233' // Other (bottom 50%): very dark purple
+// Tier color constants — orchid hero, fading through purple → navy → gray
+export const TIER_1_COLOR = '#c77dba' // Top 10%: bright orchid (brand hero)
+export const TIER_2_COLOR = '#6b1f5a' // Top 25%: deep purple
+export const TIER_3_COLOR = '#2a3060' // Top 50%: navy
+export const TIER_4_COLOR = '#1e1e24' // Other (bottom 50%): dark gray
 export const TIER_OUTSIDE_COLOR = '#0d0b12' // Outside hubs: very dark
-export const TIER_NULL_COLOR = '#221d28' // No data
+export const TIER_NULL_COLOR = '#1a1a20' // No data
 
 export interface TierBreaks {
   p50: number

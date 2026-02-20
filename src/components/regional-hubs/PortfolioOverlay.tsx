@@ -74,12 +74,12 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
 
   const visibility = visible ? 'visible' : 'none'
 
-  const GRAD_LOW = '#1a1520'
-  const GRAD_MID_LOW = '#2d2233'
-  const GRAD_MID = '#5c2d55'
-  const GRAD_HIGH = '#8b3578'
-  const GRAD_ORCHID = '#b48fc1'
-  const GRAD_PEAK = '#4de2e4'
+  const GRAD_LOW = '#1e1e24'
+  const GRAD_MID_LOW = '#1a2040'
+  const GRAD_MID = '#2a3060'
+  const GRAD_HIGH = '#6b1f5a'
+  const GRAD_ORCHID = '#c77dba'
+  const GRAD_PEAK = '#dbb0d4'
 
   const isGradient = viewMode === 'gradient'
   const isTiers = viewMode === 'tiers'
@@ -135,8 +135,8 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
     }
     return [
       'match', ['get', 'regionStatus'],
-      2, '#4de2e4',
-      1, '#8b3578',
+      2, '#c77dba',
+      1, '#6b1f5a',
       '#333333',
     ] as unknown as string
   }, [isGradient, isTiers])
@@ -144,11 +144,11 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
   const glowColor = isTiers
     ? [
         'case',
-        ['==', ['get', 'tier'], 1], '#4de2e4',
-        ['==', ['get', 'tier'], 2], '#2a9d8f',
-        '#6b4d7a',
+        ['==', ['get', 'tier'], 1], '#c77dba',
+        ['==', ['get', 'tier'], 2], '#6b1f5a',
+        '#2a3060',
       ] as unknown as string
-    : '#4de2e4'
+    : '#c77dba'
 
   return (
     <Source id="portfolio-sites-source" type="geojson" data={geojson}>

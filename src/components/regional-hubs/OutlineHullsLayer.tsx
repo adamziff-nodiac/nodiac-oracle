@@ -47,7 +47,7 @@ export function OutlineHullsLayer({ hullsGeojson, regionsGeojson, visible = true
           layout={{ visibility }}
           filter={['>', ['get', 'clusterStatus'], 0]}
           paint={{
-            'line-color': 'rgba(77, 226, 228, 0.08)',
+            'line-color': 'rgba(199, 125, 186, 0.1)',
             'line-width': 0.5,
           }}
         />
@@ -66,39 +66,39 @@ export function OutlineHullsLayer({ hullsGeojson, regionsGeojson, visible = true
           }}
         />
 
-        {/* Outer glow: wide translucent teal line behind the main border */}
+        {/* Outer glow: wide translucent orchid line behind the main border */}
         <Layer
           id="outline-hulls-glow-outer"
           type="line"
           layout={{ visibility }}
           paint={{
-            'line-color': '#4de2e4',
+            'line-color': '#c77dba',
             'line-width': 14,
-            'line-opacity': 0.06,
+            'line-opacity': 0.08,
             'line-blur': 10,
           }}
         />
 
-        {/* Mid glow: medium translucent teal line */}
+        {/* Mid glow: medium translucent orchid line */}
         <Layer
           id="outline-hulls-glow-mid"
           type="line"
           layout={{ visibility }}
           paint={{
-            'line-color': '#4de2e4',
+            'line-color': '#c77dba',
             'line-width': 7,
-            'line-opacity': 0.18,
+            'line-opacity': 0.22,
             'line-blur': 4,
           }}
         />
 
-        {/* Main border: crisp neon teal line */}
+        {/* Main border: crisp orchid line */}
         <Layer
           id="outline-hulls-border"
           type="line"
           layout={{ visibility }}
           paint={{
-            'line-color': '#4de2e4',
+            'line-color': '#c77dba',
             'line-width': 2.5,
             'line-opacity': 0.9,
           }}

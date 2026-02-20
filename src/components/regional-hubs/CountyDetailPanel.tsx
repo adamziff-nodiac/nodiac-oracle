@@ -26,8 +26,8 @@ function getScoreValue(county: WeightedCountyScore, key: CriterionKey): number {
 }
 
 function scoreColor(score: number): string {
-  if (score >= 0.7) return 'bg-nodiac-secondary'
-  if (score >= 0.4) return 'bg-nodiac-soft-orchid'
+  if (score >= 0.7) return 'bg-[#c77dba]'
+  if (score >= 0.4) return 'bg-[#6b1f5a]'
   return 'bg-gray-500'
 }
 

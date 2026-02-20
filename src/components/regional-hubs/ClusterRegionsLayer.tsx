@@ -57,15 +57,15 @@ export function ClusterRegionsLayer({ regionsGeojson, visible = true, populatedC
                 ['==', ['get', 'clusterStatus'], 0], '#0d0b12',
                 // In cluster but not populated → heavily muted
                 ['==', ['get', 'populated'], 0], '#1a1128',
-                // Populated cluster: desaturated member vs fill
-                ['==', ['get', 'clusterStatus'], 2], '#2a8a8c',
-                '#3a1d50',
+                // Populated cluster: desaturated orchid member vs fill
+                ['==', ['get', 'clusterStatus'], 2], '#8a5580',
+                '#2d1838',
               ] as unknown as string
             : [
                 'match', ['get', 'clusterStatus'],
-                2, '#4de2e4',
-                1, '#4a2565',
-                '#0d0b12',
+                2, '#c77dba',    // top counties: bright orchid
+                1, '#3a2050',    // in-cluster fill: deep purple
+                '#0d0b12',       // outside
               ] as unknown as string,
           'fill-opacity': hasMuting
             ? [
