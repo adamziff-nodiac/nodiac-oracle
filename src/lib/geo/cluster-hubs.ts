@@ -123,6 +123,70 @@ function bufferHull(hull: [number, number][], factor: number): [number, number][
   ] as [number, number])
 }
 
+// --- Sutherland-Hodgman polygon clipping ---
+
+/**
+ * Clip a polygon to one side of a half-plane defined by point (mx, my)
+ * with inward normal (nx, ny). Points with dot(p - m, n) >= 0 are kept.
+ */
+function sutherlandHodgmanClip(
+  polygon: [number, number][],
+  mx: number, my: number,
+  nx: number, ny: number,
+): [number, number][] {
+  if (polygon.length === 0) return polygon
+  const out: [number, number][] = []
+
+  for (let i = 0; i < polygon.length; i++) {
+    const cur = polygon[i]
+    const prev = polygon[(i + polygon.length - 1) % polygon.length]
+    const dCur = (cur[0] - mx) * nx + (cur[1] - my) * ny
+    const dPrev = (prev[0] - mx) * nx + (prev[1] - my) * ny
+
+    if (dPrev >= 0) {
+      if (dCur >= 0) {
+        out.push(cur)
+      } else {
+        // Exiting: add intersection
+        const t = dPrev / (dPrev - dCur)
+        out.push([prev[0] + t * (cur[0] - prev[0]), prev[1] + t * (cur[1] - prev[1])])
+      }
+    } else if (dCur >= 0) {
+      // Entering: add intersection then current
+      const t = dPrev / (dPrev - dCur)
+      out.push([prev[0] + t * (cur[0] - prev[0]), prev[1] + t * (cur[1] - prev[1])])
+      out.push(cur)
+    }
+  }
+  return out
+}
+
+/**
+ * Clip each cluster's hull to its Voronoi cell — the perpendicular bisector
+ * between each pair of cluster centroids. Guarantees zero overlap.
+ */
+function removeHullOverlaps(clusters: HubCluster[]): void {
+  if (clusters.length <= 1) return
+
+  for (let i = 0; i < clusters.length; i++) {
+    let clipped = clusters[i].hull
+    for (let j = 0; j < clusters.length; j++) {
+      if (i === j) continue
+      // Midpoint between cluster centroids
+      const mx = (clusters[i].centroid.lng + clusters[j].centroid.lng) / 2
+      const my = (clusters[i].centroid.lat + clusters[j].centroid.lat) / 2
+      // Normal pointing toward cluster i (away from j)
+      const nx = clusters[i].centroid.lng - clusters[j].centroid.lng
+      const ny = clusters[i].centroid.lat - clusters[j].centroid.lat
+      clipped = sutherlandHodgmanClip(clipped, mx, my, nx, ny)
+      if (clipped.length < 3) break
+    }
+    if (clipped.length >= 3) {
+      clusters[i].hull = clipped
+    }
+  }
+}
+
 // --- State lookup from FIPS ---
 
 const STATE_ABBRS: Record<string, string> = {
@@ -487,6 +551,9 @@ export function clusterHubs(
 
   // --- Deduplicate cluster names ---
   deduplicateNames(clusters)
+
+  // --- Clip hulls to Voronoi cells so adjacent clusters don't overlap ---
+  removeHullOverlaps(clusters)
 
   // Sort by score descending
   clusters.sort((a, b) => b.avgScore - a.avgScore)

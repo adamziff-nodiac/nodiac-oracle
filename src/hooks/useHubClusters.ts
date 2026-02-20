@@ -96,6 +96,10 @@ export function useHubClusters(
       return { id: c.id, hull: convexHull(points) }
     })
 
+    // Build cluster lookup by id for O(1) access
+    const clusterById = new Map<number, HubCluster>()
+    for (const c of clusters) clusterById.set(c.id, c)
+
     // Build centroid lookup for fast access
     const centroidMap = new Map<string, { lng: number; lat: number }>()
     for (const c of centroids) {
@@ -123,18 +127,28 @@ export function useHubClusters(
       }
 
       // Check if fill (centroid falls within any cluster's hull)
+      // When multiple hulls contain the same point, assign to nearest cluster centroid
       const centroid = centroidMap.get(fips)
       if (centroid) {
+        let bestId = -1
+        let bestDist = Infinity
         for (const { id, hull } of clusterHulls) {
           if (hull.length >= 3 && pointInPolygon(centroid.lng, centroid.lat, hull)) {
-            return {
-              ...feature,
-              properties: {
-                ...feature.properties,
-                clusterStatus: 1,
-                clusterId: id,
-              },
-            }
+            const cc = clusterById.get(id)!
+            const dx = centroid.lng - cc.centroid.lng
+            const dy = centroid.lat - cc.centroid.lat
+            const dist = dx * dx + dy * dy
+            if (dist < bestDist) { bestDist = dist; bestId = id }
+          }
+        }
+        if (bestId >= 0) {
+          return {
+            ...feature,
+            properties: {
+              ...feature.properties,
+              clusterStatus: 1,
+              clusterId: bestId,
+            },
           }
         }
       }
