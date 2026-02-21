@@ -104,6 +104,7 @@ export function buildSiteBreakdown(countyScores: {
   grid_reliability_score: number
   clipped_curtailed_score: number
   permitting_score: number
+  tax_incentives_score?: number
   labor_score: number
   fiber_score: number
   queue_pressure_score: number
@@ -114,6 +115,7 @@ export function buildSiteBreakdown(countyScores: {
       grid_reliability: null,
       clipped_curtailed: null,
       permitting: null,
+      tax_incentives: null,
       labor: null,
       fiber: null,
       queue_pressure: null,
@@ -125,6 +127,7 @@ export function buildSiteBreakdown(countyScores: {
     grid_reliability: countyScores.grid_reliability_score,
     clipped_curtailed: countyScores.clipped_curtailed_score,
     permitting: countyScores.permitting_score,
+    tax_incentives: countyScores.tax_incentives_score ?? countyScores.permitting_score,
     labor: countyScores.labor_score,
     fiber: countyScores.fiber_score,
     queue_pressure: countyScores.queue_pressure_score,

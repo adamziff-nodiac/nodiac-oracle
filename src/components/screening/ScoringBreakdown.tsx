@@ -15,6 +15,7 @@ const KEYS: Array<{ key: keyof SiteScoreBreakdown; label: string }> = [
   { key: 'grid_reliability', label: CRITERION_LABELS.grid_reliability },
   { key: 'clipped_curtailed', label: CRITERION_LABELS.clipped_curtailed },
   { key: 'permitting', label: CRITERION_LABELS.permitting },
+  { key: 'tax_incentives', label: CRITERION_LABELS.tax_incentives },
   { key: 'labor', label: CRITERION_LABELS.labor },
   { key: 'fiber', label: CRITERION_LABELS.fiber },
   { key: 'queue_pressure', label: CRITERION_LABELS.queue_pressure },

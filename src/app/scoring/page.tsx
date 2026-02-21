@@ -89,7 +89,7 @@ function CodeBlock({ children, title }: { children: string; title?: string }) {
 
 const TOC = [
   { id: 'overview', label: 'Overview' },
-  { id: 'seven-criteria', label: 'The Seven Criteria' },
+  { id: 'eight-criteria', label: 'The Eight Criteria' },
   { id: 'weight-profiles', label: 'Weight Profiles' },
   { id: 'site-screening', label: 'Site Screening' },
   { id: 'data-sources', label: 'Data Sources & Quality' },
@@ -166,10 +166,10 @@ export default function ScoringPage() {
           {/* ═══ OVERVIEW ═══ */}
           <Section id="overview" title="Overview">
             <p>
-              Nodiac&apos;s scoring model evaluates every U.S. county across <strong className="text-gray-900 dark:text-white">seven criteria</strong> that
+              Nodiac&apos;s scoring model evaluates every U.S. county across <strong className="text-gray-900 dark:text-white">eight criteria</strong> that
               determine suitability for distributed data center development at IPP and utility sites. The model produces a
               composite score (0&ndash;10) that captures power infrastructure, renewable energy opportunity, regulatory
-              environment, workforce availability, connectivity, and interconnection pipeline.
+              environment, tax &amp; incentive landscape, workforce availability, connectivity, and interconnection pipeline.
             </p>
             <p>
               The tool serves two functions:
@@ -179,9 +179,9 @@ export default function ScoringPage() {
               <li><strong className="text-gray-900 dark:text-white">Site Screening</strong> &mdash; Evaluate specific IPP portfolio sites against the same criteria, with site-level overrides where available (e.g., co-op territory check)</li>
             </ul>
             <p>
-              Each criterion is independently scored 0&ndash;1, then combined via a weighted average (arithmetic or geometric mean). Four preset weight
+              Each criterion is independently scored 0&ndash;1, then combined via a weighted average (arithmetic or geometric mean). Five preset weight
               profiles let you emphasize different development strategies (co-op partnerships, curtailment capture,
-              speed to deploy). Changing weights is instant &mdash; all recomputation happens in the browser.
+              speed to deploy, hyperscaler priorities). Changing weights is instant &mdash; all recomputation happens in the browser.
             </p>
 
             <DataBox>
@@ -192,7 +192,7 @@ export default function ScoringPage() {
           </Section>
 
           {/* ═══ THE SEVEN CRITERIA ═══ */}
-          <Section id="seven-criteria" title="The Seven Criteria">
+          <Section id="eight-criteria" title="The Eight Criteria">
             <p>
               Each criterion captures a distinct dimension of site suitability. All are scored 0&ndash;1 independently
               before being combined. The sections below explain what each measures, why it matters for development
@@ -315,12 +315,13 @@ export default function ScoringPage() {
                 </MethodDropdown>
               </SubSection>
 
-              {/* ── 3. Clipped / Curtailed ── */}
-              <SubSection title="3. Clipped / Curtailed">
+              {/* ── 3. Curtailment Opportunity ── */}
+              <SubSection title="3. Curtailment Opportunity">
                 <p>
                   <strong className="text-gray-900 dark:text-white">What it measures:</strong> How much renewable energy generation exists in
-                  the area and how likely it is to be curtailed &mdash; representing an opportunity for behind-the-meter
-                  data center load to monetize stranded power.
+                  the area and how likely it is to experience stranded power &mdash; from curtailment, inverter clipping,
+                  negative pricing, and grid congestion. Represents the opportunity for behind-the-meter
+                  data center load to monetize power that would otherwise be wasted.
                 </p>
                 <p>
                   <strong className="text-gray-900 dark:text-white">Why it matters:</strong> The Nodiac thesis depends on deploying compute where
@@ -421,8 +422,7 @@ export default function ScoringPage() {
               <SubSection title="4. Permitting">
                 <p>
                   <strong className="text-gray-900 dark:text-white">What it measures:</strong> How favorable the regulatory environment is for
-                  data center development &mdash; combining state incentive programs, regulatory posture, moratorium risk,
-                  and tax policy.
+                  data center development &mdash; combining state incentive programs, regulatory posture, and moratorium risk.
                 </p>
                 <p>
                   <strong className="text-gray-900 dark:text-white">Why it matters:</strong> Permitting timelines and regulatory risk can make
@@ -436,7 +436,7 @@ export default function ScoringPage() {
                 <DataBox>
                   <p><Label>Method:</Label> Scores are generated by an AI-powered research workflow that systematically finds and analyzes news articles, policy changes, legislation, and regulatory actions related to data center permitting at the state level.</p>
                   <p><Label>Process:</Label> The workflow (1) searches for recent news, legislative actions, and regulatory filings related to data center siting in each state, (2) categorizes findings into four scoring components, (3) assigns state-level scores with county-level adjustments where specific moratorium or opposition data exists, and (4) generates verified citation URLs for every finding.</p>
-                  <p><Label>Scoring components:</Label> State incentive programs (30%), regulatory environment (25%), moratorium/opposition risk (25%), tax policy (20%).</p>
+                  <p><Label>Scoring components:</Label> State incentive programs (35%), regulatory environment (35%), moratorium/opposition risk (30%). Tax policy is scored separately under the Tax &amp; Incentives criterion.</p>
                   <p><Label>Refresh:</Label> Runs on the first day of each quarter. Frequency can be increased for regions of active interest.</p>
                   <p><Label>Citations:</Label> 42 verified source URLs in the current dataset, linked per-county via the citation registry.</p>
                   <p><Label>Range:</Label> 0.30 (hostile, active moratoria) → 0.50 (neutral) → 0.85+ (welcoming with strong incentives).</p>
@@ -446,31 +446,27 @@ export default function ScoringPage() {
                   <p><strong className="text-gray-900 dark:text-white">How articles map to scores:</strong></p>
                   <p>
                     The AI research workflow searches for news articles, legislation, and policy documents related to data center
-                    permitting in each state. Articles are classified into the four scoring components:
+                    permitting in each state. Articles are classified into three scoring components (tax policy is now scored
+                    separately under the Tax &amp; Incentives criterion):
                   </p>
                   <ul className="list-disc list-inside space-y-1.5 ml-2">
                     <li>
-                      <strong className="text-gray-900 dark:text-white">Incentive programs (30%):</strong> Tax exemptions (sales, property, income),
-                      enterprise zones, utility rate programs, fast-track permitting programs. Articles about new incentive
-                      legislation or expansion of existing programs increase this component. States like Texas (sales tax
-                      exemption), Virginia (custom rate programs), and Ohio (tax abatements) score high.
+                      <strong className="text-gray-900 dark:text-white">Incentive programs (35%):</strong> Enterprise zones, utility rate programs,
+                      fast-track permitting programs. Articles about new incentive legislation or expansion of existing
+                      programs increase this component. States like Texas (expedited permitting), Virginia (custom rate
+                      programs), and Ohio (enterprise zone incentives) score high.
                     </li>
                     <li>
-                      <strong className="text-gray-900 dark:text-white">Regulatory environment (25%):</strong> Speed and predictability of permitting
+                      <strong className="text-gray-900 dark:text-white">Regulatory environment (35%):</strong> Speed and predictability of permitting
                       processes, utility commission attitudes, environmental review requirements. States with streamlined
                       siting processes and supportive utility commissions score higher. California&apos;s CEQA requirements and
                       multi-agency review lower this component.
                     </li>
                     <li>
-                      <strong className="text-gray-900 dark:text-white">Moratorium/opposition risk (25%):</strong> Active or proposed moratoria,
+                      <strong className="text-gray-900 dark:text-white">Moratorium/opposition risk (30%):</strong> Active or proposed moratoria,
                       community opposition movements, restrictive zoning changes. Articles about moratoria (e.g., Loudoun
                       County VA, several GA counties) significantly lower this component. This is the most county-specific
                       component &mdash; a state may be generally favorable but have pockets of local opposition.
-                    </li>
-                    <li>
-                      <strong className="text-gray-900 dark:text-white">Tax policy (20%):</strong> Corporate income tax rates, property tax structures,
-                      data center-specific tax frameworks. States with no corporate income tax (WY, SD, NV, TX) or specific
-                      data center tax incentives score highest.
                     </li>
                   </ul>
                   <p className="text-sm">
@@ -485,8 +481,62 @@ export default function ScoringPage() {
                 </MethodDropdown>
               </SubSection>
 
-              {/* ── 5. Skilled IT Labor ── */}
-              <SubSection title="5. Skilled IT Labor">
+              {/* ── 5. Tax & Incentives ── */}
+              <SubSection title="5. Tax & Incentives">
+                <p>
+                  <strong className="text-gray-900 dark:text-white">What it measures:</strong> How favorable the state and local tax environment
+                  is for data center investment &mdash; including corporate income tax, property tax structures, sales tax
+                  exemptions, and data center-specific tax incentive programs.
+                </p>
+                <p>
+                  <strong className="text-gray-900 dark:text-white">Why it matters:</strong> Tax incentives directly impact project economics and
+                  can represent millions in savings over a 10-year site lifetime. States like Texas, Wyoming, Nevada, and
+                  South Dakota have no corporate income tax. Others offer targeted data center programs &mdash; Virginia&apos;s
+                  sales tax exemption on computer equipment, Ohio&apos;s data center tax abatements, and North Carolina&apos;s
+                  property tax exemptions. Understanding the tax landscape before site selection prevents surprises that
+                  erode project returns.
+                </p>
+
+                <DataBox>
+                  <p><Label>Method:</Label> Currently derived from the same AI research workflow as permitting scores. Tax policy findings are separated into their own criterion score. A dedicated tax incentive database is planned.</p>
+                  <p><Label>Scoring components:</Label> Corporate income tax rates, property tax structures, sales tax exemptions on equipment, data center-specific incentive programs.</p>
+                  <p><Label>Range:</Label> 0.30 (high tax, no incentives) &rarr; 0.50 (average) &rarr; 0.85+ (no income tax or strong DC-specific incentives).</p>
+                  <p><Label>Note:</Label> When a dedicated tax_incentives_score is not yet available for a county, the system falls back to the permitting score as a proxy. This fallback will be removed as the tax database is populated.</p>
+                </DataBox>
+
+                <MethodDropdown>
+                  <p>
+                    Tax &amp; Incentives was previously bundled into the Permitting criterion as a 20% sub-component. It is now
+                    scored independently to give it appropriate weight &mdash; especially for hyperscaler evaluations where tax
+                    incentives are a top-tier factor in site selection.
+                  </p>
+                  <p>
+                    The AI research workflow classifies tax-related findings into the following categories:
+                  </p>
+                  <ul className="list-disc list-inside space-y-1.5 ml-2">
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Corporate income tax:</strong> States with no corporate income tax (WY, SD, NV, TX, WA) score highest. States with moderate rates and data center exemptions score above average.
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Property tax:</strong> Abatements, PILOT programs, enterprise zone exemptions. Counties offering 10+ year abatements for qualifying projects score high.
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Sales tax on equipment:</strong> Exemptions on servers, cooling equipment, and electrical infrastructure. Virginia, Texas, and several other states offer full or partial exemptions.
+                    </li>
+                    <li>
+                      <strong className="text-gray-900 dark:text-white">Data center-specific programs:</strong> Dedicated incentive packages designed for data center investment (e.g., Virginia&apos;s Data Center Opportunity Act, Ohio&apos;s data center tax exemption program).
+                    </li>
+                  </ul>
+                  <Assumption>
+                    Currently uses the permitting score as a proxy when a dedicated tax score isn&apos;t available.
+                    A standalone tax incentive database (with county-level granularity where possible) is planned to
+                    replace this proxy. State-level scores may miss county-specific incentive programs.
+                  </Assumption>
+                </MethodDropdown>
+              </SubSection>
+
+              {/* ── 6. Skilled IT Labor ── */}
+              <SubSection title="6. Skilled IT Labor">
                 <p>
                   <strong className="text-gray-900 dark:text-white">What it measures:</strong> The density of existing technology businesses in
                   a county &mdash; a proxy for available technical workforce. Counts data processing facilities, IT consulting
@@ -541,8 +591,8 @@ export default function ScoringPage() {
                 </MethodDropdown>
               </SubSection>
 
-              {/* ── 6. Fiber Availability ── */}
-              <SubSection title="6. Fiber Availability">
+              {/* ── 7. Fiber Availability ── */}
+              <SubSection title="7. Fiber Availability">
                 <p>
                   <strong className="text-gray-900 dark:text-white">What it measures:</strong> The share of locations in a county where at least
                   one ISP offers fiber-to-the-premises (FTTP) service, plus the number of competing fiber providers.
@@ -581,8 +631,8 @@ export default function ScoringPage() {
                 </MethodDropdown>
               </SubSection>
 
-              {/* ── 7. Queue Pressure ── */}
-              <SubSection title="7. Queue Pressure">
+              {/* ── 8. Queue Pressure ── */}
+              <SubSection title="8. Queue Pressure">
                 <p>
                   <strong className="text-gray-900 dark:text-white">What it measures:</strong> The volume of renewable and storage projects sitting
                   in the interconnection queue for each county, from Lawrence Berkeley National Lab&apos;s &ldquo;Queued Up&rdquo; dataset.
@@ -625,7 +675,7 @@ export default function ScoringPage() {
           {/* ═══ WEIGHT PROFILES ═══ */}
           <Section id="weight-profiles" title="Weight Profiles">
             <p>
-              Four preset profiles configure all seven weights for different development strategies. You can also adjust
+              Five preset profiles configure all eight weights for different development strategies. You can also adjust
               weights manually &mdash; any manual change switches to &ldquo;Custom&rdquo; mode. Weight range: 0.0&ndash;3.0.
             </p>
             <div className="overflow-x-auto">
@@ -637,6 +687,7 @@ export default function ScoringPage() {
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Grid</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Curtail</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Permit</th>
+                    <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Tax</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Labor</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Fiber</th>
                     <th className="text-center py-2 px-2 text-gray-500 dark:text-gray-400 font-medium">Queue</th>
@@ -653,6 +704,7 @@ export default function ScoringPage() {
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
+                    <td className="text-center py-2 px-2">1.0</td>
                     <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">General screening with no strong priors</td>
                   </tr>
                   <tr className="border-b border-gray-100 dark:border-white/5">
@@ -661,6 +713,7 @@ export default function ScoringPage() {
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
+                    <td className="text-center py-2 px-2">1.5</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
@@ -672,21 +725,35 @@ export default function ScoringPage() {
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">Minimizing time-to-power &mdash; fast permitting, reliable grid, fiber ready</td>
                   </tr>
-                  <tr>
+                  <tr className="border-b border-gray-100 dark:border-white/5">
                     <td className="py-2 pr-3 text-gray-900 dark:text-white font-sans font-medium">Curtailment Capture</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2">1.5</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-gray-500">0.5</td>
+                    <td className="text-center py-2 px-2 text-gray-500">0.5</td>
                     <td className="text-center py-2 px-2">1.0</td>
                     <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
                     <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">Maximizing stranded renewable energy opportunity</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 pr-3 text-gray-900 dark:text-white font-sans font-medium">Hyperscaler</td>
+                    <td className="text-center py-2 px-2 text-gray-500">0.5</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                    <td className="text-center py-2 px-2">1.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">2.0</td>
+                    <td className="text-center py-2 px-2 text-nodiac-secondary font-bold">3.0</td>
+                    <td className="text-center py-2 px-2">1.5</td>
+                    <td className="py-2 pl-3 font-sans text-gray-500 dark:text-gray-400 text-xs">Aligned with hyperscaler site evaluation criteria (power, permitting, fiber, labor)</td>
                   </tr>
                 </tbody>
               </table>
@@ -720,7 +787,7 @@ export default function ScoringPage() {
                   <span className="flex-shrink-0 w-6 h-6 rounded-full bg-nodiac-secondary/20 text-nodiac-secondary text-xs font-bold flex items-center justify-center mt-0.5">3</span>
                   <div>
                     <p className="text-gray-900 dark:text-white font-medium">Score Inheritance</p>
-                    <p className="text-gray-500 dark:text-gray-400">The site inherits all seven criterion scores from its county (co-op density, grid reliability, curtailment, permitting, labor, fiber, queue pressure).</p>
+                    <p className="text-gray-500 dark:text-gray-400">The site inherits all eight criterion scores from its county (co-op density, grid reliability, curtailment opportunity, permitting, tax &amp; incentives, labor, fiber, queue pressure).</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -902,6 +969,10 @@ export default function ScoringPage() {
             <ul className="space-y-3 ml-2">
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">Dedicated tax incentive database</strong> &mdash; Replace the permitting-score proxy for Tax &amp; Incentives with a standalone dataset covering state and county-level tax programs, abatements, and exemptions. Critical for accurate hyperscaler site comparisons.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
                 <span><strong className="text-gray-900 dark:text-white">Negative LMP frequency</strong> &mdash; Count hours with negative locational marginal prices per pricing node, then aggregate to counties. Negative pricing is the market signal that directly causes economic curtailment. Available from all major ISOs via the gridstatus open-source library.</span>
               </li>
               <li className="flex items-start gap-3">
@@ -910,15 +981,15 @@ export default function ScoringPage() {
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">Water availability criterion</strong> &mdash; Data centers require cooling water. Integrating USGS water availability data or drought severity indices could add a ninth criterion, particularly for air-cooled vs. water-cooled site decisions.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
+                <span><strong className="text-gray-900 dark:text-white">Sub-county zoning data</strong> &mdash; Township-level zoning and land use data would sharpen the permitting score beyond state-level policy, identifying specific parcels that are already zoned for industrial/commercial use. The county ordinance registry is a first step toward this.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
                 <span><strong className="text-gray-900 dark:text-white">Temporal tracking</strong> &mdash; Store score history over time to show trends. Useful for tracking how a region&apos;s attractiveness changes as policies shift, grid upgrades complete, or new generation comes online.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">Water availability criterion</strong> &mdash; Data centers require cooling water. Integrating USGS water availability data or drought severity indices could add a valuable eighth criterion, particularly for air-cooled vs. water-cooled site decisions.</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">Sub-county zoning data</strong> &mdash; Township-level zoning and land use data would sharpen the permitting score beyond state-level policy, identifying specific parcels that are already zoned for industrial/commercial use.</span>
               </li>
             </ul>
           </Section>
@@ -953,7 +1024,7 @@ export default function ScoringPage() {
                 </p>
                 <p className="text-sm font-medium text-gray-900 dark:text-white mt-4">Worked Example</p>
                 <p>
-                  County with: Co-op = 0.80, Grid = 0.65, Curtailment = 0.50, Permitting = 0.50, Labor = 0.50, Fiber = 0.50, Queue = 0.40
+                  County with: Co-op = 0.80, Grid = 0.65, Curtailment = 0.50, Permitting = 0.50, Tax = 0.50, Labor = 0.50, Fiber = 0.50, Queue = 0.40
                 </p>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
@@ -968,17 +1039,17 @@ export default function ScoringPage() {
                       <tr className="border-b border-gray-100 dark:border-white/5">
                         <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Balanced</td>
                         <td className="py-2 pr-3 text-sm">All = 1.0</td>
-                        <td className="py-2 text-nodiac-secondary font-bold">5.50</td>
+                        <td className="py-2 text-nodiac-secondary font-bold">5.44</td>
                       </tr>
                       <tr className="border-b border-gray-100 dark:border-white/5">
-                        <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Co-op Priority</td>
-                        <td className="py-2 pr-3 text-sm">Co-op 3, Permit 2, Queue 0.5, rest 0.5&ndash;1</td>
-                        <td className="py-2 text-nodiac-secondary font-bold">6.04</td>
+                        <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Hyperscaler</td>
+                        <td className="py-2 pr-3 text-sm">Grid 3, Permit 3, Fiber 3, Tax 2, Labor 2, Queue 1.5, rest 0.5&ndash;1</td>
+                        <td className="py-2 text-nodiac-secondary font-bold">5.34</td>
                       </tr>
                       <tr>
                         <td className="py-2 pr-3 text-gray-900 dark:text-white font-medium">Curtailment Capture</td>
                         <td className="py-2 pr-3 text-sm">Curtail 3, Queue 2, Grid 1.5, rest 0.5&ndash;1</td>
-                        <td className="py-2 text-nodiac-secondary font-bold">5.05</td>
+                        <td className="py-2 text-nodiac-secondary font-bold">4.85</td>
                       </tr>
                     </tbody>
                   </table>
@@ -1044,10 +1115,10 @@ export default function ScoringPage() {
                   <strong className="text-gray-900 dark:text-white"> Supabase backend</strong> (Postgres + Auth).
                   All weight changes happen client-side for zero-latency interaction.
                 </p>
-                <CodeBlock title="Key Files">{`scripts/build-real-county-scores.py   # Offline data pipeline (7 criteria)
+                <CodeBlock title="Key Files">{`scripts/build-real-county-scores.py   # Offline data pipeline (8 criteria)
 src/lib/scoring/county-scorer.ts      # computeCompositeScore() — arithmetic + geometric
 src/lib/scoring/site-scorer.ts        # scoreSite(), scoreSiteWeighted()
-src/lib/scoring/weight-profiles.ts    # 4 preset weight profiles
+src/lib/scoring/weight-profiles.ts    # 5 preset weight profiles
 src/lib/scoring/normalize.ts          # minMaxNormalize, inverseNormalize
 src/lib/geo/fips-lookup.ts            # FCC Area API → FIPS code
 src/lib/geo/coop-territory-lookup.ts  # ArcGIS co-op territory spatial query
@@ -1091,6 +1162,7 @@ src/hooks/useWeightedScores.ts        # Client-side composite scoring`}</CodeBlo
               <div className="mt-3 space-y-3">
                 <p><strong className="text-gray-900 dark:text-white">1. Area Ratio</strong> &mdash; Co-op density. Natural 0&ndash;1 value, no transform needed.</p>
                 <p><strong className="text-gray-900 dark:text-white">2. Percentile Rank</strong> &mdash; Grid reliability, labor, fiber, queue pressure. Produces uniform distribution. For inverse metrics (SAIDI): 1 &minus; rank.</p>
+                <p><strong className="text-gray-900 dark:text-white">5. AI Research Score</strong> &mdash; Permitting, tax &amp; incentives. State-level AI-generated scores from news, legislation, and regulatory data. Tax &amp; Incentives falls back to Permitting score when a dedicated tax score is unavailable.</p>
                 <FormulaBlock>score = rank(value) / (N - 1)</FormulaBlock>
                 <p><strong className="text-gray-900 dark:text-white">3. Log-Transform + Composite</strong> &mdash; Curtailment. Handles extreme skew in renewable MW distribution.</p>
                 <p><strong className="text-gray-900 dark:text-white">4. CF Gap</strong> &mdash; Curtailment (923 component). Expected minus actual capacity factor, aggregated to county.</p>

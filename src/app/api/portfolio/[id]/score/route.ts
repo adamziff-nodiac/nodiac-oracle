@@ -15,6 +15,7 @@ type CountyScoreRow = {
   grid_reliability_score: number
   clipped_curtailed_score: number
   permitting_score: number
+  tax_incentives_score?: number
   labor_score: number
   fiber_score: number
   queue_pressure_score: number

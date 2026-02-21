@@ -18,6 +18,7 @@ function getScoreValue(county: WeightedCountyScore, key: CriterionKey): number {
     grid_reliability: county.grid_reliability_score,
     clipped_curtailed: county.clipped_curtailed_score,
     permitting: county.permitting_score,
+    tax_incentives: county.tax_incentives_score ?? county.permitting_score,
     labor: county.labor_score,
     fiber: county.fiber_score,
     queue_pressure: county.queue_pressure_score,
@@ -41,6 +42,13 @@ function getCountyCitations(
     .map(id => registry[id])
 }
 
+const QUEUE_TYPE_LABELS: Record<string, string> = {
+  solar: 'Solar',
+  wind: 'Wind',
+  storage: 'Storage',
+  gas: 'Gas',
+}
+
 export function CountyDetailPanel({ county, citationRegistry = [], onClose }: CountyDetailPanelProps) {
   return (
     <div
@@ -56,7 +64,14 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
               <h3 className="text-lg font-bold text-gray-900 dark:text-white">
                 {county.county_name}
               </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400">{county.state_abbr}</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400">{county.state_abbr}</p>
+                {county.no_zoning && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 uppercase tracking-wider">
+                    No Zoning
+                  </span>
+                )}
+              </div>
             </div>
             <button
               onClick={onClose}
@@ -107,11 +122,28 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
                         ? `Based on ${county.grid_reliability_years} years of SAIDI data (${county.grid_reliability_data_range})`
                         : county.grid_reliability_years >= 3
                         ? `Based on ${county.grid_reliability_years} years of data (${county.grid_reliability_data_range})`
-                        : `⚠️ Based on only ${county.grid_reliability_years} year${county.grid_reliability_years > 1 ? 's' : ''} of data`
+                        : `Based on only ${county.grid_reliability_years} year${county.grid_reliability_years > 1 ? 's' : ''} of data`
                       }
                       {county.grid_reliability_avg_saidi != null && (
                         <> · Avg {county.grid_reliability_avg_saidi} min/yr ({(100 - (county.grid_reliability_avg_saidi / 525960) * 100).toFixed(county.grid_reliability_avg_saidi < 1000 ? 3 : 2)}% uptime)</>
                       )}
+                    </p>
+                  )}
+                  {key === 'queue_pressure' && county.queue_type_breakdown && (
+                    <div className="flex gap-2 mt-0.5">
+                      {Object.entries(county.queue_type_breakdown)
+                        .filter(([, count]) => count > 0)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([type, count]) => (
+                          <span key={type} className="text-[10px] text-gray-400 dark:text-gray-500">
+                            {QUEUE_TYPE_LABELS[type] ?? type} {count}
+                          </span>
+                        ))}
+                    </div>
+                  )}
+                  {key === 'tax_incentives' && county.tax_incentives_score == null && (
+                    <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
+                      Using permitting score as proxy (pipeline update pending)
                     </p>
                   )}
                 </div>

@@ -13,6 +13,7 @@ function getCriterionValue(county: CountyScore, key: CriterionKey): number {
     grid_reliability: county.grid_reliability_score,
     clipped_curtailed: county.clipped_curtailed_score,
     permitting: county.permitting_score,
+    tax_incentives: county.tax_incentives_score ?? county.permitting_score,
     labor: county.labor_score,
     fiber: county.fiber_score,
     queue_pressure: county.queue_pressure_score,

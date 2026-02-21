@@ -13,6 +13,7 @@ const CRITERIA_KEYS: CriterionKey[] = [
   'grid_reliability',
   'clipped_curtailed',
   'permitting',
+  'tax_incentives',
   'labor',
   'fiber',
   'queue_pressure',
@@ -23,6 +24,7 @@ const SHORT_LABELS: Record<CriterionKey, string> = {
   grid_reliability: 'Grid',
   clipped_curtailed: 'Curtail',
   permitting: 'Permit',
+  tax_incentives: 'Tax',
   labor: 'Labor',
   fiber: 'Fiber',
   queue_pressure: 'Queue',
@@ -127,6 +129,7 @@ export function CountyRankingGrid({ weightedScores, onCountyClick }: CountyRanki
                   <ScoreCell value={county.grid_reliability_score} />
                   <ScoreCell value={county.clipped_curtailed_score} />
                   <ScoreCell value={county.permitting_score} />
+                  <ScoreCell value={county.tax_incentives_score ?? county.permitting_score} />
                   <ScoreCell value={county.labor_score} />
                   <ScoreCell value={county.fiber_score} />
                   <ScoreCell value={county.queue_pressure_score} />

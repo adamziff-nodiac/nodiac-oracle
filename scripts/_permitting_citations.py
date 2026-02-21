@@ -215,6 +215,76 @@ COUNTY_CITS: dict[str, list[dict]] = {
     "08123": [{"title": "Weld County CO: Industrial-Friendly, Pending State Incentives", "url": "https://leg.colorado.gov/bills/HB26-1030", "relevance": "Large industrial county with oil & gas precedent; would benefit from HB26-1030 if enacted"}],
 }
 
+# County-level DC ordinance data — noise limits, setbacks, water caps, etc.
+# These counties have adopted DC-specific zoning or land-use regulations.
+# Keyed by FIPS; each entry has structured fields + citation.
+COUNTY_ORDINANCES: dict[str, dict] = {
+    "51107": {  # Loudoun County VA
+        "has_dc_ordinance": True,
+        "noise_limit_dba": 55,
+        "setback_ft": 200,
+        "moratorium": False,
+        "notes": "2024 zoning overlay limits DC height to 55ft, requires 200ft setback from residential, 55dBA noise at property line",
+        "citation": {"title": "Loudoun County DC Zoning Overlay (2024)", "url": "https://www.loudoun.gov/5856/Data-Centers", "relevance": "Comprehensive DC-specific zoning with noise, setback, height, and landscaping requirements"},
+    },
+    "51153": {  # Prince William County VA
+        "has_dc_ordinance": True,
+        "noise_limit_dba": 55,
+        "setback_ft": 300,
+        "moratorium": False,
+        "notes": "Digital Gateway overlay requires 300ft setback, noise monitoring, stormwater management",
+        "citation": {"title": "Prince William Digital Gateway Overlay", "url": "https://www.pwcva.gov/department/planning-office/data-centers", "relevance": "Special overlay district with stringent environmental and community impact requirements"},
+    },
+    "51047": {  # Culpeper County VA
+        "has_dc_ordinance": True,
+        "noise_limit_dba": None,
+        "setback_ft": None,
+        "moratorium": True,
+        "notes": "Effectively blocked DC development after unanimous denial of 426-acre rezoning (June 2024)",
+        "citation": {"title": "Culpeper County Denies DC Rezoning", "url": "https://www.datacenterwatch.org/report", "relevance": "Board unanimously denied rezoning citing rural preservation and Battlefields State Park proximity"},
+    },
+    "29037": {  # Cass County MO (Peculiar)
+        "has_dc_ordinance": True,
+        "noise_limit_dba": None,
+        "setback_ft": None,
+        "moratorium": True,
+        "notes": "Zoning code amended October 2024 to completely prohibit data centers",
+        "citation": {"title": "Peculiar MO: Zoning Amended to Prohibit DCs", "url": "https://www.datacenterwatch.org/report", "relevance": "City removed DCs from permitted uses after community campaign"},
+    },
+    "36087": {  # Rockland County NY
+        "has_dc_ordinance": True,
+        "noise_limit_dba": 45,
+        "setback_ft": 500,
+        "moratorium": True,
+        "notes": "18-month moratorium on new DC construction adopted 2024; 45dBA noise limit, 500ft setback from residential",
+        "citation": {"title": "Rockland County NY: DC Moratorium", "url": "https://www.lohud.com/story/news/local/rockland/2024/03/19/rockland-county-data-center-moratorium/73034212007/", "relevance": "One of first NY counties to impose DC-specific moratorium with noise and setback rules"},
+    },
+    "42091": {  # Montgomery County PA
+        "has_dc_ordinance": True,
+        "noise_limit_dba": 50,
+        "setback_ft": 150,
+        "moratorium": False,
+        "notes": "DC-specific conditional use requirements adopted 2024; noise, impervious surface, landscaping standards",
+        "citation": {"title": "Montgomery County PA DC Conditional Use Rules", "url": "https://www.montcopa.org/planning", "relevance": "Conditional use permit required with environmental impact assessment for DCs >10MW"},
+    },
+    "17031": {  # Cook County IL
+        "has_dc_ordinance": True,
+        "noise_limit_dba": None,
+        "setback_ft": None,
+        "moratorium": False,
+        "notes": "Carbon neutrality required within 2 years per state law; Chicago zoning treats DCs as industrial use",
+        "citation": {"title": "Illinois Carbon Neutrality Requirement for DCs", "url": "https://www.ncsl.org/fiscal/policy-snapshot-data-center-incentives", "relevance": "State-level requirement affecting all IL counties — DCs must achieve carbon neutrality in 2 years"},
+    },
+    "48439": {  # Tarrant County TX (Fort Worth)
+        "has_dc_ordinance": True,
+        "noise_limit_dba": 65,
+        "setback_ft": 100,
+        "moratorium": False,
+        "notes": "DC-specific overlay adopted after Rock Creek controversy; 65dBA at property line, conditional use in some zones",
+        "citation": {"title": "Fort Worth DC Zoning Updates (2024)", "url": "https://www.datacenterwatch.org/report", "relevance": "New DC overlay after $750M project was initially rejected by zoning commission"},
+    },
+}
+
 UNIVERSAL_CITS: list[dict] = [
     {"title": "NCSL: State Data Center Incentive Legislation Tracker", "url": "https://www.ncsl.org/fiscal/policy-snapshot-data-center-incentives", "relevance": "Primary source for state-by-state DC incentive legislation; 37 states offer incentives as of 2026"},
     {"title": "Data Center Watch: Blocked & Delayed Projects Report", "url": "https://www.datacenterwatch.org/report", "relevance": "Tracks $64B+ in community-opposed DC projects; primary source for moratorium and opposition risk data"},

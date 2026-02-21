@@ -5,6 +5,7 @@ export interface SiteScoreBreakdown {
   grid_reliability: number | null
   clipped_curtailed: number | null
   permitting: number | null
+  tax_incentives: number | null
   labor: number | null
   fiber: number | null
   queue_pressure: number | null

@@ -38,6 +38,7 @@ export function usePortfolio(prebuiltSlug?: string) {
         grid_reliability: cs.grid_reliability_score,
         clipped_curtailed: cs.clipped_curtailed_score,
         permitting: cs.permitting_score,
+        tax_incentives: cs.tax_incentives_score ?? cs.permitting_score,
         labor: cs.labor_score,
         fiber: cs.fiber_score,
         queue_pressure: qp ?? 0,

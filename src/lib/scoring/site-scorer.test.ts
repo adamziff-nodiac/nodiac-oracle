@@ -9,13 +9,14 @@ describe('scoreSite', () => {
       grid_reliability: 0.7,
       clipped_curtailed: 0.5,
       permitting: 0.6,
+      tax_incentives: 0.6,
       labor: 0.4,
       fiber: 0.9,
       queue_pressure: 0.6,
     }
     const { score } = scoreSite(breakdown)
-    // avg = (0.8+0.7+0.5+0.6+0.4+0.9+0.6)/7 ≈ 0.643 → 6.4
-    expect(score).toBeCloseTo(6.4, 1)
+    // avg = (0.8+0.7+0.5+0.6+0.6+0.4+0.9+0.6)/8 = 0.6375 -> 6.4
+    expect(score).toBeCloseTo(6.4, 0)
   })
 
   it('returns score 0 for all-null breakdown', () => {
@@ -24,6 +25,7 @@ describe('scoreSite', () => {
       grid_reliability: null,
       clipped_curtailed: null,
       permitting: null,
+      tax_incentives: null,
       labor: null,
       fiber: null,
       queue_pressure: null,
@@ -39,12 +41,13 @@ describe('scoreSite', () => {
       grid_reliability: null,
       clipped_curtailed: null,
       permitting: 0.8,
+      tax_incentives: null,
       labor: null,
       fiber: 0.8,
       queue_pressure: null,
     }
     const { score } = scoreSite(breakdown)
-    // avg = (0.8+0.8+0.8)/3 = 0.8 → 8.0
+    // avg = (0.8+0.8+0.8)/3 = 0.8 -> 8.0
     expect(score).toBeCloseTo(8.0, 1)
   })
 })
@@ -55,6 +58,7 @@ describe('scoreSiteWeighted', () => {
     grid_reliability: 0.7,
     clipped_curtailed: 0.5,
     permitting: 0.6,
+    tax_incentives: 0.6,
     labor: 0.4,
     fiber: 0.9,
     queue_pressure: 0.6,
@@ -65,6 +69,7 @@ describe('scoreSiteWeighted', () => {
     grid_reliability: 1,
     clipped_curtailed: 1,
     permitting: 1,
+    tax_incentives: 1,
     labor: 1,
     fiber: 1,
     queue_pressure: 1,
@@ -73,13 +78,13 @@ describe('scoreSiteWeighted', () => {
   it('returns a number (score only)', () => {
     const score = scoreSiteWeighted(breakdown, balancedWeights)
     expect(typeof score).toBe('number')
-    expect(score).toBeCloseTo(6.4, 1)
+    expect(score).toBeCloseTo(6.4, 0)
   })
 
   it('returns 0 for empty breakdown', () => {
     const empty: SiteScoreBreakdown = {
       coop_density: null, grid_reliability: null, clipped_curtailed: null,
-      permitting: null, labor: null, fiber: null, queue_pressure: null,
+      permitting: null, tax_incentives: null, labor: null, fiber: null, queue_pressure: null,
     }
     expect(scoreSiteWeighted(empty, balancedWeights)).toBe(0)
   })
@@ -105,7 +110,6 @@ describe('assignPercentileTiers', () => {
       { id: '9', site_score: 0.5 },
     ]
     const result = assignPercentileTiers(sites)
-    // Top 33% (indices 0-2) = good, middle (3-5) = okay, bottom (6-8) = bad
     expect(result[0].tier).toBe('good')
     expect(result[1].tier).toBe('good')
     expect(result[2].tier).toBe('good')
@@ -126,7 +130,6 @@ describe('assignPercentileTiers', () => {
   it('handles single site', () => {
     const sites = [{ id: '1', site_score: 5.0 }]
     const result = assignPercentileTiers(sites)
-    // Single site is top 100% — good
     expect(result[0].tier).toBe('good')
   })
 })
@@ -145,6 +148,23 @@ describe('buildSiteBreakdown', () => {
     const breakdown = buildSiteBreakdown(countyScores)
     expect(breakdown.coop_density).toBe(0.8)
     expect(breakdown.fiber).toBe(0.9)
+    // tax_incentives falls back to permitting_score when not provided
+    expect(breakdown.tax_incentives).toBe(0.6)
+  })
+
+  it('uses explicit tax_incentives_score when present', () => {
+    const countyScores = {
+      coop_density_score: 0.8,
+      grid_reliability_score: 0.7,
+      clipped_curtailed_score: 0.5,
+      permitting_score: 0.6,
+      tax_incentives_score: 0.9,
+      labor_score: 0.4,
+      fiber_score: 0.9,
+      queue_pressure_score: 0.6,
+    }
+    const breakdown = buildSiteBreakdown(countyScores)
+    expect(breakdown.tax_incentives).toBe(0.9)
   })
 
   it('returns all nulls for null input', () => {

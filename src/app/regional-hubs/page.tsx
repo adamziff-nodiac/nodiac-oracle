@@ -34,7 +34,8 @@ import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
 import type { ViewMode } from '@/components/regional-hubs/HubMap'
 import type { GoogleDCDisplayMode } from '@/components/regional-hubs/GoogleDataCentersLayer'
 import type { HubCluster } from '@/lib/geo/cluster-hubs'
-import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
+import type { CriterionKey, WeightedCountyScore, CountyScore } from '@/types/regional-hubs'
+import { ALL_CRITERIA, CRITERION_LABELS } from '@/types/regional-hubs'
 
 export default function RegionalHubsPage() {
   const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
@@ -62,9 +63,55 @@ export default function RegionalHubsPage() {
   const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
   const [showGoogleDC, setShowGoogleDC] = useState(false)
   const [googleDCDisplayMode, setGoogleDCDisplayMode] = useState<GoogleDCDisplayMode>('logo')
+  const [singleCriterion, setSingleCriterion] = useState<CriterionKey | null>(null)
 
   const { sites: portfolioSites } = usePortfolioSites()
-  const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
+  const { weightedScores, scoreLookup: compositeLookup, scoreRange: compositeRange, quantileBreaks: compositeQuantiles } = useWeightedScores(scores, weights, scoringMode)
+
+  // Single-criterion mode: build a FIPS → raw criterion score (0-10) lookup
+  const singleCriterionData = useMemo(() => {
+    if (!singleCriterion || scores.length === 0) return null
+    const getCriterionValue = (c: CountyScore): number => {
+      const map: Record<CriterionKey, number> = {
+        coop_density: c.coop_density_score,
+        grid_reliability: c.grid_reliability_score,
+        clipped_curtailed: c.clipped_curtailed_score,
+        permitting: c.permitting_score,
+        tax_incentives: c.tax_incentives_score ?? c.permitting_score,
+        labor: c.labor_score,
+        fiber: c.fiber_score,
+        queue_pressure: c.queue_pressure_score,
+      }
+      return map[singleCriterion]
+    }
+    const lookup = new Map<string, number>()
+    const values: number[] = []
+    for (const c of scores) {
+      const raw = getCriterionValue(c)
+      const scaled = raw * 10 // 0-10 scale
+      lookup.set(c.fips_code, scaled)
+      values.push(scaled)
+    }
+    values.sort((a, b) => a - b)
+    const pct = (p: number) => {
+      const idx = (p / 100) * (values.length - 1)
+      const lo = Math.floor(idx)
+      const hi = Math.ceil(idx)
+      return lo === hi ? values[lo] : values[lo] + (values[hi] - values[lo]) * (idx - lo)
+    }
+    return {
+      lookup,
+      range: [values[0], values[values.length - 1]] as readonly [number, number],
+      quantiles: {
+        min: values[0], p20: pct(20), p40: pct(40), p60: pct(60),
+        p80: pct(80), p95: pct(95), max: values[values.length - 1],
+      },
+    }
+  }, [singleCriterion, scores])
+
+  const scoreLookup = singleCriterionData?.lookup ?? compositeLookup
+  const scoreRange = singleCriterionData?.range ?? compositeRange
+  const quantileBreaks = singleCriterionData?.quantiles ?? compositeQuantiles
 
   const clusterOptions = useMemo(() => ({
     topPercent: clusterTopPercent,
@@ -134,7 +181,7 @@ export default function RegionalHubsPage() {
             Regional Hub Strategy
           </h1>
           <p className="mt-4 text-xl text-gray-600 dark:text-nodiac-dusty-lilac max-w-2xl leading-relaxed">
-            Scoring every US county across seven criteria to identify optimal locations for
+            Scoring every US county across eight criteria to identify optimal locations for
             Nodiac&apos;s distributed data center hubs.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
@@ -157,7 +204,7 @@ export default function RegionalHubsPage() {
             </summary>
             <div className="mt-3 p-4 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 space-y-2 max-w-2xl">
               <p>
-                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all seven criteria.
+                <strong className="text-gray-900 dark:text-white">Click any county</strong> to see its score breakdown across all eight criteria.
               </p>
               <p>
                 <strong className="text-gray-900 dark:text-white">Use the preset buttons</strong> (top-left panel) to snap weights to strategic profiles,
@@ -449,6 +496,28 @@ export default function RegionalHubsPage() {
                     </div>
                   </div>
 
+                  {/* Single-criterion view */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
+                      Single Criterion
+                    </label>
+                    <select
+                      value={singleCriterion ?? ''}
+                      onChange={(e) => setSingleCriterion(e.target.value ? e.target.value as CriterionKey : null)}
+                      className="w-full px-2 py-1.5 rounded-lg text-xs bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-700 dark:text-gray-300 focus:border-[#c77dba]/50 focus:outline-none"
+                    >
+                      <option value="">Composite (weighted)</option>
+                      {ALL_CRITERIA.map((key) => (
+                        <option key={key} value={key}>{CRITERION_LABELS[key]}</option>
+                      ))}
+                    </select>
+                    {singleCriterion && (
+                      <p className="text-[10px] text-gray-400 dark:text-gray-500">
+                        Showing raw {CRITERION_LABELS[singleCriterion]} scores. Weights are ignored.
+                      </p>
+                    )}
+                  </div>
+
                   <PresetProfiles
                     activeProfileId={activeProfileId}
                     onSelect={handlePresetSelect}
@@ -628,8 +697,8 @@ export default function RegionalHubsPage() {
         <div className="max-w-3xl mx-auto space-y-4">
           <h2 className="text-xl font-bold text-gray-900 dark:text-white">How it works</h2>
           <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-            Each county is scored 0–10 across seven criteria (co-op density, grid reliability,
-            curtailment opportunity, permitting environment, IT labor, fiber availability, and queue pressure).
+            Each county is scored 0–10 across eight criteria (co-op density, grid reliability,
+            curtailment opportunity, permitting, tax &amp; incentives, IT labor, fiber availability, and queue pressure).
             Adjust the weight sliders to prioritize what matters most for your deployment strategy,
             and drag the highlight threshold to control where the orchid glow begins.
             Click any county to inspect its full score breakdown.
