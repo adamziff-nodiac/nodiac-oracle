@@ -518,12 +518,15 @@ export default function RegionalHubsPage() {
                     )}
                   </div>
 
-                  <PresetProfiles
-                    activeProfileId={activeProfileId}
-                    onSelect={handlePresetSelect}
-                  />
+                  {!singleCriterion && (
+                    <PresetProfiles
+                      activeProfileId={activeProfileId}
+                      onSelect={handlePresetSelect}
+                    />
+                  )}
 
-                  {/* Collapsible advanced controls */}
+                  {/* Collapsible advanced controls — hidden in single-criterion mode */}
+                  {!singleCriterion && (
                   <details className="group">
                     <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors select-none flex items-center gap-1.5">
                       <span className="transition-transform group-open:rotate-90 text-[10px]">&#9654;</span>
@@ -642,6 +645,7 @@ export default function RegionalHubsPage() {
                       />
                     </div>
                   </details>
+                  )}
                 </div>
 
                 {viewMode === 'tiers' ? (
