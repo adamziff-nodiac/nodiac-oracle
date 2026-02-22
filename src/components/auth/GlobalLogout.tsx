@@ -22,7 +22,7 @@ export function GlobalLogout() {
     <button
       onClick={handleSignOut}
       disabled={isSigningOut}
-      className="fixed top-3 right-3 z-50 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-xs text-gray-300 hover:text-white hover:bg-black/60 transition-colors"
+      className="fixed top-3 right-3 z-[60] flex items-center gap-2 px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm border border-white/10 text-xs text-gray-300 hover:text-white hover:bg-black/60 transition-colors"
       title="Sign out"
     >
       {isSigningOut ? (
