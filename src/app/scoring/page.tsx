@@ -498,10 +498,10 @@ export default function ScoringPage() {
                 </p>
 
                 <DataBox>
-                  <p><Label>Method:</Label> Currently derived from the same AI research workflow as permitting scores. Tax policy findings are separated into their own criterion score. A dedicated tax incentive database is planned.</p>
+                  <p><Label>Source:</Label> State DC policy data from same research workflow as permitting (NCSL Policy Snapshot, SDI Alliance, H5 Data Centers, NAIOP 2025&ndash;2026). Now scored as its own independent criterion.</p>
                   <p><Label>Scoring components:</Label> Corporate income tax rates, property tax structures, sales tax exemptions on equipment, data center-specific incentive programs.</p>
-                  <p><Label>Range:</Label> 0.30 (high tax, no incentives) &rarr; 0.50 (average) &rarr; 0.85+ (no income tax or strong DC-specific incentives).</p>
-                  <p><Label>Note:</Label> When a dedicated tax_incentives_score is not yet available for a county, the system falls back to the permitting score as a proxy. This fallback will be removed as the tax database is populated.</p>
+                  <p><Label>Range:</Label> 0.15 (HI &mdash; high tax, no incentives) &rarr; 0.35 (default) &rarr; 0.85 (AL, FL, GA, IN &mdash; strong DC-specific incentives and abatements).</p>
+                  <p><Label>Coverage:</Label> All 3,143 counties. Scores are state-level; county-level incentive programs are a planned enhancement.</p>
                 </DataBox>
 
                 <MethodDropdown>
@@ -528,9 +528,8 @@ export default function ScoringPage() {
                     </li>
                   </ul>
                   <Assumption>
-                    Currently uses the permitting score as a proxy when a dedicated tax score isn&apos;t available.
-                    A standalone tax incentive database (with county-level granularity where possible) is planned to
-                    replace this proxy. State-level scores may miss county-specific incentive programs.
+                    Scores are state-level. County-specific incentive programs (e.g., local enterprise zones,
+                    PILOT agreements) are not yet captured. A county-level tax incentive database is planned.
                   </Assumption>
                 </MethodDropdown>
               </SubSection>
@@ -969,7 +968,7 @@ export default function ScoringPage() {
             <ul className="space-y-3 ml-2">
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />
-                <span><strong className="text-gray-900 dark:text-white">Dedicated tax incentive database</strong> &mdash; Replace the permitting-score proxy for Tax &amp; Incentives with a standalone dataset covering state and county-level tax programs, abatements, and exemptions. Critical for accurate hyperscaler site comparisons.</span>
+                <span><strong className="text-gray-900 dark:text-white">County-level tax incentive data</strong> &mdash; Add county-specific incentive programs (enterprise zones, PILOT agreements, local abatements) to supplement the current state-level tax scores. Critical for accurate hyperscaler site comparisons where county-level deals differ from state policy.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="w-2 h-2 rounded-full bg-nodiac-secondary mt-1.5 flex-shrink-0" />

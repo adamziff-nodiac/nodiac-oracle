@@ -1881,15 +1881,19 @@ _COUNTY_ADJUSTMENTS = {
 
 
 def compute_permitting_score(state: str, fips: str) -> float:
-    """Compute permitting score from state policy, regulation, risk, and zoning."""
-    policy = _STATE_DC_POLICY.get(state, 0.35)
+    """Compute permitting score from regulation, risk, and zoning (tax policy is separate)."""
     regulatory = _STATE_REGULATORY.get(state, 0.50)
     risk = _STATE_RISK.get(state, 0.70)
     zoning = _STATE_ZONING.get(state, 0.60)
 
-    base = 0.40 * policy + 0.25 * regulatory + 0.20 * risk + 0.15 * zoning
+    base = 0.40 * regulatory + 0.35 * risk + 0.25 * zoning
     adj = _COUNTY_ADJUSTMENTS.get(fips, 0.0)
     return round(max(0.05, min(0.95, base + adj)), 4)
+
+
+def compute_tax_incentives_score(state: str) -> float:
+    """Compute tax & incentives score from state DC policy data."""
+    return round(_STATE_DC_POLICY.get(state, 0.35), 4)
 
 
 # ============================================================
@@ -2296,12 +2300,17 @@ def assemble_scores(
             curtail = 0.0  # No renewables = no curtailment opportunity
             sources["curtail"] = "Default (no renewable generation)"
 
-        # Permitting
+        # Permitting (regulatory environment, risk, zoning)
         permitting = compute_permitting_score(state_abbr, fips)
         sources["permitting"] = (
-            "State DC incentive programs (NCSL, SDI Alliance, H5 2025-2026), "
-            "moratorium/opposition data (Data Center Watch 2025), "
-            "county-level adjustments where data exists"
+            "State regulatory environment, moratorium/opposition risk (Data Center Watch 2025), "
+            "zoning favorability, county-level adjustments where data exists"
+        )
+
+        # Tax & Incentives (state DC policy, exemptions, abatements)
+        tax_incentives = compute_tax_incentives_score(state_abbr)
+        sources["tax_incentives"] = (
+            "State DC incentive programs (NCSL Policy Snapshot, SDI Alliance, H5 Data Centers, NAIOP 2025-2026)"
         )
 
         # Labor
@@ -2337,6 +2346,7 @@ def assemble_scores(
             "grid_reliability_score": round(grid, 4),
             "clipped_curtailed_score": round(curtail, 4),
             "permitting_score": round(permitting, 4),
+            "tax_incentives_score": round(tax_incentives, 4),
             "labor_score": round(labor, 4),
             "fiber_score": round(fiber, 4),
             "queue_pressure_score": round(queue, 4),

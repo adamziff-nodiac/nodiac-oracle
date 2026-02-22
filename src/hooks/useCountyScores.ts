@@ -7,8 +7,7 @@ function backfillDefaults(counties: CountyScore[]): CountyScore[] {
   return counties.map(c => ({
     ...c,
     queue_pressure_score: c.queue_pressure_score ?? 0,
-    // tax_incentives_score is intentionally left undefined when absent;
-    // scoring functions fall back to permitting_score as proxy
+    tax_incentives_score: c.tax_incentives_score,
   }))
 }
 

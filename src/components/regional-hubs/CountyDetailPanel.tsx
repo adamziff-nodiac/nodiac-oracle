@@ -143,7 +143,7 @@ export function CountyDetailPanel({ county, citationRegistry = [], onClose }: Co
                   )}
                   {key === 'tax_incentives' && county.tax_incentives_score == null && (
                     <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">
-                      Using permitting score as proxy (pipeline update pending)
+                      Using permitting score as fallback
                     </p>
                   )}
                 </div>
