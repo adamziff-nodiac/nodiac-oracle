@@ -3,6 +3,7 @@ import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 import { TTSProvider } from '@/contexts/TTSContext'
+import { GlobalLogout } from '@/components/auth/GlobalLogout'
 
 export const metadata: Metadata = {
   title: 'Nodiac Oracle - Multi-Perspective AI Advisor',
@@ -50,6 +51,7 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
+          <GlobalLogout />
           <PerspectivesProvider>
             <TTSProvider>{children}</TTSProvider>
           </PerspectivesProvider>
