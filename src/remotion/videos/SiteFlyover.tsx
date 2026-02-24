@@ -11,7 +11,7 @@ import {
   Easing,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES, type Site } from '../data';
-import { C, FONT, NodiacLogo, RegionalStates, siteProj, stateColor } from '../shared';
+import { C, FONT, NodiacLogo, RegionalStates, siteProj, stateColor, Subtitles, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -280,6 +280,26 @@ function FlyoverCTA() {
   );
 }
 
+// ─── Voiceover Script ──────────────────────────────────────────────────────────
+const SUBS: SubSegment[] = [
+  { start: 0, end: 3, text: '' },
+  { start: 3, end: 6, text: '42 sites. 3 states. 348 megawatts. Every single one.' },
+  { start: 6, end: 9, text: "Let's visit every site in Nodiac's Upper Midwest Regional Hub." },
+  { start: 9, end: 14, text: 'Each site collocated with existing renewable energy infrastructure.' },
+  { start: 14, end: 18, text: 'Existing grid connections. Pre-permitted land. Ready for compute.' },
+  { start: 18, end: 22, text: 'Minnesota — 23 sites across the state, from Ridgewind to Rochester.' },
+  { start: 22, end: 26, text: "Each site sits behind the meter at a Greenbacker generation facility." },
+  { start: 26, end: 30, text: 'Iowa — 4 high-capacity sites with major transmission access.' },
+  { start: 30, end: 34, text: 'Elk, Hawkeye, Rippey — each site 37 to 50 megawatts.' },
+  { start: 34, end: 38, text: 'Wisconsin — 15 sites across cooperative territory.' },
+  { start: 38, end: 42, text: 'Pilot sites at Hay River and Walleye. First movers in a new model.' },
+  { start: 42, end: 46, text: 'Dunn Energy Cooperative partnership. Modular pods on trailers.' },
+  { start: 46, end: 50, text: 'Every site adds capacity. Every site strengthens the network.' },
+  { start: 50, end: 54, text: '42 sites. 348 megawatts. The fastest path to distributed AI compute.' },
+  { start: 54, end: 58, text: 'Nodiac. Distributed power infrastructure for AI compute.' },
+  { start: 58, end: 61, text: '' },
+];
+
 // ─── Main Composition ──────────────────────────────────────────────────────────
 export const SiteFlyover: React.FC = () => {
   // Calculate flyover duration dynamically
@@ -296,6 +316,7 @@ export const SiteFlyover: React.FC = () => {
       <Sequence from={180} durationInFrames={flyoverFrames}><TheFlyover /></Sequence>
       <Sequence from={180 + flyoverFrames} durationInFrames={180}><ZoomOutSummary /></Sequence>
       <Sequence from={180 + flyoverFrames + 180} durationInFrames={180}><FlyoverCTA /></Sequence>
+      <Subtitles segments={SUBS} />
     </AbsoluteFill>
   );
 };

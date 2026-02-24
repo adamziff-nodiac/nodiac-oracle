@@ -138,3 +138,24 @@ export function NodiacLogo({ dark = true, width = 400 }: { dark?: boolean; width
 export function stateColor(state: string) {
   return state === 'MN' ? C.mn : state === 'IA' ? C.ia : C.wi;
 }
+
+// ─── Subtitles ──────────────────────────────────────────────────────────────────
+export interface SubSegment { start: number; end: number; text: string }
+
+export function Subtitles({ segments }: { segments: SubSegment[] }) {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const sec = frame / fps;
+  const seg = segments.find(s => sec >= s.start && sec < s.end);
+  if (!seg || !seg.text) return null;
+  const p = (sec - seg.start) / (seg.end - seg.start);
+  const fi = interpolate(p, [0, 0.08], [0, 1], { extrapolateRight: 'clamp' });
+  const fo = interpolate(p, [0.88, 1], [1, 0], { extrapolateLeft: 'clamp' });
+  return (
+    <div style={{ position: 'absolute', bottom: 50, left: 0, right: 0, textAlign: 'center', opacity: fi * fo, zIndex: 100, fontFamily: FONT }}>
+      <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.8)', borderRadius: 8, padding: '10px 28px', maxWidth: 1200 }}>
+        <span style={{ color: C.white, fontSize: 22, fontWeight: 500 }}>{seg.text}</span>
+      </div>
+    </div>
+  );
+}

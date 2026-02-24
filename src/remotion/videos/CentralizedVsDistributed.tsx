@@ -10,7 +10,7 @@ import {
   Sequence,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
-import { C, FONT, NodiacLogo, siteProj, stateColor } from '../shared';
+import { C, FONT, NodiacLogo, siteProj, stateColor, Subtitles, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -434,6 +434,27 @@ function ComparisonCTA() {
   );
 }
 
+// ─── Voiceover Script ──────────────────────────────────────────────────────────
+const SUBS: SubSegment[] = [
+  { start: 0, end: 3, text: '' },
+  { start: 3, end: 6, text: 'AI needs power. There are two paths.' },
+  { start: 6, end: 10, text: "The traditional approach: build massive centralized data centers." },
+  { start: 10, end: 14, text: 'Environmental reviews. State permits. Federal approvals. Three to five years before a single rack powers on.' },
+  { start: 14, end: 18, text: "The distributed approach: go to where the power already is." },
+  { start: 18, end: 22, text: 'Existing sites. Pre-permitted land. Behind-the-meter deployment. Zero new permits required.' },
+  { start: 22, end: 26, text: 'Construction: traditional means billions in concrete and steel. Years of work.' },
+  { start: 26, end: 30, text: 'Distributed means Armada compute pods on trailers. Deployed in weeks, not years.' },
+  { start: 30, end: 34, text: 'Reliability: one centralized facility means one point of failure.' },
+  { start: 34, end: 38, text: 'A distributed network absorbs failures. Nodes go down, the network heals. 99.999 percent uptime.' },
+  { start: 38, end: 42, text: 'No backup generators needed. The redundancy is the network itself.' },
+  { start: 42, end: 46, text: 'Time to revenue: traditional takes five to seven years.' },
+  { start: 46, end: 50, text: 'Distributed: first revenue in months. 39 million by Q4 2026. 780 million plus by 2028.' },
+  { start: 50, end: 56, text: 'The verdict is clear. 42 sites. 348 megawatts. Months to deploy. $780K per megawatt per year.' },
+  { start: 56, end: 62, text: 'Distributed power infrastructure for AI compute.' },
+  { start: 62, end: 68, text: 'Nodiac.' },
+  { start: 68, end: 75, text: '' },
+];
+
 // ─── Main Composition ──────────────────────────────────────────────────────────
 export const CentralizedVsDistributed: React.FC = () => {
   return (
@@ -445,6 +466,7 @@ export const CentralizedVsDistributed: React.FC = () => {
       <Sequence from={1080} durationInFrames={300}><TimeToRevenue /></Sequence>
       <Sequence from={1380} durationInFrames={300}><TheVerdict /></Sequence>
       <Sequence from={1680} durationInFrames={570}><ComparisonCTA /></Sequence>
+      <Subtitles segments={SUBS} />
     </AbsoluteFill>
   );
 };

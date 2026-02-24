@@ -14,6 +14,7 @@ import { UPPER_MIDWEST_SITES, MN_SITES, IA_SITES, WI_SITES } from '../data';
 import {
   C, FONT, USMap, RegionalStates, NodiacLogo,
   usProj, regionProj, siteProj, stateColor, ZOOM_TO_MW,
+  Subtitles, type SubSegment,
 } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
@@ -418,7 +419,7 @@ function TheClose() {
 }
 
 // ─── Subtitle Overlay ──────────────────────────────────────────────────────────
-const SUBS = [
+const SUBS: SubSegment[] = [
   { start: 0, end: 4, text: '' },
   { start: 4, end: 10, text: "The AI industry needs 100 gigawatts of power. The grid can deliver a fraction of that." },
   { start: 10, end: 16, text: "Five-year interconnection queues. 98 billion dollars in delayed projects. The traditional path is broken." },
@@ -432,23 +433,6 @@ const SUBS = [
   { start: 86, end: 90, text: "Nodiac." },
 ];
 
-function Subtitles() {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
-  const sec = frame / fps;
-  const seg = SUBS.find(s => sec >= s.start && sec < s.end);
-  if (!seg || !seg.text) return null;
-  const p = (sec - seg.start) / (seg.end - seg.start);
-  const fi = interpolate(p, [0, 0.08], [0, 1], { extrapolateRight: 'clamp' });
-  const fo = interpolate(p, [0.88, 1], [1, 0], { extrapolateLeft: 'clamp' });
-  return (
-    <div style={{ position: 'absolute', bottom: 50, left: 0, right: 0, textAlign: 'center', opacity: fi * fo, zIndex: 100, fontFamily: FONT }}>
-      <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.8)', borderRadius: 8, padding: '10px 28px', maxWidth: 1200 }}>
-        <span style={{ color: C.white, fontSize: 22, fontWeight: 500 }}>{seg.text}</span>
-      </div>
-    </div>
-  );
-}
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
 export const GridIsFull: React.FC = () => {
@@ -463,7 +447,7 @@ export const GridIsFull: React.FC = () => {
       <Sequence from={1500} durationInFrames={360}><PilotCloseUp /></Sequence>
       <Sequence from={1860} durationInFrames={480}><BusinessCase /></Sequence>
       <Sequence from={2340} durationInFrames={360}><TheClose /></Sequence>
-      <Subtitles />
+      <Subtitles segments={SUBS} />
     </AbsoluteFill>
   );
 };

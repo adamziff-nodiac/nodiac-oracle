@@ -11,7 +11,7 @@ import {
   Easing,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
-import { C, FONT, NodiacLogo } from '../shared';
+import { C, FONT, NodiacLogo, Subtitles, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -409,6 +409,26 @@ function InvestorCTA() {
   );
 }
 
+// ─── Voiceover Script ──────────────────────────────────────────────────────────
+const SUBS: SubSegment[] = [
+  { start: 0, end: 3, text: '' },
+  { start: 3, end: 6, text: 'Nodiac. Distributed power infrastructure for AI compute.' },
+  { start: 6, end: 10, text: "AI's bottleneck is not chips. It is speed to power." },
+  { start: 10, end: 14, text: '100 gigawatts of demand. 5-year queues. 98 billion in delayed projects.' },
+  { start: 14, end: 18, text: 'Nodiac deploys compute where power already exists.' },
+  { start: 18, end: 22, text: 'Collocated with renewable energy sites. Energized in months, not years.' },
+  { start: 22, end: 26, text: 'Upper Midwest Regional Hub: 42 sites across Minnesota, Iowa, and Wisconsin.' },
+  { start: 26, end: 30, text: '348 megawatts. Pilots at Hay River and Walleye in active development.' },
+  { start: 30, end: 34, text: '$780K revenue per megawatt per year. $700K EBITDA. Triple-net lease.' },
+  { start: 34, end: 38, text: '5 to 10 year contracts with Tier-1 hyperscaler counterparties.' },
+  { start: 38, end: 42, text: '50 megawatts by Q4 2026. 200 megawatts by 2027.' },
+  { start: 42, end: 46, text: 'Over a gigawatt by 2028. 780 million dollars in annual recurring revenue.' },
+  { start: 46, end: 50, text: 'Faster to market. Cleaner compute. Lower grid burden. Repeatable deployments.' },
+  { start: 50, end: 54, text: 'Built by the team behind Greenbacker — 3 billion in renewable assets under management.' },
+  { start: 54, end: 58, text: 'The fastest path to distributed AI compute in the Upper Midwest.' },
+  { start: 58, end: 60, text: '' },
+];
+
 // ─── Main Composition ──────────────────────────────────────────────────────────
 export const InvestorBrief: React.FC = () => {
   return (
@@ -420,6 +440,7 @@ export const InvestorBrief: React.FC = () => {
       <Sequence from={900} durationInFrames={240}><TheBusinessModel /></Sequence>
       <Sequence from={1140} durationInFrames={300}><TheScalingPlan /></Sequence>
       <Sequence from={1440} durationInFrames={360}><InvestorCTA /></Sequence>
+      <Subtitles segments={SUBS} />
     </AbsoluteFill>
   );
 };

@@ -10,7 +10,7 @@ import {
   Sequence,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
-import { C, FONT, NodiacLogo, siteProj, stateColor, regionProj } from '../shared';
+import { C, FONT, NodiacLogo, siteProj, stateColor, regionProj, Subtitles, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -368,6 +368,26 @@ function NetworkRevealed() {
   );
 }
 
+// ─── Voiceover Script ──────────────────────────────────────────────────────────
+const SUBS: SubSegment[] = [
+  { start: 0, end: 3, text: '' },
+  { start: 3, end: 7, text: 'It starts with two nodes. Hay River and Walleye.' },
+  { start: 7, end: 10, text: 'Then the network grows. Site by site. Node by node.' },
+  { start: 10, end: 14, text: '42 nodes across three states. A living network of distributed compute.' },
+  { start: 14, end: 18, text: '348 megawatts of capacity, pulsing through the Upper Midwest.' },
+  { start: 18, end: 22, text: 'Every node connected. Every node contributing.' },
+  { start: 22, end: 26, text: '99.999 percent uptime. Not through backup generators.' },
+  { start: 26, end: 30, text: 'Through the network itself. Nodes fail. The network heals.' },
+  { start: 30, end: 34, text: 'Distributed N-plus-1. Validated by 200,000 Monte Carlo simulations.' },
+  { start: 34, end: 38, text: 'The network does not just survive. It grows.' },
+  { start: 38, end: 42, text: '50 megawatts by Q4 2026. 200 megawatts by 2027.' },
+  { start: 42, end: 46, text: 'Over a gigawatt by 2028. Each new node strengthens the whole.' },
+  { start: 46, end: 50, text: '780 million dollars in annual revenue at scale.' },
+  { start: 50, end: 54, text: 'Distributed power infrastructure for AI compute.' },
+  { start: 54, end: 58, text: 'Nodiac.' },
+  { start: 58, end: 60, text: '' },
+];
+
 // ─── Main Composition ──────────────────────────────────────────────────────────
 export const NetworkEffect: React.FC = () => {
   return (
@@ -377,6 +397,7 @@ export const NetworkEffect: React.FC = () => {
       <Sequence from={660} durationInFrames={360}><ResilienceTest /></Sequence>
       <Sequence from={1020} durationInFrames={420}><Growth /></Sequence>
       <Sequence from={1440} durationInFrames={360}><NetworkRevealed /></Sequence>
+      <Subtitles segments={SUBS} />
     </AbsoluteFill>
   );
 };

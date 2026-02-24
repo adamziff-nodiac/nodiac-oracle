@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Play, Pause, RotateCcw, Film, Check } from 'lucide-react';
+import { ArrowLeft, Play, Pause, RotateCcw, Film, Check, FileText } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -15,6 +15,7 @@ interface VideoOption {
   duration: string;
   tags: string[];
   accent: string;
+  script: string;
 }
 
 const videos: VideoOption[] = [
@@ -27,6 +28,23 @@ const videos: VideoOption[] = [
     duration: '1:30',
     tags: ['Cinematic', '90 sec', 'Narrative Arc'],
     accent: '#4de2e4',
+    script: `The AI industry needs 100 gigawatts of power. The grid can deliver a fraction of that.
+
+Five-year interconnection queues. 98 billion dollars in delayed projects. The traditional path is broken.
+
+Building a new data center takes five to seven years to energize. AI cannot wait that long.
+
+Unless you go to where the power already is.
+
+Across the Upper Midwest, hundreds of renewable energy sites sit with available capacity. Nodiac brings compute to the power.
+
+42 sites across Minnesota, Iowa, and Wisconsin. Over 340 megawatts. Connected to existing grid infrastructure.
+
+Pilot sites at Hay River and Walleye are already in development. Modular data centers on trailers. Energized in months.
+
+50 megawatts by Q4 2026. 200 megawatts by 2027. Over a gigawatt by 2028.
+
+The fastest path to distributed AI compute in the Upper Midwest. Nodiac.`,
   },
   {
     id: 'site-flyover',
@@ -37,6 +55,19 @@ const videos: VideoOption[] = [
     duration: '1:00',
     tags: ['Fast-Paced', '60 sec', 'Geographic'],
     accent: '#6366f1',
+    script: `42 sites. 3 states. 348 megawatts. Every single one.
+
+Let's visit every site in Nodiac's Upper Midwest Regional Hub. Each site collocated with existing renewable energy infrastructure. Existing grid connections. Pre-permitted land. Ready for compute.
+
+Minnesota — 23 sites across the state, from Ridgewind to Rochester. Each site sits behind the meter at a Greenbacker generation facility.
+
+Iowa — 4 high-capacity sites with major transmission access. Elk, Hawkeye, Rippey — each site 37 to 50 megawatts.
+
+Wisconsin — 15 sites across cooperative territory. Pilot sites at Hay River and Walleye. First movers in a new model. Dunn Energy Cooperative partnership. Modular pods on trailers.
+
+Every site adds capacity. Every site strengthens the network. 42 sites. 348 megawatts. The fastest path to distributed AI compute.
+
+Nodiac. Distributed power infrastructure for AI compute.`,
   },
   {
     id: 'centralized-vs-distributed',
@@ -47,6 +78,21 @@ const videos: VideoOption[] = [
     duration: '1:15',
     tags: ['Comparison', '75 sec', 'Split-Screen'],
     accent: '#f43f5e',
+    script: `AI needs power. There are two paths.
+
+The traditional approach: build massive centralized data centers. Environmental reviews. State permits. Federal approvals. Three to five years before a single rack powers on.
+
+The distributed approach: go to where the power already is. Existing sites. Pre-permitted land. Behind-the-meter deployment. Zero new permits required.
+
+Construction: traditional means billions in concrete and steel. Years of work. Distributed means Armada compute pods on trailers. Deployed in weeks, not years.
+
+Reliability: one centralized facility means one point of failure. A distributed network absorbs failures. Nodes go down, the network heals. 99.999 percent uptime. No backup generators needed.
+
+Time to revenue: traditional takes five to seven years. Distributed: first revenue in months. 39 million by Q4 2026. 780 million plus by 2028.
+
+The verdict is clear. 42 sites. 348 megawatts. Months to deploy. $780K per megawatt per year.
+
+Distributed power infrastructure for AI compute. Nodiac.`,
   },
   {
     id: 'network-effect',
@@ -57,6 +103,15 @@ const videos: VideoOption[] = [
     duration: '1:00',
     tags: ['Abstract', '60 sec', 'Data Viz'],
     accent: '#22d3ee',
+    script: `It starts with two nodes. Hay River and Walleye. Then the network grows. Site by site. Node by node.
+
+42 nodes across three states. A living network of distributed compute. 348 megawatts of capacity, pulsing through the Upper Midwest. Every node connected. Every node contributing.
+
+99.999 percent uptime. Not through backup generators. Through the network itself. Nodes fail. The network heals. Distributed N-plus-1. Validated by 200,000 Monte Carlo simulations.
+
+The network does not just survive. It grows. 50 megawatts by Q4 2026. 200 megawatts by 2027. Over a gigawatt by 2028. Each new node strengthens the whole. 780 million dollars in annual revenue at scale.
+
+Distributed power infrastructure for AI compute. Nodiac.`,
   },
   {
     id: 'investor-brief',
@@ -67,12 +122,28 @@ const videos: VideoOption[] = [
     duration: '1:00',
     tags: ['Corporate', '60 sec', 'Investor-Ready'],
     accent: '#b48fc1',
+    script: `Nodiac. Distributed power infrastructure for AI compute.
+
+AI's bottleneck is not chips. It is speed to power. 100 gigawatts of demand. 5-year queues. 98 billion in delayed projects.
+
+Nodiac deploys compute where power already exists. Collocated with renewable energy sites. Energized in months, not years.
+
+Upper Midwest Regional Hub: 42 sites across Minnesota, Iowa, and Wisconsin. 348 megawatts. Pilots at Hay River and Walleye in active development.
+
+$780K revenue per megawatt per year. $700K EBITDA. Triple-net lease. 5 to 10 year contracts with Tier-1 hyperscaler counterparties.
+
+50 megawatts by Q4 2026. 200 megawatts by 2027. Over a gigawatt by 2028. 780 million dollars in annual recurring revenue.
+
+Faster to market. Cleaner compute. Lower grid burden. Repeatable deployments. Built by the team behind Greenbacker — 3 billion in renewable assets under management.
+
+The fastest path to distributed AI compute in the Upper Midwest.`,
   },
 ];
 
 export default function CompareStylesPage() {
   const [selected, setSelected] = useState(videos[0]);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [showScript, setShowScript] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const handleSelect = (video: VideoOption) => {
@@ -141,11 +212,11 @@ export default function CompareStylesPage() {
             5 Promo Videos
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mb-8">
-            Each video tells the Upper Midwest Regional Hub story differently &mdash; different structure, narrative, and visual approach.
+            Each video tells the Upper Midwest Regional Hub story differently &mdash; different structure, narrative, and visual approach. Subtitles are baked into each video; full script shown below.
           </p>
 
           <div className="grid lg:grid-cols-3 gap-8">
-            {/* Video player */}
+            {/* Video player + script */}
             <div className="lg:col-span-2">
               <div className="rounded-xl overflow-hidden bg-black shadow-2xl border border-gray-200 dark:border-white/10">
                 <video
@@ -175,6 +246,15 @@ export default function CompareStylesPage() {
                     <RotateCcw className="w-4 h-4 text-white" />
                   </button>
                   <div className="flex-1" />
+                  <button
+                    onClick={() => setShowScript(!showScript)}
+                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                      showScript ? 'bg-nodiac-secondary/20 text-nodiac-secondary' : 'bg-white/10 text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    <FileText className="w-4 h-4" />
+                    Script
+                  </button>
                   <div className="flex items-center gap-2 text-sm text-gray-400">
                     <Film className="w-4 h-4" />
                     <span className="font-medium text-white">{selected.label}</span>
@@ -211,6 +291,21 @@ export default function CompareStylesPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Script panel (always visible below, toggleable) */}
+              {showScript && (
+                <div className="mt-4 p-6 rounded-xl bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10">
+                  <div className="flex items-center gap-2 mb-4">
+                    <FileText className="w-4 h-4 text-nodiac-secondary" />
+                    <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Voiceover Script &mdash; {selected.label}
+                    </h3>
+                  </div>
+                  <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">
+                    {selected.script}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Video selector */}
