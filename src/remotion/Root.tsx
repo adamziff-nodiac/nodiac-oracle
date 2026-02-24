@@ -4,8 +4,13 @@ import { UpperMidwestVideo } from './UpperMidwestVideo';
 import { ThemedVideo } from './ThemedVideo';
 import { THEMES } from './themes';
 import { getScriptForTheme } from './scripts';
+import { GridIsFull } from './videos/GridIsFull';
+import { SiteFlyover, SITE_FLYOVER_DURATION } from './videos/SiteFlyover';
+import { CentralizedVsDistributed, CVD_DURATION } from './videos/CentralizedVsDistributed';
+import { NetworkEffect, NETWORK_EFFECT_DURATION } from './videos/NetworkEffect';
+import { InvestorBrief, INVESTOR_BRIEF_DURATION } from './videos/InvestorBrief';
 
-// Calculate total duration for each pacing
+// Calculate total duration for each pacing (legacy themed videos)
 function calcDuration(pacing: 'standard' | 'fast' | 'cinematic') {
   const dur = (base: number) =>
     pacing === 'fast' ? Math.round(base * 0.85) :
@@ -26,7 +31,54 @@ export const RemotionRoot: React.FC = () => {
         height={1080}
       />
 
-      {/* 5 themed compositions */}
+      {/* ── 5 Distinct Videos ─────────────────────────────────────────── */}
+
+      <Composition
+        id="GridIsFull"
+        component={GridIsFull}
+        durationInFrames={2700}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+
+      <Composition
+        id="SiteFlyover"
+        component={SiteFlyover}
+        durationInFrames={SITE_FLYOVER_DURATION}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+
+      <Composition
+        id="CentralizedVsDistributed"
+        component={CentralizedVsDistributed}
+        durationInFrames={CVD_DURATION}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+
+      <Composition
+        id="NetworkEffect"
+        component={NetworkEffect}
+        durationInFrames={NETWORK_EFFECT_DURATION}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+
+      <Composition
+        id="InvestorBrief"
+        component={InvestorBrief}
+        durationInFrames={INVESTOR_BRIEF_DURATION}
+        fps={30}
+        width={1920}
+        height={1080}
+      />
+
+      {/* ── Legacy themed compositions ────────────────────────────────── */}
       {THEMES.map(theme => {
         const script = getScriptForTheme(theme.id);
         const totalFrames = calcDuration(theme.pacing);
