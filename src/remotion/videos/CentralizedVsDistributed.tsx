@@ -10,7 +10,7 @@ import {
   Sequence,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
-import { C, FONT, NodiacLogo, siteProj, stateColor, Subtitles, type SubSegment } from '../shared';
+import { C, FONT, NodiacLogo, siteProj, stateColor, Subtitles, Voiceover, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -456,7 +456,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const CentralizedVsDistributed: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
+export const CentralizedVsDistributed: React.FC<{ showSubtitles?: boolean; showVoiceover?: boolean }> = ({ showSubtitles = true, showVoiceover = true }) => {
   return (
     <AbsoluteFill style={{ background: C.bg }}>
       <Sequence from={0} durationInFrames={180}><TheChallenge /></Sequence>
@@ -467,6 +467,7 @@ export const CentralizedVsDistributed: React.FC<{ showSubtitles?: boolean }> = (
       <Sequence from={1380} durationInFrames={300}><TheVerdict /></Sequence>
       <Sequence from={1680} durationInFrames={570}><ComparisonCTA /></Sequence>
       <Subtitles segments={SUBS} enabled={showSubtitles} />
+      <Voiceover src="audio/centralized-vs-distributed.mp3" enabled={showVoiceover} />
     </AbsoluteFill>
   );
 };

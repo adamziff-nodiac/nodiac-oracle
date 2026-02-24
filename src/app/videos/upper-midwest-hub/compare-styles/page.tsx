@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Play, Pause, RotateCcw, Film, Check, FileText } from 'lucide-react';
+import { ArrowLeft, Play, Pause, RotateCcw, SkipBack, SkipForward, Volume2, VolumeX, Film, Check, FileText } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -140,17 +140,42 @@ The fastest path to distributed AI compute in the Upper Midwest.`,
   },
 ];
 
+function formatTime(sec: number) {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export default function CompareStylesPage() {
   const [selected, setSelected] = useState(videos[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [showScript, setShowScript] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [isMuted, setIsMuted] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const timelineRef = useRef<HTMLDivElement>(null);
+
+  // Update current time on playback
+  useEffect(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const onTime = () => setCurrentTime(v.currentTime);
+    const onDur = () => setDuration(v.duration || 0);
+    v.addEventListener('timeupdate', onTime);
+    v.addEventListener('loadedmetadata', onDur);
+    return () => {
+      v.removeEventListener('timeupdate', onTime);
+      v.removeEventListener('loadedmetadata', onDur);
+    };
+  }, [selected]);
 
   const handleSelect = (video: VideoOption) => {
     if (videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
       setIsPlaying(false);
+      setCurrentTime(0);
     }
     setSelected(video);
     setTimeout(() => {
@@ -160,7 +185,7 @@ export default function CompareStylesPage() {
     }, 0);
   };
 
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
     if (isPlaying) {
       videoRef.current.pause();
@@ -168,7 +193,7 @@ export default function CompareStylesPage() {
       videoRef.current.play();
     }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
 
   const restart = () => {
     if (!videoRef.current) return;
@@ -176,6 +201,54 @@ export default function CompareStylesPage() {
     videoRef.current.play();
     setIsPlaying(true);
   };
+
+  const skip = (seconds: number) => {
+    if (!videoRef.current) return;
+    videoRef.current.currentTime = Math.max(0, Math.min(videoRef.current.duration, videoRef.current.currentTime + seconds));
+  };
+
+  const toggleMute = () => {
+    if (!videoRef.current) return;
+    videoRef.current.muted = !videoRef.current.muted;
+    setIsMuted(!isMuted);
+  };
+
+  const handleTimelineClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!videoRef.current || !timelineRef.current) return;
+    const rect = timelineRef.current.getBoundingClientRect();
+    const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    videoRef.current.currentTime = pct * (videoRef.current.duration || 0);
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      switch (e.key) {
+        case ' ':
+        case 'k':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowLeft':
+        case 'j':
+          e.preventDefault();
+          skip(-10);
+          break;
+        case 'ArrowRight':
+        case 'l':
+          e.preventDefault();
+          skip(10);
+          break;
+        case 'm':
+          e.preventDefault();
+          toggleMute();
+          break;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [togglePlay]);
 
   return (
     <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-nodiac-dark dark:via-slate-900 dark:to-nodiac-dark">
@@ -228,37 +301,105 @@ export default function CompareStylesPage() {
                   onPause={() => setIsPlaying(false)}
                 />
                 {/* Controls */}
-                <div className="flex items-center gap-3 p-4 bg-gray-900">
-                  <button
-                    onClick={togglePlay}
-                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                <div className="p-4 bg-gray-900 space-y-3">
+                  {/* Timeline */}
+                  <div
+                    ref={timelineRef}
+                    className="group relative h-2 rounded-full bg-white/10 cursor-pointer"
+                    onClick={handleTimelineClick}
                   >
-                    {isPlaying ? (
-                      <Pause className="w-5 h-5 text-white" />
-                    ) : (
-                      <Play className="w-5 h-5 text-white ml-0.5" />
-                    )}
-                  </button>
-                  <button
-                    onClick={restart}
-                    className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-                  >
-                    <RotateCcw className="w-4 h-4 text-white" />
-                  </button>
-                  <div className="flex-1" />
-                  <button
-                    onClick={() => setShowScript(!showScript)}
-                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                      showScript ? 'bg-nodiac-secondary/20 text-nodiac-secondary' : 'bg-white/10 text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    <FileText className="w-4 h-4" />
-                    Script
-                  </button>
-                  <div className="flex items-center gap-2 text-sm text-gray-400">
-                    <Film className="w-4 h-4" />
-                    <span className="font-medium text-white">{selected.label}</span>
-                    <span className="text-gray-500">({selected.duration})</span>
+                    {/* Progress */}
+                    <div
+                      className="absolute top-0 left-0 h-full rounded-full bg-nodiac-secondary transition-[width] duration-100"
+                      style={{ width: duration > 0 ? `${(currentTime / duration) * 100}%` : '0%' }}
+                    />
+                    {/* Hover expand */}
+                    <div className="absolute inset-0 -top-1 -bottom-1 rounded-full group-hover:bg-white/5" />
+                    {/* Scrub handle */}
+                    <div
+                      className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-nodiac-secondary opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      style={{ left: duration > 0 ? `calc(${(currentTime / duration) * 100}% - 6px)` : '0' }}
+                    />
+                  </div>
+
+                  {/* Button row */}
+                  <div className="flex items-center gap-2">
+                    {/* Restart */}
+                    <button
+                      onClick={restart}
+                      className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                      title="Restart"
+                    >
+                      <RotateCcw className="w-4 h-4 text-white" />
+                    </button>
+
+                    {/* Back 10s */}
+                    <button
+                      onClick={() => skip(-10)}
+                      className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                      title="Back 10s (J or ←)"
+                    >
+                      <SkipBack className="w-4 h-4 text-white" />
+                    </button>
+
+                    {/* Play/Pause */}
+                    <button
+                      onClick={togglePlay}
+                      className="w-11 h-11 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+                      title="Play/Pause (Space or K)"
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-5 h-5 text-white" />
+                      ) : (
+                        <Play className="w-5 h-5 text-white ml-0.5" />
+                      )}
+                    </button>
+
+                    {/* Forward 10s */}
+                    <button
+                      onClick={() => skip(10)}
+                      className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                      title="Forward 10s (L or →)"
+                    >
+                      <SkipForward className="w-4 h-4 text-white" />
+                    </button>
+
+                    {/* Mute */}
+                    <button
+                      onClick={toggleMute}
+                      className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                      title="Mute (M)"
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-4 h-4 text-white" />
+                      ) : (
+                        <Volume2 className="w-4 h-4 text-white" />
+                      )}
+                    </button>
+
+                    {/* Time display */}
+                    <span className="text-xs text-gray-400 font-mono ml-1">
+                      {formatTime(currentTime)} / {formatTime(duration)}
+                    </span>
+
+                    <div className="flex-1" />
+
+                    {/* Script toggle */}
+                    <button
+                      onClick={() => setShowScript(!showScript)}
+                      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                        showScript ? 'bg-nodiac-secondary/20 text-nodiac-secondary' : 'bg-white/10 text-gray-400 hover:text-white'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      Script
+                    </button>
+
+                    {/* Video label */}
+                    <div className="flex items-center gap-2 text-sm text-gray-400">
+                      <Film className="w-4 h-4" />
+                      <span className="font-medium text-white">{selected.label}</span>
+                    </div>
                   </div>
                 </div>
               </div>

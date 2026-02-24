@@ -36,7 +36,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="GridIsFull"
         component={GridIsFull}
-        defaultProps={{ showSubtitles: true }}
+        defaultProps={{ showSubtitles: true, showVoiceover: true }}
         durationInFrames={2700}
         fps={30}
         width={1920}
@@ -46,7 +46,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="SiteFlyover"
         component={SiteFlyover}
-        defaultProps={{ showSubtitles: true }}
+        defaultProps={{ showSubtitles: true, showVoiceover: true }}
         durationInFrames={SITE_FLYOVER_DURATION}
         fps={30}
         width={1920}
@@ -56,7 +56,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="CentralizedVsDistributed"
         component={CentralizedVsDistributed}
-        defaultProps={{ showSubtitles: true }}
+        defaultProps={{ showSubtitles: true, showVoiceover: true }}
         durationInFrames={CVD_DURATION}
         fps={30}
         width={1920}
@@ -66,7 +66,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="NetworkEffect"
         component={NetworkEffect}
-        defaultProps={{ showSubtitles: true }}
+        defaultProps={{ showSubtitles: true, showVoiceover: true }}
         durationInFrames={NETWORK_EFFECT_DURATION}
         fps={30}
         width={1920}
@@ -76,7 +76,7 @@ export const RemotionRoot: React.FC = () => {
       <Composition
         id="InvestorBrief"
         component={InvestorBrief}
-        defaultProps={{ showSubtitles: true }}
+        defaultProps={{ showSubtitles: true, showVoiceover: true }}
         durationInFrames={INVESTOR_BRIEF_DURATION}
         fps={30}
         width={1920}

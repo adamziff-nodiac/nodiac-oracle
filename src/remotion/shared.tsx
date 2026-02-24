@@ -1,6 +1,6 @@
 // Shared utilities for all Remotion video compositions
 import React from 'react';
-import { Img, staticFile, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { Audio, Img, staticFile, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { US_STATES, HIGHLIGHT_STATES } from './us-states-data';
 import type { Site } from './data';
 
@@ -159,4 +159,10 @@ export function Subtitles({ segments, enabled = true }: { segments: SubSegment[]
       </div>
     </div>
   );
+}
+
+// ─── Voiceover Audio ────────────────────────────────────────────────────────────
+export function Voiceover({ src, enabled = true }: { src: string; enabled?: boolean }) {
+  if (!enabled) return null;
+  return <Audio src={staticFile(src)} volume={1} />;
 }

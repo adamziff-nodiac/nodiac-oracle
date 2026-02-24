@@ -11,7 +11,7 @@ import {
   Easing,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
-import { C, FONT, NodiacLogo, Subtitles, type SubSegment } from '../shared';
+import { C, FONT, NodiacLogo, Subtitles, Voiceover, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -430,7 +430,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const InvestorBrief: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
+export const InvestorBrief: React.FC<{ showSubtitles?: boolean; showVoiceover?: boolean }> = ({ showSubtitles = true, showVoiceover = true }) => {
   return (
     <AbsoluteFill style={{ background: C.multiply }}>
       <Sequence from={0} durationInFrames={180}><TheOneLiner /></Sequence>
@@ -441,6 +441,7 @@ export const InvestorBrief: React.FC<{ showSubtitles?: boolean }> = ({ showSubti
       <Sequence from={1140} durationInFrames={300}><TheScalingPlan /></Sequence>
       <Sequence from={1440} durationInFrames={360}><InvestorCTA /></Sequence>
       <Subtitles segments={SUBS} enabled={showSubtitles} />
+      <Voiceover src="audio/investor-brief.mp3" enabled={showVoiceover} />
     </AbsoluteFill>
   );
 };

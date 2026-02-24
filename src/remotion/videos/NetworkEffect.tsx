@@ -10,7 +10,7 @@ import {
   Sequence,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
-import { C, FONT, NodiacLogo, siteProj, stateColor, regionProj, Subtitles, type SubSegment } from '../shared';
+import { C, FONT, NodiacLogo, siteProj, stateColor, regionProj, Subtitles, Voiceover, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -389,7 +389,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const NetworkEffect: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
+export const NetworkEffect: React.FC<{ showSubtitles?: boolean; showVoiceover?: boolean }> = ({ showSubtitles = true, showVoiceover = true }) => {
   return (
     <AbsoluteFill style={{ background: '#000' }}>
       <Sequence from={0} durationInFrames={300}><Genesis /></Sequence>
@@ -398,6 +398,7 @@ export const NetworkEffect: React.FC<{ showSubtitles?: boolean }> = ({ showSubti
       <Sequence from={1020} durationInFrames={420}><Growth /></Sequence>
       <Sequence from={1440} durationInFrames={360}><NetworkRevealed /></Sequence>
       <Subtitles segments={SUBS} enabled={showSubtitles} />
+      <Voiceover src="audio/network-effect.mp3" enabled={showVoiceover} />
     </AbsoluteFill>
   );
 };

@@ -11,7 +11,7 @@ import {
   Easing,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES, type Site } from '../data';
-import { C, FONT, NodiacLogo, RegionalStates, siteProj, stateColor, Subtitles, type SubSegment } from '../shared';
+import { C, FONT, NodiacLogo, RegionalStates, siteProj, stateColor, Subtitles, Voiceover, type SubSegment } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
@@ -301,7 +301,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const SiteFlyover: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
+export const SiteFlyover: React.FC<{ showSubtitles?: boolean; showVoiceover?: boolean }> = ({ showSubtitles = true, showVoiceover = true }) => {
   // Calculate flyover duration dynamically
   let flyoverFrames = 0;
   for (const site of FLYOVER_ORDER) {
@@ -317,6 +317,7 @@ export const SiteFlyover: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitl
       <Sequence from={180 + flyoverFrames} durationInFrames={180}><ZoomOutSummary /></Sequence>
       <Sequence from={180 + flyoverFrames + 180} durationInFrames={180}><FlyoverCTA /></Sequence>
       <Subtitles segments={SUBS} enabled={showSubtitles} />
+      <Voiceover src="audio/site-flyover.mp3" enabled={showVoiceover} />
     </AbsoluteFill>
   );
 };

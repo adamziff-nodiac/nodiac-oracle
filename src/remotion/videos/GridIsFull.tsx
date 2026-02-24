@@ -14,7 +14,7 @@ import { UPPER_MIDWEST_SITES, MN_SITES, IA_SITES, WI_SITES } from '../data';
 import {
   C, FONT, USMap, RegionalStates, NodiacLogo,
   usProj, regionProj, siteProj, stateColor, ZOOM_TO_MW,
-  Subtitles, type SubSegment,
+  Subtitles, Voiceover, type SubSegment,
 } from '../shared';
 
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
@@ -435,7 +435,7 @@ const SUBS: SubSegment[] = [
 
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const GridIsFull: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
+export const GridIsFull: React.FC<{ showSubtitles?: boolean; showVoiceover?: boolean }> = ({ showSubtitles = true, showVoiceover = true }) => {
   // 90 seconds = 2700 frames
   return (
     <AbsoluteFill style={{ background: '#000' }}>
@@ -448,6 +448,7 @@ export const GridIsFull: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitle
       <Sequence from={1860} durationInFrames={480}><BusinessCase /></Sequence>
       <Sequence from={2340} durationInFrames={360}><TheClose /></Sequence>
       <Subtitles segments={SUBS} enabled={showSubtitles} />
+      <Voiceover src="audio/grid-is-full.mp3" enabled={showVoiceover} />
     </AbsoluteFill>
   );
 };
