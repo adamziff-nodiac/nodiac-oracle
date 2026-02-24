@@ -19,6 +19,9 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@google/generative-ai": "^0.24.1",
+    "@remotion/cli": "^4.0.428",
+    "@remotion/player": "^4.0.428",
+    "@remotion/renderer": "^4.0.428",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.90.1",
     "@tailwindcss/postcss": "^4.1.18",
@@ -35,6 +38,7 @@
     "react-markdown": "^10.1.0",
     "rehype-highlight": "^7.0.2",
     "remark-gfm": "^4.0.1",
+    "remotion": "^4.0.428",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
