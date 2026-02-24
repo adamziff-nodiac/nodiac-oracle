@@ -14,6 +14,7 @@ import {
   ChevronDown,
   ChevronUp,
   Headphones,
+  Palette,
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -83,11 +84,18 @@ export default function UpperMidwestHubVideoPage() {
             <VideoPlayer />
           </div>
 
-          {/* Compare voices CTA */}
-          <div className="mb-8">
+          {/* Compare CTAs */}
+          <div className="mb-8 flex flex-wrap gap-3">
+            <Link
+              href="/videos/upper-midwest-hub/compare-styles"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-nodiac-primary/10 dark:bg-nodiac-primary/20 border border-nodiac-primary/30 text-nodiac-primary dark:text-nodiac-soft-orchid hover:bg-nodiac-primary/20 dark:hover:bg-nodiac-primary/30 transition-colors text-sm font-medium"
+            >
+              <Palette className="w-4 h-4" />
+              Compare 5 Video Styles
+            </Link>
             <Link
               href="/videos/upper-midwest-hub/compare"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-nodiac-primary/10 dark:bg-nodiac-primary/20 border border-nodiac-primary/30 text-nodiac-primary dark:text-nodiac-soft-orchid hover:bg-nodiac-primary/20 dark:hover:bg-nodiac-primary/30 transition-colors text-sm font-medium"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-nodiac-secondary/10 dark:bg-nodiac-secondary/20 border border-nodiac-secondary/30 text-nodiac-secondary hover:bg-nodiac-secondary/20 dark:hover:bg-nodiac-secondary/30 transition-colors text-sm font-medium"
             >
               <Headphones className="w-4 h-4" />
               Compare 5 Voiceover Options
@@ -166,24 +174,28 @@ export default function UpperMidwestHubVideoPage() {
                   bunx remotion render UpperMidwestHub --codec h264
                 </div>
                 <h4 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mt-6 mb-3">
-                  TTS Options
+                  TTS Options (Ranked)
                 </h4>
                 <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
                   <div>
                     <span className="font-medium text-gray-800 dark:text-gray-200">ElevenLabs</span>{' '}
-                    &mdash; Best quality, $5/mo starter
+                    &mdash; Best quality. Adam, Daniel, or Rachel voices. $5/mo+
                   </div>
                   <div>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">OpenAI TTS</span>{' '}
-                    &mdash; Good quality, pay-per-use via API
+                    <span className="font-medium text-gray-800 dark:text-gray-200">Hume AI Octave 2</span>{' '}
+                    &mdash; Emotion-aware LLM TTS, $7.60/1M chars
                   </div>
                   <div>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">Google Cloud TTS</span>{' '}
-                    &mdash; Neural voices, $4/1M chars
+                    <span className="font-medium text-gray-800 dark:text-gray-200">Inworld TTS-1 Max</span>{' '}
+                    &mdash; #1 on TTS Arena, $10/1M chars
                   </div>
                   <div>
-                    <span className="font-medium text-gray-800 dark:text-gray-200">macOS say</span>{' '}
-                    &mdash; Free, local, lower quality
+                    <span className="font-medium text-gray-800 dark:text-gray-200">Cartesia Sonic 3</span>{' '}
+                    &mdash; Ultra-low latency, fine-grained control
+                  </div>
+                  <div>
+                    <span className="font-medium text-gray-800 dark:text-gray-200">Azure Dragon HD</span>{' '}
+                    &mdash; Enterprise-grade, DavisNeural voice
                   </div>
                 </div>
               </div>
