@@ -430,7 +430,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const InvestorBrief: React.FC = () => {
+export const InvestorBrief: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
   return (
     <AbsoluteFill style={{ background: C.multiply }}>
       <Sequence from={0} durationInFrames={180}><TheOneLiner /></Sequence>
@@ -440,7 +440,7 @@ export const InvestorBrief: React.FC = () => {
       <Sequence from={900} durationInFrames={240}><TheBusinessModel /></Sequence>
       <Sequence from={1140} durationInFrames={300}><TheScalingPlan /></Sequence>
       <Sequence from={1440} durationInFrames={360}><InvestorCTA /></Sequence>
-      <Subtitles segments={SUBS} />
+      <Subtitles segments={SUBS} enabled={showSubtitles} />
     </AbsoluteFill>
   );
 };

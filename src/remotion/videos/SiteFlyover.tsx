@@ -301,7 +301,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const SiteFlyover: React.FC = () => {
+export const SiteFlyover: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
   // Calculate flyover duration dynamically
   let flyoverFrames = 0;
   for (const site of FLYOVER_ORDER) {
@@ -316,7 +316,7 @@ export const SiteFlyover: React.FC = () => {
       <Sequence from={180} durationInFrames={flyoverFrames}><TheFlyover /></Sequence>
       <Sequence from={180 + flyoverFrames} durationInFrames={180}><ZoomOutSummary /></Sequence>
       <Sequence from={180 + flyoverFrames + 180} durationInFrames={180}><FlyoverCTA /></Sequence>
-      <Subtitles segments={SUBS} />
+      <Subtitles segments={SUBS} enabled={showSubtitles} />
     </AbsoluteFill>
   );
 };

@@ -456,7 +456,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const CentralizedVsDistributed: React.FC = () => {
+export const CentralizedVsDistributed: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
   return (
     <AbsoluteFill style={{ background: C.bg }}>
       <Sequence from={0} durationInFrames={180}><TheChallenge /></Sequence>
@@ -466,7 +466,7 @@ export const CentralizedVsDistributed: React.FC = () => {
       <Sequence from={1080} durationInFrames={300}><TimeToRevenue /></Sequence>
       <Sequence from={1380} durationInFrames={300}><TheVerdict /></Sequence>
       <Sequence from={1680} durationInFrames={570}><ComparisonCTA /></Sequence>
-      <Subtitles segments={SUBS} />
+      <Subtitles segments={SUBS} enabled={showSubtitles} />
     </AbsoluteFill>
   );
 };

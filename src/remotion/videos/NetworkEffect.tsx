@@ -389,7 +389,7 @@ const SUBS: SubSegment[] = [
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const NetworkEffect: React.FC = () => {
+export const NetworkEffect: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
   return (
     <AbsoluteFill style={{ background: '#000' }}>
       <Sequence from={0} durationInFrames={300}><Genesis /></Sequence>
@@ -397,7 +397,7 @@ export const NetworkEffect: React.FC = () => {
       <Sequence from={660} durationInFrames={360}><ResilienceTest /></Sequence>
       <Sequence from={1020} durationInFrames={420}><Growth /></Sequence>
       <Sequence from={1440} durationInFrames={360}><NetworkRevealed /></Sequence>
-      <Subtitles segments={SUBS} />
+      <Subtitles segments={SUBS} enabled={showSubtitles} />
     </AbsoluteFill>
   );
 };

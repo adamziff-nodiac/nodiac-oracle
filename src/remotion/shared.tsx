@@ -142,10 +142,11 @@ export function stateColor(state: string) {
 // ─── Subtitles ──────────────────────────────────────────────────────────────────
 export interface SubSegment { start: number; end: number; text: string }
 
-export function Subtitles({ segments }: { segments: SubSegment[] }) {
+export function Subtitles({ segments, enabled = true }: { segments: SubSegment[]; enabled?: boolean }) {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const sec = frame / fps;
+  if (!enabled) return null;
   const seg = segments.find(s => sec >= s.start && sec < s.end);
   if (!seg || !seg.text) return null;
   const p = (sec - seg.start) / (seg.end - seg.start);

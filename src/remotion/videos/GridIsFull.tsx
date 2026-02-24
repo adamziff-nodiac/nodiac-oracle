@@ -435,7 +435,7 @@ const SUBS: SubSegment[] = [
 
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
-export const GridIsFull: React.FC = () => {
+export const GridIsFull: React.FC<{ showSubtitles?: boolean }> = ({ showSubtitles = true }) => {
   // 90 seconds = 2700 frames
   return (
     <AbsoluteFill style={{ background: '#000' }}>
@@ -447,7 +447,7 @@ export const GridIsFull: React.FC = () => {
       <Sequence from={1500} durationInFrames={360}><PilotCloseUp /></Sequence>
       <Sequence from={1860} durationInFrames={480}><BusinessCase /></Sequence>
       <Sequence from={2340} durationInFrames={360}><TheClose /></Sequence>
-      <Subtitles segments={SUBS} />
+      <Subtitles segments={SUBS} enabled={showSubtitles} />
     </AbsoluteFill>
   );
 };
