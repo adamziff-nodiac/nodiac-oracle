@@ -84,14 +84,18 @@ function Permitting() {
       <div style={{ fontSize: 20, color: '#666', lineHeight: 2.2 }}>
         Environmental review: 18-24 months<br />
         State permits: 12-18 months<br />
-        Federal review: 6-12 months
+        Federal review: 6-12 months<br />
+        Grid interconnection: 5+ years
       </div>
-      <div style={{ marginTop: 50, opacity: stampOp }}>
+      <div style={{ marginTop: 30, opacity: stampOp }}>
         <div style={{ display: 'inline-block', padding: '12px 28px', border: '3px solid #cc3333', borderRadius: 12, transform: 'rotate(-3deg)' }}>
           <span style={{ fontSize: 32, fontWeight: 900, color: '#cc3333' }}>3-5 YEARS</span>
         </div>
       </div>
-      {/* Warning icon */}
+      <div style={{ marginTop: 30, opacity: stampOp }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: '#cc3333' }}>$98B in delayed projects</div>
+        <div style={{ fontSize: 16, color: '#555', marginTop: 8 }}>Every hyperscaler constrained</div>
+      </div>
       <div style={{ position: 'absolute', bottom: 80, left: 50, right: 50 }}>
         <div style={{ fontSize: 18, color: '#555', fontStyle: 'italic' }}>Before a single rack powers on</div>
       </div>
@@ -110,10 +114,14 @@ function Permitting() {
         Pre-permitted sites<br />
         Behind-the-meter deployment
       </div>
-      <div style={{ marginTop: 50, opacity: checkOp }}>
+      <div style={{ marginTop: 30, opacity: checkOp }}>
         <div style={{ display: 'inline-block', padding: '12px 28px', border: `3px solid ${C.teal}`, borderRadius: 12 }}>
           <span style={{ fontSize: 32, fontWeight: 900, color: C.teal }}>ZERO NEW PERMITS</span>
         </div>
+      </div>
+      <div style={{ marginTop: 30, opacity: checkOp }}>
+        <div style={{ fontSize: 22, fontWeight: 800, color: C.teal }}>42 Greenbacker-owned sites</div>
+        <div style={{ fontSize: 16, color: C.lilac, marginTop: 8 }}>Speed-to-power in months, not years</div>
       </div>
       <div style={{ position: 'absolute', bottom: 80, right: 50 }}>
         <div style={{ fontSize: 18, color: C.teal, fontWeight: 600 }}>Deploy immediately</div>
@@ -253,6 +261,15 @@ function Reliability() {
       <div style={{ textAlign: 'center', marginTop: 30, fontSize: 20, color: '#555', fontWeight: 600 }}>
         Single point of failure
       </div>
+      {leftFail && (
+        <div style={{ textAlign: 'center', marginTop: 30, opacity: leftRecovery }}>
+          <div style={{ fontSize: 18, color: '#888', lineHeight: 1.8 }}>
+            72-hour fuel supply<br />
+            Diesel backup generators<br />
+            One earthquake, one flood = total loss
+          </div>
+        </div>
+      )}
     </div>
   );
 
@@ -417,10 +434,10 @@ function TheVerdict() {
   const rightExpand = interpolate(frame, [30, 90], [50, 100], { extrapolateRight: 'clamp' });
 
   const stats = [
-    { n: '42 sites', delay: 80 },
+    { n: '42 Greenbacker-owned sites', delay: 80 },
     { n: '348 MW', delay: 95 },
-    { n: '3 states', delay: 110 },
-    { n: 'Months to deploy', delay: 125 },
+    { n: '<14 mo payback', delay: 110 },
+    { n: 'Weeks to deploy', delay: 125 },
     { n: '$780K/MW/year', delay: 140 },
     { n: '99.999% uptime', delay: 155 },
   ];
@@ -463,7 +480,7 @@ function ComparisonCTA() {
   const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const logoSc = spring({ frame, fps, config: { damping: 12, mass: 0.8 } });
   const tagOp = interpolate(frame, [20, 40], [0, 1], { extrapolateRight: 'clamp' });
-  const fadeOut = interpolate(frame, [520, 570], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  const fadeOut = interpolate(frame, [250, 300], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
     <AbsoluteFill style={{ background: `radial-gradient(ellipse at center, ${C.bg2} 0%, ${C.bg} 70%)`, fontFamily: FONT, justifyContent: 'center', alignItems: 'center', opacity: fadeIn * fadeOut }}>
@@ -478,10 +495,12 @@ function ComparisonCTA() {
       <div style={{ transform: `scale(${logoSc})`, zIndex: 10 }}>
         <NodiacLogo width={450} />
       </div>
-      <div style={{ position: 'absolute', bottom: 240, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
-        <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>Distributed Power Infrastructure for AI Compute</div>
+      <div style={{ position: 'absolute', bottom: 260, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
+        <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>Speed-to-power for AI inference</div>
+        <div style={{ fontSize: 24, fontWeight: 500, color: C.teal, marginTop: 8 }}>starting in the Upper Midwest.</div>
       </div>
-      <div style={{ position: 'absolute', bottom: 100, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
+      <div style={{ position: 'absolute', bottom: 120, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
+        <div style={{ fontSize: 18, color: '#ff8866', fontWeight: 600, marginBottom: 16 }}>The first-mover window is closing.</div>
         <div style={{ fontSize: 22, color: C.lilac, letterSpacing: 4 }}>NODIAC.AI</div>
       </div>
     </AbsoluteFill>
@@ -491,22 +510,21 @@ function ComparisonCTA() {
 // ─── Voiceover Script ──────────────────────────────────────────────────────────
 const SUBS: SubSegment[] = [
   { start: 0, end: 3, text: '' },
-  { start: 3, end: 6, text: 'AI needs power. There are two paths.' },
-  { start: 6, end: 10, text: "The traditional approach: build massive centralized data centers." },
+  { start: 3, end: 6, text: 'AI inference needs power. There are two paths.' },
+  { start: 6, end: 10, text: "The traditional approach: build massive centralized data centers. 98 billion dollars delayed." },
   { start: 10, end: 14, text: 'Environmental reviews. State permits. Federal approvals. Three to five years before a single rack powers on.' },
-  { start: 14, end: 18, text: "The distributed approach: go to where the power already is." },
-  { start: 18, end: 22, text: 'Existing sites. Pre-permitted land. Behind-the-meter deployment. Zero new permits required.' },
-  { start: 22, end: 26, text: 'Construction: traditional means billions in concrete and steel. Years of work.' },
-  { start: 26, end: 30, text: 'Distributed means Armada compute pods on trailers. Deployed in weeks, not years.' },
-  { start: 30, end: 34, text: 'Reliability: one centralized facility means one point of failure.' },
+  { start: 14, end: 18, text: "The distributed approach: speed-to-power at Greenbacker-owned generation sites." },
+  { start: 18, end: 22, text: 'Existing infrastructure. Pre-permitted. Behind-the-meter. Zero new permits required.' },
+  { start: 22, end: 26, text: 'Construction: traditional means billions in concrete and steel.' },
+  { start: 26, end: 30, text: 'Distributed means Armada compute pods on trailers. Deployed in weeks.' },
+  { start: 30, end: 34, text: 'One centralized facility means one point of failure.' },
   { start: 34, end: 38, text: 'A distributed network absorbs failures. Nodes go down, the network heals. 99.999 percent uptime.' },
-  { start: 38, end: 42, text: 'No backup generators needed. The redundancy is the network itself.' },
-  { start: 42, end: 46, text: 'Time to revenue: traditional takes five to seven years.' },
-  { start: 46, end: 50, text: 'Distributed: first revenue in months. 39 million by Q4 2026. 780 million plus by 2028.' },
-  { start: 50, end: 56, text: 'The verdict is clear. 42 sites. 348 megawatts. Months to deploy. $780K per megawatt per year.' },
-  { start: 56, end: 62, text: 'Distributed power infrastructure for AI compute.' },
-  { start: 62, end: 68, text: 'Nodiac.' },
-  { start: 68, end: 75, text: '' },
+  { start: 38, end: 42, text: 'Time to revenue: traditional takes five to seven years.' },
+  { start: 42, end: 46, text: 'Distributed: first revenue in months. Less than 14 months to payback per megawatt.' },
+  { start: 46, end: 52, text: '42 Greenbacker-owned sites. 348 megawatts. $780K per megawatt per year. The verdict is clear.' },
+  { start: 52, end: 58, text: 'Speed-to-power for AI inference. The first-mover window is closing.' },
+  { start: 58, end: 62, text: 'Nodiac.' },
+  { start: 62, end: 66, text: '' },
 ];
 
 // ─── Main Composition ──────────────────────────────────────────────────────────
@@ -519,11 +537,11 @@ export const CentralizedVsDistributed: React.FC<{ showSubtitles?: boolean; showV
       <Sequence from={780} durationInFrames={300}><Reliability /></Sequence>
       <Sequence from={1080} durationInFrames={300}><TimeToRevenue /></Sequence>
       <Sequence from={1380} durationInFrames={300}><TheVerdict /></Sequence>
-      <Sequence from={1680} durationInFrames={570}><ComparisonCTA /></Sequence>
+      <Sequence from={1680} durationInFrames={300}><ComparisonCTA /></Sequence>
       <Subtitles segments={SUBS} enabled={showSubtitles} />
       <Voiceover src="audio/centralized-vs-distributed.mp3" enabled={showVoiceover} />
     </AbsoluteFill>
   );
 };
 
-export const CVD_DURATION = 2250; // 75 seconds
+export const CVD_DURATION = 1980; // 66 seconds

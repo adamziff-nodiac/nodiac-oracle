@@ -93,8 +93,9 @@ function EstablishingShot() {
           );
         })}
       </svg>
-      <div style={{ position: 'absolute', bottom: 80, left: 0, right: 0, textAlign: 'center', opacity: textOp }}>
+      <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center', opacity: textOp }}>
         <div style={{ fontSize: 36, fontWeight: 600, color: C.white }}>Let&apos;s visit every site.</div>
+        <div style={{ fontSize: 18, color: C.teal, marginTop: 10, letterSpacing: 3 }}>GREENBACKER-OWNED GENERATION SITES</div>
       </div>
     </AbsoluteFill>
   );
@@ -299,12 +300,16 @@ function FlyoverCTA() {
       <div style={{ transform: `scale(${logoSc})`, zIndex: 10 }}>
         <NodiacLogo width={450} />
       </div>
-      <div style={{ position: 'absolute', bottom: 240, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
+      <div style={{ position: 'absolute', bottom: 260, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
         <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>
-          The fastest path to AI compute in the Upper Midwest.
+          Speed-to-power for AI inference
+        </div>
+        <div style={{ fontSize: 24, fontWeight: 500, color: C.teal, marginTop: 8 }}>
+          starting in the Upper Midwest.
         </div>
       </div>
-      <div style={{ position: 'absolute', bottom: 100, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
+      <div style={{ position: 'absolute', bottom: 120, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
+        <div style={{ fontSize: 18, color: '#ff8866', fontWeight: 600, marginBottom: 16 }}>The first-mover window is closing.</div>
         <div style={{ fontSize: 22, color: C.lilac, letterSpacing: 4 }}>NODIAC.AI</div>
       </div>
     </AbsoluteFill>
@@ -314,20 +319,20 @@ function FlyoverCTA() {
 // ─── Voiceover Script ──────────────────────────────────────────────────────────
 const SUBS: SubSegment[] = [
   { start: 0, end: 3, text: '' },
-  { start: 3, end: 6, text: '42 sites. 3 states. 348 megawatts. Every single one.' },
+  { start: 3, end: 6, text: '42 Greenbacker-owned sites. 3 states. 348 megawatts. Every single one.' },
   { start: 6, end: 9, text: "Let's visit every site in Nodiac's Upper Midwest Regional Hub." },
-  { start: 9, end: 14, text: 'Each site collocated with existing renewable energy infrastructure.' },
-  { start: 14, end: 18, text: 'Existing grid connections. Pre-permitted land. Ready for compute.' },
+  { start: 9, end: 14, text: 'Each site collocated with Greenbacker renewable generation. Existing infrastructure.' },
+  { start: 14, end: 18, text: 'Grid connections. Pre-permitted land. Speed-to-power for AI inference.' },
   { start: 18, end: 22, text: 'Minnesota — 23 sites across the state, from Ridgewind to Rochester.' },
-  { start: 22, end: 26, text: "Each site sits behind the meter at a Greenbacker generation facility." },
+  { start: 22, end: 26, text: "Each site behind the meter at a Greenbacker generation facility." },
   { start: 26, end: 30, text: 'Iowa — 4 high-capacity sites with major transmission access.' },
   { start: 30, end: 34, text: 'Elk, Hawkeye, Rippey — each site 37 to 50 megawatts.' },
   { start: 34, end: 38, text: 'Wisconsin — 15 sites across cooperative territory.' },
-  { start: 38, end: 42, text: 'Pilot sites at Hay River and Walleye. First movers in a new model.' },
-  { start: 42, end: 46, text: 'Dunn Energy Cooperative partnership. Modular pods on trailers.' },
+  { start: 38, end: 42, text: 'Pilot sites at Hay River and Walleye with Dunn Energy Cooperative.' },
+  { start: 42, end: 46, text: 'Armada compute pods on trailers. Weeks to energize, not years.' },
   { start: 46, end: 50, text: 'Every site adds capacity. Every site strengthens the network.' },
-  { start: 50, end: 54, text: '42 sites. 348 megawatts. The fastest path to distributed AI compute.' },
-  { start: 54, end: 58, text: 'Nodiac. Distributed power infrastructure for AI compute.' },
+  { start: 50, end: 54, text: '42 Greenbacker-owned sites. 348 megawatts. Speed-to-power for AI inference.' },
+  { start: 54, end: 58, text: 'Nodiac. The first-mover window is closing.' },
   { start: 58, end: 61, text: '' },
 ];
 

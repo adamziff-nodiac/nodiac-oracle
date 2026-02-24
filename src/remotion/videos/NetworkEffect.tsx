@@ -192,7 +192,7 @@ function Heartbeat() {
         {/* Text overlays — bigger, more prominent */}
         <div style={{ position: 'absolute', top: 50, left: 0, right: 0, textAlign: 'center' }}>
           <div style={{ fontSize: 48, fontWeight: 800, color: C.teal, opacity: text1Op * text1Fo, textShadow: `0 0 40px ${C.teal}30` }}>
-            {TOTAL_CAP} MW of distributed capacity
+            {TOTAL_CAP} MW of distributed inference capacity
           </div>
         </div>
         <div style={{ position: 'absolute', top: 50, left: 0, right: 0, textAlign: 'center' }}>
@@ -200,7 +200,7 @@ function Heartbeat() {
             99.999% UPTIME
           </div>
           <div style={{ fontSize: 22, color: C.lilac, marginTop: 8, opacity: text2Op * text2Fo }}>
-            No backup generators. The network is the redundancy.
+            No backup generators. Distributed N+1 redundancy across Greenbacker-owned sites.
           </div>
         </div>
       </AbsoluteFill>
@@ -433,7 +433,8 @@ function NetworkRevealed() {
             <NodiacLogo width={500} />
           </div>
           <div style={{ marginTop: 40, opacity: tagOp, textAlign: 'center' }}>
-            <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>Distributed Power Infrastructure for AI Compute</div>
+            <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>Speed-to-power for AI inference</div>
+            <div style={{ fontSize: 24, fontWeight: 500, color: C.teal, marginTop: 8 }}>starting in the Upper Midwest.</div>
             <div style={{ fontSize: 22, color: C.lilac, marginTop: 16, letterSpacing: 4 }}>NODIAC.AI</div>
           </div>
         </div>
@@ -445,19 +446,19 @@ function NetworkRevealed() {
 // ─── Voiceover Script ──────────────────────────────────────────────────────────
 const SUBS: SubSegment[] = [
   { start: 0, end: 3, text: '' },
-  { start: 3, end: 7, text: 'It starts with two nodes. Hay River and Walleye.' },
+  { start: 3, end: 7, text: 'It starts with two nodes. Hay River and Walleye. Greenbacker-owned sites with Dunn Energy Cooperative.' },
   { start: 7, end: 10, text: 'Then the network grows. Site by site. Node by node.' },
-  { start: 10, end: 14, text: '42 nodes across three states. A living network of distributed compute.' },
-  { start: 14, end: 18, text: '348 megawatts of capacity, pulsing through the Upper Midwest.' },
-  { start: 18, end: 22, text: 'Every node connected. Every node contributing.' },
+  { start: 10, end: 14, text: '42 Greenbacker-owned nodes across three states. A living network of distributed inference compute.' },
+  { start: 14, end: 18, text: '348 megawatts of capacity. Inference is how AI labs make money. It needs compute close to users.' },
+  { start: 18, end: 22, text: 'Every node connected. Every node contributing. Speed-to-power in months, not years.' },
   { start: 22, end: 26, text: '99.999 percent uptime. Not through backup generators.' },
-  { start: 26, end: 30, text: 'Through the network itself. Nodes fail. The network heals.' },
-  { start: 30, end: 34, text: 'Distributed N-plus-1. Validated by 200,000 Monte Carlo simulations.' },
-  { start: 34, end: 38, text: 'The network does not just survive. It grows.' },
+  { start: 26, end: 30, text: 'Through the network itself. Distributed N-plus-1 redundancy. Nodes fail. The network heals.' },
+  { start: 30, end: 34, text: 'Validated by 200,000 Monte Carlo simulations.' },
+  { start: 34, end: 38, text: 'The network does not just survive. It grows. Less than 14 months to payback per megawatt.' },
   { start: 38, end: 42, text: '50 megawatts by Q4 2026. 200 megawatts by 2027.' },
-  { start: 42, end: 46, text: 'Over a gigawatt by 2028. Each new node strengthens the whole.' },
-  { start: 46, end: 50, text: '780 million dollars in annual revenue at scale.' },
-  { start: 50, end: 54, text: 'Distributed power infrastructure for AI compute.' },
+  { start: 42, end: 46, text: 'Over a gigawatt by 2028. 780 million dollars in annual revenue.' },
+  { start: 46, end: 50, text: '200 megawatts online 6 months sooner equals 1.2 billion in hyperscaler revenue.' },
+  { start: 50, end: 54, text: 'Speed-to-power for AI inference. Starting in the Upper Midwest.' },
   { start: 54, end: 58, text: 'Nodiac.' },
   { start: 58, end: 60, text: '' },
 ];

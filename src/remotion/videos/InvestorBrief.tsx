@@ -61,6 +61,7 @@ function TheOneLiner() {
             <span style={{ color: C.teal }}>for AI compute.</span>
           </div>
           <div style={{ width: `${underlineW}%`, height: 3, background: C.teal, margin: '24px auto 0', opacity: 0.5 }} />
+          <div style={{ fontSize: 18, color: C.lilac, marginTop: 20, letterSpacing: 4, opacity: interpolate(frame, [60, 80], [0, 1], { extrapolateRight: 'clamp' }) }}>SPEED-TO-POWER FOR AI INFERENCE</div>
         </div>
       </div>
     </SlideBackground>
@@ -77,7 +78,7 @@ function TheProblem() {
     { label: 'AI COMPUTE DEMAND BY 2030', value: '100+ GW', color: C.teal, delay: 0 },
     { label: 'INTERCONNECTION QUEUE', value: '5+ years', color: '#ff6666', delay: 15 },
     { label: 'DELAYED DATA CENTER CAPEX', value: '$98B', color: '#ff6666', delay: 30 },
-    { label: 'CURTAILED RENEWABLE MWh/YR', value: '20M', color: C.orchid, delay: 45 },
+    { label: '200 MW ONLINE 6 MO SOONER', value: '$1.2B', color: C.teal, delay: 45 },
   ];
 
   const headerOp = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' });
@@ -91,7 +92,10 @@ function TheProblem() {
             AI&apos;s bottleneck isn&apos;t chips.
           </div>
           <div style={{ fontSize: 46, fontWeight: 800, color: '#ff6666', opacity: headerOp }}>
-            It&apos;s speed to power.
+            It&apos;s speed-to-power.
+          </div>
+          <div style={{ fontSize: 22, color: C.lilac, marginTop: 12, opacity: headerOp }}>
+            Inference is how AI labs make money. It needs distributed compute.
           </div>
         </div>
         <div style={{ position: 'absolute', bottom: 100, left: 120, right: 120, display: 'flex', gap: 24 }}>
@@ -122,10 +126,10 @@ function TheThesis() {
   const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
 
   const steps = [
-    { icon: '\u26A1', text: 'Deploy compute where power already exists', delay: 20 },
-    { icon: '\uD83C\uDF31', text: 'Collocate with renewable energy sites (IPPs)', delay: 40 },
+    { icon: '\u26A1', text: 'Speed-to-power: deploy inference where generation exists', delay: 20 },
+    { icon: '\uD83C\uDF31', text: 'Collocate at Greenbacker-owned renewable sites', delay: 40 },
     { icon: '\u23F1', text: 'Energize in months, not years', delay: 60 },
-    { icon: '\uD83D\uDD04', text: 'Repeatable across hundreds of sites', delay: 80 },
+    { icon: '\uD83D\uDD04', text: 'Repeatable. 200 MW online 6 mo sooner = $1.2B in revenue', delay: 80 },
   ];
 
   const headerOp = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' });
@@ -193,7 +197,10 @@ function ThePortfolio() {
         <div style={{ position: 'absolute', top: 100, left: 140 }}>
           <div style={{ fontSize: 18, fontWeight: 700, color: C.teal, letterSpacing: 5, opacity: headerOp }}>UPPER MIDWEST REGIONAL HUB</div>
           <div style={{ fontSize: 46, fontWeight: 800, color: C.white, marginTop: 8, opacity: headerOp }}>
-            First hub. {TOTAL_SITES} sites. {TOTAL_CAP} MW.
+            {TOTAL_SITES} Greenbacker-owned sites. {TOTAL_CAP} MW.
+          </div>
+          <div style={{ fontSize: 20, color: C.lilac, marginTop: 8, opacity: headerOp }}>
+            Existing infrastructure. Grid connections. Pre-permitted.
           </div>
         </div>
 
@@ -260,7 +267,7 @@ function TheBusinessModel() {
     { label: 'REVENUE / MW / YEAR', value: '$780K', color: C.teal, delay: 20 },
     { label: 'OPEX / MW / YEAR', value: '$80K', color: C.lilac, delay: 35 },
     { label: 'EBITDA / MW / YEAR', value: '$700K', color: C.orchid, delay: 50 },
-    { label: 'BUILD COST / MW', value: '$800K', color: C.white, delay: 65 },
+    { label: 'PAYBACK PERIOD', value: '<14 mo', color: C.white, delay: 65 },
   ];
 
   const modelOp = interpolate(frame, [110, 130], [0, 1], { extrapolateRight: 'clamp' });
@@ -364,10 +371,10 @@ function TheScalingPlan() {
 
         <div style={{ position: 'absolute', bottom: 80, left: 120, right: 120, display: 'flex', gap: 20, opacity: diffOp }}>
           {[
-            'Faster to market',
-            'Cleaner compute',
-            'Lower grid burden',
-            'Repeatable deployments',
+            'Greenbacker ($3B AUM)',
+            'Dunn Energy Coop',
+            'Armada Hardware',
+            'Dairyland Power',
           ].map(t => (
             <div key={t} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, background: `${C.teal}12`, border: `2px solid ${C.teal}25`, textAlign: 'center' }}>
               <span style={{ fontSize: 18, fontWeight: 700, color: C.teal }}>{t}</span>
@@ -408,14 +415,15 @@ function InvestorCTA() {
 
         <div style={{ marginTop: 40, opacity: tagOp, textAlign: 'center' }}>
           <div style={{ fontSize: 34, fontWeight: 600, color: C.white }}>
-            The fastest path to distributed AI compute
+            Speed-to-power for AI inference
           </div>
           <div style={{ fontSize: 34, fontWeight: 600, color: C.teal }}>
-            in the Upper Midwest.
+            starting in the Upper Midwest.
           </div>
         </div>
 
-        <div style={{ marginTop: 50, opacity: urlOp }}>
+        <div style={{ marginTop: 30, opacity: urlOp, textAlign: 'center' }}>
+          <div style={{ fontSize: 18, color: '#ff8866', fontWeight: 600, marginBottom: 16 }}>The first-mover window is closing.</div>
           <div style={{ fontSize: 26, color: C.lilac, letterSpacing: 5 }}>NODIAC.AI</div>
         </div>
       </div>
@@ -426,20 +434,20 @@ function InvestorCTA() {
 // ─── Voiceover Script ──────────────────────────────────────────────────────────
 const SUBS: SubSegment[] = [
   { start: 0, end: 3, text: '' },
-  { start: 3, end: 6, text: 'Nodiac. Distributed power infrastructure for AI compute.' },
-  { start: 6, end: 10, text: "AI's bottleneck is not chips. It is speed to power." },
-  { start: 10, end: 14, text: '100 gigawatts of demand. 5-year queues. 98 billion in delayed projects.' },
-  { start: 14, end: 18, text: 'Nodiac deploys compute where power already exists.' },
-  { start: 18, end: 22, text: 'Collocated with renewable energy sites. Energized in months, not years.' },
-  { start: 22, end: 26, text: 'Upper Midwest Regional Hub: 42 sites across Minnesota, Iowa, and Wisconsin.' },
-  { start: 26, end: 30, text: '348 megawatts. Pilots at Hay River and Walleye in active development.' },
-  { start: 30, end: 34, text: '$780K revenue per megawatt per year. $700K EBITDA. Triple-net lease.' },
-  { start: 34, end: 38, text: '5 to 10 year contracts with Tier-1 hyperscaler counterparties.' },
-  { start: 38, end: 42, text: '50 megawatts by Q4 2026. 200 megawatts by 2027.' },
-  { start: 42, end: 46, text: 'Over a gigawatt by 2028. 780 million dollars in annual recurring revenue.' },
-  { start: 46, end: 50, text: 'Faster to market. Cleaner compute. Lower grid burden. Repeatable deployments.' },
-  { start: 50, end: 54, text: 'Built by the team behind Greenbacker — 3 billion in renewable assets under management.' },
-  { start: 54, end: 58, text: 'The fastest path to distributed AI compute in the Upper Midwest.' },
+  { start: 3, end: 6, text: 'Nodiac. Speed-to-power for AI inference.' },
+  { start: 6, end: 10, text: "AI's bottleneck is not chips. It is speed-to-power. Inference is how labs make money." },
+  { start: 10, end: 14, text: '100 gigawatts of demand. 5-year queues. 200 megawatts online 6 months sooner equals 1.2 billion in hyperscaler revenue.' },
+  { start: 14, end: 18, text: 'Nodiac deploys inference compute at Greenbacker-owned renewable generation sites.' },
+  { start: 18, end: 22, text: 'Existing infrastructure. Grid connections. Pre-permitted. Speed-to-power in months, not years.' },
+  { start: 22, end: 26, text: 'Upper Midwest Regional Hub: 42 Greenbacker-owned sites across Minnesota, Iowa, and Wisconsin.' },
+  { start: 26, end: 30, text: '348 megawatts. Pilots at Hay River and Walleye in active development with Dunn Energy Cooperative.' },
+  { start: 30, end: 34, text: '$780K revenue per megawatt per year. $700K EBITDA. Less than 14 months to payback.' },
+  { start: 34, end: 38, text: 'Triple-net lease. 5 to 10 year contracts with Tier-1 hyperscaler counterparties.' },
+  { start: 38, end: 42, text: '50 megawatts by Q4 2026. 200 megawatts by 2027. Over a gigawatt by 2028.' },
+  { start: 42, end: 46, text: '780 million dollars in annual recurring revenue at scale.' },
+  { start: 46, end: 50, text: 'Built by the team behind Greenbacker — 3 billion in renewable energy assets.' },
+  { start: 50, end: 54, text: 'Speed-to-power for AI inference. The first-mover window is closing.' },
+  { start: 54, end: 58, text: 'Nodiac.' },
   { start: 58, end: 60, text: '' },
 ];
 

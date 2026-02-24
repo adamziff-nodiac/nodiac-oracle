@@ -113,7 +113,7 @@ function Bottleneck() {
         {[
           { text: '5-year interconnection queues', op: card1Op, color: '#ff6666' },
           { text: '$98B in delayed projects', op: card2Op, color: '#ffaa44' },
-          { text: 'Every hyperscaler constrained', op: card3Op, color: C.teal },
+          { text: '200 MW 6 mo sooner = $1.2B revenue', op: card3Op, color: C.teal },
         ].map((c, i) => (
           <div key={i} style={{ opacity: c.op, transform: `translateY(${(1 - c.op) * 20}px)`, padding: '20px 40px', borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: `1px solid ${c.color}30`, backdropFilter: 'blur(4px)' }}>
             <span style={{ fontSize: 22, color: C.white, fontWeight: 600 }}>{c.text}</span>
@@ -238,8 +238,11 @@ function ThePivot() {
       }} />
 
       {/* Text */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', opacity: textOp * (1 - logoOp), zIndex: 10 }}>
+      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', opacity: textOp * (1 - logoOp), zIndex: 10 }}>
         <div style={{ fontSize: 56, fontWeight: 700, color: C.teal, textAlign: 'center', textShadow: `0 0 60px ${C.teal}50`, transform: `scale(${textScale})` }}>
+          Speed-to-power.
+        </div>
+        <div style={{ fontSize: 24, color: C.lilac, marginTop: 16, textAlign: 'center', opacity: textOp }}>
           Go to where the power already is.
         </div>
       </div>
@@ -285,8 +288,9 @@ function MapUnfolds() {
       </div>
 
       {/* Title during zoom */}
-      <div style={{ position: 'absolute', top: 80, left: 0, right: 0, textAlign: 'center', opacity: titleOp * titleFo, zIndex: 10 }}>
+      <div style={{ position: 'absolute', top: 60, left: 0, right: 0, textAlign: 'center', opacity: titleOp * titleFo, zIndex: 10 }}>
         <div style={{ fontSize: 36, fontWeight: 700, color: C.white }}>Upper Midwest Regional Hub</div>
+        <div style={{ fontSize: 18, color: C.teal, marginTop: 8, letterSpacing: 3 }}>GREENBACKER-OWNED GENERATION SITES</div>
       </div>
 
       {/* After zoom: show site dots */}
@@ -352,8 +356,9 @@ function PilotCloseUp() {
         })}
       </svg>
 
-      <div style={{ position: 'absolute', top: 80, left: 0, right: 0, textAlign: 'center' }}>
+      <div style={{ position: 'absolute', top: 60, left: 0, right: 0, textAlign: 'center' }}>
         <div style={{ fontSize: 20, color: C.teal, fontWeight: 700, letterSpacing: 6, textTransform: 'uppercase' }}>Pilot Sites In Development</div>
+        <div style={{ fontSize: 16, color: C.lilac, marginTop: 6 }}>Dunn Energy Cooperative &bull; Western Wisconsin</div>
       </div>
       <div style={{ position: 'absolute', top: 180, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 60 }}>
         {pilots.map((p, i) => (
@@ -374,9 +379,24 @@ function PilotCloseUp() {
           </div>
         ))}
       </div>
-      <div style={{ position: 'absolute', bottom: 80, left: 0, right: 0, textAlign: 'center', opacity: podOp }}>
-        <div style={{ fontSize: 28, color: C.white, fontWeight: 600 }}>Modular. Mobile. Months to deploy — not years.</div>
-        <div style={{ fontSize: 20, color: C.lilac, marginTop: 12 }}>Armada compute pods on trailers. No concrete. No permitting.</div>
+      {/* Deployment details - fill the dead space */}
+      <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, opacity: podOp }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <div style={{ fontSize: 28, color: C.white, fontWeight: 600 }}>Modular. Mobile. Months to deploy — not years.</div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 40, marginTop: 8 }}>
+          {[
+            { label: 'Hardware', value: 'Armada compute pods', sub: 'Trailer-mounted, no concrete' },
+            { label: 'Power Partner', value: 'Dunn Energy Coop', sub: 'Interconnection approved' },
+            { label: 'Speed-to-Power', value: 'Weeks to energize', sub: 'vs 5-7 years traditional' },
+          ].map(d => (
+            <div key={d.label} style={{ textAlign: 'center', padding: '12px 24px', borderRadius: 12, background: 'rgba(255,255,255,0.03)' }}>
+              <div style={{ fontSize: 14, color: C.teal, fontWeight: 700, letterSpacing: 2 }}>{d.label}</div>
+              <div style={{ fontSize: 20, color: C.white, fontWeight: 600, marginTop: 6 }}>{d.value}</div>
+              <div style={{ fontSize: 14, color: C.lilac, marginTop: 4 }}>{d.sub}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </AbsoluteFill>
   );
@@ -425,9 +445,9 @@ function BusinessCase() {
       </div>
       <div style={{ position: 'absolute', bottom: 80, left: 120, right: 120, display: 'flex', gap: 30, opacity: diffOp }}>
         {[
-          { text: '$780K/MW/year revenue', color: C.teal },
-          { text: '99.999% distributed uptime', color: C.orchid },
-          { text: 'Greenbacker site access', color: C.white },
+          { text: '<14 month payback per MW', color: C.teal },
+          { text: 'Triple-net lease, stable EBITDA', color: C.orchid },
+          { text: 'Greenbacker-owned site access ($3B AUM)', color: C.white },
         ].map(t => (
           <div key={t.text} style={{ flex: 1, padding: '20px 28px', borderRadius: 16, background: 'rgba(255,255,255,0.04)', border: `1px solid ${t.color}20` }}>
             <span style={{ fontSize: 20, color: C.white, fontWeight: 600 }}>{t.text}</span>
@@ -469,12 +489,13 @@ function TheClose() {
       </div>
       <div style={{ position: 'absolute', bottom: 260, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
         <div style={{ fontSize: 32, fontWeight: 600, color: C.white }}>
-          The fastest path to distributed AI compute
+          Speed-to-power for AI inference
           <br />
-          <span style={{ color: C.teal }}>in the Upper Midwest.</span>
+          <span style={{ color: C.teal }}>starting in the Upper Midwest.</span>
         </div>
       </div>
-      <div style={{ position: 'absolute', bottom: 100, left: 0, right: 0, textAlign: 'center', opacity: urlOp, zIndex: 10 }}>
+      <div style={{ position: 'absolute', bottom: 120, left: 0, right: 0, textAlign: 'center', opacity: urlOp, zIndex: 10 }}>
+        <div style={{ fontSize: 18, color: '#ff8866', fontWeight: 600, marginBottom: 16 }}>The first-mover window is closing.</div>
         <div style={{ fontSize: 24, color: C.lilac, letterSpacing: 4 }}>NODIAC.AI</div>
       </div>
     </AbsoluteFill>
@@ -484,16 +505,16 @@ function TheClose() {
 // ─── Subtitle Overlay ──────────────────────────────────────────────────────────
 const SUBS: SubSegment[] = [
   { start: 0, end: 4, text: '' },
-  { start: 4, end: 10, text: "The AI industry needs 100 gigawatts of power. The grid can deliver a fraction of that." },
-  { start: 10, end: 16, text: "Five-year interconnection queues. 98 billion dollars in delayed projects. The traditional path is broken." },
-  { start: 16, end: 24, text: "Building a new data center takes five to seven years to energize. AI cannot wait that long." },
-  { start: 24, end: 30, text: "Unless you go to where the power already is." },
-  { start: 30, end: 40, text: "Across the Upper Midwest, hundreds of renewable energy sites sit with available capacity. Nodiac brings compute to the power." },
-  { start: 40, end: 50, text: "42 sites across Minnesota, Iowa, and Wisconsin. Over 340 megawatts. Connected to existing grid infrastructure." },
-  { start: 50, end: 62, text: "Pilot sites at Hay River and Walleye are already in development. Modular data centers on trailers. Energized in months." },
-  { start: 62, end: 78, text: "50 megawatts by Q4 2026. 200 megawatts by 2027. Over a gigawatt by 2028." },
-  { start: 78, end: 86, text: "The fastest path to distributed AI compute in the Upper Midwest." },
-  { start: 86, end: 90, text: "Nodiac." },
+  { start: 4, end: 10, text: "The AI industry needs 100 gigawatts of power. The grid can deliver a fraction of that. 200 megawatts online 6 months sooner equals 1.2 billion in hyperscaler revenue." },
+  { start: 10, end: 16, text: "Five-year interconnection queues. 98 billion dollars in delayed projects. Speed-to-power is the bottleneck." },
+  { start: 16, end: 24, text: "Building a new data center takes five to seven years to energize. Inference — how AI labs make money — cannot wait that long." },
+  { start: 24, end: 30, text: "Speed-to-power. Go to where the power already is." },
+  { start: 30, end: 40, text: "Across the Upper Midwest, 42 Greenbacker-owned renewable generation sites sit with available capacity. Nodiac brings inference compute to the power." },
+  { start: 40, end: 50, text: "42 sites across Minnesota, Iowa, and Wisconsin. Over 340 megawatts. Existing infrastructure. Grid connections. Pre-permitted." },
+  { start: 50, end: 62, text: "Pilot sites at Hay River and Walleye with Dunn Energy Cooperative. Armada compute pods on trailers. Energized in weeks." },
+  { start: 62, end: 78, text: "50 megawatts by Q4 2026. 200 megawatts by 2027. Over a gigawatt by 2028. Less than 14 months to payback per megawatt." },
+  { start: 78, end: 86, text: "Speed-to-power for AI inference, starting in the Upper Midwest." },
+  { start: 86, end: 90, text: "Nodiac. The first-mover window is closing." },
 ];
 
 
