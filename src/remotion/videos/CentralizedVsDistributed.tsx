@@ -8,6 +8,7 @@ import {
   interpolate,
   spring,
   Sequence,
+  Easing,
 } from 'remotion';
 import { UPPER_MIDWEST_SITES } from '../data';
 import { C, FONT, NodiacLogo, siteProj, stateColor, Subtitles, Voiceover, type SubSegment } from '../shared';
@@ -25,8 +26,7 @@ function SplitFrame({ left, right, dividerOp = 1 }: { left: React.ReactNode; rig
       <div style={{ position: 'absolute', right: 0, top: 0, width: '50%', height: '100%', overflow: 'hidden' }}>
         {right}
       </div>
-      {/* Center divider */}
-      <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 3, background: C.teal, opacity: dividerOp * 0.6, transform: 'translateX(-1px)', boxShadow: `0 0 20px ${C.teal}40` }} />
+      <div style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 4, background: C.teal, opacity: dividerOp * 0.5, transform: 'translateX(-2px)', boxShadow: `0 0 30px ${C.teal}40` }} />
     </AbsoluteFill>
   );
 }
@@ -34,33 +34,32 @@ function SplitFrame({ left, right, dividerOp = 1 }: { left: React.ReactNode; rig
 // ─── Scene 1: The Challenge (0:00-0:06) ────────────────────────────────────────
 function TheChallenge() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const titleOp = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' });
   const splitProgress = interpolate(frame, [40, 80], [0, 1], { extrapolateRight: 'clamp' });
   const leftOp = interpolate(frame, [80, 100], [0, 1], { extrapolateRight: 'clamp' });
   const rightOp = interpolate(frame, [90, 110], [0, 1], { extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill style={{ background: C.bg, fontFamily: FONT, justifyContent: 'center', alignItems: 'center' }}>
+    <AbsoluteFill style={{ background: C.bg, fontFamily: FONT, justifyContent: 'center', alignItems: 'center', opacity: fadeIn }}>
       <div style={{ opacity: titleOp, textAlign: 'center' }}>
-        <div style={{ fontSize: 48, fontWeight: 800, color: C.white }}>
+        <div style={{ fontSize: 56, fontWeight: 800, color: C.white }}>
           AI needs power.
         </div>
-        <div style={{ fontSize: 32, color: C.lilac, marginTop: 12 }}>
+        <div style={{ fontSize: 36, color: C.lilac, marginTop: 16 }}>
           There are two paths.
         </div>
       </div>
-      {/* Split labels appear */}
       <div style={{ position: 'absolute', left: '15%', bottom: 200, opacity: leftOp }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: '#666', letterSpacing: 4 }}>TRADITIONAL</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: '#666', letterSpacing: 5 }}>TRADITIONAL</div>
       </div>
       <div style={{ position: 'absolute', right: '15%', bottom: 200, opacity: rightOp }}>
-        <div style={{ fontSize: 20, fontWeight: 700, color: C.teal, letterSpacing: 4 }}>DISTRIBUTED</div>
+        <div style={{ fontSize: 24, fontWeight: 800, color: C.teal, letterSpacing: 5 }}>DISTRIBUTED</div>
       </div>
-      {/* Growing divider line */}
       <div style={{
-        position: 'absolute', left: '50%', transform: 'translateX(-1px)',
+        position: 'absolute', left: '50%', transform: 'translateX(-2px)',
         top: `${50 - splitProgress * 50}%`, bottom: `${50 - splitProgress * 50}%`,
-        width: 3, background: C.teal, opacity: splitProgress * 0.6,
+        width: 4, background: C.teal, opacity: splitProgress * 0.5,
       }} />
     </AbsoluteFill>
   );
@@ -69,129 +68,149 @@ function TheChallenge() {
 // ─── Scene 2: Permitting (0:06-0:16) ──────────────────────────────────────────
 function Permitting() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const tradBar = interpolate(frame, [0, 280], [0, 0.6], { extrapolateRight: 'clamp' });
   const distBar = interpolate(frame, [20, 50], [0, 1], { extrapolateRight: 'clamp' });
-  const stampOp = interpolate(frame, [200, 220], [0, 1], { extrapolateRight: 'clamp' });
+  const stampOp = interpolate(frame, [180, 200], [0, 1], { extrapolateRight: 'clamp' });
   const checkOp = interpolate(frame, [60, 80], [0, 1], { extrapolateRight: 'clamp' });
 
   const left = (
-    <div style={{ background: '#080808', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#555', letterSpacing: 3, marginBottom: 20 }}>TRADITIONAL</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: '#888', marginBottom: 30 }}>Permitting</div>
-      <div style={{ height: 12, borderRadius: 6, background: '#1a1a1a', marginBottom: 20 }}>
-        <div style={{ height: '100%', borderRadius: 6, background: '#cc3333', width: `${tradBar * 100}%` }} />
+    <div style={{ background: '#080808', height: '100%', padding: '60px 50px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#555', letterSpacing: 4, marginBottom: 20 }}>TRADITIONAL</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: '#888', marginBottom: 30 }}>Permitting</div>
+      <div style={{ height: 16, borderRadius: 8, background: '#1a1a1a', marginBottom: 24 }}>
+        <div style={{ height: '100%', borderRadius: 8, background: '#cc3333', width: `${tradBar * 100}%` }} />
       </div>
-      <div style={{ fontSize: 14, color: '#666', lineHeight: 2 }}>
+      <div style={{ fontSize: 20, color: '#666', lineHeight: 2.2 }}>
         Environmental review: 18-24 months<br />
         State permits: 12-18 months<br />
         Federal review: 6-12 months
       </div>
-      <div style={{ marginTop: 40, opacity: stampOp }}>
-        <div style={{ display: 'inline-block', padding: '8px 20px', border: '2px solid #cc3333', borderRadius: 8, transform: 'rotate(-3deg)' }}>
-          <span style={{ fontSize: 24, fontWeight: 900, color: '#cc3333' }}>3-5 YEARS</span>
+      <div style={{ marginTop: 50, opacity: stampOp }}>
+        <div style={{ display: 'inline-block', padding: '12px 28px', border: '3px solid #cc3333', borderRadius: 12, transform: 'rotate(-3deg)' }}>
+          <span style={{ fontSize: 32, fontWeight: 900, color: '#cc3333' }}>3-5 YEARS</span>
         </div>
+      </div>
+      {/* Warning icon */}
+      <div style={{ position: 'absolute', bottom: 80, left: 50, right: 50 }}>
+        <div style={{ fontSize: 18, color: '#555', fontStyle: 'italic' }}>Before a single rack powers on</div>
       </div>
     </div>
   );
 
   const right = (
-    <div style={{ background: '#040810', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: C.teal, letterSpacing: 3, marginBottom: 20 }}>DISTRIBUTED</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: C.white, marginBottom: 30 }}>Permitting</div>
-      <div style={{ height: 12, borderRadius: 6, background: '#1a1a1a', marginBottom: 20 }}>
-        <div style={{ height: '100%', borderRadius: 6, background: C.teal, width: `${distBar * 100}%` }} />
+    <div style={{ background: '#040810', height: '100%', padding: '60px 50px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: C.teal, letterSpacing: 4, marginBottom: 20 }}>DISTRIBUTED</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: C.white, marginBottom: 30 }}>Permitting</div>
+      <div style={{ height: 16, borderRadius: 8, background: '#1a1a1a', marginBottom: 24 }}>
+        <div style={{ height: '100%', borderRadius: 8, background: C.teal, width: `${distBar * 100}%` }} />
       </div>
-      <div style={{ fontSize: 14, color: C.lilac, lineHeight: 2 }}>
+      <div style={{ fontSize: 20, color: C.lilac, lineHeight: 2.2 }}>
         Existing infrastructure<br />
         Pre-permitted sites<br />
         Behind-the-meter deployment
       </div>
-      <div style={{ marginTop: 40, opacity: checkOp }}>
-        <div style={{ display: 'inline-block', padding: '8px 20px', border: `2px solid ${C.teal}`, borderRadius: 8 }}>
-          <span style={{ fontSize: 24, fontWeight: 900, color: C.teal }}>ZERO NEW PERMITS</span>
+      <div style={{ marginTop: 50, opacity: checkOp }}>
+        <div style={{ display: 'inline-block', padding: '12px 28px', border: `3px solid ${C.teal}`, borderRadius: 12 }}>
+          <span style={{ fontSize: 32, fontWeight: 900, color: C.teal }}>ZERO NEW PERMITS</span>
         </div>
+      </div>
+      <div style={{ position: 'absolute', bottom: 80, right: 50 }}>
+        <div style={{ fontSize: 18, color: C.teal, fontWeight: 600 }}>Deploy immediately</div>
       </div>
     </div>
   );
 
-  return <SplitFrame left={left} right={right} />;
+  return (
+    <AbsoluteFill style={{ opacity: fadeIn }}>
+      <SplitFrame left={left} right={right} />
+    </AbsoluteFill>
+  );
 }
 
 // ─── Scene 3: Construction (0:16-0:26) ────────────────────────────────────────
 function Construction() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const tradCost = interpolate(frame, [0, 250], [0, 1200], { extrapolateRight: 'clamp' });
   const distDeploy = interpolate(frame, [30, 90], [0, 1], { extrapolateRight: 'clamp' });
   const distCost = interpolate(frame, [60, 90], [0, 3], { extrapolateRight: 'clamp' });
   const tradTime = interpolate(frame, [0, 250], [0, 48], { extrapolateRight: 'clamp' });
 
   const left = (
-    <div style={{ background: '#080808', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#555', letterSpacing: 3, marginBottom: 20 }}>TRADITIONAL</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: '#888', marginBottom: 40 }}>Construction</div>
-      {/* Cost counter */}
-      <div style={{ fontSize: 48, fontWeight: 900, color: '#cc3333', fontFamily: 'JetBrains Mono, monospace' }}>
+    <div style={{ background: '#080808', height: '100%', padding: '60px 50px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#555', letterSpacing: 4, marginBottom: 20 }}>TRADITIONAL</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: '#888', marginBottom: 40 }}>Construction</div>
+      <div style={{ fontSize: 64, fontWeight: 900, color: '#cc3333', fontFamily: 'JetBrains Mono, monospace' }}>
         ${Math.round(tradCost)}M
       </div>
-      <div style={{ fontSize: 14, color: '#666', marginTop: 8 }}>and counting...</div>
-      {/* Time bar */}
+      <div style={{ fontSize: 20, color: '#666', marginTop: 8 }}>and counting...</div>
       <div style={{ marginTop: 40 }}>
-        <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>Timeline</div>
-        <div style={{ height: 8, borderRadius: 4, background: '#1a1a1a', width: '100%' }}>
-          <div style={{ height: '100%', borderRadius: 4, background: '#cc3333', width: `${(tradTime / 48) * 100}%`, opacity: 0.7 }} />
+        <div style={{ fontSize: 18, color: '#666', marginBottom: 10 }}>Timeline</div>
+        <div style={{ height: 12, borderRadius: 6, background: '#1a1a1a', width: '100%' }}>
+          <div style={{ height: '100%', borderRadius: 6, background: '#cc3333', width: `${(tradTime / 48) * 100}%`, opacity: 0.7 }} />
         </div>
-        <div style={{ fontSize: 12, color: '#555', marginTop: 4 }}>{Math.round(tradTime)} / 48 months</div>
+        <div style={{ fontSize: 18, color: '#555', marginTop: 8 }}>{Math.round(tradTime)} / 48 months</div>
       </div>
-      {/* Building wireframe */}
-      <svg width={300} height={200} style={{ marginTop: 30, opacity: 0.3 }}>
-        <rect x={20} y={60} width={260} height={130} fill="none" stroke="#333" strokeWidth={1} strokeDasharray="4 4" />
-        <line x1={20} y1={60} x2={150} y2={10} stroke="#333" strokeWidth={1} strokeDasharray="4 4" />
-        <line x1={280} y1={60} x2={150} y2={10} stroke="#333" strokeWidth={1} strokeDasharray="4 4" />
+      {/* Building wireframe — bigger and bolder */}
+      <svg width={400} height={200} style={{ marginTop: 30, opacity: 0.2 }}>
+        <rect x={20} y={60} width={360} height={130} fill="none" stroke="#444" strokeWidth={2} strokeDasharray="6 4" />
+        <line x1={20} y1={60} x2={200} y2={10} stroke="#444" strokeWidth={2} strokeDasharray="6 4" />
+        <line x1={380} y1={60} x2={200} y2={10} stroke="#444" strokeWidth={2} strokeDasharray="6 4" />
+        <text x={200} y={140} fill="#444" fontSize={14} textAnchor="middle" fontFamily={FONT}>UNDER CONSTRUCTION</text>
       </svg>
     </div>
   );
 
   const right = (
-    <div style={{ background: '#040810', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: C.teal, letterSpacing: 3, marginBottom: 20 }}>DISTRIBUTED</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: C.white, marginBottom: 40 }}>Construction</div>
-      <div style={{ fontSize: 48, fontWeight: 900, color: C.teal, fontFamily: 'JetBrains Mono, monospace' }}>
+    <div style={{ background: '#040810', height: '100%', padding: '60px 50px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: C.teal, letterSpacing: 4, marginBottom: 20 }}>DISTRIBUTED</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: C.white, marginBottom: 40 }}>Construction</div>
+      <div style={{ fontSize: 64, fontWeight: 900, color: C.teal, fontFamily: 'JetBrains Mono, monospace' }}>
         ${distCost.toFixed(0)}M
       </div>
-      <div style={{ fontSize: 14, color: C.lilac, marginTop: 8 }}>per site</div>
-      {/* Trailer deployment animation */}
-      <div style={{ marginTop: 40, position: 'relative', height: 120 }}>
+      <div style={{ fontSize: 20, color: C.lilac, marginTop: 8 }}>per site</div>
+      {/* Trailer deployment animation — bigger */}
+      <div style={{ marginTop: 40, position: 'relative', height: 160 }}>
         <div style={{
           position: 'absolute',
-          left: `${distDeploy * 60}%`,
+          left: `${distDeploy * 55}%`,
           top: 30,
-          width: 120, height: 60, borderRadius: 8,
-          background: `linear-gradient(180deg, ${C.teal}30, ${C.bg2}60)`,
-          border: `1px solid ${C.teal}40`,
+          width: 180, height: 80, borderRadius: 12,
+          background: `linear-gradient(180deg, ${C.teal}40, ${C.bg2}60)`,
+          border: `2px solid ${C.teal}50`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, color: C.teal, fontWeight: 700,
+          fontSize: 16, color: C.teal, fontWeight: 800,
         }}>
           ARMADA POD
         </div>
+        {/* Wheels */}
+        <div style={{ position: 'absolute', left: `calc(${distDeploy * 55}% + 30px)`, top: 110, width: 16, height: 16, borderRadius: '50%', background: '#333', border: '2px solid #555' }} />
+        <div style={{ position: 'absolute', left: `calc(${distDeploy * 55}% + 130px)`, top: 110, width: 16, height: 16, borderRadius: '50%', background: '#333', border: '2px solid #555' }} />
         {/* Power connection spark */}
         {distDeploy > 0.9 && (
-          <div style={{ position: 'absolute', right: 40, top: 55, width: 10, height: 10, borderRadius: '50%', background: C.teal, boxShadow: `0 0 20px ${C.teal}` }} />
+          <div style={{ position: 'absolute', right: 50, top: 65, width: 16, height: 16, borderRadius: '50%', background: C.teal, boxShadow: `0 0 30px ${C.teal}` }} />
         )}
       </div>
-      <div style={{ marginTop: 20 }}>
-        <div style={{ display: 'inline-block', padding: '8px 20px', border: `2px solid ${C.teal}`, borderRadius: 8, opacity: distDeploy > 0.9 ? 1 : 0 }}>
-          <span style={{ fontSize: 20, fontWeight: 900, color: C.teal }}>DEPLOYED IN WEEKS</span>
+      <div style={{ marginTop: 16 }}>
+        <div style={{ display: 'inline-block', padding: '12px 28px', border: `3px solid ${C.teal}`, borderRadius: 12, opacity: distDeploy > 0.9 ? 1 : 0 }}>
+          <span style={{ fontSize: 28, fontWeight: 900, color: C.teal }}>DEPLOYED IN WEEKS</span>
         </div>
       </div>
     </div>
   );
 
-  return <SplitFrame left={left} right={right} />;
+  return (
+    <AbsoluteFill style={{ opacity: fadeIn }}>
+      <SplitFrame left={left} right={right} />
+    </AbsoluteFill>
+  );
 }
 
 // ─── Scene 4: Reliability (0:26-0:36) ─────────────────────────────────────────
 function Reliability() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const failFrame = 60;
   const failed = frame >= failFrame;
   const recovery = interpolate(frame, [failFrame + 30, failFrame + 90], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
@@ -200,176 +219,203 @@ function Reliability() {
   const leftRecovery = interpolate(frame, [failFrame + 60, failFrame + 120], [0, 1], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   const left = (
-    <div style={{ background: '#080808', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#555', letterSpacing: 3, marginBottom: 20 }}>TRADITIONAL</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: '#888', marginBottom: 40 }}>Reliability</div>
-      {/* Single building */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 60 }}>
+    <div style={{ background: '#080808', height: '100%', padding: '60px 50px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#555', letterSpacing: 4, marginBottom: 20 }}>TRADITIONAL</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: '#888', marginBottom: 30 }}>Reliability</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 40 }}>
         <div style={{
-          width: 120, height: 120, borderRadius: 16,
+          width: 180, height: 180, borderRadius: 24,
           background: leftFail ? 'rgba(204,51,51,0.3)' : 'rgba(255,255,255,0.05)',
-          border: `2px solid ${leftFail ? '#cc3333' : '#333'}`,
+          border: `3px solid ${leftFail ? '#cc3333' : '#333'}`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexDirection: 'column',
         }}>
-          <div style={{ fontSize: 32, color: leftFail ? '#cc3333' : '#666' }}>
+          <div style={{ fontSize: 48, color: leftFail ? '#cc3333' : '#666' }}>
             {leftFail ? '\u26A0' : '\uD83C\uDFE2'}
           </div>
-          <div style={{ fontSize: 11, color: leftFail ? '#cc3333' : '#666', marginTop: 8 }}>
+          <div style={{ fontSize: 18, color: leftFail ? '#cc3333' : '#666', marginTop: 12, fontWeight: 700 }}>
             {leftFail ? 'OFFLINE' : '500 MW'}
           </div>
         </div>
       </div>
       <div style={{ textAlign: 'center', marginTop: 30 }}>
         {leftFail && (
-          <div style={{ fontSize: 18, fontWeight: 700, color: '#cc3333' }}>
+          <div style={{ fontSize: 24, fontWeight: 800, color: '#cc3333' }}>
             100% CAPACITY OFFLINE
           </div>
         )}
         {leftRecovery > 0 && (
-          <div style={{ fontSize: 13, color: '#666', marginTop: 8, opacity: leftRecovery }}>
+          <div style={{ fontSize: 18, color: '#666', marginTop: 12, opacity: leftRecovery }}>
             Backup generator: 72-hour fuel supply
           </div>
         )}
       </div>
-      <div style={{ textAlign: 'center', marginTop: 40, fontSize: 14, color: '#555' }}>
+      <div style={{ textAlign: 'center', marginTop: 30, fontSize: 20, color: '#555', fontWeight: 600 }}>
         Single point of failure
       </div>
     </div>
   );
 
-  // Distributed: network of dots
   const networkDots = Array.from({ length: 12 }, (_, i) => {
     const a = (i / 12) * Math.PI * 2;
-    const x = 200 + Math.cos(a) * 120;
-    const y = 280 + Math.sin(a) * 120;
-    // 2 dots "fail"
+    const x = 240 + Math.cos(a) * 150;
+    const y = 320 + Math.sin(a) * 150;
     const isFailed = failed && (i === 3 || i === 7);
     const isRecovered = isFailed && recovery > 0.8;
     return { x, y, isFailed, isRecovered };
   });
 
   const right = (
-    <div style={{ background: '#040810', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: C.teal, letterSpacing: 3, marginBottom: 20 }}>DISTRIBUTED</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: C.white, marginBottom: 20 }}>Reliability</div>
-      <svg width={400} height={400}>
-        {/* Connection lines */}
+    <div style={{ background: '#040810', height: '100%', padding: '60px 50px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: C.teal, letterSpacing: 4, marginBottom: 20 }}>DISTRIBUTED</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: C.white, marginBottom: 10 }}>Reliability</div>
+      <svg width={480} height={480} style={{ margin: '0 auto', display: 'block' }}>
         {networkDots.map((d, i) => {
           const next = networkDots[(i + 1) % networkDots.length];
-          return <line key={i} x1={d.x} y1={d.y} x2={next.x} y2={next.y} stroke={C.teal} strokeWidth={1} opacity={0.15} />;
+          return <line key={i} x1={d.x} y1={d.y} x2={next.x} y2={next.y} stroke={C.teal} strokeWidth={1.5} opacity={0.2} />;
         })}
-        {/* Dots */}
+        {/* Cross connections */}
+        {networkDots.map((d, i) => {
+          const across = networkDots[(i + 4) % networkDots.length];
+          return <line key={`x${i}`} x1={d.x} y1={d.y} x2={across.x} y2={across.y} stroke={C.teal} strokeWidth={0.5} opacity={0.1} />;
+        })}
         {networkDots.map((d, i) => (
-          <circle key={i} cx={d.x} cy={d.y} r={10}
+          <circle key={i} cx={d.x} cy={d.y} r={14}
             fill={d.isFailed && !d.isRecovered ? '#cc3333' : C.teal}
             opacity={d.isFailed && !d.isRecovered ? 0.5 : 0.8}
           />
         ))}
-        {/* Center hub */}
-        <circle cx={200} cy={280} r={20} fill={C.bg2} stroke={C.teal} strokeWidth={2} />
-        <text x={200} y={284} fill={C.white} fontSize={10} fontWeight={700} textAnchor="middle" fontFamily={FONT}>HUB</text>
+        <circle cx={240} cy={320} r={28} fill={C.bg2} stroke={C.teal} strokeWidth={3} />
+        <text x={240} y={326} fill={C.white} fontSize={14} fontWeight={800} textAnchor="middle" fontFamily={FONT}>HUB</text>
       </svg>
       {failed && (
         <div style={{ textAlign: 'center', marginTop: -20 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: C.teal }}>
+          <div style={{ fontSize: 20, fontWeight: 800, color: C.teal }}>
             {recovery < 0.8 ? '2 NODES OFFLINE — LOAD REDISTRIBUTED' : 'NETWORK HEALED — ALL NODES ONLINE'}
           </div>
-          <div style={{ fontSize: 24, fontWeight: 900, color: C.teal, marginTop: 8 }}>99.999% UPTIME</div>
-          <div style={{ fontSize: 13, color: C.lilac }}>No backup generators</div>
+          <div style={{ fontSize: 32, fontWeight: 900, color: C.teal, marginTop: 8 }}>99.999% UPTIME</div>
+          <div style={{ fontSize: 18, color: C.lilac }}>No backup generators needed</div>
         </div>
       )}
     </div>
   );
 
-  return <SplitFrame left={left} right={right} />;
+  return (
+    <AbsoluteFill style={{ opacity: fadeIn }}>
+      <SplitFrame left={left} right={right} />
+    </AbsoluteFill>
+  );
 }
 
 // ─── Scene 5: Time to Revenue (0:36-0:46) ─────────────────────────────────────
 function TimeToRevenue() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const progress = interpolate(frame, [0, 250], [0, 1], { extrapolateRight: 'clamp' });
 
-  // Traditional: flat until year 5, then jumps
   const tradRevenue = (x: number) => x > 0.7 ? (x - 0.7) * 3 : 0;
-  // Distributed: ramps early
   const distRevenue = (x: number) => x > 0.15 ? Math.pow((x - 0.15) / 0.85, 1.5) : 0;
 
-  const chartW = 340;
-  const chartH = 250;
+  const chartW = 500;
+  const chartH = 350;
 
   const left = (
-    <div style={{ background: '#080808', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#555', letterSpacing: 3, marginBottom: 20 }}>TRADITIONAL</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: '#888', marginBottom: 30 }}>Time to Revenue</div>
+    <div style={{ background: '#080808', height: '100%', padding: '60px 40px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: '#555', letterSpacing: 4, marginBottom: 20 }}>TRADITIONAL</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: '#888', marginBottom: 24 }}>Time to Revenue</div>
       <svg width={chartW} height={chartH}>
-        {/* Axes */}
-        <line x1={40} y1={chartH - 30} x2={chartW} y2={chartH - 30} stroke="#333" strokeWidth={1} />
-        <line x1={40} y1={0} x2={40} y2={chartH - 30} stroke="#333" strokeWidth={1} />
-        {/* Revenue curve */}
+        <line x1={50} y1={chartH - 40} x2={chartW} y2={chartH - 40} stroke="#333" strokeWidth={2} />
+        <line x1={50} y1={0} x2={50} y2={chartH - 40} stroke="#333" strokeWidth={2} />
+        {/* Grid lines */}
+        {[0.25, 0.5, 0.75].map(p => (
+          <line key={p} x1={50} y1={chartH - 40 - p * (chartH - 50)} x2={chartW} y2={chartH - 40 - p * (chartH - 50)} stroke="#1a1a1a" strokeWidth={1} />
+        ))}
         <path
-          d={Array.from({ length: 50 }, (_, i) => {
-            const t = (i / 49) * progress;
-            const x = 40 + (i / 49) * (chartW - 50);
-            const y = chartH - 30 - tradRevenue(t) * (chartH - 40);
+          d={Array.from({ length: 60 }, (_, i) => {
+            const t = (i / 59) * progress;
+            const x = 50 + (i / 59) * (chartW - 60);
+            const y = chartH - 40 - tradRevenue(t) * (chartH - 50);
             return `${i === 0 ? 'M' : 'L'}${x},${y}`;
           }).join(' ')}
-          fill="none" stroke="#cc3333" strokeWidth={2}
+          fill="none" stroke="#cc3333" strokeWidth={3}
         />
-        {/* Year labels */}
+        {/* Area fill */}
+        <path
+          d={Array.from({ length: 60 }, (_, i) => {
+            const t = (i / 59) * progress;
+            const x = 50 + (i / 59) * (chartW - 60);
+            const y = chartH - 40 - tradRevenue(t) * (chartH - 50);
+            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+          }).join(' ') + ` L${50 + (chartW - 60)},${chartH - 40} L50,${chartH - 40} Z`}
+          fill="#cc333310"
+        />
         {['2025', '2028', '2031'].map((y, i) => (
-          <text key={y} x={40 + i * ((chartW - 50) / 2)} y={chartH - 10} fill="#555" fontSize={11} fontFamily={FONT}>{y}</text>
+          <text key={y} x={50 + i * ((chartW - 60) / 2)} y={chartH - 15} fill="#555" fontSize={16} fontFamily={FONT} fontWeight={600}>{y}</text>
         ))}
       </svg>
-      <div style={{ marginTop: 20, fontSize: 16, fontWeight: 700, color: '#cc3333' }}>
+      <div style={{ marginTop: 16, fontSize: 24, fontWeight: 800, color: '#cc3333' }}>
         FIRST REVENUE: YEAR 5-7
       </div>
     </div>
   );
 
   const right = (
-    <div style={{ background: '#040810', height: '100%', padding: 60, fontFamily: FONT }}>
-      <div style={{ fontSize: 14, fontWeight: 700, color: C.teal, letterSpacing: 3, marginBottom: 20 }}>DISTRIBUTED</div>
-      <div style={{ fontSize: 20, fontWeight: 700, color: C.white, marginBottom: 30 }}>Time to Revenue</div>
+    <div style={{ background: '#040810', height: '100%', padding: '60px 40px', fontFamily: FONT }}>
+      <div style={{ fontSize: 18, fontWeight: 800, color: C.teal, letterSpacing: 4, marginBottom: 20 }}>DISTRIBUTED</div>
+      <div style={{ fontSize: 28, fontWeight: 800, color: C.white, marginBottom: 24 }}>Time to Revenue</div>
       <svg width={chartW} height={chartH}>
-        <line x1={40} y1={chartH - 30} x2={chartW} y2={chartH - 30} stroke="#333" strokeWidth={1} />
-        <line x1={40} y1={0} x2={40} y2={chartH - 30} stroke="#333" strokeWidth={1} />
+        <line x1={50} y1={chartH - 40} x2={chartW} y2={chartH - 40} stroke="#333" strokeWidth={2} />
+        <line x1={50} y1={0} x2={50} y2={chartH - 40} stroke="#333" strokeWidth={2} />
+        {[0.25, 0.5, 0.75].map(p => (
+          <line key={p} x1={50} y1={chartH - 40 - p * (chartH - 50)} x2={chartW} y2={chartH - 40 - p * (chartH - 50)} stroke="#1a1a1a" strokeWidth={1} />
+        ))}
         <path
-          d={Array.from({ length: 50 }, (_, i) => {
-            const t = (i / 49) * progress;
-            const x = 40 + (i / 49) * (chartW - 50);
-            const y = chartH - 30 - distRevenue(t) * (chartH - 40);
+          d={Array.from({ length: 60 }, (_, i) => {
+            const t = (i / 59) * progress;
+            const x = 50 + (i / 59) * (chartW - 60);
+            const y = chartH - 40 - distRevenue(t) * (chartH - 50);
             return `${i === 0 ? 'M' : 'L'}${x},${y}`;
           }).join(' ')}
-          fill="none" stroke={C.teal} strokeWidth={2.5}
+          fill="none" stroke={C.teal} strokeWidth={3}
+        />
+        <path
+          d={Array.from({ length: 60 }, (_, i) => {
+            const t = (i / 59) * progress;
+            const x = 50 + (i / 59) * (chartW - 60);
+            const y = chartH - 40 - distRevenue(t) * (chartH - 50);
+            return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+          }).join(' ') + ` L${50 + (chartW - 60)},${chartH - 40} L50,${chartH - 40} Z`}
+          fill={`${C.teal}10`}
         />
         {['2025', '2027', '2028+'].map((y, i) => (
-          <text key={y} x={40 + i * ((chartW - 50) / 2)} y={chartH - 10} fill={C.lilac} fontSize={11} fontFamily={FONT}>{y}</text>
+          <text key={y} x={50 + i * ((chartW - 60) / 2)} y={chartH - 15} fill={C.lilac} fontSize={16} fontFamily={FONT} fontWeight={600}>{y}</text>
         ))}
-        {/* Milestone markers */}
-        {progress > 0.25 && <text x={140} y={chartH - 80} fill={C.teal} fontSize={12} fontWeight={700} fontFamily={FONT}>$39M</text>}
-        {progress > 0.5 && <text x={210} y={chartH - 120} fill={C.teal} fontSize={12} fontWeight={700} fontFamily={FONT}>$156M</text>}
-        {progress > 0.8 && <text x={280} y={chartH - 180} fill={C.teal} fontSize={14} fontWeight={700} fontFamily={FONT}>$780M+</text>}
+        {progress > 0.25 && <text x={170} y={chartH - 120} fill={C.teal} fontSize={18} fontWeight={800} fontFamily={FONT}>$39M</text>}
+        {progress > 0.5 && <text x={270} y={chartH - 180} fill={C.teal} fontSize={18} fontWeight={800} fontFamily={FONT}>$156M</text>}
+        {progress > 0.8 && <text x={370} y={chartH - 260} fill={C.teal} fontSize={22} fontWeight={900} fontFamily={FONT}>$780M+</text>}
       </svg>
-      <div style={{ marginTop: 20, fontSize: 16, fontWeight: 700, color: C.teal }}>
+      <div style={{ marginTop: 16, fontSize: 24, fontWeight: 800, color: C.teal }}>
         FIRST REVENUE: MONTHS
       </div>
     </div>
   );
 
-  return <SplitFrame left={left} right={right} />;
+  return (
+    <AbsoluteFill style={{ opacity: fadeIn }}>
+      <SplitFrame left={left} right={right} />
+    </AbsoluteFill>
+  );
 }
 
 // ─── Scene 6: The Verdict (0:46-0:56) ─────────────────────────────────────────
 function TheVerdict() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
 
-  // Left side crumbles away
   const crumble = interpolate(frame, [0, 60], [0, 1], { extrapolateRight: 'clamp' });
   const rightExpand = interpolate(frame, [30, 90], [50, 100], { extrapolateRight: 'clamp' });
 
-  // Stats appear
   const stats = [
     { n: '42 sites', delay: 80 },
     { n: '348 MW', delay: 95 },
@@ -380,23 +426,26 @@ function TheVerdict() {
   ];
 
   return (
-    <AbsoluteFill style={{ background: C.bg, fontFamily: FONT }}>
-      {/* Crumbling left side */}
+    <AbsoluteFill style={{ background: C.bg, fontFamily: FONT, opacity: fadeIn }}>
       <div style={{ position: 'absolute', left: 0, top: 0, width: '50%', height: '100%', opacity: 1 - crumble, filter: `blur(${crumble * 10}px)`, background: '#080808' }} />
-
-      {/* Expanding right side */}
       <div style={{ position: 'absolute', left: `${100 - rightExpand}%`, top: 0, width: `${rightExpand}%`, height: '100%', background: C.bg }}>
+        {/* Background gradient */}
+        <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 50% 30%, ${C.eggplant}30 0%, transparent 60%)` }} />
         <div style={{ padding: 80, maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 30, justifyContent: 'center', marginTop: 100 }}>
+          <div style={{ textAlign: 'center', marginBottom: 40 }}>
+            <div style={{ fontSize: 20, color: C.teal, fontWeight: 700, letterSpacing: 4 }}>THE VERDICT</div>
+            <div style={{ fontSize: 40, color: C.white, fontWeight: 800, marginTop: 8 }}>Distributed wins.</div>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', marginTop: 40 }}>
             {stats.map(s => {
               const op = spring({ frame: frame - s.delay, fps, config: { damping: 12 } });
               return (
                 <div key={s.n} style={{
-                  padding: '16px 32px', borderRadius: 12,
-                  background: `${C.teal}10`, border: `1px solid ${C.teal}30`,
+                  padding: '20px 40px', borderRadius: 16,
+                  background: `${C.teal}10`, border: `2px solid ${C.teal}30`,
                   opacity: op, transform: `scale(${op})`,
                 }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: C.white }}>{s.n}</span>
+                  <span style={{ fontSize: 24, fontWeight: 700, color: C.white }}>{s.n}</span>
                 </div>
               );
             })}
@@ -411,24 +460,29 @@ function TheVerdict() {
 function ComparisonCTA() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const logoSc = spring({ frame, fps, config: { damping: 12, mass: 0.8 } });
   const tagOp = interpolate(frame, [20, 40], [0, 1], { extrapolateRight: 'clamp' });
+  const fadeOut = interpolate(frame, [520, 570], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill style={{ background: `radial-gradient(ellipse at center, ${C.bg2} 0%, ${C.bg} 70%)`, fontFamily: FONT, justifyContent: 'center', alignItems: 'center' }}>
-      {/* Subtle network dots */}
-      {UPPER_MIDWEST_SITES.slice(0, 15).map((site, i) => {
-        const p = siteProj(site);
-        return <div key={i} style={{ position: 'absolute', left: p.x, top: p.y, width: 3, height: 3, borderRadius: '50%', background: C.teal, opacity: 0.15 }} />;
-      })}
+    <AbsoluteFill style={{ background: `radial-gradient(ellipse at center, ${C.bg2} 0%, ${C.bg} 70%)`, fontFamily: FONT, justifyContent: 'center', alignItems: 'center', opacity: fadeIn * fadeOut }}>
+      {/* Network dots */}
+      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.12 }}>
+        {UPPER_MIDWEST_SITES.map((site, i) => {
+          const p = siteProj(site);
+          const pulse = Math.sin(frame * 0.04 + i * 0.7) * 0.3 + 0.7;
+          return <circle key={i} cx={p.x} cy={p.y} r={(4 + Math.sqrt(site.capacityMW)) * pulse} fill={stateColor(site.state)} />;
+        })}
+      </svg>
       <div style={{ transform: `scale(${logoSc})`, zIndex: 10 }}>
-        <NodiacLogo width={400} />
+        <NodiacLogo width={450} />
       </div>
       <div style={{ position: 'absolute', bottom: 240, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
-        <div style={{ fontSize: 24, fontWeight: 600, color: C.white }}>Distributed Power Infrastructure for AI Compute</div>
+        <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>Distributed Power Infrastructure for AI Compute</div>
       </div>
       <div style={{ position: 'absolute', bottom: 100, left: 0, right: 0, textAlign: 'center', opacity: tagOp, zIndex: 10 }}>
-        <div style={{ fontSize: 18, color: C.lilac, letterSpacing: 3 }}>NODIAC.AI</div>
+        <div style={{ fontSize: 22, color: C.lilac, letterSpacing: 4 }}>NODIAC.AI</div>
       </div>
     </AbsoluteFill>
   );

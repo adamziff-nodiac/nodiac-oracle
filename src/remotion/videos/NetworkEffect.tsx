@@ -15,10 +15,8 @@ import { C, FONT, NodiacLogo, siteProj, stateColor, regionProj, Subtitles, Voice
 const TOTAL_SITES = UPPER_MIDWEST_SITES.length;
 const TOTAL_CAP = Math.round(UPPER_MIDWEST_SITES.reduce((s, si) => s + si.capacityMW, 0));
 
-// Sorted by capacity descending for growth order
 const SORTED_SITES = [...UPPER_MIDWEST_SITES].sort((a, b) => b.capacityMW - a.capacityMW);
 
-// Precompute nearest neighbors
 const NEIGHBORS = UPPER_MIDWEST_SITES.map((site) => {
   return UPPER_MIDWEST_SITES
     .map((n, i) => ({ i, d: Math.hypot(n.lat - site.lat, n.lng - site.lng) }))
@@ -28,96 +26,115 @@ const NEIGHBORS = UPPER_MIDWEST_SITES.map((site) => {
     .map(x => x.i);
 });
 
+// Background with ambient glow
+function NetworkBG({ children, glowColor = C.teal, glowOpacity = 0.06 }: { children: React.ReactNode; glowColor?: string; glowOpacity?: number }) {
+  return (
+    <AbsoluteFill style={{ background: `radial-gradient(ellipse at 50% 45%, #0a0a18 0%, #050510 100%)`, fontFamily: FONT }}>
+      <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse at 55% 40%, ${glowColor}${Math.round(glowOpacity * 255).toString(16).padStart(2, '0')} 0%, transparent 60%)` }} />
+      {children}
+    </AbsoluteFill>
+  );
+}
+
 // ─── Scene 1: Genesis (0:00-0:10) — Network grows from nothing ─────────────────
 function Genesis() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
 
-  // Grow from 2 pilot sites to all 42
-  const growthProgress = interpolate(frame, [0, 280], [0, 1], { extrapolateRight: 'clamp' });
+  const growthProgress = interpolate(frame, [0, 250], [0, 1], { extrapolateRight: 'clamp' });
   const visibleCount = Math.min(TOTAL_SITES, Math.max(2, Math.floor(growthProgress * TOTAL_SITES)));
 
-  // Start with pilots, then add by capacity
   const pilotIndices = UPPER_MIDWEST_SITES.map((s, i) => s.isPilot ? i : -1).filter(i => i >= 0);
   const nonPilots = UPPER_MIDWEST_SITES.map((_, i) => i).filter(i => !UPPER_MIDWEST_SITES[i].isPilot)
     .sort((a, b) => UPPER_MIDWEST_SITES[b].capacityMW - UPPER_MIDWEST_SITES[a].capacityMW);
   const growOrder = [...pilotIndices, ...nonPilots];
   const activeIndices = new Set(growOrder.slice(0, visibleCount));
 
-  // Interpolate positions from center to actual positions
   const centerX = 960;
   const centerY = 500;
 
-  const textOp = interpolate(frame, [250, 270], [0, 1], { extrapolateRight: 'clamp' });
+  const counterOp = interpolate(frame, [30, 50], [0, 1], { extrapolateRight: 'clamp' });
+  const labelOp = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill style={{ background: '#000', fontFamily: FONT }}>
-      <svg width="1920" height="1080" style={{ position: 'absolute' }}>
-        <defs>
-          <filter id="ng"><feGaussianBlur stdDeviation="4" /></filter>
-        </defs>
-        {/* Connection lines */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          if (!activeIndices.has(i)) return null;
-          const p = siteProj(site);
-          const birthFrame = growOrder.indexOf(i) * (280 / TOTAL_SITES);
-          const age = Math.max(0, frame - birthFrame);
-          const posLerp = Math.min(1, age / 40);
+    <NetworkBG glowOpacity={0.04}>
+      <AbsoluteFill style={{ opacity: fadeIn }}>
+        {/* Scene label */}
+        <div style={{ position: 'absolute', top: 60, left: 80, opacity: labelOp }}>
+          <div style={{ fontSize: 18, color: C.teal, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' }}>Network Genesis</div>
+        </div>
 
-          const sx = centerX + (p.x - centerX) * posLerp;
-          const sy = centerY + (p.y - centerY) * posLerp;
+        <svg width="1920" height="1080" style={{ position: 'absolute' }}>
+          <defs>
+            <filter id="ng"><feGaussianBlur stdDeviation="6" /></filter>
+          </defs>
+          {/* Connection lines */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            if (!activeIndices.has(i)) return null;
+            const p = siteProj(site);
+            const birthFrame = growOrder.indexOf(i) * (250 / TOTAL_SITES);
+            const age = Math.max(0, frame - birthFrame);
+            const posLerp = Math.min(1, age / 30);
 
-          return NEIGHBORS[i]
-            .filter(ni => activeIndices.has(ni))
-            .map(ni => {
-              const n = UPPER_MIDWEST_SITES[ni];
-              const np = siteProj(n);
-              const nBirth = growOrder.indexOf(ni) * (280 / TOTAL_SITES);
-              const nAge = Math.max(0, frame - nBirth);
-              const nLerp = Math.min(1, nAge / 40);
-              const nx = centerX + (np.x - centerX) * nLerp;
-              const ny = centerY + (np.y - centerY) * nLerp;
+            const sx = centerX + (p.x - centerX) * posLerp;
+            const sy = centerY + (p.y - centerY) * posLerp;
 
-              const lineOp = Math.min(posLerp, nLerp) * 0.2;
+            return NEIGHBORS[i]
+              .filter(ni => activeIndices.has(ni))
+              .map(ni => {
+                const n = UPPER_MIDWEST_SITES[ni];
+                const np = siteProj(n);
+                const nBirth = growOrder.indexOf(ni) * (250 / TOTAL_SITES);
+                const nAge = Math.max(0, frame - nBirth);
+                const nLerp = Math.min(1, nAge / 30);
+                const nx = centerX + (np.x - centerX) * nLerp;
+                const ny = centerY + (np.y - centerY) * nLerp;
+                const lineOp = Math.min(posLerp, nLerp) * 0.25;
 
-              return <line key={`${i}-${ni}`} x1={sx} y1={sy} x2={nx} y2={ny} stroke={C.teal} strokeWidth={1} opacity={lineOp} />;
-            });
-        })}
+                return <line key={`${i}-${ni}`} x1={sx} y1={sy} x2={nx} y2={ny} stroke={C.teal} strokeWidth={1.5} opacity={lineOp} />;
+              });
+          })}
 
-        {/* Dots */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          if (!activeIndices.has(i)) return null;
-          const p = siteProj(site);
-          const birthFrame = growOrder.indexOf(i) * (280 / TOTAL_SITES);
-          const age = Math.max(0, frame - birthFrame);
-          const posLerp = Math.min(1, age / 40);
-          const scaleLerp = spring({ frame: Math.max(0, frame - birthFrame), fps, config: { damping: 10, mass: 0.5 } });
+          {/* Dots — bigger */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            if (!activeIndices.has(i)) return null;
+            const p = siteProj(site);
+            const birthFrame = growOrder.indexOf(i) * (250 / TOTAL_SITES);
+            const age = Math.max(0, frame - birthFrame);
+            const posLerp = Math.min(1, age / 30);
+            const scaleLerp = spring({ frame: Math.max(0, frame - birthFrame), fps, config: { damping: 10, mass: 0.5 } });
 
-          const sx = centerX + (p.x - centerX) * posLerp;
-          const sy = centerY + (p.y - centerY) * posLerp;
-          const r = (3 + Math.sqrt(site.capacityMW) * 1.2) * scaleLerp;
-          const c = stateColor(site.state);
+            const sx = centerX + (p.x - centerX) * posLerp;
+            const sy = centerY + (p.y - centerY) * posLerp;
+            const r = (4 + Math.sqrt(site.capacityMW) * 1.5) * scaleLerp;
+            const c = stateColor(site.state);
 
-          return (
-            <g key={site.name}>
-              <circle cx={sx} cy={sy} r={r * 2.5} fill={c} opacity={0.1 * scaleLerp} filter="url(#ng)" />
-              <circle cx={sx} cy={sy} r={r} fill={c} opacity={0.8 * scaleLerp} />
-            </g>
-          );
-        })}
-      </svg>
+            return (
+              <g key={site.name}>
+                <circle cx={sx} cy={sy} r={r * 3} fill={c} opacity={0.12 * scaleLerp} filter="url(#ng)" />
+                <circle cx={sx} cy={sy} r={r} fill={c} opacity={0.9 * scaleLerp} />
+              </g>
+            );
+          })}
+        </svg>
 
-      {/* Counter */}
-      <div style={{ position: 'absolute', top: 40, left: 80, opacity: textOp }}>
-        <div style={{ fontSize: 48, fontWeight: 800, color: C.teal }}>{TOTAL_SITES} <span style={{ fontSize: 18, color: C.lilac }}>NODES</span></div>
-      </div>
-    </AbsoluteFill>
+        {/* Counter — always visible after early frames */}
+        <div style={{ position: 'absolute', top: 50, right: 80, textAlign: 'right', opacity: counterOp }}>
+          <div style={{ fontSize: 56, fontWeight: 900, color: C.teal }}>{visibleCount} <span style={{ fontSize: 22, color: C.lilac }}>NODES</span></div>
+          <div style={{ fontSize: 28, fontWeight: 700, color: C.white }}>
+            {Math.round(growOrder.slice(0, visibleCount).reduce((s, i) => s + UPPER_MIDWEST_SITES[i].capacityMW, 0))} <span style={{ fontSize: 16, color: C.lilac }}>MW</span>
+          </div>
+        </div>
+      </AbsoluteFill>
+    </NetworkBG>
   );
 }
 
 // ─── Scene 2: The Heartbeat (0:10-0:22) — Pulsing network ─────────────────────
 function Heartbeat() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const pulse = Math.sin(frame * 0.08) * 0.5 + 0.5;
   const rippleRadius = (frame % 90) / 90;
 
@@ -127,74 +144,79 @@ function Heartbeat() {
   const text2Fo = interpolate(frame, [280, 300], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill style={{ background: '#000', fontFamily: FONT }}>
-      <svg width="1920" height="1080" style={{ position: 'absolute' }}>
-        <defs><filter id="hg"><feGaussianBlur stdDeviation="6" /></filter></defs>
+    <NetworkBG glowColor={C.teal} glowOpacity={0.05}>
+      <AbsoluteFill style={{ opacity: fadeIn }}>
+        <svg width="1920" height="1080" style={{ position: 'absolute' }}>
+          <defs><filter id="hg"><feGaussianBlur stdDeviation="8" /></filter></defs>
 
-        {/* Ripple from center */}
-        <circle cx={960} cy={500} r={rippleRadius * 600} fill="none" stroke={C.teal} strokeWidth={1} opacity={(1 - rippleRadius) * 0.2} />
+          {/* Ripple rings — multiple */}
+          {[0, 0.33, 0.66].map((offset, ri) => {
+            const r = ((frame + offset * 90) % 90) / 90;
+            return <circle key={ri} cx={960} cy={500} r={r * 700} fill="none" stroke={C.teal} strokeWidth={1.5} opacity={(1 - r) * 0.15} />;
+          })}
 
-        {/* Connection lines pulsing */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          const p = siteProj(site);
-          return NEIGHBORS[i].map(ni => {
-            const n = UPPER_MIDWEST_SITES[ni];
-            const np = siteProj(n);
-            // Animated dash offset for "data flow"
-            const dashOffset = -frame * 2;
+          {/* Connection lines with animated dashes */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            const p = siteProj(site);
+            return NEIGHBORS[i].map(ni => {
+              const n = UPPER_MIDWEST_SITES[ni];
+              const np = siteProj(n);
+              const dashOffset = -frame * 2;
+              return (
+                <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y}
+                  stroke={C.teal} strokeWidth={1.5} opacity={0.15 + pulse * 0.1}
+                  strokeDasharray="6 10" strokeDashoffset={dashOffset}
+                />
+              );
+            });
+          })}
+
+          {/* Dots — bigger and more visible */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            const p = siteProj(site);
+            const r = 4 + Math.sqrt(site.capacityMW) * 1.5;
+            const c = stateColor(site.state);
+            const dist = Math.hypot(p.x - 960, p.y - 500);
+            const rippleHit = Math.abs(dist - rippleRadius * 700) < 50;
+            const brightness = rippleHit ? 1 : 0.5 + pulse * 0.3;
+
             return (
-              <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y}
-                stroke={C.teal} strokeWidth={1} opacity={0.15 + pulse * 0.1}
-                strokeDasharray="4 8" strokeDashoffset={dashOffset}
-              />
+              <g key={site.name}>
+                <circle cx={p.x} cy={p.y} r={r * 2.5} fill={c} opacity={brightness * 0.15} filter="url(#hg)" />
+                <circle cx={p.x} cy={p.y} r={r} fill={c} opacity={brightness} />
+              </g>
             );
-          });
-        })}
+          })}
+        </svg>
 
-        {/* Dots sized by capacity */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          const p = siteProj(site);
-          const r = 3 + Math.sqrt(site.capacityMW) * 1.2;
-          const c = stateColor(site.state);
-          // Heartbeat: each dot brightens when ripple reaches it
-          const dist = Math.hypot(p.x - 960, p.y - 500);
-          const rippleHit = Math.abs(dist - rippleRadius * 600) < 40;
-          const brightness = rippleHit ? 1 : 0.5 + pulse * 0.3;
-
-          return (
-            <g key={site.name}>
-              <circle cx={p.x} cy={p.y} r={r * 2} fill={c} opacity={brightness * 0.15} filter="url(#hg)" />
-              <circle cx={p.x} cy={p.y} r={r} fill={c} opacity={brightness} />
-            </g>
-          );
-        })}
-      </svg>
-
-      {/* Text overlays */}
-      <div style={{ position: 'absolute', top: 40, left: 0, right: 0, textAlign: 'center' }}>
-        <div style={{ fontSize: 36, fontWeight: 700, color: C.teal, opacity: text1Op * text1Fo }}>
-          {TOTAL_CAP} MW
+        {/* Text overlays — bigger, more prominent */}
+        <div style={{ position: 'absolute', top: 50, left: 0, right: 0, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: C.teal, opacity: text1Op * text1Fo, textShadow: `0 0 40px ${C.teal}30` }}>
+            {TOTAL_CAP} MW of distributed capacity
+          </div>
         </div>
-      </div>
-      <div style={{ position: 'absolute', top: 40, left: 0, right: 0, textAlign: 'center' }}>
-        <div style={{ fontSize: 36, fontWeight: 700, color: C.white, opacity: text2Op * text2Fo }}>
-          99.999% UPTIME
+        <div style={{ position: 'absolute', top: 50, left: 0, right: 0, textAlign: 'center' }}>
+          <div style={{ fontSize: 48, fontWeight: 800, color: C.white, opacity: text2Op * text2Fo }}>
+            99.999% UPTIME
+          </div>
+          <div style={{ fontSize: 22, color: C.lilac, marginTop: 8, opacity: text2Op * text2Fo }}>
+            No backup generators. The network is the redundancy.
+          </div>
         </div>
-      </div>
-    </AbsoluteFill>
+      </AbsoluteFill>
+    </NetworkBG>
   );
 }
 
 // ─── Scene 3: Resilience Test (0:22-0:34) — Nodes fail and heal ────────────────
 function ResilienceTest() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
 
-  // First failure: 3 nodes at frame 30
   const fail1 = frame >= 30;
   const heal1 = frame >= 150;
   const fail1Nodes = [5, 15, 25];
 
-  // Second failure: 6 nodes at frame 180
   const fail2 = frame >= 180;
   const heal2 = frame >= 300;
   const fail2Nodes = [2, 8, 12, 20, 30, 35];
@@ -209,121 +231,163 @@ function ResilienceTest() {
   const text3Op = interpolate(frame, [320, 340], [0, 1], { extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill style={{ background: '#000', fontFamily: FONT }}>
-      <svg width="1920" height="1080" style={{ position: 'absolute' }}>
-        <defs><filter id="rg"><feGaussianBlur stdDeviation="6" /></filter></defs>
+    <NetworkBG glowColor={fail1 && !heal1 ? '#ff3333' : C.teal} glowOpacity={0.04}>
+      <AbsoluteFill style={{ opacity: fadeIn }}>
+        <svg width="1920" height="1080" style={{ position: 'absolute' }}>
+          <defs><filter id="rg"><feGaussianBlur stdDeviation="8" /></filter></defs>
 
-        {/* Connections - rerouting when nodes fail */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          if (allFailed.has(i)) return null;
-          const p = siteProj(site);
-          return NEIGHBORS[i]
-            .filter(ni => !allFailed.has(ni))
-            .map(ni => {
-              const n = UPPER_MIDWEST_SITES[ni];
-              const np = siteProj(n);
-              return <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y} stroke={C.teal} strokeWidth={1} opacity={0.2} />;
-            });
-        })}
+          {/* Connections — rerouting */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            if (allFailed.has(i)) return null;
+            const p = siteProj(site);
+            return NEIGHBORS[i]
+              .filter(ni => !allFailed.has(ni))
+              .map(ni => {
+                const n = UPPER_MIDWEST_SITES[ni];
+                const np = siteProj(n);
+                return <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y} stroke={C.teal} strokeWidth={1.5} opacity={0.25} />;
+              });
+          })}
 
-        {/* Dots */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          const p = siteProj(site);
-          const r = 3 + Math.sqrt(site.capacityMW) * 1.2;
-          const isFailed = allFailed.has(i);
+          {/* Dots */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            const p = siteProj(site);
+            const r = 4 + Math.sqrt(site.capacityMW) * 1.5;
+            const isFailed = allFailed.has(i);
 
-          return (
-            <g key={site.name}>
-              {/* Failure ring */}
-              {isFailed && (
-                <circle cx={p.x} cy={p.y} r={r * 3} fill="none" stroke="#ff3333" strokeWidth={1.5} opacity={0.5 + Math.sin(frame * 0.3) * 0.3} />
-              )}
-              <circle cx={p.x} cy={p.y} r={r} fill={isFailed ? '#ff3333' : stateColor(site.state)} opacity={isFailed ? 0.3 : 0.8} />
-            </g>
-          );
-        })}
-      </svg>
+            return (
+              <g key={site.name}>
+                {isFailed && (
+                  <>
+                    <circle cx={p.x} cy={p.y} r={r * 4} fill="none" stroke="#ff3333" strokeWidth={2} opacity={0.4 + Math.sin(frame * 0.3) * 0.2} />
+                    <circle cx={p.x} cy={p.y} r={r * 2} fill="#ff3333" opacity={0.1} filter="url(#rg)" />
+                  </>
+                )}
+                <circle cx={p.x} cy={p.y} r={r} fill={isFailed ? '#ff3333' : stateColor(site.state)} opacity={isFailed ? 0.3 : 0.9} />
+              </g>
+            );
+          })}
+        </svg>
 
-      {/* Status text */}
-      <div style={{ position: 'absolute', top: 40, left: 0, right: 0, textAlign: 'center' }}>
-        <div style={{ fontSize: 24, fontWeight: 700, color: '#ff6666', opacity: text1Op }}>
-          DISTRIBUTED N+1
+        {/* Status text — bigger */}
+        <div style={{ position: 'absolute', top: 50, left: 0, right: 0, textAlign: 'center' }}>
+          <div style={{ fontSize: 36, fontWeight: 800, color: '#ff6666', opacity: text1Op }}>
+            3 NODES OFFLINE — LOAD REDISTRIBUTED
+          </div>
+          <div style={{ fontSize: 36, fontWeight: 800, color: '#ff6666', opacity: text2Op }}>
+            6 MORE NODES DOWN — NETWORK ADAPTS
+          </div>
+          <div style={{ fontSize: 44, fontWeight: 900, color: C.teal, opacity: text3Op, textShadow: `0 0 40px ${C.teal}40` }}>
+            THE NETWORK HEALS
+          </div>
+          <div style={{ fontSize: 22, color: C.lilac, opacity: text3Op, marginTop: 8 }}>
+            Zero backup generators. Distributed N+1 redundancy.
+          </div>
         </div>
-        <div style={{ fontSize: 24, fontWeight: 700, color: '#ff6666', opacity: text2Op }}>
-          ZERO BACKUP GENERATORS
-        </div>
-        <div style={{ fontSize: 32, fontWeight: 800, color: C.teal, opacity: text3Op }}>
-          THE NETWORK HEALS
-        </div>
-      </div>
-    </AbsoluteFill>
+      </AbsoluteFill>
+    </NetworkBG>
   );
 }
 
 // ─── Scene 4: Growth (0:34-0:48) — Network expands ────────────────────────────
 function Growth() {
   const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
   const growthPct = interpolate(frame, [0, 350], [0, 1], { extrapolateRight: 'clamp' });
   const mw = interpolate(growthPct, [0, 0.1, 0.4, 0.7, 1], [50, 100, 200, 500, 1000]);
-  const rev = mw * 0.78; // $780K/MW
+  const rev = mw * 0.78;
 
-  // Existing sites + phantom "future" sites
   const futureCount = Math.floor(growthPct * 60);
   const futureDots = Array.from({ length: futureCount }, (_, i) => {
-    // Spread outward from existing sites
     const seed = UPPER_MIDWEST_SITES[i % TOTAL_SITES];
-    const angle = (i * 137.5) * Math.PI / 180; // golden angle
+    const angle = (i * 137.5) * Math.PI / 180;
     const dist = 0.3 + (i / 60) * 1.5;
     return {
       x: seed.lng + Math.cos(angle) * dist,
       y: seed.lat + Math.sin(angle) * dist * 0.6,
-      r: 2 + Math.random() * 3,
+      r: 3 + Math.random() * 4,
     };
   });
 
-  const flashOp = growthPct > 0.98 ? Math.sin(frame * 0.5) * 0.3 + 0.3 : 0;
+  const flashOp = growthPct > 0.98 ? Math.sin(frame * 0.5) * 0.15 + 0.15 : 0;
 
   return (
-    <AbsoluteFill style={{ background: '#000', fontFamily: FONT }}>
-      <svg width="1920" height="1080" style={{ position: 'absolute' }}>
-        <defs><filter id="gg"><feGaussianBlur stdDeviation="4" /></filter></defs>
-
-        {/* Existing sites */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          const p = siteProj(site);
-          const r = 3 + Math.sqrt(site.capacityMW) * 1.2;
-          return <circle key={site.name} cx={p.x} cy={p.y} r={r} fill={stateColor(site.state)} opacity={0.9} />;
-        })}
-
-        {/* Future sites */}
-        {futureDots.map((fd, i) => {
-          const p = regionProj(fd.y, fd.x);
-          return <circle key={`f${i}`} cx={p.x} cy={p.y} r={fd.r} fill={C.teal} opacity={0.3} filter="url(#gg)" />;
-        })}
-
-        {/* Network connections */}
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          const p = siteProj(site);
-          return NEIGHBORS[i].map(ni => {
-            const np = siteProj(UPPER_MIDWEST_SITES[ni]);
-            return <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y} stroke={C.teal} strokeWidth={0.5} opacity={0.15} />;
-          });
-        })}
-      </svg>
-
-      {/* Flash at 1 GW */}
-      <div style={{ position: 'absolute', inset: 0, background: C.teal, opacity: flashOp }} />
-
-      {/* Counter */}
-      <div style={{ position: 'absolute', top: 40, right: 80, textAlign: 'right', zIndex: 10 }}>
-        <div style={{ fontSize: 48, fontWeight: 900, color: C.teal, fontFamily: 'JetBrains Mono, monospace' }}>
-          {Math.round(mw)} MW
+    <NetworkBG glowOpacity={0.05}>
+      <AbsoluteFill style={{ opacity: fadeIn }}>
+        {/* Label */}
+        <div style={{ position: 'absolute', top: 60, left: 80 }}>
+          <div style={{ fontSize: 18, color: C.teal, fontWeight: 700, letterSpacing: 5, textTransform: 'uppercase' }}>Scaling Roadmap</div>
         </div>
-        <div style={{ fontSize: 28, fontWeight: 700, color: C.orchid, fontFamily: 'JetBrains Mono, monospace' }}>
-          ${Math.round(rev)}M
+
+        <svg width="1920" height="1080" style={{ position: 'absolute' }}>
+          <defs><filter id="gg"><feGaussianBlur stdDeviation="6" /></filter></defs>
+
+          {/* Existing sites */}
+          {UPPER_MIDWEST_SITES.map((site) => {
+            const p = siteProj(site);
+            const r = 4 + Math.sqrt(site.capacityMW) * 1.5;
+            return (
+              <React.Fragment key={site.name}>
+                <circle cx={p.x} cy={p.y} r={r * 2} fill={stateColor(site.state)} opacity={0.15} />
+                <circle cx={p.x} cy={p.y} r={r} fill={stateColor(site.state)} opacity={0.9} />
+              </React.Fragment>
+            );
+          })}
+
+          {/* Future sites — more visible */}
+          {futureDots.map((fd, i) => {
+            const p = regionProj(fd.y, fd.x);
+            return (
+              <React.Fragment key={`f${i}`}>
+                <circle cx={p.x} cy={p.y} r={fd.r * 2} fill={C.teal} opacity={0.08} filter="url(#gg)" />
+                <circle cx={p.x} cy={p.y} r={fd.r} fill={C.teal} opacity={0.4} />
+              </React.Fragment>
+            );
+          })}
+
+          {/* Network connections */}
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            const p = siteProj(site);
+            return NEIGHBORS[i].map(ni => {
+              const np = siteProj(UPPER_MIDWEST_SITES[ni]);
+              return <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y} stroke={C.teal} strokeWidth={1} opacity={0.2} />;
+            });
+          })}
+        </svg>
+
+        {/* Flash at 1 GW */}
+        <div style={{ position: 'absolute', inset: 0, background: C.teal, opacity: flashOp }} />
+
+        {/* Counter — bigger */}
+        <div style={{ position: 'absolute', top: 50, right: 80, textAlign: 'right', zIndex: 10 }}>
+          <div style={{ fontSize: 56, fontWeight: 900, color: C.teal, fontFamily: 'JetBrains Mono, monospace' }}>
+            {Math.round(mw)} MW
+          </div>
+          <div style={{ fontSize: 32, fontWeight: 700, color: C.orchid, fontFamily: 'JetBrains Mono, monospace' }}>
+            ${Math.round(rev)}M ARR
+          </div>
         </div>
-      </div>
-    </AbsoluteFill>
+
+        {/* Milestone markers */}
+        {growthPct > 0.1 && (
+          <div style={{ position: 'absolute', bottom: 100, left: 80, display: 'flex', gap: 24 }}>
+            <div style={{ padding: '10px 20px', borderRadius: 10, background: `${C.teal}15`, border: `1px solid ${C.teal}30` }}>
+              <span style={{ fontSize: 18, fontWeight: 700, color: C.teal }}>Q4 2026: 50 MW</span>
+            </div>
+            {growthPct > 0.4 && (
+              <div style={{ padding: '10px 20px', borderRadius: 10, background: `${C.orchid}15`, border: `1px solid ${C.orchid}30` }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: C.orchid }}>2027: 200 MW</span>
+              </div>
+            )}
+            {growthPct > 0.7 && (
+              <div style={{ padding: '10px 20px', borderRadius: 10, background: `${C.teal}15`, border: `1px solid ${C.teal}30` }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: C.teal }}>2028+: 1 GW+</span>
+              </div>
+            )}
+          </div>
+        )}
+      </AbsoluteFill>
+    </NetworkBG>
   );
 }
 
@@ -332,39 +396,49 @@ function Growth() {
 function NetworkRevealed() {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const logoOp = interpolate(frame, [60, 90], [0, 1], { extrapolateRight: 'clamp' });
-  const tagOp = interpolate(frame, [100, 120], [0, 1], { extrapolateRight: 'clamp' });
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
+  const logoOp = interpolate(frame, [40, 70], [0, 1], { extrapolateRight: 'clamp' });
+  const logoScale = spring({ frame: Math.max(0, frame - 40), fps, config: { damping: 12, mass: 0.8 } });
+  const tagOp = interpolate(frame, [80, 100], [0, 1], { extrapolateRight: 'clamp' });
   const pulse = Math.sin(frame * 0.06) * 0.15 + 0.85;
+  const fadeOut = interpolate(frame, [320, 360], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
 
   return (
-    <AbsoluteFill style={{ background: '#000', fontFamily: FONT }}>
-      {/* Steady-state network */}
-      <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.4 }}>
-        {UPPER_MIDWEST_SITES.map((site, i) => {
-          const p = siteProj(site);
-          return NEIGHBORS[i].map(ni => {
-            const np = siteProj(UPPER_MIDWEST_SITES[ni]);
-            return <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y} stroke={C.teal} strokeWidth={0.5} opacity={0.3} />;
-          });
-        })}
-        {UPPER_MIDWEST_SITES.map((site) => {
-          const p = siteProj(site);
-          const r = 3 + Math.sqrt(site.capacityMW) * 1;
-          return <circle key={site.name} cx={p.x} cy={p.y} r={r * pulse} fill={stateColor(site.state)} opacity={0.7} />;
-        })}
-      </svg>
+    <NetworkBG glowOpacity={0.06}>
+      <AbsoluteFill style={{ opacity: fadeIn * fadeOut }}>
+        {/* Steady-state network — more visible */}
+        <svg width="1920" height="1080" style={{ position: 'absolute', opacity: 0.3 }}>
+          {UPPER_MIDWEST_SITES.map((site, i) => {
+            const p = siteProj(site);
+            return NEIGHBORS[i].map(ni => {
+              const np = siteProj(UPPER_MIDWEST_SITES[ni]);
+              return <line key={`${i}-${ni}`} x1={p.x} y1={p.y} x2={np.x} y2={np.y} stroke={C.teal} strokeWidth={1} opacity={0.3} />;
+            });
+          })}
+          {UPPER_MIDWEST_SITES.map((site) => {
+            const p = siteProj(site);
+            const r = 4 + Math.sqrt(site.capacityMW) * 1.3;
+            return (
+              <React.Fragment key={site.name}>
+                <circle cx={p.x} cy={p.y} r={r * 2} fill={stateColor(site.state)} opacity={0.15} />
+                <circle cx={p.x} cy={p.y} r={r * pulse} fill={stateColor(site.state)} opacity={0.8} />
+              </React.Fragment>
+            );
+          })}
+        </svg>
 
-      {/* Logo and text */}
-      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
-        <div style={{ opacity: logoOp }}>
-          <NodiacLogo width={450} />
+        {/* Logo and text */}
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', zIndex: 10 }}>
+          <div style={{ opacity: logoOp, transform: `scale(${logoScale})` }}>
+            <NodiacLogo width={500} />
+          </div>
+          <div style={{ marginTop: 40, opacity: tagOp, textAlign: 'center' }}>
+            <div style={{ fontSize: 30, fontWeight: 600, color: C.white }}>Distributed Power Infrastructure for AI Compute</div>
+            <div style={{ fontSize: 22, color: C.lilac, marginTop: 16, letterSpacing: 4 }}>NODIAC.AI</div>
+          </div>
         </div>
-        <div style={{ marginTop: 40, opacity: tagOp, textAlign: 'center' }}>
-          <div style={{ fontSize: 24, fontWeight: 600, color: C.white }}>Distributed Power Infrastructure for AI Compute</div>
-          <div style={{ fontSize: 18, color: C.lilac, marginTop: 16, letterSpacing: 3 }}>NODIAC.AI</div>
-        </div>
-      </div>
-    </AbsoluteFill>
+      </AbsoluteFill>
+    </NetworkBG>
   );
 }
 
@@ -391,7 +465,7 @@ const SUBS: SubSegment[] = [
 // ─── Main Composition ──────────────────────────────────────────────────────────
 export const NetworkEffect: React.FC<{ showSubtitles?: boolean; showVoiceover?: boolean }> = ({ showSubtitles = true, showVoiceover = true }) => {
   return (
-    <AbsoluteFill style={{ background: '#000' }}>
+    <AbsoluteFill style={{ background: '#050510' }}>
       <Sequence from={0} durationInFrames={300}><Genesis /></Sequence>
       <Sequence from={300} durationInFrames={360}><Heartbeat /></Sequence>
       <Sequence from={660} durationInFrames={360}><ResilienceTest /></Sequence>

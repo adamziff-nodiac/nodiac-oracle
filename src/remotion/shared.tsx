@@ -1,6 +1,6 @@
 // Shared utilities for all Remotion video compositions
 import React from 'react';
-import { Audio, Img, staticFile, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Audio, Img, staticFile, interpolate, spring, useCurrentFrame, useVideoConfig } from 'remotion';
 import { US_STATES, HIGHLIGHT_STATES } from './us-states-data';
 import type { Site } from './data';
 
@@ -150,14 +150,26 @@ export function Subtitles({ segments, enabled = true }: { segments: SubSegment[]
   const seg = segments.find(s => sec >= s.start && sec < s.end);
   if (!seg || !seg.text) return null;
   const p = (sec - seg.start) / (seg.end - seg.start);
-  const fi = interpolate(p, [0, 0.08], [0, 1], { extrapolateRight: 'clamp' });
-  const fo = interpolate(p, [0.88, 1], [1, 0], { extrapolateLeft: 'clamp' });
+  const fi = interpolate(p, [0, 0.06], [0, 1], { extrapolateRight: 'clamp' });
+  const fo = interpolate(p, [0.92, 1], [1, 0], { extrapolateLeft: 'clamp' });
   return (
-    <div style={{ position: 'absolute', bottom: 50, left: 0, right: 0, textAlign: 'center', opacity: fi * fo, zIndex: 100, fontFamily: FONT }}>
-      <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.8)', borderRadius: 8, padding: '10px 28px', maxWidth: 1200 }}>
-        <span style={{ color: C.white, fontSize: 22, fontWeight: 500 }}>{seg.text}</span>
+    <div style={{ position: 'absolute', bottom: 60, left: 0, right: 0, textAlign: 'center', opacity: fi * fo, zIndex: 100, fontFamily: FONT }}>
+      <div style={{ display: 'inline-block', background: 'rgba(0,0,0,0.85)', borderRadius: 10, padding: '14px 36px', maxWidth: 1400, backdropFilter: 'blur(8px)' }}>
+        <span style={{ color: C.white, fontSize: 28, fontWeight: 500, lineHeight: 1.4 }}>{seg.text}</span>
       </div>
     </div>
+  );
+}
+
+// ─── Scene Transition Wrapper ─────────────────────────────────────────────────
+export function SceneFade({ children, durationInFrames }: { children: React.ReactNode; durationInFrames: number }) {
+  const frame = useCurrentFrame();
+  const fadeIn = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: 'clamp' });
+  const fadeOut = interpolate(frame, [durationInFrames - 15, durationInFrames], [1, 0], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' });
+  return (
+    <AbsoluteFill style={{ opacity: fadeIn * fadeOut }}>
+      {children}
+    </AbsoluteFill>
   );
 }
 
