@@ -13,6 +13,7 @@ import {
   FileText,
   ChevronDown,
   ChevronUp,
+  Headphones,
 } from 'lucide-react';
 import { Navigation } from '@/components/Navigation';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -78,8 +79,19 @@ export default function UpperMidwestHubVideoPage() {
           </p>
 
           {/* Video Player */}
-          <div className="mb-8">
+          <div className="mb-4">
             <VideoPlayer />
+          </div>
+
+          {/* Compare voices CTA */}
+          <div className="mb-8">
+            <Link
+              href="/videos/upper-midwest-hub/compare"
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-nodiac-primary/10 dark:bg-nodiac-primary/20 border border-nodiac-primary/30 text-nodiac-primary dark:text-nodiac-soft-orchid hover:bg-nodiac-primary/20 dark:hover:bg-nodiac-primary/30 transition-colors text-sm font-medium"
+            >
+              <Headphones className="w-4 h-4" />
+              Compare 5 Voiceover Options
+            </Link>
           </div>
 
           {/* Info grid */}
