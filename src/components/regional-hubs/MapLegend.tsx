@@ -1,5 +1,6 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
 import { COLOR_LOW, COLOR_MID_LOW, COLOR_MID, COLOR_HIGH, COLOR_ORCHID, COLOR_PEAK } from './CountyChoropleth'
 import type { ColorMode } from './CountyChoropleth'
 import type { ViewMode } from './HubMap'
@@ -18,11 +19,25 @@ interface MapLegendProps {
   clusterCount?: number
   showGoogleDC?: boolean
   prospectiveSites?: ProspectiveSitesLegendInfo | null
+  onCollapse?: () => void
 }
 
 const legendBox = "absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10"
 
-export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', clusterCount, showGoogleDC, prospectiveSites }: MapLegendProps) {
+function CollapseButton({ onCollapse }: { onCollapse?: () => void }) {
+  if (!onCollapse) return null
+  return (
+    <button
+      onClick={onCollapse}
+      className="absolute top-2 right-2 p-0.5 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+      title="Collapse legend"
+    >
+      <ChevronDown className="w-3.5 h-3.5" />
+    </button>
+  )
+}
+
+export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'percentile', viewMode = 'county', clusterCount, showGoogleDC, prospectiveSites, onCollapse }: MapLegendProps) {
   // Overlay items shown across all view modes
   const overlayItems = (
     <>
@@ -75,7 +90,8 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
   if (viewMode === 'outline') {
     return (
       <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+        <CollapseButton onCollapse={onCollapse} />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
           Hub Outlines
         </p>
         <div className="flex flex-col gap-1.5">
@@ -104,7 +120,8 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
     const GRAD_PEAK = '#c77dba'
     return (
       <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+        <CollapseButton onCollapse={onCollapse} />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
           Hub Gradient
         </p>
         <div className="flex items-center gap-2">
@@ -133,7 +150,8 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
   if (viewMode === 'regions') {
     return (
       <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+        <CollapseButton onCollapse={onCollapse} />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
           Hub Regions
         </p>
         <div className="flex flex-col gap-1.5">
@@ -162,7 +180,8 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
   if (colorMode === 'percentile') {
     return (
       <div className={legendBox}>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+        <CollapseButton onCollapse={onCollapse} />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
           Composite Score
         </p>
         <div className="flex items-center gap-2">
@@ -188,7 +207,8 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
 
   return (
     <div className={legendBox}>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+      <CollapseButton onCollapse={onCollapse} />
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
         Composite Score
       </p>
       <div className="flex items-center gap-2">

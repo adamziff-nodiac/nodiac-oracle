@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { SlidersHorizontal, X, Info, Pencil } from 'lucide-react'
+import { SlidersHorizontal, X, Info, Pencil, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import dynamic from 'next/dynamic'
@@ -61,6 +61,8 @@ export default function RegionalHubsPage() {
   const [positionOverrides, setPositionOverrides] = useState<Record<number, { lng: number; lat: number }>>({})
   const [editingNames, setEditingNames] = useState(false)
   const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [legendCollapsed, setLegendCollapsed] = useState(false)
   const [showGoogleDC, setShowGoogleDC] = useState(false)
   const [googleDCDisplayMode, setGoogleDCDisplayMode] = useState<GoogleDCDisplayMode>('logo')
   const [showProspectiveSites, setShowProspectiveSites] = useState(false)
@@ -230,15 +232,38 @@ export default function RegionalHubsPage() {
                 {/* Mobile weight toggle */}
                 <button
                   ref={mobileBtnRef}
-                  onClick={() => setShowMobileWeights(!showMobileWeights)}
+                  onClick={() => { setShowMobileWeights(!showMobileWeights); setSidebarCollapsed(false) }}
                   className="absolute top-4 left-4 z-20 md:hidden flex items-center gap-2 px-3 py-2 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {showMobileWeights ? <X className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
                   Weights
                 </button>
 
+                {/* Sidebar expand button (desktop, collapsed) */}
+                {sidebarCollapsed && (
+                  <button
+                    onClick={() => setSidebarCollapsed(false)}
+                    className="absolute top-4 left-4 z-10 hidden md:flex items-center gap-1.5 px-2.5 py-2 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                )}
+
                 {/* Floating weight panel */}
-                <div ref={panelRef} className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} md:block md:top-4`}>
+                <div ref={panelRef} className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} ${sidebarCollapsed ? 'md:hidden' : 'md:block'} md:top-4`}>
+                  {/* Collapse button */}
+                  <div className="flex justify-between items-center -mt-1 -mb-2">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">Controls</span>
+                    <button
+                      onClick={() => setSidebarCollapsed(true)}
+                      className="hidden md:flex items-center p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      title="Collapse panel"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  </div>
+
                   {/* View Mode pill row */}
                   <div className="space-y-1.5">
                     <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
@@ -671,8 +696,16 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                {viewMode === 'tiers' ? (
-                  <TierLegend clusterCount={clusterCount} />
+                {legendCollapsed ? (
+                  <button
+                    onClick={() => setLegendCollapsed(false)}
+                    className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Legend
+                    <ChevronDown className="w-3 h-3 rotate-180" />
+                  </button>
+                ) : viewMode === 'tiers' ? (
+                  <TierLegend clusterCount={clusterCount} onCollapse={() => setLegendCollapsed(true)} />
                 ) : (
                   <MapLegend
                     scoreRange={scoreRange}
@@ -682,6 +715,7 @@ export default function RegionalHubsPage() {
                     clusterCount={viewMode !== 'county' ? clusterCount : undefined}
                     showGoogleDC={showGoogleDC}
                     prospectiveSites={showProspectiveSites ? { ippCount, substationCount, radiusMiles: prospectiveRadius } : null}
+                    onCollapse={() => setLegendCollapsed(true)}
                   />
                 )}
 

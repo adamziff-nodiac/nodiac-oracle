@@ -1,9 +1,11 @@
 'use client'
 
+import { ChevronDown } from 'lucide-react'
 import { TIER_1_COLOR, TIER_2_COLOR, TIER_3_COLOR, TIER_4_COLOR, TIER_OUTSIDE_COLOR } from './TierHubsLayer'
 
 interface TierLegendProps {
   clusterCount?: number
+  onCollapse?: () => void
 }
 
 const legendBox = 'absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10'
@@ -20,10 +22,19 @@ const tiers = [
  * Legend overlay for the Tiers view mode.
  * Shows the four tier colors with their percentile labels.
  */
-export function TierLegend({ clusterCount }: TierLegendProps) {
+export function TierLegend({ clusterCount, onCollapse }: TierLegendProps) {
   return (
     <div className={legendBox}>
-      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase">
+      {onCollapse && (
+        <button
+          onClick={onCollapse}
+          className="absolute top-2 right-2 p-0.5 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+          title="Collapse legend"
+        >
+          <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      )}
+      <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
         County Tiers
       </p>
       <div className="flex flex-col gap-1.5">
