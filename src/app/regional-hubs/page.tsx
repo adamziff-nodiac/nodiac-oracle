@@ -32,6 +32,7 @@ import { DEFAULT_WEIGHTS, getProfileById } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
 import type { ViewMode } from '@/components/regional-hubs/HubMap'
+import { useProspectiveSites } from '@/hooks/useProspectiveSites'
 import type { GoogleDCDisplayMode } from '@/components/regional-hubs/GoogleDataCentersLayer'
 import type { HubCluster } from '@/lib/geo/cluster-hubs'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
@@ -62,8 +63,20 @@ export default function RegionalHubsPage() {
   const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
   const [showGoogleDC, setShowGoogleDC] = useState(false)
   const [googleDCDisplayMode, setGoogleDCDisplayMode] = useState<GoogleDCDisplayMode>('logo')
+  const [showProspectiveSites, setShowProspectiveSites] = useState(false)
+  const [showIPP, setShowIPP] = useState(true)
+  const [showSubstations, setShowSubstations] = useState(true)
+  const [includeTransmission, setIncludeTransmission] = useState(false)
+  const [prospectiveRadius, setProspectiveRadius] = useState(100)
 
   const { sites: portfolioSites } = usePortfolioSites()
+  const { geojson: prospectiveSitesGeojson, ippCount, substationCount, isLoading: prospectiveLoading } = useProspectiveSites({
+    enabled: showProspectiveSites,
+    showIPP,
+    showSubstations,
+    includeTransmission,
+    radiusMiles: prospectiveRadius,
+  })
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
   const clusterOptions = useMemo(() => ({
@@ -209,6 +222,9 @@ export default function RegionalHubsPage() {
                   onClusters={handleClusters}
                   showGoogleDC={showGoogleDC}
                   googleDCDisplayMode={googleDCDisplayMode}
+                  showProspectiveSites={showProspectiveSites}
+                  prospectiveSitesGeojson={prospectiveSitesGeojson}
+                  prospectiveRadius={prospectiveRadius}
                 />
 
                 {/* Mobile weight toggle */}
@@ -444,6 +460,86 @@ export default function RegionalHubsPage() {
                           >
                             Logo + Name
                           </button>
+                        </div>
+                      )}
+                      {/* Prospective Sites */}
+                      <button
+                        onClick={() => setShowProspectiveSites(!showProspectiveSites)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          showProspectiveSites
+                            ? 'bg-[#FFB800]/20 text-[#FFB800]'
+                            : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <span>Prospective Sites</span>
+                        {showProspectiveSites && (
+                          <span className="tabular-nums font-mono text-[10px]">
+                            {prospectiveLoading ? '...' : `${(ippCount + substationCount).toLocaleString()}`}
+                          </span>
+                        )}
+                      </button>
+                      {showProspectiveSites && (
+                        <div className="space-y-2 pl-1">
+                          {/* Sub-toggles */}
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => setShowIPP(!showIPP)}
+                              className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                                showIPP
+                                  ? 'bg-[#FFB800]/20 text-[#FFB800]'
+                                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                              }`}
+                            >
+                              IPP Sites {showIPP && !prospectiveLoading && <span className="opacity-60">({ippCount.toLocaleString()})</span>}
+                            </button>
+                            <button
+                              onClick={() => setShowSubstations(!showSubstations)}
+                              className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                                showSubstations
+                                  ? 'bg-[#22C55E]/20 text-[#22C55E]'
+                                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                              }`}
+                            >
+                              Substations {showSubstations && !prospectiveLoading && <span className="opacity-60">({substationCount.toLocaleString()})</span>}
+                            </button>
+                          </div>
+                          {/* Include Transmission toggle */}
+                          <button
+                            onClick={() => setIncludeTransmission(!includeTransmission)}
+                            className={`w-full flex items-center justify-between px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                              includeTransmission
+                                ? 'bg-[#FFB800]/15 text-[#FFB800]'
+                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            <span>Include Transmission</span>
+                            <span className="text-gray-500">{includeTransmission ? 'All IPP' : 'Dist. only'}</span>
+                          </button>
+                          {/* Radius slider */}
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">Radius</span>
+                              <span className="text-xs text-[#FFB800] tabular-nums font-mono font-semibold">
+                                {prospectiveRadius}mi
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={25}
+                              max={300}
+                              step={25}
+                              value={prospectiveRadius}
+                              onChange={(e) => setProspectiveRadius(parseInt(e.target.value))}
+                              className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                                bg-gray-200 dark:bg-white/10
+                                [&::-webkit-slider-thumb]:appearance-none
+                                [&::-webkit-slider-thumb]:w-3.5
+                                [&::-webkit-slider-thumb]:h-3.5
+                                [&::-webkit-slider-thumb]:rounded-full
+                                [&::-webkit-slider-thumb]:bg-[#FFB800]
+                                [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,184,0,0.4)]"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
