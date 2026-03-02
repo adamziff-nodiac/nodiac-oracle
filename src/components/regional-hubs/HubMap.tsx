@@ -360,20 +360,14 @@ export function HubMap({
       )}
 
       {/* Google data center overlay */}
-      {showGoogleDC && (
-        <GoogleDataCentersLayer
-          visible={showGoogleDC}
-          displayMode={googleDCDisplayMode}
-        />
-      )}
+      <GoogleDataCentersLayer
+        visible={showGoogleDC}
+        displayMode={googleDCDisplayMode}
+      />
 
-      {/* Prospective sites: radius circles + site markers */}
-      {showProspectiveSites && (
-        <>
-          <RadiusCirclesLayer radiusMiles={prospectiveRadius} visible />
-          <ProspectiveSitesLayer geojson={prospectiveSitesGeojson} visible />
-        </>
-      )}
+      {/* Prospective sites: radius circles behind points, always mounted for stable z-order */}
+      <RadiusCirclesLayer radiusMiles={prospectiveRadius} visible={showProspectiveSites} />
+      <ProspectiveSitesLayer geojson={prospectiveSitesGeojson} visible={showProspectiveSites} />
     </Map>
   )
 }
