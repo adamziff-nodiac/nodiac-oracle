@@ -674,7 +674,15 @@ export default function RegionalHubsPage() {
                 {viewMode === 'tiers' ? (
                   <TierLegend clusterCount={clusterCount} />
                 ) : (
-                  <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} clusterCount={viewMode !== 'county' ? clusterCount : undefined} />
+                  <MapLegend
+                    scoreRange={scoreRange}
+                    highlightThreshold={highlightThreshold}
+                    colorMode={colorMode}
+                    viewMode={viewMode}
+                    clusterCount={viewMode !== 'county' ? clusterCount : undefined}
+                    showGoogleDC={showGoogleDC}
+                    prospectiveSites={showProspectiveSites ? { ippCount, substationCount, radiusMiles: prospectiveRadius } : null}
+                  />
                 )}
 
                 {/* Export button */}
