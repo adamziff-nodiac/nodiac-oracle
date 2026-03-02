@@ -4,8 +4,9 @@
  *
  * Output: public/data/prospective-substations.json
  *
- * Compact format: { n, y, x, s, tp, mv }
+ * Compact format: { n, y, x, s, tp, mv, c, co, cf, ln, mnv }
  *   n = NAME, y = LATITUDE, x = LONGITUDE, s = STATE, tp = TYPE, mv = MAX_VOLT
+ *   c = CITY, co = COUNTY, cf = COUNTYFIPS, ln = LINES, mnv = MIN_VOLT
  *
  * Run: bun run scripts/fetch-hifld-substations.ts
  */
@@ -60,6 +61,11 @@ interface SubstationRaw {
   LATITUDE: number
   LONGITUDE: number
   MAX_VOLT: number
+  CITY: string
+  COUNTY: string
+  COUNTYFIPS: string
+  LINES: number
+  MIN_VOLT: number
 }
 
 interface SubstationCompact {
@@ -69,6 +75,11 @@ interface SubstationCompact {
   s: string
   tp: string
   mv: number | null
+  c: string
+  co: string
+  cf: string
+  ln: number | null
+  mnv: number | null
 }
 
 async function fetchAll(): Promise<SubstationCompact[]> {
@@ -80,7 +91,7 @@ async function fetchAll(): Promise<SubstationCompact[]> {
   while (true) {
     const params = new URLSearchParams({
       where: '1=1',
-      outFields: 'NAME,STATE,TYPE,STATUS,LATITUDE,LONGITUDE,MAX_VOLT',
+      outFields: 'NAME,STATE,TYPE,STATUS,LATITUDE,LONGITUDE,MAX_VOLT,CITY,COUNTY,COUNTYFIPS,LINES,MIN_VOLT',
       resultOffset: String(offset),
       resultRecordCount: String(PAGE_SIZE),
       f: 'json',
@@ -108,6 +119,11 @@ async function fetchAll(): Promise<SubstationCompact[]> {
           s: a.STATE || '',
           tp: a.TYPE || '',
           mv: a.MAX_VOLT && a.MAX_VOLT > 0 ? +a.MAX_VOLT.toFixed(0) : null,
+          c: a.CITY || '',
+          co: a.COUNTY || '',
+          cf: a.COUNTYFIPS || '',
+          ln: a.LINES && a.LINES > 0 ? a.LINES : null,
+          mnv: a.MIN_VOLT && a.MIN_VOLT > 0 ? +a.MIN_VOLT.toFixed(0) : null,
         })
       }
     }

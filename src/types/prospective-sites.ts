@@ -18,6 +18,16 @@ export interface SubstationCompact {
   s: string    // STATE
   tp: string   // TYPE
   mv: number | null // MAX_VOLT
+  c: string    // CITY
+  co: string   // COUNTY
+  cf: string   // COUNTYFIPS
+  ln: number | null // LINES
+  mnv: number | null // MIN_VOLT
+  u: string | null   // utility name (from enrichment)
+  ut: string | null  // utility type
+  hc: string | null  // holding company
+  cust: number | null // customers served
+  sp: number | null   // summer peak MW
 }
 
 /** GeoJSON feature properties for prospective site markers */
@@ -29,4 +39,14 @@ export interface ProspectiveSiteProperties {
   voltageTier?: string | null
   /** Pre-computed distance to nearest Google DC in miles */
   nearestDCMiles: number
+  city?: string | null
+  county?: string | null
+  countyFips?: string | null
+  lines?: number | null
+  minVoltage?: number | null
+  utility?: string | null
+  utilityType?: string | null
+  holdingCompany?: string | null
+  customers?: number | null
+  summerPeakMW?: number | null
 }

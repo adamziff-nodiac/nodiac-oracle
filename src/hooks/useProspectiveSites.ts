@@ -161,6 +161,16 @@ export function useProspectiveSites({
             state: sub.s,
             voltage: sub.mv,
             nearestDCMiles: Math.round(substationDistances[i]),
+            city: sub.c || null,
+            county: sub.co || null,
+            countyFips: sub.cf || null,
+            lines: sub.ln,
+            minVoltage: sub.mnv,
+            utility: sub.u,
+            utilityType: sub.ut,
+            holdingCompany: sub.hc,
+            customers: sub.cust,
+            summerPeakMW: sub.sp,
           },
         })
       }

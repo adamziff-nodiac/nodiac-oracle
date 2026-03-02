@@ -14,6 +14,122 @@ const SITE_COLORS: Record<ProspectiveSiteProperties['siteType'], string> = {
   substation: '#22C55E', // green
 }
 
+const UTILITY_TYPE_LABELS: Record<string, string> = {
+  'MUNICIPAL': 'Muni',
+  'COOPERATIVE': 'Co-op',
+  'INVESTOR OWNED': 'IOU',
+  'STATE': 'State',
+  'FEDERAL': 'Federal',
+  'POLITICAL SUBDIVISION': 'Poli Sub',
+  'MUNICIPAL MKTG AUTHORITY': 'Muni Auth',
+  'WHOLESALE POWER MARKETER': 'Wholesale',
+  'COMMUNITY CHOICE AGGREGATOR': 'CCA',
+  'NOT AVAILABLE': '',
+}
+
+function formatNumber(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`
+  return String(n)
+}
+
+function SubstationPopup({ props }: { props: ProspectiveSiteProperties }) {
+  const voltageStr = (() => {
+    if (props.minVoltage != null && props.voltage != null) {
+      return props.minVoltage === props.voltage
+        ? `${props.voltage}kV`
+        : `${props.minVoltage}–${props.voltage}kV`
+    }
+    if (props.voltage != null) return `${props.voltage}kV`
+    if (props.minVoltage != null) return `${props.minVoltage}kV`
+    return null
+  })()
+
+  const location = [props.city, props.county, props.state].filter(Boolean).join(', ')
+  const utilityBadge = props.utilityType && props.utilityType !== 'NOT AVAILABLE'
+    ? UTILITY_TYPE_LABELS[props.utilityType] || props.utilityType
+    : null
+
+  return (
+    <div className="text-xs text-gray-200 space-y-1.5 max-w-[240px]">
+      {/* Name */}
+      <div className="flex items-center gap-1.5">
+        <span
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: SITE_COLORS.substation }}
+        />
+        <span className="font-semibold text-white truncate">
+          {props.name}
+        </span>
+      </div>
+
+      {/* Utility owner */}
+      {props.utility && (
+        <div>
+          <span className="text-gray-400">Utility:</span>{' '}
+          <span className="font-medium text-green-300">{props.utility}</span>
+          {utilityBadge && (
+            <span className="ml-1 px-1 py-0.5 rounded text-[10px] bg-white/10 text-gray-300">
+              {utilityBadge}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Holding company (hide if same as utility name) */}
+      {props.holdingCompany && props.holdingCompany !== props.utility && (
+        <div>
+          <span className="text-gray-400">Holding Co:</span>{' '}
+          {props.holdingCompany}
+        </div>
+      )}
+
+      {/* Location */}
+      {location && (
+        <div>
+          <span className="text-gray-400">Location:</span> {location}
+        </div>
+      )}
+
+      {/* Voltage */}
+      {voltageStr && (
+        <div>
+          <span className="text-gray-400">Voltage:</span> {voltageStr}
+        </div>
+      )}
+
+      {/* Lines */}
+      {props.lines != null && (
+        <div>
+          <span className="text-gray-400">Lines:</span> {props.lines}
+        </div>
+      )}
+
+      {/* Utility stats */}
+      {(props.summerPeakMW != null || props.customers != null) && (
+        <div className="flex gap-3">
+          {props.summerPeakMW != null && (
+            <span>
+              <span className="text-gray-400">Peak:</span> {props.summerPeakMW.toLocaleString()}MW
+            </span>
+          )}
+          {props.customers != null && (
+            <span>
+              <span className="text-gray-400">Cust:</span> {formatNumber(props.customers)}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Distance */}
+      <div>
+        <span className="text-gray-400">Nearest Google DC:</span>{' '}
+        <span className="text-[#4285F4]">{props.nearestDCMiles}mi</span>
+      </div>
+    </div>
+  )
+}
+
 interface ProspectiveSitesLayerProps {
   geojson: GeoJSON.FeatureCollection<GeoJSON.Point, ProspectiveSiteProperties> | null
   visible?: boolean
@@ -41,14 +157,29 @@ export function ProspectiveSitesLayer({ geojson, visible = true }: ProspectiveSi
         const coords = f.geometry.coordinates as [number, number]
         // Mapbox stringifies nested properties, parse them back
         const props = f.properties as Record<string, string | number | null>
+        const parseStr = (v: string | number | null | undefined) =>
+          v != null && String(v) !== '' && String(v) !== 'null' ? String(v) : null
+        const parseNum = (v: string | number | null | undefined) =>
+          v != null && String(v) !== '' && String(v) !== 'null' ? Number(v) : null
+
         setHovered({
           props: {
             name: String(props.name || ''),
             siteType: String(props.siteType || 'other') as ProspectiveSiteProperties['siteType'],
             state: String(props.state || ''),
-            voltage: props.voltage ? Number(props.voltage) : null,
-            voltageTier: props.voltageTier ? String(props.voltageTier) : null,
+            voltage: parseNum(props.voltage),
+            voltageTier: parseStr(props.voltageTier),
             nearestDCMiles: Number(props.nearestDCMiles || 0),
+            city: parseStr(props.city),
+            county: parseStr(props.county),
+            countyFips: parseStr(props.countyFips),
+            lines: parseNum(props.lines),
+            minVoltage: parseNum(props.minVoltage),
+            utility: parseStr(props.utility),
+            utilityType: parseStr(props.utilityType),
+            holdingCompany: parseStr(props.holdingCompany),
+            customers: parseNum(props.customers),
+            summerPeakMW: parseNum(props.summerPeakMW),
           },
           lngLat: coords,
         })
@@ -131,36 +262,40 @@ export function ProspectiveSitesLayer({ geojson, visible = true }: ProspectiveSi
           offset={12}
           className="[&_.mapboxgl-popup-content]:!bg-gray-900 [&_.mapboxgl-popup-content]:!rounded-lg [&_.mapboxgl-popup-content]:!shadow-xl [&_.mapboxgl-popup-content]:!p-3 [&_.mapboxgl-popup-content]:!border [&_.mapboxgl-popup-content]:!border-white/10 [&_.mapboxgl-popup-tip]:!border-t-gray-900"
         >
-          <div className="text-xs text-gray-200 space-y-1">
-            <div className="flex items-center gap-1.5">
-              <span
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: SITE_COLORS[hovered.props.siteType] }}
-              />
-              <span className="font-semibold text-white truncate max-w-[180px]">
-                {hovered.props.name}
-              </span>
-            </div>
-            <div>
-              <span className="text-gray-400">Type:</span>{' '}
-              <span className="capitalize">{hovered.props.siteType}</span>
-            </div>
-            <div>
-              <span className="text-gray-400">State:</span> {hovered.props.state}
-            </div>
-            {hovered.props.voltage != null && (
-              <div>
-                <span className="text-gray-400">Voltage:</span> {hovered.props.voltage}kV
-                {hovered.props.voltageTier && (
-                  <span className="text-gray-500 ml-1">({hovered.props.voltageTier})</span>
-                )}
+          {hovered.props.siteType === 'substation' ? (
+            <SubstationPopup props={hovered.props} />
+          ) : (
+            <div className="text-xs text-gray-200 space-y-1">
+              <div className="flex items-center gap-1.5">
+                <span
+                  className="w-2.5 h-2.5 rounded-full"
+                  style={{ backgroundColor: SITE_COLORS[hovered.props.siteType] }}
+                />
+                <span className="font-semibold text-white truncate max-w-[180px]">
+                  {hovered.props.name}
+                </span>
               </div>
-            )}
-            <div>
-              <span className="text-gray-400">Nearest Google DC:</span>{' '}
-              <span className="text-[#4285F4]">{hovered.props.nearestDCMiles}mi</span>
+              <div>
+                <span className="text-gray-400">Type:</span>{' '}
+                <span className="capitalize">{hovered.props.siteType}</span>
+              </div>
+              <div>
+                <span className="text-gray-400">State:</span> {hovered.props.state}
+              </div>
+              {hovered.props.voltage != null && (
+                <div>
+                  <span className="text-gray-400">Voltage:</span> {hovered.props.voltage}kV
+                  {hovered.props.voltageTier && (
+                    <span className="text-gray-500 ml-1">({hovered.props.voltageTier})</span>
+                  )}
+                </div>
+              )}
+              <div>
+                <span className="text-gray-400">Nearest Google DC:</span>{' '}
+                <span className="text-[#4285F4]">{hovered.props.nearestDCMiles}mi</span>
+              </div>
             </div>
-          </div>
+          )}
         </Popup>
       )}
     </>

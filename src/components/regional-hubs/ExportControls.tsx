@@ -79,20 +79,35 @@ export function ExportControls({ targetRef, viewMode = 'county', hideOnExportRef
     }
 
     try {
-      const { width, height } = getExportDimensions()
+      const { width: targetW, height: targetH } = getExportDimensions()
       const el = targetRef.current
       const elRect = el.getBoundingClientRect()
-      // Scale to match export dimensions while preserving aspect ratio
-      const scale = Math.max(width / elRect.width, height / elRect.height)
+
+      // Scale so the capture covers the target dimensions (may overshoot one axis)
+      const scale = Math.max(targetW / elRect.width, targetH / elRect.height)
       const dataUrl = await toPng(el, {
         cacheBust: true,
         pixelRatio: scale,
         backgroundColor: '#0f0f1a',
       })
 
+      // Crop to exact target dimensions (center-crop the oversized axis)
+      const img = new Image()
+      img.src = dataUrl
+      await new Promise<void>((resolve) => { img.onload = () => resolve() })
+
+      const canvas = document.createElement('canvas')
+      canvas.width = targetW
+      canvas.height = targetH
+      const ctx = canvas.getContext('2d')!
+      const sx = Math.round((img.width - targetW) / 2)
+      const sy = Math.round((img.height - targetH) / 2)
+      ctx.drawImage(img, sx, sy, targetW, targetH, 0, 0, targetW, targetH)
+      const croppedUrl = canvas.toDataURL('image/png')
+
       const link = document.createElement('a')
       link.download = `nodiac-regional-hubs-${viewMode}-${new Date().toISOString().slice(0, 10)}.png`
-      link.href = dataUrl
+      link.href = croppedUrl
       link.click()
     } catch (err) {
       console.error('Export failed:', err)
