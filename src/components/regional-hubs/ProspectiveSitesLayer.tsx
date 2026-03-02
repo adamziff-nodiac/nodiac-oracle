@@ -27,12 +27,6 @@ const UTILITY_TYPE_LABELS: Record<string, string> = {
   'NOT AVAILABLE': '',
 }
 
-function formatNumber(n: number): string {
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `${(n / 1_000).toFixed(0)}K`
-  return String(n)
-}
-
 function SubstationPopup({ props }: { props: ProspectiveSiteProperties }) {
   const voltageStr = (() => {
     if (props.minVoltage != null && props.voltage != null) {
@@ -102,22 +96,6 @@ function SubstationPopup({ props }: { props: ProspectiveSiteProperties }) {
       {props.lines != null && (
         <div>
           <span className="text-gray-400">Lines:</span> {props.lines}
-        </div>
-      )}
-
-      {/* Utility stats */}
-      {(props.summerPeakMW != null || props.customers != null) && (
-        <div className="flex gap-3">
-          {props.summerPeakMW != null && (
-            <span>
-              <span className="text-gray-400">Peak:</span> {props.summerPeakMW.toLocaleString()}MW
-            </span>
-          )}
-          {props.customers != null && (
-            <span>
-              <span className="text-gray-400">Cust:</span> {formatNumber(props.customers)}
-            </span>
-          )}
         </div>
       )}
 
