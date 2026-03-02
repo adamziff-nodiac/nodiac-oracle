@@ -86,11 +86,10 @@ function SubstationPopup({ props }: { props: ProspectiveSiteProperties }) {
       )}
 
       {/* Voltage */}
-      {voltageStr && (
-        <div>
-          <span className="text-gray-400">Voltage:</span> {voltageStr}
-        </div>
-      )}
+      <div>
+        <span className="text-gray-400">Voltage:</span>{' '}
+        {voltageStr ?? <span className="text-gray-500">unknown</span>}
+      </div>
 
       {/* Lines */}
       {props.lines != null && (
