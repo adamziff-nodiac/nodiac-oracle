@@ -99,63 +99,22 @@ export function ProspectiveSitesLayer({ geojson, visible = true }: ProspectiveSi
         id="prospective-sites-source"
         type="geojson"
         data={data}
-        cluster={true}
-        clusterMaxZoom={10}
-        clusterRadius={40}
       >
-        {/* Cluster circles */}
-        <Layer
-          id="prospective-sites-clusters"
-          type="circle"
-          filter={['has', 'point_count']}
-          layout={{ visibility }}
-          paint={{
-            'circle-color': '#FFB800',
-            'circle-radius': [
-              'step',
-              ['get', 'point_count'],
-              12, 50,
-              16, 200,
-              20, 500,
-              24,
-            ],
-            'circle-opacity': 0.7,
-            'circle-stroke-width': 1.5,
-            'circle-stroke-color': 'rgba(255,184,0,0.4)',
-          }}
-        />
-        {/* Cluster count labels */}
-        <Layer
-          id="prospective-sites-cluster-count"
-          type="symbol"
-          filter={['has', 'point_count']}
-          layout={{
-            visibility,
-            'text-field': '{point_count_abbreviated}',
-            'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-            'text-size': 11,
-            'text-allow-overlap': true,
-          }}
-          paint={{
-            'text-color': '#1a1a2e',
-          }}
-        />
-        {/* Individual site circles */}
+        {/* Individual site circles — no clustering, always visible */}
         <Layer
           id="prospective-sites-unclustered"
           type="circle"
-          filter={['!', ['has', 'point_count']]}
           layout={{ visibility }}
           paint={{
             'circle-color': colorExpr,
             'circle-radius': [
               'interpolate', ['linear'], ['zoom'],
-              3, 2.5,
-              6, 4,
+              3, 2,
+              6, 3.5,
               10, 6,
             ],
             'circle-opacity': 0.8,
-            'circle-stroke-width': 1,
+            'circle-stroke-width': 0.5,
             'circle-stroke-color': 'rgba(0,0,0,0.3)',
           }}
         />
