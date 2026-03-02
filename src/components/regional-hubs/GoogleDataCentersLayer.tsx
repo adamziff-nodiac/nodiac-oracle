@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo, useEffect, useState, useCallback, useRef } from 'react'
 import { Source, Layer, Popup, useMap } from 'react-map-gl/mapbox'
 import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCenters'
 
@@ -14,6 +14,7 @@ interface GoogleDataCentersLayerProps {
 /**
  * Renders Google data center locations as "G" markers on the map.
  * Supports clustering on zoom-out and optional name labels.
+ * In logo-label mode, cluster labels list all member DC names.
  */
 export function GoogleDataCentersLayer({
   visible = true,
@@ -21,6 +22,8 @@ export function GoogleDataCentersLayer({
 }: GoogleDataCentersLayerProps) {
   const { current: map } = useMap()
   const [hovered, setHovered] = useState<{ dc: GoogleDataCenter; lngLat: [number, number] } | null>(null)
+  const [clusterLabelsGeojson, setClusterLabelsGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
+  const pendingRef = useRef(0) // track in-flight updates to avoid stale writes
 
   const geojson = useMemo<GeoJSON.FeatureCollection>(() => {
     const features: GeoJSON.Feature[] = googleDataCenters.map((dc, i) => ({
@@ -43,28 +46,21 @@ export function GoogleDataCentersLayer({
   const visibility = visible ? ('visible' as const) : ('none' as const)
   const showLabels = visible && displayMode === 'logo-label'
 
-  // Register custom icon images on the map
-  useMemo(() => {
+  // Register custom icon images on the map (and re-register after style changes)
+  useEffect(() => {
     if (!map) return
     const m = map.getMap()
-    if (m.hasImage('google-g-icon')) return
 
     const dpr = 2
     const deg2rad = (d: number) => d * Math.PI / 180
 
-    /**
-     * Draw the multicolored Google "G" logo on a canvas.
-     * The G is an annular ring (4 colored quadrants) with a gap on
-     * the upper-right and a horizontal blue bar at the 3-o'clock position.
-     */
     function drawGoogleG(ctx: CanvasRenderingContext2D, s: number) {
       const cx = s / 2
       const cy = s / 2
-      const outerR = s / 2       // fill to canvas edge — no transparent ring
+      const outerR = s / 2
       const innerR = s * 0.27
       const barH = outerR - innerR
 
-      // Helper: draw a filled annular sector
       function sector(startDeg: number, endDeg: number, color: string) {
         ctx.beginPath()
         ctx.arc(cx, cy, outerR, deg2rad(startDeg), deg2rad(endDeg))
@@ -74,45 +70,51 @@ export function GoogleDataCentersLayer({
         ctx.fill()
       }
 
-      // Four colored quadrants of the ring
-      // Canvas angles: 0°=east/right, clockwise
-      sector(1, 90, '#34A853')     // Green: bottom-right (3 o'clock → 6 o'clock)
-      sector(90, 180, '#FBBC05')   // Yellow: bottom-left (6 o'clock → 9 o'clock)
-      sector(180, 270, '#EA4335')  // Red: top-left (9 o'clock → 12 o'clock)
-      sector(270, 330, '#4285F4')  // Blue: top-right (12 o'clock → ~1:30, stops at gap)
+      sector(1, 90, '#34A853')
+      sector(90, 180, '#FBBC05')
+      sector(180, 270, '#EA4335')
+      sector(270, 330, '#4285F4')
 
-      // White center fill
       ctx.beginPath()
       ctx.arc(cx, cy, innerR, 0, Math.PI * 2)
       ctx.fillStyle = '#ffffff'
       ctx.fill()
 
-      // Blue horizontal bar (the crossbar of the G)
       ctx.fillStyle = '#4285F4'
       ctx.fillRect(cx, cy - barH / 2, outerR, barH)
     }
 
-    // Individual point icon: Google G on transparent background
-    const size = 32
-    const canvas = document.createElement('canvas')
-    canvas.width = size * dpr
-    canvas.height = size * dpr
-    const ctx = canvas.getContext('2d')!
-    ctx.scale(dpr, dpr)
-    drawGoogleG(ctx, size)
-    const imgData = ctx.getImageData(0, 0, size * dpr, size * dpr)
-    m.addImage('google-g-icon', { width: size * dpr, height: size * dpr, data: new Uint8Array(imgData.data) }, { pixelRatio: dpr })
+    function addIcons() {
+      if (m.hasImage('google-g-icon')) return
 
-    // Cluster icon: larger Google G on transparent background
-    const cSize = 40
-    const cCanvas = document.createElement('canvas')
-    cCanvas.width = cSize * dpr
-    cCanvas.height = cSize * dpr
-    const cCtx = cCanvas.getContext('2d')!
-    cCtx.scale(dpr, dpr)
-    drawGoogleG(cCtx, cSize)
-    const cImgData = cCtx.getImageData(0, 0, cSize * dpr, cSize * dpr)
-    m.addImage('google-g-cluster', { width: cSize * dpr, height: cSize * dpr, data: new Uint8Array(cImgData.data) }, { pixelRatio: dpr })
+      const size = 32
+      const canvas = document.createElement('canvas')
+      canvas.width = size * dpr
+      canvas.height = size * dpr
+      const ctx = canvas.getContext('2d')!
+      ctx.scale(dpr, dpr)
+      drawGoogleG(ctx, size)
+      const imgData = ctx.getImageData(0, 0, size * dpr, size * dpr)
+      m.addImage('google-g-icon', { width: size * dpr, height: size * dpr, data: new Uint8Array(imgData.data) }, { pixelRatio: dpr })
+
+      const cSize = 40
+      const cCanvas = document.createElement('canvas')
+      cCanvas.width = cSize * dpr
+      cCanvas.height = cSize * dpr
+      const cCtx = cCanvas.getContext('2d')!
+      cCtx.scale(dpr, dpr)
+      drawGoogleG(cCtx, cSize)
+      const cImgData = cCtx.getImageData(0, 0, cSize * dpr, cSize * dpr)
+      m.addImage('google-g-cluster', { width: cSize * dpr, height: cSize * dpr, data: new Uint8Array(cImgData.data) }, { pixelRatio: dpr })
+    }
+
+    // Add immediately if style is loaded, and re-add on style changes
+    if (m.isStyleLoaded()) addIcons()
+    m.on('style.load', addIcons)
+
+    return () => {
+      m.off('style.load', addIcons)
+    }
   }, [map])
 
   // Register hover events on the map instance
@@ -162,6 +164,75 @@ export function GoogleDataCentersLayer({
       }
     }
   }, [map])
+
+  // Build cluster labels: for each visible cluster, fetch member names
+  const updateClusterLabels = useCallback(() => {
+    if (!map) return
+    const m = map.getMap()
+    if (!m.getLayer('google-dc-clusters')) return
+
+    const { width, height } = m.getCanvas()
+    const clusters = m.queryRenderedFeatures([[0, 0], [width, height]], { layers: ['google-dc-clusters'] })
+    if (clusters.length === 0) {
+      setClusterLabelsGeojson(null)
+      return
+    }
+
+    const source = m.getSource('google-dc-source') as mapboxgl.GeoJSONSource | undefined
+    if (!source || !('getClusterLeaves' in source)) return
+
+    const batchId = ++pendingRef.current
+
+    // Fetch leaves for each cluster in parallel
+    Promise.all(
+      clusters.map(
+        (cluster) =>
+          new Promise<GeoJSON.Feature | null>((resolve) => {
+            const clusterId = cluster.properties?.cluster_id
+            const count = cluster.properties?.point_count ?? 0
+            if (clusterId == null) { resolve(null); return }
+
+            source.getClusterLeaves(clusterId, count, 0, (err, leaves) => {
+              if (err || !leaves) { resolve(null); return }
+              const names = leaves
+                .map((l) => (l.properties as Record<string, string>)?.name)
+                .filter(Boolean)
+                .sort()
+              const coords = (cluster.geometry as GeoJSON.Point).coordinates
+              resolve({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: coords },
+                properties: { label: names.join('\n') },
+              })
+            })
+          })
+      )
+    ).then((features) => {
+      // Only update if this is still the latest batch
+      if (batchId !== pendingRef.current) return
+      const valid = features.filter(Boolean) as GeoJSON.Feature[]
+      if (valid.length > 0) {
+        setClusterLabelsGeojson({ type: 'FeatureCollection', features: valid })
+      } else {
+        setClusterLabelsGeojson(null)
+      }
+    })
+  }, [map])
+
+  useEffect(() => {
+    if (!map) return
+    const m = map.getMap()
+
+    const handler = () => updateClusterLabels()
+    // Update on zoom/pan and when source data finishes loading
+    m.on('moveend', handler)
+    m.on('sourcedata', handler)
+
+    return () => {
+      m.off('moveend', handler)
+      m.off('sourcedata', handler)
+    }
+  }, [map, updateClusterLabels])
 
   return (
     <>
@@ -236,6 +307,30 @@ export function GoogleDataCentersLayer({
           }}
         />
       </Source>
+
+      {/* Cluster name labels (logo-label mode) — separate source from cluster leaves */}
+      {clusterLabelsGeojson && showLabels && (
+        <Source id="google-dc-cluster-labels-source" type="geojson" data={clusterLabelsGeojson}>
+          <Layer
+            id="google-dc-cluster-labels"
+            type="symbol"
+            layout={{
+              'text-field': ['get', 'label'],
+              'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+              'text-size': 11,
+              'text-offset': [0, 1.8],
+              'text-anchor': 'top',
+              'text-max-width': 14,
+              'text-allow-overlap': true,
+            }}
+            paint={{
+              'text-color': '#d1d5db',
+              'text-halo-color': 'rgba(0,0,0,0.7)',
+              'text-halo-width': 1.5,
+            }}
+          />
+        </Source>
+      )}
 
       {/* Hover popup */}
       {hovered && visible && (

@@ -12,11 +12,14 @@ import { GradientHubsLayer } from './GradientHubsLayer'
 import { TierHubsLayer } from './TierHubsLayer'
 import { PortfolioOverlay } from './PortfolioOverlay'
 import { GoogleDataCentersLayer, type GoogleDCDisplayMode } from './GoogleDataCentersLayer'
+import { RadiusCirclesLayer } from './RadiusCirclesLayer'
+import { ProspectiveSitesLayer } from './ProspectiveSitesLayer'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHubClusters } from '@/hooks/useHubClusters'
 import type { ClusterOptions, HubCluster } from '@/lib/geo/cluster-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
+import type { ProspectiveSiteProperties } from '@/types/prospective-sites'
 
 export type ViewMode = 'county' | 'regions' | 'outline' | 'gradient' | 'tiers'
 
@@ -43,6 +46,9 @@ interface HubMapProps {
   positionOverrides?: Record<number, { lng: number; lat: number }>
   onPositionOverride?: (clusterId: number, pos: { lng: number; lat: number }) => void
   onClusters?: (clusters: HubCluster[]) => void
+  showProspectiveSites?: boolean
+  prospectiveSitesGeojson?: GeoJSON.FeatureCollection<GeoJSON.Point, ProspectiveSiteProperties> | null
+  prospectiveRadius?: number
 }
 
 export function HubMap({
@@ -66,6 +72,9 @@ export function HubMap({
   positionOverrides,
   onPositionOverride,
   onClusters,
+  showProspectiveSites = false,
+  prospectiveSitesGeojson = null,
+  prospectiveRadius = 100,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -328,13 +337,13 @@ export function HubMap({
         />
       )}
 
-      {/* Portfolio sites overlay — visible in all hub-based modes */}
+      {/* Portfolio sites overlay */}
       {showPortfolio && clusterData && portfolioSites.length > 0 && (
         <PortfolioOverlay
           sites={portfolioSites}
           fipsClusterStatus={clusterData.fipsClusterStatus}
           scoreLookup={scoreLookup}
-          visible={showPortfolio && viewMode !== 'county'}
+          visible={showPortfolio}
           viewMode={viewMode}
         />
       )}
@@ -350,13 +359,15 @@ export function HubMap({
         />
       )}
 
-      {/* Google data center overlay */}
-      {showGoogleDC && (
-        <GoogleDataCentersLayer
-          visible={showGoogleDC}
-          displayMode={googleDCDisplayMode}
-        />
-      )}
+      {/* Prospective sites: radius circles behind points, always mounted for stable z-order */}
+      <RadiusCirclesLayer radiusMiles={prospectiveRadius} visible={showProspectiveSites} />
+      <ProspectiveSitesLayer geojson={prospectiveSitesGeojson} visible={showProspectiveSites} />
+
+      {/* Google data center overlay — rendered last so logos appear above prospective dots */}
+      <GoogleDataCentersLayer
+        visible={showGoogleDC}
+        displayMode={googleDCDisplayMode}
+      />
     </Map>
   )
 }

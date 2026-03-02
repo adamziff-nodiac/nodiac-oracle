@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef, useMemo } from 'react'
 import Link from 'next/link'
-import { SlidersHorizontal, X, Info, Pencil } from 'lucide-react'
+import { SlidersHorizontal, X, Info, Pencil, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import dynamic from 'next/dynamic'
@@ -32,6 +32,7 @@ import { DEFAULT_WEIGHTS, getProfileById } from '@/lib/scoring/weight-profiles'
 import type { ScoringMode } from '@/lib/scoring/county-scorer'
 import type { ColorMode } from '@/components/regional-hubs/CountyChoropleth'
 import type { ViewMode } from '@/components/regional-hubs/HubMap'
+import { useProspectiveSites } from '@/hooks/useProspectiveSites'
 import type { GoogleDCDisplayMode } from '@/components/regional-hubs/GoogleDataCentersLayer'
 import type { HubCluster } from '@/lib/geo/cluster-hubs'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
@@ -60,10 +61,24 @@ export default function RegionalHubsPage() {
   const [positionOverrides, setPositionOverrides] = useState<Record<number, { lng: number; lat: number }>>({})
   const [editingNames, setEditingNames] = useState(false)
   const [clusterNames, setClusterNames] = useState<{ id: number; name: string }[]>([])
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [legendCollapsed, setLegendCollapsed] = useState(false)
   const [showGoogleDC, setShowGoogleDC] = useState(false)
   const [googleDCDisplayMode, setGoogleDCDisplayMode] = useState<GoogleDCDisplayMode>('logo')
+  const [showProspectiveSites, setShowProspectiveSites] = useState(false)
+  const [showIPP, setShowIPP] = useState(true)
+  const [showSubstations, setShowSubstations] = useState(true)
+  const [includeTransmission, setIncludeTransmission] = useState(false)
+  const [prospectiveRadius, setProspectiveRadius] = useState(100)
 
   const { sites: portfolioSites } = usePortfolioSites()
+  const { geojson: prospectiveSitesGeojson, ippCount, substationCount, isLoading: prospectiveLoading } = useProspectiveSites({
+    enabled: showProspectiveSites,
+    showIPP,
+    showSubstations,
+    includeTransmission,
+    radiusMiles: prospectiveRadius,
+  })
   const { weightedScores, scoreLookup, scoreRange, quantileBreaks } = useWeightedScores(scores, weights, scoringMode)
 
   const clusterOptions = useMemo(() => ({
@@ -209,20 +224,46 @@ export default function RegionalHubsPage() {
                   onClusters={handleClusters}
                   showGoogleDC={showGoogleDC}
                   googleDCDisplayMode={googleDCDisplayMode}
+                  showProspectiveSites={showProspectiveSites}
+                  prospectiveSitesGeojson={prospectiveSitesGeojson}
+                  prospectiveRadius={prospectiveRadius}
                 />
 
                 {/* Mobile weight toggle */}
                 <button
                   ref={mobileBtnRef}
-                  onClick={() => setShowMobileWeights(!showMobileWeights)}
+                  onClick={() => { setShowMobileWeights(!showMobileWeights); setSidebarCollapsed(false) }}
                   className="absolute top-4 left-4 z-20 md:hidden flex items-center gap-2 px-3 py-2 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
                   {showMobileWeights ? <X className="w-4 h-4" /> : <SlidersHorizontal className="w-4 h-4" />}
                   Weights
                 </button>
 
+                {/* Sidebar expand button (desktop, collapsed) */}
+                {sidebarCollapsed && (
+                  <button
+                    onClick={() => setSidebarCollapsed(false)}
+                    className="absolute top-4 left-4 z-10 hidden md:flex items-center gap-1.5 px-2.5 py-2 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    <SlidersHorizontal className="w-3.5 h-3.5" />
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                )}
+
                 {/* Floating weight panel */}
-                <div ref={panelRef} className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} md:block md:top-4`}>
+                <div ref={panelRef} className={`absolute top-4 left-4 w-64 bg-white/90 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-xl p-4 space-y-5 z-10 max-h-[calc(70vh-2rem)] overflow-y-auto ${showMobileWeights ? 'block top-14' : 'hidden'} ${sidebarCollapsed ? 'md:hidden' : 'md:block'} md:top-4`}>
+                  {/* Collapse button */}
+                  <div className="flex justify-between items-center -mt-1 -mb-2">
+                    <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">Controls</span>
+                    <button
+                      onClick={() => setSidebarCollapsed(true)}
+                      className="hidden md:flex items-center p-1 rounded text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+                      title="Collapse panel"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                  </div>
+
                   {/* View Mode pill row */}
                   <div className="space-y-1.5">
                     <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
@@ -391,23 +432,23 @@ export default function RegionalHubsPage() {
                             </div>
                           </div>
                         )}
-                        <button
-                          onClick={() => setShowPortfolio(!showPortfolio)}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            showPortfolio
-                              ? 'bg-[#c77dba]/20 text-[#c77dba]'
-                              : 'bg-white/5 text-gray-400 hover:text-white'
-                          }`}
-                        >
-                          <span>Portfolio Sites</span>
-                          <span className="tabular-nums font-mono text-[10px]">
-                            {portfolioSites.length} sites
-                          </span>
-                        </button>
                       </div>
                     )}
-                    {/* Google Data Centers toggle — always visible */}
+                    {/* Overlay toggles — always visible */}
                     <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
+                      <button
+                        onClick={() => setShowPortfolio(!showPortfolio)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          showPortfolio
+                            ? 'bg-[#c77dba]/20 text-[#c77dba]'
+                            : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <span>Portfolio Sites</span>
+                        <span className="tabular-nums font-mono text-[10px]">
+                          {portfolioSites.length} sites
+                        </span>
+                      </button>
                       <button
                         onClick={() => setShowGoogleDC(!showGoogleDC)}
                         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
@@ -444,6 +485,86 @@ export default function RegionalHubsPage() {
                           >
                             Logo + Name
                           </button>
+                        </div>
+                      )}
+                      {/* Prospective Sites */}
+                      <button
+                        onClick={() => setShowProspectiveSites(!showProspectiveSites)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          showProspectiveSites
+                            ? 'bg-[#FFB800]/20 text-[#FFB800]'
+                            : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <span>Prospective Sites</span>
+                        {showProspectiveSites && (
+                          <span className="tabular-nums font-mono text-[10px]">
+                            {prospectiveLoading ? '...' : `${(ippCount + substationCount).toLocaleString()}`}
+                          </span>
+                        )}
+                      </button>
+                      {showProspectiveSites && (
+                        <div className="space-y-2 pl-1">
+                          {/* Sub-toggles */}
+                          <div className="flex gap-1">
+                            <button
+                              onClick={() => setShowIPP(!showIPP)}
+                              className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                                showIPP
+                                  ? 'bg-[#FFB800]/20 text-[#FFB800]'
+                                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                              }`}
+                            >
+                              IPP Sites {showIPP && !prospectiveLoading && <span className="opacity-60">({ippCount.toLocaleString()})</span>}
+                            </button>
+                            <button
+                              onClick={() => setShowSubstations(!showSubstations)}
+                              className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                                showSubstations
+                                  ? 'bg-[#22C55E]/20 text-[#22C55E]'
+                                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                              }`}
+                            >
+                              Substations {showSubstations && !prospectiveLoading && <span className="opacity-60">({substationCount.toLocaleString()})</span>}
+                            </button>
+                          </div>
+                          {/* Include Transmission toggle */}
+                          <button
+                            onClick={() => setIncludeTransmission(!includeTransmission)}
+                            className={`w-full flex items-center justify-between px-2 py-1 rounded text-[10px] font-medium transition-colors ${
+                              includeTransmission
+                                ? 'bg-[#FFB800]/15 text-[#FFB800]'
+                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                            }`}
+                          >
+                            <span>Include Transmission</span>
+                            <span className="text-gray-500">{includeTransmission ? 'All IPP' : 'Dist. only'}</span>
+                          </button>
+                          {/* Radius slider */}
+                          <div className="space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="text-[10px] text-gray-500 dark:text-gray-400">Radius</span>
+                              <span className="text-xs text-[#FFB800] tabular-nums font-mono font-semibold">
+                                {prospectiveRadius}mi
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min={25}
+                              max={300}
+                              step={25}
+                              value={prospectiveRadius}
+                              onChange={(e) => setProspectiveRadius(parseInt(e.target.value))}
+                              className="w-full h-1.5 rounded-full appearance-none cursor-pointer
+                                bg-gray-200 dark:bg-white/10
+                                [&::-webkit-slider-thumb]:appearance-none
+                                [&::-webkit-slider-thumb]:w-3.5
+                                [&::-webkit-slider-thumb]:h-3.5
+                                [&::-webkit-slider-thumb]:rounded-full
+                                [&::-webkit-slider-thumb]:bg-[#FFB800]
+                                [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,184,0,0.4)]"
+                            />
+                          </div>
                         </div>
                       )}
                     </div>
@@ -575,10 +696,27 @@ export default function RegionalHubsPage() {
                   </details>
                 </div>
 
-                {viewMode === 'tiers' ? (
-                  <TierLegend clusterCount={clusterCount} />
+                {legendCollapsed ? (
+                  <button
+                    onClick={() => setLegendCollapsed(false)}
+                    className="absolute bottom-4 right-4 z-10 flex items-center gap-1.5 px-3 py-2 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  >
+                    Legend
+                    <ChevronDown className="w-3 h-3 rotate-180" />
+                  </button>
+                ) : viewMode === 'tiers' ? (
+                  <TierLegend clusterCount={clusterCount} onCollapse={() => setLegendCollapsed(true)} />
                 ) : (
-                  <MapLegend scoreRange={scoreRange} highlightThreshold={highlightThreshold} colorMode={colorMode} viewMode={viewMode} clusterCount={viewMode !== 'county' ? clusterCount : undefined} />
+                  <MapLegend
+                    scoreRange={scoreRange}
+                    highlightThreshold={highlightThreshold}
+                    colorMode={colorMode}
+                    viewMode={viewMode}
+                    clusterCount={viewMode !== 'county' ? clusterCount : undefined}
+                    showGoogleDC={showGoogleDC}
+                    prospectiveSites={showProspectiveSites ? { ippCount, substationCount, radiusMiles: prospectiveRadius } : null}
+                    onCollapse={() => setLegendCollapsed(true)}
+                  />
                 )}
 
                 {/* Export button */}
