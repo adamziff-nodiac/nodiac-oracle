@@ -432,23 +432,23 @@ export default function RegionalHubsPage() {
                             </div>
                           </div>
                         )}
-                        <button
-                          onClick={() => setShowPortfolio(!showPortfolio)}
-                          className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                            showPortfolio
-                              ? 'bg-[#c77dba]/20 text-[#c77dba]'
-                              : 'bg-white/5 text-gray-400 hover:text-white'
-                          }`}
-                        >
-                          <span>Portfolio Sites</span>
-                          <span className="tabular-nums font-mono text-[10px]">
-                            {portfolioSites.length} sites
-                          </span>
-                        </button>
                       </div>
                     )}
-                    {/* Google Data Centers toggle — always visible */}
+                    {/* Overlay toggles — always visible */}
                     <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
+                      <button
+                        onClick={() => setShowPortfolio(!showPortfolio)}
+                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                          showPortfolio
+                            ? 'bg-[#c77dba]/20 text-[#c77dba]'
+                            : 'bg-white/5 text-gray-400 hover:text-white'
+                        }`}
+                      >
+                        <span>Portfolio Sites</span>
+                        <span className="tabular-nums font-mono text-[10px]">
+                          {portfolioSites.length} sites
+                        </span>
+                      </button>
                       <button
                         onClick={() => setShowGoogleDC(!showGoogleDC)}
                         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${

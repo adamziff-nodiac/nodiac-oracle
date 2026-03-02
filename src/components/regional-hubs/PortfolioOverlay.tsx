@@ -81,10 +81,14 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
   const GRAD_ORCHID = '#c77dba'
   const GRAD_PEAK = '#dbb0d4'
 
+  const isCounty = viewMode === 'county'
   const isGradient = viewMode === 'gradient'
   const isTiers = viewMode === 'tiers'
 
   const dotColorExpression = useMemo(() => {
+    if (isCounty) {
+      return '#c77dba'
+    }
     if (isTiers) {
       return [
         'case',
@@ -116,9 +120,12 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
       1, '#d4c8e0',
       '#555555',
     ] as unknown as string
-  }, [isGradient, isTiers])
+  }, [isCounty, isGradient, isTiers])
 
   const strokeColorExpression = useMemo(() => {
+    if (isCounty) {
+      return 'rgba(0,0,0,0.3)'
+    }
     if (isTiers) {
       return [
         'case',
@@ -139,7 +146,7 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
       1, '#6b1f5a',
       '#333333',
     ] as unknown as string
-  }, [isGradient, isTiers])
+  }, [isCounty, isGradient, isTiers])
 
   const glowColor = isTiers
     ? [
@@ -152,10 +159,11 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
 
   return (
     <Source id="portfolio-sites-source" type="geojson" data={geojson}>
+      {/* Glow layer — hidden in county mode */}
       <Layer
         id="portfolio-sites-glow"
         type="circle"
-        layout={{ visibility }}
+        layout={{ visibility: isCounty ? 'none' : visibility }}
         filter={['>', ['get', 'regionStatus'], 0]}
         paint={{
           'circle-radius': 22,
@@ -169,25 +177,27 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
         type="circle"
         layout={{ visibility }}
         paint={{
-          'circle-radius': [
-            'match', ['get', 'regionStatus'],
-            2, 11,
-            1, 9.5,
-            6,
-          ],
+          'circle-radius': isCounty
+            ? ['interpolate', ['linear'], ['zoom'], 3, 2, 6, 3.5, 10, 6] as unknown as number
+            : [
+                'match', ['get', 'regionStatus'],
+                2, 11,
+                1, 9.5,
+                6,
+              ] as unknown as number,
           'circle-color': dotColorExpression,
-          'circle-opacity': [
+          'circle-opacity': isCounty ? 0.8 : [
             'match', ['get', 'regionStatus'],
             2, 0.95,
             1, 0.8,
             0.3,
-          ],
-          'circle-stroke-width': [
+          ] as unknown as number,
+          'circle-stroke-width': isCounty ? 0.5 : [
             'match', ['get', 'regionStatus'],
             2, 1.5,
             1, 1,
             0.5,
-          ],
+          ] as unknown as number,
           'circle-stroke-color': strokeColorExpression,
         }}
       />

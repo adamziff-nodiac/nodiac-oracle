@@ -337,13 +337,13 @@ export function HubMap({
         />
       )}
 
-      {/* Portfolio sites overlay — visible in all hub-based modes */}
+      {/* Portfolio sites overlay */}
       {showPortfolio && clusterData && portfolioSites.length > 0 && (
         <PortfolioOverlay
           sites={portfolioSites}
           fipsClusterStatus={clusterData.fipsClusterStatus}
           scoreLookup={scoreLookup}
-          visible={showPortfolio && viewMode !== 'county'}
+          visible={showPortfolio}
           viewMode={viewMode}
         />
       )}
