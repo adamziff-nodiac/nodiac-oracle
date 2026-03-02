@@ -359,15 +359,15 @@ export function HubMap({
         />
       )}
 
-      {/* Google data center overlay */}
+      {/* Prospective sites: radius circles behind points, always mounted for stable z-order */}
+      <RadiusCirclesLayer radiusMiles={prospectiveRadius} visible={showProspectiveSites} />
+      <ProspectiveSitesLayer geojson={prospectiveSitesGeojson} visible={showProspectiveSites} />
+
+      {/* Google data center overlay — rendered last so logos appear above prospective dots */}
       <GoogleDataCentersLayer
         visible={showGoogleDC}
         displayMode={googleDCDisplayMode}
       />
-
-      {/* Prospective sites: radius circles behind points, always mounted for stable z-order */}
-      <RadiusCirclesLayer radiusMiles={prospectiveRadius} visible={showProspectiveSites} />
-      <ProspectiveSitesLayer geojson={prospectiveSitesGeojson} visible={showProspectiveSites} />
     </Map>
   )
 }

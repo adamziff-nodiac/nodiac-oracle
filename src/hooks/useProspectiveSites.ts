@@ -149,6 +149,8 @@ export function useProspectiveSites({
       for (let i = 0; i < substationCache.length; i++) {
         if (substationDistances[i] > maxMiles) continue
         const sub = substationCache[i]
+        // Filter by voltage: distribution < 69kV, transmission >= 69kV
+        if (!includeTransmission && sub.mv != null && sub.mv >= 69) continue
         substationCount++
         features.push({
           type: 'Feature',

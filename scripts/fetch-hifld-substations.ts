@@ -107,7 +107,7 @@ async function fetchAll(): Promise<SubstationCompact[]> {
           x: +a.LONGITUDE.toFixed(4),
           s: a.STATE || '',
           tp: a.TYPE || '',
-          mv: a.MAX_VOLT ? +a.MAX_VOLT.toFixed(0) : null,
+          mv: a.MAX_VOLT && a.MAX_VOLT > 0 ? +a.MAX_VOLT.toFixed(0) : null,
         })
       }
     }
