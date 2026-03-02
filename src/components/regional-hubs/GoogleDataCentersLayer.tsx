@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useEffect, useState } from 'react'
+import { useMemo, useEffect, useState, useCallback, useRef } from 'react'
 import { Source, Layer, Popup, useMap } from 'react-map-gl/mapbox'
 import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCenters'
 
@@ -14,6 +14,7 @@ interface GoogleDataCentersLayerProps {
 /**
  * Renders Google data center locations as "G" markers on the map.
  * Supports clustering on zoom-out and optional name labels.
+ * In logo-label mode, cluster labels list all member DC names.
  */
 export function GoogleDataCentersLayer({
   visible = true,
@@ -21,6 +22,8 @@ export function GoogleDataCentersLayer({
 }: GoogleDataCentersLayerProps) {
   const { current: map } = useMap()
   const [hovered, setHovered] = useState<{ dc: GoogleDataCenter; lngLat: [number, number] } | null>(null)
+  const [clusterLabelsGeojson, setClusterLabelsGeojson] = useState<GeoJSON.FeatureCollection | null>(null)
+  const pendingRef = useRef(0) // track in-flight updates to avoid stale writes
 
   const geojson = useMemo<GeoJSON.FeatureCollection>(() => {
     const features: GeoJSON.Feature[] = googleDataCenters.map((dc, i) => ({
@@ -163,6 +166,75 @@ export function GoogleDataCentersLayer({
     }
   }, [map])
 
+  // Build cluster labels: for each visible cluster, fetch member names
+  const updateClusterLabels = useCallback(() => {
+    if (!map) return
+    const m = map.getMap()
+    if (!m.getLayer('google-dc-clusters')) return
+
+    const { width, height } = m.getCanvas()
+    const clusters = m.queryRenderedFeatures([[0, 0], [width, height]], { layers: ['google-dc-clusters'] })
+    if (clusters.length === 0) {
+      setClusterLabelsGeojson(null)
+      return
+    }
+
+    const source = m.getSource('google-dc-source') as mapboxgl.GeoJSONSource | undefined
+    if (!source || !('getClusterLeaves' in source)) return
+
+    const batchId = ++pendingRef.current
+
+    // Fetch leaves for each cluster in parallel
+    Promise.all(
+      clusters.map(
+        (cluster) =>
+          new Promise<GeoJSON.Feature | null>((resolve) => {
+            const clusterId = cluster.properties?.cluster_id
+            const count = cluster.properties?.point_count ?? 0
+            if (clusterId == null) { resolve(null); return }
+
+            source.getClusterLeaves(clusterId, count, 0, (err, leaves) => {
+              if (err || !leaves) { resolve(null); return }
+              const names = leaves
+                .map((l) => (l.properties as Record<string, string>)?.name)
+                .filter(Boolean)
+                .sort()
+              const coords = (cluster.geometry as GeoJSON.Point).coordinates
+              resolve({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: coords },
+                properties: { label: names.join('\n') },
+              })
+            })
+          })
+      )
+    ).then((features) => {
+      // Only update if this is still the latest batch
+      if (batchId !== pendingRef.current) return
+      const valid = features.filter(Boolean) as GeoJSON.Feature[]
+      if (valid.length > 0) {
+        setClusterLabelsGeojson({ type: 'FeatureCollection', features: valid })
+      } else {
+        setClusterLabelsGeojson(null)
+      }
+    })
+  }, [map])
+
+  useEffect(() => {
+    if (!map) return
+    const m = map.getMap()
+
+    const handler = () => updateClusterLabels()
+    // Update on zoom/pan and when source data finishes loading
+    m.on('moveend', handler)
+    m.on('sourcedata', handler)
+
+    return () => {
+      m.off('moveend', handler)
+      m.off('sourcedata', handler)
+    }
+  }, [map, updateClusterLabels])
+
   return (
     <>
       <Source
@@ -236,6 +308,30 @@ export function GoogleDataCentersLayer({
           }}
         />
       </Source>
+
+      {/* Cluster name labels (logo-label mode) — separate source from cluster leaves */}
+      {clusterLabelsGeojson && showLabels && (
+        <Source id="google-dc-cluster-labels-source" type="geojson" data={clusterLabelsGeojson}>
+          <Layer
+            id="google-dc-cluster-labels"
+            type="symbol"
+            layout={{
+              'text-field': ['get', 'label'],
+              'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+              'text-size': 11,
+              'text-offset': [0, 1.8],
+              'text-anchor': 'top',
+              'text-max-width': 14,
+              'text-allow-overlap': true,
+            }}
+            paint={{
+              'text-color': '#d1d5db',
+              'text-halo-color': 'rgba(0,0,0,0.7)',
+              'text-halo-width': 1.5,
+            }}
+          />
+        </Source>
+      )}
 
       {/* Hover popup */}
       {hovered && visible && (
