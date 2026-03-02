@@ -15,9 +15,9 @@ import { resolve } from 'path'
 
 const OUT_DIR = resolve(__dirname, '../public/data')
 
-// HIFLD Electric Substations (Rutgers mirror of HIFLD open data, ~8,700 substations)
+// HIFLD Electric Substations — full national dataset (~78K substations)
 const BASE_URL =
-  'https://oceandata.rad.rutgers.edu/arcgis/rest/services/RenewableEnergy/HIFLD_Electric_SubstationsTransmissionLines/MapServer/0/query'
+  'https://services6.arcgis.com/OO2s4OoyCZkYJ6oE/arcgis/rest/services/Substations/FeatureServer/0/query'
 
 // North American Google DC coordinates [lng, lat]
 const NA_GOOGLE_DCS: [number, number][] = [
@@ -72,7 +72,7 @@ interface SubstationCompact {
 }
 
 async function fetchAll(): Promise<SubstationCompact[]> {
-  const PAGE_SIZE = 1000
+  const PAGE_SIZE = 2000
   let offset = 0
   const results: SubstationCompact[] = []
   let total = 0
