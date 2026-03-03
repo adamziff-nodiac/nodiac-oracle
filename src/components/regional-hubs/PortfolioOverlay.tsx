@@ -81,7 +81,7 @@ export function PortfolioOverlay({ sites, fipsClusterStatus, scoreLookup, visibl
   const GRAD_ORCHID = '#c77dba'
   const GRAD_PEAK = '#dbb0d4'
 
-  const isCounty = viewMode === 'county'
+  const isCounty = viewMode === 'county' || viewMode === 'plain'
   const isGradient = viewMode === 'gradient'
   const isTiers = viewMode === 'tiers'
 

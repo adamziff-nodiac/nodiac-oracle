@@ -86,6 +86,20 @@ export function MapLegend({ scoreRange, highlightThreshold = 6.5, colorMode = 'p
     </div>
   ) : null
 
+  // --- Plain/Default mode ---
+  if (viewMode === 'plain') {
+    if (!hasOverlays) return null
+    return (
+      <div className={legendBox}>
+        <CollapseButton onCollapse={onCollapse} />
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium tracking-wide uppercase pr-4">
+          Map Overlays
+        </p>
+        {overlayItems}
+      </div>
+    )
+  }
+
   // --- Outline mode ---
   if (viewMode === 'outline') {
     return (

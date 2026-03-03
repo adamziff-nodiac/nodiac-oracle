@@ -50,7 +50,7 @@ export default function RegionalHubsPage() {
   const [scoringMode, setScoringMode] = useState<ScoringMode>('arithmetic')
   const [colorMode, setColorMode] = useState<ColorMode>('percentile')
   const [highlightThreshold, setHighlightThreshold] = useState(6.5)
-  const [viewMode, setViewMode] = useState<ViewMode>('county')
+  const [viewMode, setViewMode] = useState<ViewMode>('plain')
   const [clusterTopPercent, setClusterTopPercent] = useState(10)
   const [clusterMinSize, setClusterMinSize] = useState(5)
   const [clusterLinkDist, setClusterLinkDist] = useState(250)
@@ -271,6 +271,7 @@ export default function RegionalHubsPage() {
                     </label>
                     <div className="flex gap-1 overflow-x-auto scrollbar-hide pb-0.5">
                       {([
+                        { id: 'plain', label: 'Default' },
                         { id: 'county', label: 'County' },
                         { id: 'regions', label: 'Regions' },
                         { id: 'outline', label: 'Outline' },
@@ -281,7 +282,7 @@ export default function RegionalHubsPage() {
                           key={id}
                           onClick={() => {
                             setViewMode(id)
-                            if (id !== 'county') setSelectedCounty(null)
+                            if (id !== 'county' && id !== 'plain') setSelectedCounty(null)
                           }}
                           className={`whitespace-nowrap px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
                             viewMode === id
@@ -294,7 +295,7 @@ export default function RegionalHubsPage() {
                       ))}
                     </div>
                     {/* Cluster tuning sliders — visible in all hub-based modes */}
-                    {viewMode !== 'county' && (
+                    {viewMode !== 'county' && viewMode !== 'plain' && (
                       <div className="mt-2 space-y-2.5">
                         {/* Top percent */}
                         <div className="space-y-1">
@@ -374,7 +375,7 @@ export default function RegionalHubsPage() {
                       </div>
                     )}
                     {/* Toggles — visible in all hub-based modes */}
-                    {viewMode !== 'county' && (
+                    {viewMode !== 'county' && viewMode !== 'plain' && (
                       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
                         <div className="flex gap-1">
                           <button
@@ -712,7 +713,7 @@ export default function RegionalHubsPage() {
                     highlightThreshold={highlightThreshold}
                     colorMode={colorMode}
                     viewMode={viewMode}
-                    clusterCount={viewMode !== 'county' ? clusterCount : undefined}
+                    clusterCount={viewMode !== 'county' && viewMode !== 'plain' ? clusterCount : undefined}
                     showGoogleDC={showGoogleDC}
                     prospectiveSites={showProspectiveSites ? { ippCount, substationCount, radiusMiles: prospectiveRadius } : null}
                     onCollapse={() => setLegendCollapsed(true)}

@@ -25,6 +25,7 @@ interface CountyChoroplethProps {
   colorMode?: ColorMode
   quantileBreaks?: QuantileBreaks | null
   visible?: boolean
+  plain?: boolean
 }
 
 export function CountyChoropleth({
@@ -36,6 +37,7 @@ export function CountyChoropleth({
   colorMode = 'percentile',
   quantileBreaks,
   visible = true,
+  plain = false,
 }: CountyChoroplethProps) {
   // Inject composite scores directly into GeoJSON feature properties.
   // This avoids the Mapbox match-expression size limit (~3k entries).
@@ -71,6 +73,17 @@ export function CountyChoropleth({
 
   // Color expression depends on mode
   const fillColorExpression = useMemo(() => {
+    if (plain) {
+      // Plain mode: uniform transparent dark fill
+      if (!hoveredFips) return 'rgba(15, 15, 26, 0.3)'
+      return [
+        'case',
+        ['==', ['get', 'FIPS'], hoveredFips],
+        'rgba(199, 125, 186, 0.15)',
+        'rgba(15, 15, 26, 0.3)',
+      ] as unknown as string
+    }
+
     if (colorMode === 'percentile' && quantileBreaks) {
       // Percentile-based: gray → navy → orchid purple.
       // Bottom 40% stays dark gray. Navy emerges p40-p60. Purple builds p60-p80.
@@ -112,7 +125,7 @@ export function CountyChoropleth({
         Math.min(t + 0.5, 10), COLOR_PEAK,
       ],
     ] as unknown as string
-  }, [colorMode, quantileBreaks, highlightThreshold])
+  }, [colorMode, quantileBreaks, highlightThreshold, plain, hoveredFips])
 
   const visibility = visible ? 'visible' : 'none'
 
@@ -136,8 +149,8 @@ export function CountyChoropleth({
         type="line"
         layout={{ visibility }}
         paint={{
-          'line-color': 'rgba(255, 255, 255, 0.06)',
-          'line-width': 0.5,
+          'line-color': plain ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+          'line-width': plain ? 0.75 : 0.5,
         }}
       />
     </Source>
