@@ -21,7 +21,7 @@ import type { ClusterOptions, HubCluster } from '@/lib/geo/cluster-hubs'
 import type { QuantileBreaks } from '@/hooks/useWeightedScores'
 import type { ProspectiveSiteProperties } from '@/types/prospective-sites'
 
-export type ViewMode = 'county' | 'regions' | 'outline' | 'gradient' | 'tiers'
+export type ViewMode = 'county' | 'plain' | 'regions' | 'outline' | 'gradient' | 'tiers'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -124,7 +124,7 @@ export function HubMap({
     return { populatedClusterIds: ids, clusterSiteCounts: counts }
   }, [fipsToClusterId, showPortfolio, portfolioSites])
 
-  const isCountyMode = viewMode === 'county'
+  const isCountyMode = viewMode === 'county' || viewMode === 'plain'
 
   const handleClick = useCallback(
     (e: MapMouseEvent) => {
@@ -297,6 +297,8 @@ export function HubMap({
           colorMode={colorMode}
           quantileBreaks={quantileBreaks}
           visible={isCountyMode}
+          plain={viewMode === 'plain'}
+          isDark={isDark}
         />
       )}
 
@@ -352,7 +354,7 @@ export function HubMap({
       {clusterData && (
         <ClusterLabelsLayer
           labelsGeojson={clusterData.labelsGeojson}
-          visible={viewMode !== 'county' && showLabels}
+          visible={viewMode !== 'county' && viewMode !== 'plain' && showLabels}
           nameOverrides={nameOverrides}
           positionOverrides={positionOverrides}
           siteCounts={clusterSiteCounts}
