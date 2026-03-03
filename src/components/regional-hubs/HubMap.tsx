@@ -298,6 +298,7 @@ export function HubMap({
           quantileBreaks={quantileBreaks}
           visible={isCountyMode}
           plain={viewMode === 'plain'}
+          isDark={isDark}
         />
       )}
 
