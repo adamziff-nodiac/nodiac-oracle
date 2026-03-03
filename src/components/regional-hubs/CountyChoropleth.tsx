@@ -76,15 +76,7 @@ export function CountyChoropleth({
   // Color expression depends on mode
   const fillColorExpression = useMemo(() => {
     if (plain) {
-      const baseFill = isDark ? 'rgba(15, 15, 26, 0.3)' : 'rgba(0, 0, 0, 0.03)'
-      const hoverFill = isDark ? 'rgba(199, 125, 186, 0.15)' : 'rgba(199, 125, 186, 0.12)'
-      if (!hoveredFips) return baseFill
-      return [
-        'case',
-        ['==', ['get', 'FIPS'], hoveredFips],
-        hoverFill,
-        baseFill,
-      ] as unknown as string
+      return isDark ? 'rgba(15, 15, 26, 0.3)' : 'rgba(0, 0, 0, 0.03)'
     }
 
     if (colorMode === 'percentile' && quantileBreaks) {
