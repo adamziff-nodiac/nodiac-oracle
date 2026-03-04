@@ -1,0 +1,44 @@
+import { Navigation } from '@/components/Navigation'
+import { ThemeToggle } from '@/components/ThemeToggle'
+import { SubNav } from '@/components/tracker/SubNav'
+import Link from 'next/link'
+
+export const metadata = {
+  title: 'Tracker - Nodiac Oracle',
+  description: 'Track site development from qualification through commissioning',
+}
+
+export default function TrackerLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen bg-[var(--background)]">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm border-b border-zinc-200 dark:border-[#2a2a40]">
+        <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
+              <span className="text-white font-bold text-sm">N</span>
+            </div>
+            <span className="text-zinc-900 dark:text-white font-semibold text-lg hidden sm:inline">Nodiac</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Navigation />
+          </div>
+        </div>
+      </header>
+
+      {/* Tracker content */}
+      <div className="max-w-[1920px] mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-12">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Project Tracker
+          </h1>
+        </div>
+        <SubNav />
+        <div className="mt-4">
+          {children}
+        </div>
+      </div>
+    </div>
+  )
+}

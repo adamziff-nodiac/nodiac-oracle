@@ -1,15 +1,56 @@
-import type { Tables } from '@/types/database'
 import type { CheckpointStatus, AmountStatus } from './constants'
 
-// Core row types from generated database types
-export type TrackerSite = Tables<'tracker_sites'>
-export type TrackerHub = Tables<'tracker_regional_hubs'>
-export type TrackerPartner = Tables<'tracker_power_partners'>
-export type TrackerActivity = Tables<'tracker_activity_log'>
+// Base tracker_sites row type
+// TODO: Replace with Tables<'tracker_sites'> after `supabase gen types` includes tracker tables
+export interface TrackerSite {
+  id: string
+  name: string
+  hub_id: string | null
+  utility_id: string | null
+  asset_owner_id: string | null
+  mw_current: number | null
+  mw_target: number | null
+  priority: string
+  site_notes: Record<string, unknown> | null
+  checkpoint_notes: Record<string, unknown> | null
+  archived_at: string | null
+  archived_reason: string | null
+  created_at: string
+  updated_at: string
+  // Checkpoint columns: each prefix has _status, _forecast, _completed, _owner
+  // Financial checkpoints also have _amount and _amount_status
+  [key: string]: unknown
+}
+
+// TODO: Replace with Tables<'tracker_regional_hubs'> after types regenerated
+export interface TrackerHub {
+  id: string
+  name: string
+  description: string | null
+  created_at: string
+}
+
+// TODO: Replace with Tables<'tracker_power_partners'> after types regenerated
+export interface TrackerPartner {
+  id: string
+  name: string
+  partner_type: string | null
+  hub_id: string | null
+  parent_gt_id: string | null
+  created_at: string
+}
+
+// TODO: Replace with Tables<'tracker_activity_log'> after types regenerated
+export interface TrackerActivity {
+  id: string
+  site_id: string
+  title: string
+  summary: string | null
+  source: string | null
+  created_at: string
+}
 
 // The view type (extended site with computed columns)
-// After types are regenerated, this should come from Tables<'tracker_site_overview'>
-// Until then, define manually:
 export interface TrackerSiteOverview extends TrackerSite {
   hub_name: string | null
   utility_name: string | null
