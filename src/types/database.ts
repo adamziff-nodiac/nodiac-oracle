@@ -12,250 +12,8 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
-      county_scores: {
-        Row: {
-          id: string
-          fips_code: string
-          state_fips: string
-          county_name: string
-          state_abbr: string
-          coop_density_score: number
-          grid_reliability_score: number
-          clipped_curtailed_score: number
-          permitting_score: number
-          labor_score: number
-          fiber_score: number
-          queue_pressure_score: number
-          data_sources: Json
-          last_permitting_update: string | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          fips_code: string
-          state_fips: string
-          county_name: string
-          state_abbr: string
-          coop_density_score?: number
-          grid_reliability_score?: number
-          clipped_curtailed_score?: number
-          permitting_score?: number
-          labor_score?: number
-          fiber_score?: number
-          queue_pressure_score?: number
-          data_sources?: Json
-          last_permitting_update?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          fips_code?: string
-          state_fips?: string
-          county_name?: string
-          state_abbr?: string
-          coop_density_score?: number
-          grid_reliability_score?: number
-          clipped_curtailed_score?: number
-          permitting_score?: number
-          labor_score?: number
-          fiber_score?: number
-          queue_pressure_score?: number
-          data_sources?: Json
-          last_permitting_update?: string | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      hub_regions: {
-        Row: {
-          id: string
-          name: string
-          description: string | null
-          geojson: Json
-          color: string
-          priority_rank: number | null
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          name: string
-          description?: string | null
-          geojson: Json
-          color?: string
-          priority_rank?: number | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          name?: string
-          description?: string | null
-          geojson?: Json
-          color?: string
-          priority_rank?: number | null
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      permitting_sentiment: {
-        Row: {
-          id: string
-          fips_code: string
-          sentiment_label: string
-          sentiment_score: number
-          evidence: Json
-          moratoria_active: boolean
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          fips_code: string
-          sentiment_label: string
-          sentiment_score?: number
-          evidence?: Json
-          moratoria_active?: boolean
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          fips_code?: string
-          sentiment_label?: string
-          sentiment_score?: number
-          evidence?: Json
-          moratoria_active?: boolean
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "permitting_sentiment_fips_code_fkey"
-            columns: ["fips_code"]
-            isOneToOne: true
-            referencedRelation: "county_scores"
-            referencedColumns: ["fips_code"]
-          },
-        ]
-      }
-      portfolio_uploads: {
-        Row: {
-          id: string
-          user_id: string
-          name: string
-          site_count: number
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          user_id: string
-          name: string
-          site_count?: number
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          user_id?: string
-          name?: string
-          site_count?: number
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      portfolio_sites: {
-        Row: {
-          id: string
-          upload_id: string
-          site_name: string
-          latitude: number | null
-          longitude: number | null
-          county: string | null
-          state: string | null
-          fips_code: string | null
-          raw_data: Json
-          site_score: number | null
-          tier: string | null
-          score_breakdown: Json
-          created_at: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          id?: string
-          upload_id: string
-          site_name: string
-          latitude?: number | null
-          longitude?: number | null
-          county?: string | null
-          state?: string | null
-          fips_code?: string | null
-          raw_data?: Json
-          site_score?: number | null
-          tier?: string | null
-          score_breakdown?: Json
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          id?: string
-          upload_id?: string
-          site_name?: string
-          latitude?: number | null
-          longitude?: number | null
-          county?: string | null
-          state?: string | null
-          fips_code?: string | null
-          raw_data?: Json
-          site_score?: number | null
-          tier?: string | null
-          score_breakdown?: Json
-          created_at?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "portfolio_sites_upload_id_fkey"
-            columns: ["upload_id"]
-            isOneToOne: false
-            referencedRelation: "portfolio_uploads"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       chats: {
         Row: {
           created_at: string | null
@@ -325,6 +83,93 @@ export type Database = {
         }
         Relationships: []
       }
+      county_scores: {
+        Row: {
+          clipped_curtailed_score: number | null
+          coop_density_score: number | null
+          county_name: string
+          created_at: string | null
+          data_sources: Json | null
+          fiber_score: number | null
+          fips_code: string
+          grid_reliability_score: number | null
+          id: string
+          labor_score: number | null
+          last_permitting_update: string | null
+          permitting_score: number | null
+          state_abbr: string
+          state_fips: string
+          updated_at: string | null
+        }
+        Insert: {
+          clipped_curtailed_score?: number | null
+          coop_density_score?: number | null
+          county_name: string
+          created_at?: string | null
+          data_sources?: Json | null
+          fiber_score?: number | null
+          fips_code: string
+          grid_reliability_score?: number | null
+          id?: string
+          labor_score?: number | null
+          last_permitting_update?: string | null
+          permitting_score?: number | null
+          state_abbr: string
+          state_fips: string
+          updated_at?: string | null
+        }
+        Update: {
+          clipped_curtailed_score?: number | null
+          coop_density_score?: number | null
+          county_name?: string
+          created_at?: string | null
+          data_sources?: Json | null
+          fiber_score?: number | null
+          fips_code?: string
+          grid_reliability_score?: number | null
+          id?: string
+          labor_score?: number | null
+          last_permitting_update?: string | null
+          permitting_score?: number | null
+          state_abbr?: string
+          state_fips?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      hub_regions: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          geojson: Json
+          id: string
+          name: string
+          priority_rank: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          geojson: Json
+          id?: string
+          name: string
+          priority_rank?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          geojson?: Json
+          id?: string
+          name?: string
+          priority_rank?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           chat_id: string
@@ -360,6 +205,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "chats"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      permitting_sentiment: {
+        Row: {
+          created_at: string | null
+          evidence: Json | null
+          fips_code: string
+          id: string
+          moratoria_active: boolean | null
+          sentiment_label: string
+          sentiment_score: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          evidence?: Json | null
+          fips_code: string
+          id?: string
+          moratoria_active?: boolean | null
+          sentiment_label: string
+          sentiment_score?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          evidence?: Json | null
+          fips_code?: string
+          id?: string
+          moratoria_active?: boolean | null
+          sentiment_label?: string
+          sentiment_score?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permitting_sentiment_fips_code_fkey"
+            columns: ["fips_code"]
+            isOneToOne: true
+            referencedRelation: "county_scores"
+            referencedColumns: ["fips_code"]
           },
         ]
       }
@@ -405,6 +291,95 @@ export type Database = {
           system_prompt?: string
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      portfolio_sites: {
+        Row: {
+          county: string | null
+          created_at: string | null
+          fips_code: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          raw_data: Json | null
+          score_breakdown: Json | null
+          site_name: string
+          site_score: number | null
+          state: string | null
+          tier: string | null
+          updated_at: string | null
+          upload_id: string
+          utility_type: string | null
+        }
+        Insert: {
+          county?: string | null
+          created_at?: string | null
+          fips_code?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          raw_data?: Json | null
+          score_breakdown?: Json | null
+          site_name: string
+          site_score?: number | null
+          state?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          upload_id: string
+          utility_type?: string | null
+        }
+        Update: {
+          county?: string | null
+          created_at?: string | null
+          fips_code?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          raw_data?: Json | null
+          score_breakdown?: Json | null
+          site_name?: string
+          site_score?: number | null
+          state?: string | null
+          tier?: string | null
+          updated_at?: string | null
+          upload_id?: string
+          utility_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_sites_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio_uploads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      portfolio_uploads: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          site_count: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          site_count?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          site_count?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -596,15 +571,1085 @@ export type Database = {
         }
         Relationships: []
       }
+      tracker_activity_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          logged_by: string | null
+          site_id: string | null
+          source_link: string | null
+          source_type: Database["public"]["Enums"]["activity_source"] | null
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          logged_by?: string | null
+          site_id?: string | null
+          source_link?: string | null
+          source_type?: Database["public"]["Enums"]["activity_source"] | null
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          logged_by?: string | null
+          site_id?: string | null
+          source_link?: string | null
+          source_type?: Database["public"]["Enums"]["activity_source"] | null
+          summary?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_activity_log_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_site_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_activity_log_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracker_landowners: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          mailing_address: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          mailing_address?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          mailing_address?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tracker_parcels: {
+        Row: {
+          apn: string
+          area_acres: number | null
+          created_at: string | null
+          id: string
+          landowner_id: string | null
+          notes: string | null
+          site_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          apn: string
+          area_acres?: number | null
+          created_at?: string | null
+          id?: string
+          landowner_id?: string | null
+          notes?: string | null
+          site_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          apn?: string
+          area_acres?: number | null
+          created_at?: string | null
+          id?: string
+          landowner_id?: string | null
+          notes?: string | null
+          site_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_parcels_landowner_id_fkey"
+            columns: ["landowner_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_landowners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_parcels_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_site_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_parcels_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracker_partner_hubs: {
+        Row: {
+          hub_id: string
+          partner_id: string
+        }
+        Insert: {
+          hub_id: string
+          partner_id: string
+        }
+        Update: {
+          hub_id?: string
+          partner_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_partner_hubs_hub_id_fkey"
+            columns: ["hub_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_regional_hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_partner_hubs_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_power_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracker_power_partners: {
+        Row: {
+          attio_link: string | null
+          available_capacity: string | null
+          created_at: string | null
+          id: string
+          ix_process_notes: string | null
+          loi_signed: boolean | null
+          name: string
+          notes: Json | null
+          parent_gt_id: string | null
+          rate_structure: string | null
+          relationship_stage:
+            | Database["public"]["Enums"]["relationship_stage"]
+            | null
+          type: Database["public"]["Enums"]["partner_type"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          attio_link?: string | null
+          available_capacity?: string | null
+          created_at?: string | null
+          id?: string
+          ix_process_notes?: string | null
+          loi_signed?: boolean | null
+          name: string
+          notes?: Json | null
+          parent_gt_id?: string | null
+          rate_structure?: string | null
+          relationship_stage?:
+            | Database["public"]["Enums"]["relationship_stage"]
+            | null
+          type?: Database["public"]["Enums"]["partner_type"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          attio_link?: string | null
+          available_capacity?: string | null
+          created_at?: string | null
+          id?: string
+          ix_process_notes?: string | null
+          loi_signed?: boolean | null
+          name?: string
+          notes?: Json | null
+          parent_gt_id?: string | null
+          rate_structure?: string | null
+          relationship_stage?:
+            | Database["public"]["Enums"]["relationship_stage"]
+            | null
+          type?: Database["public"]["Enums"]["partner_type"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_power_partners_parent_gt_id_fkey"
+            columns: ["parent_gt_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_power_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracker_regional_hubs: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          notes: Json | null
+          status: Database["public"]["Enums"]["hub_status"] | null
+          target_mw: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: Json | null
+          status?: Database["public"]["Enums"]["hub_status"] | null
+          target_mw?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: Json | null
+          status?: Database["public"]["Enums"]["hub_status"] | null
+          target_mw?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tracker_site_landowners: {
+        Row: {
+          landowner_id: string
+          lease_status: Database["public"]["Enums"]["lease_status"] | null
+          notes: string | null
+          proximity: Database["public"]["Enums"]["landowner_proximity"]
+          purpose: Database["public"]["Enums"]["landowner_purpose"][]
+          site_id: string
+        }
+        Insert: {
+          landowner_id: string
+          lease_status?: Database["public"]["Enums"]["lease_status"] | null
+          notes?: string | null
+          proximity: Database["public"]["Enums"]["landowner_proximity"]
+          purpose?: Database["public"]["Enums"]["landowner_purpose"][]
+          site_id: string
+        }
+        Update: {
+          landowner_id?: string
+          lease_status?: Database["public"]["Enums"]["lease_status"] | null
+          notes?: string | null
+          proximity?: Database["public"]["Enums"]["landowner_proximity"]
+          purpose?: Database["public"]["Enums"]["landowner_purpose"][]
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_site_landowners_landowner_id_fkey"
+            columns: ["landowner_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_landowners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_site_landowners_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_site_overview"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_site_landowners_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tracker_sites: {
+        Row: {
+          address: string | null
+          ahj: string | null
+          archived_at: string | null
+          archived_reason: string | null
+          asset_owner_id: string | null
+          checkpoint_notes: Json | null
+          construction_commissioned_completed: string | null
+          construction_commissioned_forecast: string | null
+          construction_commissioned_owner: string | null
+          construction_commissioned_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_complete_completed: string | null
+          construction_complete_forecast: string | null
+          construction_complete_owner: string | null
+          construction_complete_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_energized_completed: string | null
+          construction_energized_forecast: string | null
+          construction_energized_owner: string | null
+          construction_energized_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_equip_delivered_completed: string | null
+          construction_equip_delivered_forecast: string | null
+          construction_equip_delivered_owner: string | null
+          construction_equip_delivered_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_engaged_completed: string | null
+          control_engaged_forecast: string | null
+          control_engaged_owner: string | null
+          control_engaged_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_secured_completed: string | null
+          control_secured_forecast: string | null
+          control_secured_owner: string | null
+          control_secured_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          coordinates: string | null
+          created_at: string | null
+          eng_design_completed: string | null
+          eng_design_forecast: string | null
+          eng_design_owner: string | null
+          eng_design_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          eng_equip_ordered_amount: number | null
+          eng_equip_ordered_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          eng_equip_ordered_completed: string | null
+          eng_equip_ordered_forecast: string | null
+          eng_equip_ordered_owner: string | null
+          eng_equip_ordered_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_capacity_completed: string | null
+          fiber_capacity_forecast: string | null
+          fiber_capacity_owner: string | null
+          fiber_capacity_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_identified_completed: string | null
+          fiber_identified_forecast: string | null
+          fiber_identified_owner: string | null
+          fiber_identified_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_secured_amount: number | null
+          fiber_secured_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          fiber_secured_completed: string | null
+          fiber_secured_forecast: string | null
+          fiber_secured_owner: string | null
+          fiber_secured_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          id: string
+          interested_offtakers: string[] | null
+          mw_current: number | null
+          mw_potential: number | null
+          name: string
+          permit_approved_amount: number | null
+          permit_approved_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          permit_approved_completed: string | null
+          permit_approved_forecast: string | null
+          permit_approved_owner: string | null
+          permit_approved_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          permit_requirements_completed: string | null
+          permit_requirements_forecast: string | null
+          permit_requirements_owner: string | null
+          permit_requirements_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_check_completed: string | null
+          power_capacity_check_forecast: string | null
+          power_capacity_check_owner: string | null
+          power_capacity_check_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_indication_completed: string | null
+          power_capacity_indication_forecast: string | null
+          power_capacity_indication_owner: string | null
+          power_capacity_indication_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_connection_completed: string | null
+          power_connection_forecast: string | null
+          power_connection_owner: string | null
+          power_connection_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_deposit_amount: number | null
+          power_deposit_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          power_deposit_completed: string | null
+          power_deposit_forecast: string | null
+          power_deposit_owner: string | null
+          power_deposit_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_service_request_completed: string | null
+          power_service_request_forecast: string | null
+          power_service_request_owner: string | null
+          power_service_request_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_utility_design_completed: string | null
+          power_utility_design_forecast: string | null
+          power_utility_design_owner: string | null
+          power_utility_design_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          priority: Database["public"]["Enums"]["site_priority"] | null
+          regional_hub_id: string | null
+          site_identified_completed: string | null
+          site_identified_forecast: string | null
+          site_identified_owner: string | null
+          site_identified_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_notes: Json | null
+          site_qualified_completed: string | null
+          site_qualified_forecast: string | null
+          site_qualified_owner: string | null
+          site_qualified_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_type: Database["public"]["Enums"]["site_type_enum"] | null
+          updated_at: string | null
+          utility_id: string | null
+        }
+        Insert: {
+          address?: string | null
+          ahj?: string | null
+          archived_at?: string | null
+          archived_reason?: string | null
+          asset_owner_id?: string | null
+          checkpoint_notes?: Json | null
+          construction_commissioned_completed?: string | null
+          construction_commissioned_forecast?: string | null
+          construction_commissioned_owner?: string | null
+          construction_commissioned_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_complete_completed?: string | null
+          construction_complete_forecast?: string | null
+          construction_complete_owner?: string | null
+          construction_complete_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_energized_completed?: string | null
+          construction_energized_forecast?: string | null
+          construction_energized_owner?: string | null
+          construction_energized_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_equip_delivered_completed?: string | null
+          construction_equip_delivered_forecast?: string | null
+          construction_equip_delivered_owner?: string | null
+          construction_equip_delivered_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_engaged_completed?: string | null
+          control_engaged_forecast?: string | null
+          control_engaged_owner?: string | null
+          control_engaged_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_secured_completed?: string | null
+          control_secured_forecast?: string | null
+          control_secured_owner?: string | null
+          control_secured_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          coordinates?: string | null
+          created_at?: string | null
+          eng_design_completed?: string | null
+          eng_design_forecast?: string | null
+          eng_design_owner?: string | null
+          eng_design_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          eng_equip_ordered_amount?: number | null
+          eng_equip_ordered_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          eng_equip_ordered_completed?: string | null
+          eng_equip_ordered_forecast?: string | null
+          eng_equip_ordered_owner?: string | null
+          eng_equip_ordered_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_capacity_completed?: string | null
+          fiber_capacity_forecast?: string | null
+          fiber_capacity_owner?: string | null
+          fiber_capacity_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_identified_completed?: string | null
+          fiber_identified_forecast?: string | null
+          fiber_identified_owner?: string | null
+          fiber_identified_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_secured_amount?: number | null
+          fiber_secured_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          fiber_secured_completed?: string | null
+          fiber_secured_forecast?: string | null
+          fiber_secured_owner?: string | null
+          fiber_secured_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          id?: string
+          interested_offtakers?: string[] | null
+          mw_current?: number | null
+          mw_potential?: number | null
+          name: string
+          permit_approved_amount?: number | null
+          permit_approved_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          permit_approved_completed?: string | null
+          permit_approved_forecast?: string | null
+          permit_approved_owner?: string | null
+          permit_approved_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          permit_requirements_completed?: string | null
+          permit_requirements_forecast?: string | null
+          permit_requirements_owner?: string | null
+          permit_requirements_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_check_completed?: string | null
+          power_capacity_check_forecast?: string | null
+          power_capacity_check_owner?: string | null
+          power_capacity_check_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_indication_completed?: string | null
+          power_capacity_indication_forecast?: string | null
+          power_capacity_indication_owner?: string | null
+          power_capacity_indication_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_connection_completed?: string | null
+          power_connection_forecast?: string | null
+          power_connection_owner?: string | null
+          power_connection_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_deposit_amount?: number | null
+          power_deposit_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          power_deposit_completed?: string | null
+          power_deposit_forecast?: string | null
+          power_deposit_owner?: string | null
+          power_deposit_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_service_request_completed?: string | null
+          power_service_request_forecast?: string | null
+          power_service_request_owner?: string | null
+          power_service_request_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_utility_design_completed?: string | null
+          power_utility_design_forecast?: string | null
+          power_utility_design_owner?: string | null
+          power_utility_design_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          priority?: Database["public"]["Enums"]["site_priority"] | null
+          regional_hub_id?: string | null
+          site_identified_completed?: string | null
+          site_identified_forecast?: string | null
+          site_identified_owner?: string | null
+          site_identified_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_notes?: Json | null
+          site_qualified_completed?: string | null
+          site_qualified_forecast?: string | null
+          site_qualified_owner?: string | null
+          site_qualified_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_type?: Database["public"]["Enums"]["site_type_enum"] | null
+          updated_at?: string | null
+          utility_id?: string | null
+        }
+        Update: {
+          address?: string | null
+          ahj?: string | null
+          archived_at?: string | null
+          archived_reason?: string | null
+          asset_owner_id?: string | null
+          checkpoint_notes?: Json | null
+          construction_commissioned_completed?: string | null
+          construction_commissioned_forecast?: string | null
+          construction_commissioned_owner?: string | null
+          construction_commissioned_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_complete_completed?: string | null
+          construction_complete_forecast?: string | null
+          construction_complete_owner?: string | null
+          construction_complete_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_energized_completed?: string | null
+          construction_energized_forecast?: string | null
+          construction_energized_owner?: string | null
+          construction_energized_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_equip_delivered_completed?: string | null
+          construction_equip_delivered_forecast?: string | null
+          construction_equip_delivered_owner?: string | null
+          construction_equip_delivered_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_engaged_completed?: string | null
+          control_engaged_forecast?: string | null
+          control_engaged_owner?: string | null
+          control_engaged_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_secured_completed?: string | null
+          control_secured_forecast?: string | null
+          control_secured_owner?: string | null
+          control_secured_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          coordinates?: string | null
+          created_at?: string | null
+          eng_design_completed?: string | null
+          eng_design_forecast?: string | null
+          eng_design_owner?: string | null
+          eng_design_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          eng_equip_ordered_amount?: number | null
+          eng_equip_ordered_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          eng_equip_ordered_completed?: string | null
+          eng_equip_ordered_forecast?: string | null
+          eng_equip_ordered_owner?: string | null
+          eng_equip_ordered_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_capacity_completed?: string | null
+          fiber_capacity_forecast?: string | null
+          fiber_capacity_owner?: string | null
+          fiber_capacity_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_identified_completed?: string | null
+          fiber_identified_forecast?: string | null
+          fiber_identified_owner?: string | null
+          fiber_identified_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_secured_amount?: number | null
+          fiber_secured_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          fiber_secured_completed?: string | null
+          fiber_secured_forecast?: string | null
+          fiber_secured_owner?: string | null
+          fiber_secured_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          id?: string
+          interested_offtakers?: string[] | null
+          mw_current?: number | null
+          mw_potential?: number | null
+          name?: string
+          permit_approved_amount?: number | null
+          permit_approved_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          permit_approved_completed?: string | null
+          permit_approved_forecast?: string | null
+          permit_approved_owner?: string | null
+          permit_approved_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          permit_requirements_completed?: string | null
+          permit_requirements_forecast?: string | null
+          permit_requirements_owner?: string | null
+          permit_requirements_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_check_completed?: string | null
+          power_capacity_check_forecast?: string | null
+          power_capacity_check_owner?: string | null
+          power_capacity_check_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_indication_completed?: string | null
+          power_capacity_indication_forecast?: string | null
+          power_capacity_indication_owner?: string | null
+          power_capacity_indication_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_connection_completed?: string | null
+          power_connection_forecast?: string | null
+          power_connection_owner?: string | null
+          power_connection_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_deposit_amount?: number | null
+          power_deposit_amount_status?:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          power_deposit_completed?: string | null
+          power_deposit_forecast?: string | null
+          power_deposit_owner?: string | null
+          power_deposit_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_service_request_completed?: string | null
+          power_service_request_forecast?: string | null
+          power_service_request_owner?: string | null
+          power_service_request_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_utility_design_completed?: string | null
+          power_utility_design_forecast?: string | null
+          power_utility_design_owner?: string | null
+          power_utility_design_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          priority?: Database["public"]["Enums"]["site_priority"] | null
+          regional_hub_id?: string | null
+          site_identified_completed?: string | null
+          site_identified_forecast?: string | null
+          site_identified_owner?: string | null
+          site_identified_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_notes?: Json | null
+          site_qualified_completed?: string | null
+          site_qualified_forecast?: string | null
+          site_qualified_owner?: string | null
+          site_qualified_status?:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_type?: Database["public"]["Enums"]["site_type_enum"] | null
+          updated_at?: string | null
+          utility_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_sites_asset_owner_id_fkey"
+            columns: ["asset_owner_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_power_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_sites_regional_hub_id_fkey"
+            columns: ["regional_hub_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_regional_hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_sites_utility_id_fkey"
+            columns: ["utility_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_power_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
-      [_ in never]: never
+      tracker_site_overview: {
+        Row: {
+          address: string | null
+          ahj: string | null
+          archived_at: string | null
+          archived_reason: string | null
+          asset_owner_id: string | null
+          asset_owner_name: string | null
+          capex_per_mw: number | null
+          checkpoint_notes: Json | null
+          construction_commissioned_completed: string | null
+          construction_commissioned_forecast: string | null
+          construction_commissioned_owner: string | null
+          construction_commissioned_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_complete_completed: string | null
+          construction_complete_forecast: string | null
+          construction_complete_owner: string | null
+          construction_complete_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_energized_completed: string | null
+          construction_energized_forecast: string | null
+          construction_energized_owner: string | null
+          construction_energized_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_equip_delivered_completed: string | null
+          construction_equip_delivered_forecast: string | null
+          construction_equip_delivered_owner: string | null
+          construction_equip_delivered_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          construction_phase: string | null
+          construction_ready: boolean | null
+          construction_ready_date: string | null
+          control_engaged_completed: string | null
+          control_engaged_forecast: string | null
+          control_engaged_owner: string | null
+          control_engaged_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          control_secured_completed: string | null
+          control_secured_forecast: string | null
+          control_secured_owner: string | null
+          control_secured_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          coordinates: string | null
+          created_at: string | null
+          days_to_cod: number | null
+          days_to_construction_ready: number | null
+          days_to_ix: number | null
+          eng_design_completed: string | null
+          eng_design_forecast: string | null
+          eng_design_owner: string | null
+          eng_design_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          eng_equip_ordered_amount: number | null
+          eng_equip_ordered_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          eng_equip_ordered_completed: string | null
+          eng_equip_ordered_forecast: string | null
+          eng_equip_ordered_owner: string | null
+          eng_equip_ordered_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          engineering_phase: string | null
+          fiber_capacity_completed: string | null
+          fiber_capacity_forecast: string | null
+          fiber_capacity_owner: string | null
+          fiber_capacity_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_identified_completed: string | null
+          fiber_identified_forecast: string | null
+          fiber_identified_owner: string | null
+          fiber_identified_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          fiber_phase: string | null
+          fiber_secured_amount: number | null
+          fiber_secured_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          fiber_secured_completed: string | null
+          fiber_secured_forecast: string | null
+          fiber_secured_owner: string | null
+          fiber_secured_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          hub_name: string | null
+          id: string | null
+          interested_offtakers: string[] | null
+          is_archived: boolean | null
+          mw_current: number | null
+          mw_potential: number | null
+          name: string | null
+          next_step: string | null
+          permit_approved_amount: number | null
+          permit_approved_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          permit_approved_completed: string | null
+          permit_approved_forecast: string | null
+          permit_approved_owner: string | null
+          permit_approved_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          permit_requirements_completed: string | null
+          permit_requirements_forecast: string | null
+          permit_requirements_owner: string | null
+          permit_requirements_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          permitting_phase: string | null
+          power_capacity_check_completed: string | null
+          power_capacity_check_forecast: string | null
+          power_capacity_check_owner: string | null
+          power_capacity_check_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_capacity_indication_completed: string | null
+          power_capacity_indication_forecast: string | null
+          power_capacity_indication_owner: string | null
+          power_capacity_indication_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_connection_completed: string | null
+          power_connection_forecast: string | null
+          power_connection_owner: string | null
+          power_connection_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_deposit_amount: number | null
+          power_deposit_amount_status:
+            | Database["public"]["Enums"]["amount_status"]
+            | null
+          power_deposit_completed: string | null
+          power_deposit_forecast: string | null
+          power_deposit_owner: string | null
+          power_deposit_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_phase: string | null
+          power_service_request_completed: string | null
+          power_service_request_forecast: string | null
+          power_service_request_owner: string | null
+          power_service_request_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          power_utility_design_completed: string | null
+          power_utility_design_forecast: string | null
+          power_utility_design_owner: string | null
+          power_utility_design_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          priority: Database["public"]["Enums"]["site_priority"] | null
+          regional_hub_id: string | null
+          site_control_phase: string | null
+          site_identified_completed: string | null
+          site_identified_forecast: string | null
+          site_identified_owner: string | null
+          site_identified_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_notes: Json | null
+          site_qualification_phase: string | null
+          site_qualified_completed: string | null
+          site_qualified_forecast: string | null
+          site_qualified_owner: string | null
+          site_qualified_status:
+            | Database["public"]["Enums"]["checkpoint_status"]
+            | null
+          site_type: Database["public"]["Enums"]["site_type_enum"] | null
+          total_capex: number | null
+          updated_at: string | null
+          utility_id: string | null
+          utility_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tracker_sites_asset_owner_id_fkey"
+            columns: ["asset_owner_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_power_partners"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_sites_regional_hub_id_fkey"
+            columns: ["regional_hub_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_regional_hubs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tracker_sites_utility_id_fkey"
+            columns: ["utility_id"]
+            isOneToOne: false
+            referencedRelation: "tracker_power_partners"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      activity_source:
+        | "call"
+        | "email"
+        | "slack"
+        | "meeting"
+        | "manual"
+        | "other"
+      amount_status: "Estimated" | "Quoted" | "Approved" | "Paid"
+      checkpoint_status:
+        | "Not Started"
+        | "In Progress"
+        | "Complete"
+        | "Blocked"
+        | "N/A"
+      hub_status: "Planning" | "Active Development" | "Operational"
+      landowner_proximity: "Collocated" | "Adjacent"
+      landowner_purpose:
+        | "DC Location"
+        | "Fiber Route"
+        | "Access Easement"
+        | "Utility Easement"
+      lease_status:
+        | "No Contact"
+        | "Engaged"
+        | "Amendment In Progress"
+        | "Signed"
+      partner_type:
+        | "Distribution Co-op"
+        | "G&T Co-op"
+        | "Municipal Utility"
+        | "IOU"
+        | "IPP"
+      relationship_stage:
+        | "Identified"
+        | "Initial Contact"
+        | "Capacity Discussion"
+        | "Under Contract"
+      site_priority:
+        | "Lead"
+        | "Active"
+        | "Pipeline"
+        | "On Hold"
+        | "Deprioritized"
+      site_type_enum: "Solar" | "Wind" | "Solar + BESS" | "Substation" | "Other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -730,10 +1775,46 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
-    Enums: {},
+    Enums: {
+      activity_source: ["call", "email", "slack", "meeting", "manual", "other"],
+      amount_status: ["Estimated", "Quoted", "Approved", "Paid"],
+      checkpoint_status: [
+        "Not Started",
+        "In Progress",
+        "Complete",
+        "Blocked",
+        "N/A",
+      ],
+      hub_status: ["Planning", "Active Development", "Operational"],
+      landowner_proximity: ["Collocated", "Adjacent"],
+      landowner_purpose: [
+        "DC Location",
+        "Fiber Route",
+        "Access Easement",
+        "Utility Easement",
+      ],
+      lease_status: [
+        "No Contact",
+        "Engaged",
+        "Amendment In Progress",
+        "Signed",
+      ],
+      partner_type: [
+        "Distribution Co-op",
+        "G&T Co-op",
+        "Municipal Utility",
+        "IOU",
+        "IPP",
+      ],
+      relationship_stage: [
+        "Identified",
+        "Initial Contact",
+        "Capacity Discussion",
+        "Under Contract",
+      ],
+      site_priority: ["Lead", "Active", "Pipeline", "On Hold", "Deprioritized"],
+      site_type_enum: ["Solar", "Wind", "Solar + BESS", "Substation", "Other"],
+    },
   },
 } as const
