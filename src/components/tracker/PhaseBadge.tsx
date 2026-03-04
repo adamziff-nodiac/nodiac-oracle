@@ -3,10 +3,10 @@
 import { cn } from '@/lib/utils'
 
 const STATUS_COLORS: Record<string, string> = {
-  'Not Started': 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500',
-  'In Progress': 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
-  'Complete': 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
-  'Blocked': 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400',
+  'Not Started': 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400',
+  'In Progress': 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
+  'Complete': 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-200',
+  'Blocked': 'bg-red-200 text-red-800 dark:bg-red-700/50 dark:text-red-200',
   'N/A': '',
 }
 
@@ -32,8 +32,7 @@ export function PhaseBadge({ status, abbrev }: PhaseBadgeProps) {
       )}
       title={`${abbrev}: ${status}`}
     >
-      <span className="sm:inline hidden">{abbrev}</span>
-      <span className="sm:hidden inline">&nbsp;</span>
+      {abbrev}
     </span>
   )
 }

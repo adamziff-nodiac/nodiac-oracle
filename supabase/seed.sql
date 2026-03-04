@@ -7,13 +7,12 @@
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. Regional Hubs (3)
+-- 1. Regional Hubs (2)
 -- ---------------------------------------------------------------------------
 INSERT INTO tracker_regional_hubs (name, target_mw, status, notes)
 VALUES
   ('Upper Midwest Hub', 500, 'Active Development', '{}'::jsonb),
-  ('Colorado Hub', NULL, 'Active Development', '{}'::jsonb),
-  ('Minnesota Hub', NULL, 'Planning', '{}'::jsonb);
+  ('Colorado Hub', NULL, 'Active Development', '{}'::jsonb);
 
 -- ---------------------------------------------------------------------------
 -- 2. Power Partners (12) — G&Ts and IOUs first, then Distribution Co-ops
@@ -87,11 +86,11 @@ VALUES
   ((SELECT id FROM tracker_power_partners WHERE name = 'Xcel Energy (Denver/DIA)'),
    (SELECT id FROM tracker_regional_hubs WHERE name = 'Colorado Hub'));
 
--- Minnesota Hub partners
+-- Upper Midwest Hub partners
 INSERT INTO tracker_partner_hubs (partner_id, hub_id)
 VALUES
   ((SELECT id FROM tracker_power_partners WHERE name = 'Xcel Energy (Minnesota)'),
-   (SELECT id FROM tracker_regional_hubs WHERE name = 'Minnesota Hub'));
+   (SELECT id FROM tracker_regional_hubs WHERE name = 'Upper Midwest Hub'));
 
 -- ---------------------------------------------------------------------------
 -- 4. Sites (16) — all milestones default to 'Not Started'
@@ -317,7 +316,7 @@ INSERT INTO tracker_sites (
 )
 VALUES (
   'Xcel MN Sites',
-  (SELECT id FROM tracker_regional_hubs WHERE name = 'Minnesota Hub'),
+  (SELECT id FROM tracker_regional_hubs WHERE name = 'Upper Midwest Hub'),
   (SELECT id FROM tracker_power_partners WHERE name = 'Xcel Energy (Minnesota)'),
   'Pipeline',
   '{"summary": "~12 project sites in Xcel Energy Minnesota territory. Sites under joint Greenbacker/Xcel co-ownership. Focus on determining available interconnection capacity at each site (1-10 MW modular deployments). Grid draw (not clipped/curtailed solar) is primary power strategy.", "next_steps": ["Josh pulling site control docs from Greenbacker data room", "Clarify grid-draw model with Greenbacker"], "blockers": ["Greenbacker contact does not fully understand grid-draw model"], "updated_at": "2026-03-03T00:00:00Z"}'::jsonb

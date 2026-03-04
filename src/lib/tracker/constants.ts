@@ -1,12 +1,12 @@
 // Checkpoint definitions — the source of truth for UI rendering
 export const PHASES = [
-  { key: 'site_qualification', label: 'Site Qualification', abbrev: 'SQ' },
-  { key: 'site_control', label: 'Site Control', abbrev: 'SC' },
-  { key: 'power', label: 'Power', abbrev: 'PWR' },
-  { key: 'permitting', label: 'Permitting', abbrev: 'PRM' },
-  { key: 'fiber', label: 'Fiber', abbrev: 'FBR' },
-  { key: 'engineering', label: 'Eng & Procurement', abbrev: 'ENG' },
-  { key: 'construction', label: 'Construction', abbrev: 'CON' },
+  { key: 'site_qualification', label: 'Site Qualification', abbrev: 'Qualify' },
+  { key: 'site_control', label: 'Site Control', abbrev: 'Control' },
+  { key: 'power', label: 'Power', abbrev: 'Power' },
+  { key: 'permitting', label: 'Permitting', abbrev: 'Permit' },
+  { key: 'fiber', label: 'Fiber', abbrev: 'Fiber' },
+  { key: 'engineering', label: 'Eng & Procurement', abbrev: 'Eng' },
+  { key: 'construction', label: 'Construction', abbrev: 'Build' },
 ] as const
 
 export type PhaseKey = typeof PHASES[number]['key']
@@ -53,7 +53,7 @@ export type AmountStatus = typeof AMOUNT_STATUS_OPTIONS[number]
 export const PRIORITY_OPTIONS = ['Lead', 'Active', 'Pipeline', 'On Hold', 'Deprioritized'] as const
 export type Priority = typeof PRIORITY_OPTIONS[number]
 
-export const OWNER_OPTIONS = ['Eric', 'Josh', 'Stratton', 'Evan', 'Adam Z', 'Sara', 'Ken'] as const
+export const OWNER_OPTIONS = ['Eric', 'Josh', 'Stratton', 'Evan', 'Ziff', 'Sara', 'Ken'] as const
 
 // Phase status -> color mapping for the grid
 export const PHASE_COLORS: Record<string, string> = {

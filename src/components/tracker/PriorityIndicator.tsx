@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 const DOT_COLORS: Record<string, string> = {
   'Lead': 'bg-nodiac-secondary',
   'Active': 'bg-emerald-500',
-  'Pipeline': 'bg-sky-500',
+  'Pipeline': 'bg-violet-500',
   'On Hold': 'bg-amber-500',
   'Deprioritized': 'bg-zinc-400',
 }
@@ -13,7 +13,7 @@ const DOT_COLORS: Record<string, string> = {
 const TEXT_COLORS: Record<string, string> = {
   'Lead': 'text-nodiac-secondary',
   'Active': 'text-emerald-500 dark:text-emerald-400',
-  'Pipeline': 'text-sky-500 dark:text-sky-400',
+  'Pipeline': 'text-violet-500 dark:text-violet-400',
   'On Hold': 'text-amber-500 dark:text-amber-400',
   'Deprioritized': 'text-zinc-400 dark:text-zinc-500',
 }

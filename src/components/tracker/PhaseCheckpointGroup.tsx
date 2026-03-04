@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils'
 import { OWNER_OPTIONS, type CheckpointStatus, type AmountStatus } from '@/lib/tracker/constants'
 import type { Checkpoint } from '@/lib/tracker/constants'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
-import { PhaseBadge } from './PhaseBadge'
 import { CheckpointStatusBadge } from './CheckpointStatusBadge'
 import { AmountStatusBadge } from './AmountStatusBadge'
 import { ChevronRight } from 'lucide-react'
@@ -48,10 +47,15 @@ export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: Pha
       >
         <span className="flex items-center gap-2 text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           {phase.label}
-          <PhaseBadge
-            status={phaseStatus as 'Not Started' | 'In Progress' | 'Complete' | 'Blocked' | 'N/A'}
-            abbrev={phase.abbrev}
-          />
+          <span className={cn(
+            'text-[11px] font-medium px-2 py-0.5 rounded-full',
+            phaseStatus === 'Complete' && 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-200',
+            phaseStatus === 'In Progress' && 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
+            phaseStatus === 'Blocked' && 'bg-red-200 text-red-800 dark:bg-red-700/50 dark:text-red-200',
+            phaseStatus === 'Not Started' && 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400',
+          )}>
+            {phaseStatus}
+          </span>
         </span>
         <ChevronRight
           className={cn(
@@ -101,7 +105,7 @@ export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: Pha
                       type="date"
                       value={forecast ?? ''}
                       onChange={e => onUpdate(checkpoint.prefix, 'forecast', e.target.value || null)}
-                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 transition-colors duration-100 tabular-nums w-[110px] text-zinc-700 dark:text-zinc-300"
+                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 transition-colors duration-100 tabular-nums w-[110px] text-zinc-700 dark:text-zinc-300 dark:[color-scheme:dark]"
                     />
                   </div>
 
@@ -112,7 +116,7 @@ export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: Pha
                       type="date"
                       value={completed ?? ''}
                       onChange={e => onUpdate(checkpoint.prefix, 'completed', e.target.value || null)}
-                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 transition-colors duration-100 tabular-nums w-[110px] text-zinc-700 dark:text-zinc-300"
+                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 transition-colors duration-100 tabular-nums w-[110px] text-zinc-700 dark:text-zinc-300 dark:[color-scheme:dark]"
                     />
                   </div>
 
