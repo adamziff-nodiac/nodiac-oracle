@@ -55,6 +55,12 @@ export type Priority = typeof PRIORITY_OPTIONS[number]
 
 export const OWNER_OPTIONS = ['Eric', 'Josh', 'Stratton', 'Evan', 'Ziff', 'Sara', 'Ken'] as const
 
+export const PARTNER_TYPE_OPTIONS = ['Distribution Co-op', 'G&T Co-op', 'Municipal Utility', 'IOU', 'IPP'] as const
+export type PartnerType = typeof PARTNER_TYPE_OPTIONS[number]
+
+export const RELATIONSHIP_STAGE_OPTIONS = ['Identified', 'Initial Contact', 'Capacity Discussion', 'Under Contract'] as const
+export type RelationshipStage = typeof RELATIONSHIP_STAGE_OPTIONS[number]
+
 // Phase status -> color mapping for the grid
 export const PHASE_COLORS: Record<string, string> = {
   'Not Started': 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400',

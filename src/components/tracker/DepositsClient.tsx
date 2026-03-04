@@ -65,11 +65,14 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
 
   const deposits = useMemo(() => extractDeposits(sites), [sites])
 
-  const readyToSend = deposits.filter(d => d.amountStatus === 'Quoted' || d.amountStatus === 'Approved')
+  const quotedOrApproved = deposits.filter(d => d.amountStatus === 'Quoted' || d.amountStatus === 'Approved')
+  const readyToSend = quotedOrApproved.filter(d => d.checkpointStatus !== 'Blocked')
+  const blocked = quotedOrApproved.filter(d => d.checkpointStatus === 'Blocked')
   const pending = deposits.filter(d => d.amountStatus === 'Estimated')
   const paid = deposits.filter(d => d.amountStatus === 'Paid')
 
   const readyTotal = readyToSend.reduce((s, d) => s + (d.amount ?? 0), 0)
+  const blockedTotal = blocked.reduce((s, d) => s + (d.amount ?? 0), 0)
   const pendingTotal = pending.reduce((s, d) => s + (d.amount ?? 0), 0)
   const paidTotal = paid.reduce((s, d) => s + (d.amount ?? 0), 0)
 
@@ -83,8 +86,9 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <MetricCard label="Ready to Send" value={formatCurrency(readyTotal)} sublabel={`${readyToSend.length} deposits`} />
+        <MetricCard label="Blocked" value={formatCurrency(blockedTotal)} sublabel={`${blocked.length} deposits`} />
         <MetricCard label="Pending" value={formatCurrency(pendingTotal)} sublabel={`${pending.length} deposits`} />
         <MetricCard label="Total Paid" value={formatCurrency(paidTotal)} sublabel={`${paid.length} deposits`} />
       </div>
@@ -96,6 +100,13 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
         items={readyToSend}
         formatCurrency={formatCurrency}
         accent
+      />
+      <DepositGroup
+        title="Blocked"
+        total={blockedTotal}
+        items={blocked}
+        formatCurrency={formatCurrency}
+        blocked
       />
       <DepositGroup
         title="Pending"
@@ -122,6 +133,7 @@ function DepositGroup({
   items,
   formatCurrency,
   accent,
+  blocked,
   muted,
 }: {
   title: string
@@ -129,10 +141,11 @@ function DepositGroup({
   items: DepositItem[]
   formatCurrency: (v: number) => string
   accent?: boolean
+  blocked?: boolean
   muted?: boolean
 }) {
   return (
-    <div className={`${accent ? 'border-l-2 border-nodiac-secondary pl-4' : ''} ${muted ? 'opacity-70' : ''}`}>
+    <div className={`${accent ? 'border-l-2 border-nodiac-secondary pl-4' : ''} ${blocked ? 'border-l-2 border-red-400 dark:border-red-500 pl-4' : ''} ${muted ? 'opacity-70' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
         <span className="text-sm font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
@@ -165,7 +178,7 @@ function DepositGroup({
                     <td className="px-4 py-3">
                       <Link
                         href={`/tracker/${item.siteId}`}
-                        className="text-[13px] font-medium text-nodiac-secondary hover:underline"
+                        className="text-[13px] font-medium text-nodiac-primary dark:text-nodiac-secondary hover:underline"
                       >
                         {item.siteName}
                       </Link>
@@ -197,7 +210,7 @@ function DepositGroup({
               <div key={`${item.siteId}-${item.checkpointLabel}-${i}`} className="p-3 border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
                 <Link
                   href={`/tracker/${item.siteId}`}
-                  className="text-[13px] font-medium text-nodiac-secondary"
+                  className="text-[13px] font-medium text-nodiac-primary dark:text-nodiac-secondary"
                 >
                   {item.siteName}
                 </Link>

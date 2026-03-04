@@ -34,10 +34,23 @@ export interface TrackerHub {
 export interface TrackerPartner {
   id: string
   name: string
-  partner_type: string | null
-  hub_id: string | null
+  type: string | null
+  relationship_stage: string | null
+  loi_signed: boolean | null
   parent_gt_id: string | null
+  ix_process_notes: string | null
+  rate_structure: string | null
+  available_capacity: string | null
+  attio_link: string | null
+  notes: Record<string, unknown> | null
   created_at: string
+  updated_at: string
+}
+
+// Extended partner type with computed fields for the list view
+export interface TrackerPartnerWithCounts extends TrackerPartner {
+  site_count: number
+  hub_names: string[]
 }
 
 // TODO: Replace with Tables<'tracker_activity_log'> after types regenerated

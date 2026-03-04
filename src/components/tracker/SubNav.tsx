@@ -8,6 +8,7 @@ const tabs = [
   { href: '/tracker', label: 'Portfolio' },
   { href: '/tracker/deposits', label: 'Deposits' },
   { href: '/tracker/metrics', label: 'Metrics' },
+  { href: '/tracker/partners', label: 'Partners' },
   { href: '/tracker/docs', label: 'Docs' },
 ]
 
