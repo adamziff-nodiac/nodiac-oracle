@@ -91,6 +91,22 @@ export function MetricsClient({ initialSites, hubs }: MetricsClientProps) {
     : null
 
   // Capex analysis
+  const FINANCIAL_PREFIXES = ['power_deposit', 'permit_approved', 'fiber_secured', 'eng_equip_ordered']
+
+  function getCapexConfidence(site: TrackerSiteOverview): 'Actual' | 'Mixed' | 'Estimated' {
+    const record = site as unknown as Record<string, unknown>
+    const statuses = FINANCIAL_PREFIXES
+      .map(p => (record[`${p}_amount_status`] as string) || 'Estimated')
+      .filter((_, i) => {
+        const amount = record[`${FINANCIAL_PREFIXES[i]}_amount`] as number | null
+        return amount != null && amount > 0
+      })
+    if (statuses.length === 0) return 'Estimated'
+    if (statuses.every(s => s === 'Paid' || s === 'Approved')) return 'Actual'
+    if (statuses.every(s => s === 'Estimated')) return 'Estimated'
+    return 'Mixed'
+  }
+
   const capexSites = useMemo(() =>
     sites
       .filter(s => s.capex_per_mw && s.capex_per_mw > 0)
@@ -216,6 +232,7 @@ export function MetricsClient({ initialSites, hubs }: MetricsClientProps) {
                   <th className="py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-right">Total Capex</th>
                   <th className="py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-right">MW</th>
                   <th className="py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-right">Capex/MW</th>
+                  <th className="py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">Basis</th>
                 </tr>
               </thead>
               <tbody>
@@ -239,6 +256,21 @@ export function MetricsClient({ initialSites, hubs }: MetricsClientProps) {
                         : 'text-red-600 dark:text-red-400'
                     )}>
                       {formatCurrency(site.capex_per_mw ?? 0)}
+                    </td>
+                    <td className="py-2 text-center">
+                      {(() => {
+                        const confidence = getCapexConfidence(site)
+                        const styles = confidence === 'Actual'
+                          ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400'
+                          : confidence === 'Mixed'
+                            ? 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400'
+                            : 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                        return (
+                          <span className={cn('inline-flex px-2 py-0.5 rounded text-[10px] font-medium', styles)}>
+                            {confidence}
+                          </span>
+                        )
+                      })()}
                     </td>
                   </tr>
                 ))}
