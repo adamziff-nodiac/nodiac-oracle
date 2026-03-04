@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 import { AMOUNT_STATUS_OPTIONS, type AmountStatus } from '@/lib/tracker/constants'
 
@@ -19,23 +20,45 @@ interface AmountStatusBadgeProps {
 
 export function AmountStatusBadge({ status, editable, onStatusChange }: AmountStatusBadgeProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
+
+  const updatePosition = useCallback(() => {
+    if (buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 4, left: rect.left })
+    }
+  }, [])
 
   useEffect(() => {
+    if (!open) return
+    updatePosition()
+
     function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        buttonRef.current && !buttonRef.current.contains(e.target as Node)
+      ) {
         setOpen(false)
       }
     }
-    if (open) {
-      document.addEventListener('mousedown', handleClick)
-      return () => document.removeEventListener('mousedown', handleClick)
+    function handleScroll() {
+      setOpen(false)
     }
-  }, [open])
+
+    document.addEventListener('mousedown', handleClick)
+    window.addEventListener('scroll', handleScroll, true)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [open, updatePosition])
 
   return (
-    <div ref={ref} className="relative">
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => editable && setOpen(!open)}
         className={cn(
@@ -47,8 +70,12 @@ export function AmountStatusBadge({ status, editable, onStatusChange }: AmountSt
         {status}
       </button>
 
-      {open && (
-        <div className="absolute z-50 mt-1 w-32 py-1 bg-white dark:bg-[#1c1c34] border border-zinc-200 dark:border-[#2a2a40] rounded-lg shadow-lg shadow-black/10 dark:shadow-black/40">
+      {open && createPortal(
+        <div
+          ref={dropdownRef}
+          className="fixed z-[9999] w-32 py-1 bg-white dark:bg-[#1c1c34] border border-zinc-200 dark:border-[#2a2a40] rounded-lg shadow-lg shadow-black/10 dark:shadow-black/40"
+          style={{ top: pos.top, left: pos.left }}
+        >
           {AMOUNT_STATUS_OPTIONS.map((opt) => (
             <button
               key={opt}
@@ -69,8 +96,9 @@ export function AmountStatusBadge({ status, editable, onStatusChange }: AmountSt
               )}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   )
 }

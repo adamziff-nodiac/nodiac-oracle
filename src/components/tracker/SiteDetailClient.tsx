@@ -54,6 +54,26 @@ export function SiteDetailClient({ initialSite, initialActivity }: SiteDetailCli
     }
   }
 
+  async function handleNotesUpdate(updatedNotes: SiteNotes) {
+    const prev = { ...site }
+    setSite(s => ({ ...s, site_notes: updatedNotes } as TrackerSiteOverview))
+
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('tracker_sites')
+        .update({ site_notes: updatedNotes })
+        .eq('id', site.id)
+
+      if (error) throw error
+      showToast('Saved', 'success')
+    } catch {
+      setSite(prev)
+      showToast('Failed to save', 'error')
+    }
+  }
+
   const notes = (site.site_notes as SiteNotes | null) ?? null
   const siteQualCompleted = site['site_qualified_completed'] as string | null
 
@@ -76,7 +96,7 @@ export function SiteDetailClient({ initialSite, initialActivity }: SiteDetailCli
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          <OperationalContext notes={notes} />
+          <OperationalContext notes={notes} onUpdate={handleNotesUpdate} />
 
           {PHASES.map(phase => (
             <PhaseCheckpointGroup
