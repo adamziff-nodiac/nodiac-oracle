@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageSquare, BarChart3, ArrowRight, Map, FileSearch } from 'lucide-react'
+import { MessageSquare, BarChart3, ArrowRight, Map, FileSearch, ClipboardList } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 
@@ -33,6 +33,13 @@ const features = [
     title: 'Site Screening',
     description: 'Upload IPP portfolios and score sites against regional hub criteria',
     color: 'from-nodiac-soft-orchid to-nodiac-primary',
+  },
+  {
+    href: '/tracker',
+    icon: ClipboardList,
+    title: 'Tracker',
+    description: 'Track site development from qualification through commissioning across all hubs',
+    color: 'from-nodiac-primary to-nodiac-secondary',
   },
 ]
 
