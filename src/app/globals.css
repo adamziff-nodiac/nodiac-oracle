@@ -78,3 +78,29 @@ body {
     transform: translateY(-6px);
   }
 }
+
+/* Tracker toast slide-in */
+@keyframes slide-in {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 200ms ease-out;
+}
+
+/* Tracker realtime update flash */
+@keyframes realtime-flash {
+  0% { background-color: rgba(77, 226, 228, 0.1); }
+  100% { background-color: transparent; }
+}
+
+.realtime-updated {
+  animation: realtime-flash 1000ms ease-out;
+}
