@@ -3,17 +3,19 @@
 import { useState, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
-import { CHECKPOINTS, type AmountStatus } from '@/lib/tracker/constants'
+import { CHECKPOINTS, type AmountStatus, type CheckpointStatus } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { AmountStatusBadge } from './AmountStatusBadge'
 import { CheckpointStatusBadge } from './CheckpointStatusBadge'
 import { MetricCard } from './MetricCard'
-import { ToastContainer } from './Toast'
+import { ToastContainer, showToast } from './Toast'
 
 interface DepositItem {
   siteId: string
   siteName: string
+  checkpointPrefix: string
   checkpointLabel: string
   amount: number | null
   amountStatus: AmountStatus
@@ -36,6 +38,7 @@ function extractDeposits(sites: TrackerSiteOverview[]): DepositItem[] {
         items.push({
           siteId: site.id,
           siteName: site.name ?? 'Unknown',
+          checkpointPrefix: cp.prefix,
           checkpointLabel: cp.label,
           amount,
           amountStatus,
@@ -55,7 +58,7 @@ interface DepositsClientProps {
 
 export function DepositsClient({ initialSites }: DepositsClientProps) {
   const router = useRouter()
-  const [sites] = useState(initialSites)
+  const [sites, setSites] = useState(initialSites)
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -83,6 +86,85 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
     return `$${val.toLocaleString()}`
   }
 
+  async function handleAmountStatusChange(item: DepositItem, newStatus: AmountStatus) {
+    const columnName = `${item.checkpointPrefix}_amount_status`
+    const prev = [...sites]
+
+    // Optimistic update
+    setSites(ss => ss.map(s =>
+      s.id === item.siteId
+        ? { ...s, [columnName]: newStatus } as TrackerSiteOverview
+        : s
+    ))
+
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('tracker_sites')
+        .update({ [columnName]: newStatus })
+        .eq('id', item.siteId)
+
+      if (error) throw error
+      showToast('Saved', 'success')
+    } catch {
+      setSites(prev)
+      showToast('Failed to save', 'error')
+    }
+  }
+
+  async function handleAmountChange(item: DepositItem, newAmount: number | null) {
+    const columnName = `${item.checkpointPrefix}_amount`
+    const prev = [...sites]
+
+    setSites(ss => ss.map(s =>
+      s.id === item.siteId
+        ? { ...s, [columnName]: newAmount } as TrackerSiteOverview
+        : s
+    ))
+
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('tracker_sites')
+        .update({ [columnName]: newAmount })
+        .eq('id', item.siteId)
+
+      if (error) throw error
+      showToast('Saved', 'success')
+    } catch {
+      setSites(prev)
+      showToast('Failed to save', 'error')
+    }
+  }
+
+  async function handleCheckpointStatusChange(item: DepositItem, newStatus: CheckpointStatus) {
+    const columnName = `${item.checkpointPrefix}_status`
+    const prev = [...sites]
+
+    setSites(ss => ss.map(s =>
+      s.id === item.siteId
+        ? { ...s, [columnName]: newStatus } as TrackerSiteOverview
+        : s
+    ))
+
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('tracker_sites')
+        .update({ [columnName]: newStatus })
+        .eq('id', item.siteId)
+
+      if (error) throw error
+      showToast('Saved', 'success')
+    } catch {
+      setSites(prev)
+      showToast('Failed to save', 'error')
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
       {/* Summary cards */}
@@ -99,6 +181,9 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
         total={readyTotal}
         items={readyToSend}
         formatCurrency={formatCurrency}
+        onAmountStatusChange={handleAmountStatusChange}
+        onAmountChange={handleAmountChange}
+        onCheckpointStatusChange={handleCheckpointStatusChange}
         accent
       />
       <DepositGroup
@@ -106,6 +191,9 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
         total={blockedTotal}
         items={blocked}
         formatCurrency={formatCurrency}
+        onAmountStatusChange={handleAmountStatusChange}
+        onAmountChange={handleAmountChange}
+        onCheckpointStatusChange={handleCheckpointStatusChange}
         blocked
       />
       <DepositGroup
@@ -113,12 +201,18 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
         total={pendingTotal}
         items={pending}
         formatCurrency={formatCurrency}
+        onAmountStatusChange={handleAmountStatusChange}
+        onAmountChange={handleAmountChange}
+        onCheckpointStatusChange={handleCheckpointStatusChange}
       />
       <DepositGroup
         title="Paid"
         total={paidTotal}
         items={paid}
         formatCurrency={formatCurrency}
+        onAmountStatusChange={handleAmountStatusChange}
+        onAmountChange={handleAmountChange}
+        onCheckpointStatusChange={handleCheckpointStatusChange}
         muted
       />
 
@@ -127,11 +221,58 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
   )
 }
 
+function EditableAmount({
+  amount,
+  formatCurrency,
+  onSave,
+}: {
+  amount: number | null
+  formatCurrency: (v: number) => string
+  onSave: (newAmount: number | null) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(amount?.toString() ?? '')
+
+  function handleSave() {
+    const parsed = value.trim() === '' ? null : parseFloat(value.replace(/[,$]/g, ''))
+    if (parsed !== null && isNaN(parsed)) return
+    onSave(parsed)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <input
+        type="text"
+        value={value}
+        onChange={e => setValue(e.target.value)}
+        onBlur={handleSave}
+        onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
+        autoFocus
+        className="w-24 px-2 py-1 text-[13px] font-medium tabular-nums text-right bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] rounded focus:outline-none focus:ring-1 focus:ring-nodiac-secondary text-zinc-900 dark:text-zinc-100"
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => { setValue(amount?.toString() ?? ''); setEditing(true) }}
+      className="text-[13px] font-medium tabular-nums text-zinc-900 dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-[#1a1a30] px-2 py-1 rounded transition-colors cursor-pointer"
+    >
+      {amount != null ? formatCurrency(amount) : '--'}
+    </button>
+  )
+}
+
 function DepositGroup({
   title,
   total,
   items,
   formatCurrency,
+  onAmountStatusChange,
+  onAmountChange,
+  onCheckpointStatusChange,
   accent,
   blocked,
   muted,
@@ -140,6 +281,9 @@ function DepositGroup({
   total: number
   items: DepositItem[]
   formatCurrency: (v: number) => string
+  onAmountStatusChange: (item: DepositItem, newStatus: AmountStatus) => void
+  onAmountChange: (item: DepositItem, newAmount: number | null) => void
+  onCheckpointStatusChange: (item: DepositItem, newStatus: CheckpointStatus) => void
   accent?: boolean
   blocked?: boolean
   muted?: boolean
@@ -167,7 +311,7 @@ function DepositGroup({
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Site</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Checkpoint</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-right">Amount</th>
-                  <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">Status</th>
+                  <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">Payment Status</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Provider</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">Phase Status</th>
                 </tr>
@@ -186,17 +330,29 @@ function DepositGroup({
                     <td className="px-4 py-3 text-[13px] text-zinc-600 dark:text-zinc-400">
                       {item.checkpointLabel}
                     </td>
-                    <td className="px-4 py-3 text-[13px] font-medium tabular-nums text-right text-zinc-900 dark:text-zinc-100">
-                      {item.amount != null ? formatCurrency(item.amount) : '--'}
+                    <td className="px-4 py-3 text-right">
+                      <EditableAmount
+                        amount={item.amount}
+                        formatCurrency={formatCurrency}
+                        onSave={(newAmount) => onAmountChange(item, newAmount)}
+                      />
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <AmountStatusBadge status={item.amountStatus} />
+                      <AmountStatusBadge
+                        status={item.amountStatus}
+                        editable
+                        onStatusChange={(newStatus) => onAmountStatusChange(item, newStatus)}
+                      />
                     </td>
                     <td className="px-4 py-3 text-[13px] text-zinc-500 dark:text-zinc-400 truncate max-w-[140px]">
                       {item.providerName ?? '--'}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <CheckpointStatusBadge status={item.checkpointStatus as 'Not Started' | 'In Progress' | 'Complete' | 'Blocked' | 'N/A'} />
+                      <CheckpointStatusBadge
+                        status={item.checkpointStatus as CheckpointStatus}
+                        editable
+                        onStatusChange={(newStatus) => onCheckpointStatusChange(item, newStatus)}
+                      />
                     </td>
                   </tr>
                 ))}
@@ -215,12 +371,24 @@ function DepositGroup({
                   {item.siteName}
                 </Link>
                 <div className="text-[13px] text-zinc-600 dark:text-zinc-400">{item.checkpointLabel}</div>
-                <div className="text-base font-semibold tabular-nums text-zinc-900 dark:text-zinc-100 mt-1">
-                  {item.amount != null ? formatCurrency(item.amount) : '--'}
+                <div className="mt-1">
+                  <EditableAmount
+                    amount={item.amount}
+                    formatCurrency={formatCurrency}
+                    onSave={(newAmount) => onAmountChange(item, newAmount)}
+                  />
                 </div>
                 <div className="flex items-center gap-2 mt-2">
-                  <AmountStatusBadge status={item.amountStatus} />
-                  <CheckpointStatusBadge status={item.checkpointStatus as 'Not Started' | 'In Progress' | 'Complete' | 'Blocked' | 'N/A'} />
+                  <AmountStatusBadge
+                    status={item.amountStatus}
+                    editable
+                    onStatusChange={(newStatus) => onAmountStatusChange(item, newStatus)}
+                  />
+                  <CheckpointStatusBadge
+                    status={item.checkpointStatus as CheckpointStatus}
+                    editable
+                    onStatusChange={(newStatus) => onCheckpointStatusChange(item, newStatus)}
+                  />
                 </div>
               </div>
             ))}
