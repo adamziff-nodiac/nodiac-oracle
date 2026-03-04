@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
@@ -221,6 +221,40 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
   )
 }
 
+function InfoTooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open])
+
+  return (
+    <div ref={ref} className="relative inline-flex ml-1">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-zinc-300 dark:border-zinc-600 text-[9px] font-bold text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:border-zinc-400 dark:hover:border-zinc-400 transition-colors cursor-pointer leading-none"
+      >
+        i
+      </button>
+      {open && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-52 px-3 py-2 rounded-lg bg-zinc-800 dark:bg-zinc-700 text-[11px] text-zinc-100 leading-relaxed shadow-lg normal-case tracking-normal font-normal">
+          {text}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-x-[5px] border-x-transparent border-t-[5px] border-t-zinc-800 dark:border-t-zinc-700" />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function EditableAmount({
   amount,
   formatCurrency,
@@ -311,9 +345,15 @@ function DepositGroup({
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Site</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Checkpoint</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-right">Amount</th>
-                  <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">Payment Status</th>
+                  <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">
+                    Payment Status
+                    <InfoTooltip text="Where the money is in its lifecycle: Estimated → Quoted → Approved → Paid." />
+                  </th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Provider</th>
-                  <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">Phase Status</th>
+                  <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">
+                    Phase Status
+                    <InfoTooltip text="The checkpoint's overall progress: Not Started → In Progress → Complete. A deposit can be Quoted but Blocked if something else needs to happen first." />
+                  </th>
                 </tr>
               </thead>
               <tbody>
