@@ -192,7 +192,7 @@ export function ProspectiveSitesLayer({ geojson, visible = true }: ProspectiveSi
     }
 
     const attach = () => {
-      if (!m.getLayer('prospective-sites-unclustered')) {
+      if (!m.isStyleLoaded() || !m.getLayer('prospective-sites-unclustered')) {
         setTimeout(attach, 200)
         return
       }
@@ -202,10 +202,12 @@ export function ProspectiveSitesLayer({ geojson, visible = true }: ProspectiveSi
     attach()
 
     return () => {
-      if (m.getLayer('prospective-sites-unclustered')) {
-        m.off('mouseenter', 'prospective-sites-unclustered', handleEnter)
-        m.off('mouseleave', 'prospective-sites-unclustered', handleLeave)
-      }
+      try {
+        if (m.getLayer('prospective-sites-unclustered')) {
+          m.off('mouseenter', 'prospective-sites-unclustered', handleEnter)
+          m.off('mouseleave', 'prospective-sites-unclustered', handleLeave)
+        }
+      } catch { /* style may be undefined during cleanup */ }
     }
   }, [map])
 

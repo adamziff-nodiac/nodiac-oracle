@@ -167,6 +167,11 @@ export function HubMap({
     scrollZoom.setZoomRate(1 / 200)
 
     const addStateBorders = () => {
+      // Guard against style not being loaded (can happen during style transitions)
+      if (!map.isStyleLoaded()) {
+        setTimeout(addStateBorders, 200)
+        return
+      }
       // Wait for either county-fill or hub-heatmap layer to exist
       if (!map.getLayer('county-fill') && !map.getLayer('hub-heatmap')) {
         setTimeout(addStateBorders, 200)
@@ -228,7 +233,7 @@ export function HubMap({
     const dragState: { clusterId: number | null } = { clusterId: null }
 
     map.on('mousedown', (e) => {
-      if (!map.getLayer('cluster-regions-labels')) return
+      if (!map.isStyleLoaded() || !map.getLayer('cluster-regions-labels')) return
       const features = map.queryRenderedFeatures(e.point, { layers: ['cluster-regions-labels'] })
       if (!features.length) return
       const clusterId = features[0].properties?.id
@@ -269,6 +274,7 @@ export function HubMap({
 
   return (
     <Map
+      key={isDark ? 'dark' : 'light'}
       ref={ref}
       mapboxAccessToken={MAPBOX_TOKEN}
       initialViewState={{

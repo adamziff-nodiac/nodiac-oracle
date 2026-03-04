@@ -3,7 +3,12 @@
 import { useState, useEffect } from 'react'
 
 export function useIsDark() {
-  const [isDark, setIsDark] = useState(false)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof document !== 'undefined') {
+      return document.documentElement.classList.contains('dark')
+    }
+    return false
+  })
 
   useEffect(() => {
     const root = document.documentElement

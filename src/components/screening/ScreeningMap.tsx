@@ -90,6 +90,7 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
 
   return (
     <Map
+      key={isDark ? 'dark' : 'light'}
       mapboxAccessToken={MAPBOX_TOKEN}
       initialViewState={initialView}
       style={{ width: '100%', height: '100%' }}

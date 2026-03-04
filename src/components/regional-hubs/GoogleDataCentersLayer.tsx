@@ -148,7 +148,7 @@ export function GoogleDataCentersLayer({
 
     // Wait for layer to exist before attaching
     const attach = () => {
-      if (!m.getLayer('google-dc-points')) {
+      if (!m.isStyleLoaded() || !m.getLayer('google-dc-points')) {
         setTimeout(attach, 200)
         return
       }
@@ -158,10 +158,12 @@ export function GoogleDataCentersLayer({
     attach()
 
     return () => {
-      if (m.getLayer('google-dc-points')) {
-        m.off('mouseenter', 'google-dc-points', handleEnter)
-        m.off('mouseleave', 'google-dc-points', handleLeave)
-      }
+      try {
+        if (m.getLayer('google-dc-points')) {
+          m.off('mouseenter', 'google-dc-points', handleEnter)
+          m.off('mouseleave', 'google-dc-points', handleLeave)
+        }
+      } catch { /* style may be undefined during cleanup */ }
     }
   }, [map])
 
@@ -169,7 +171,7 @@ export function GoogleDataCentersLayer({
   const updateClusterLabels = useCallback(() => {
     if (!map) return
     const m = map.getMap()
-    if (!m.getLayer('google-dc-clusters')) return
+    if (!m.isStyleLoaded() || !m.getLayer('google-dc-clusters')) return
 
     const { width, height } = m.getCanvas()
     const clusters = m.queryRenderedFeatures([[0, 0], [width, height]], { layers: ['google-dc-clusters'] })
