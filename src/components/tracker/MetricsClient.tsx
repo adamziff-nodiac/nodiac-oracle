@@ -179,7 +179,7 @@ export function MetricsClient({ initialSites, hubs }: MetricsClientProps) {
                 {sites.map(site => (
                   <tr key={site.id} className="border-b border-zinc-100 dark:border-[#22223a]">
                     <td className="py-2 text-[13px]">
-                      <Link href={`/tracker/${site.id}`} className="text-nodiac-secondary hover:underline font-medium">
+                      <Link href={`/tracker/${site.id}`} className="text-nodiac-primary dark:text-nodiac-secondary hover:underline font-medium">
                         {site.name}
                       </Link>
                     </td>
@@ -222,7 +222,7 @@ export function MetricsClient({ initialSites, hubs }: MetricsClientProps) {
                 {capexSites.map(site => (
                   <tr key={site.id} className="border-b border-zinc-100 dark:border-[#22223a]">
                     <td className="py-2 text-[13px]">
-                      <Link href={`/tracker/${site.id}`} className="text-nodiac-secondary hover:underline font-medium">
+                      <Link href={`/tracker/${site.id}`} className="text-nodiac-primary dark:text-nodiac-secondary hover:underline font-medium">
                         {site.name}
                       </Link>
                     </td>
