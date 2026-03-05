@@ -248,6 +248,31 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
     }
   )
 
+  // ── delete_activity ──────────────────────────────────────────────────
+  server.tool(
+    'delete_activity',
+    'Delete an activity log entry by its ID. Use get_recent_activity or get_site to find the activity_id. This is destructive and cannot be undone.',
+    {
+      activity_id: z.string().uuid().describe('The activity log entry UUID'),
+    },
+    WRITE_DESTRUCTIVE,
+    async ({ activity_id }) => {
+      const supabase = getClient()
+
+      const { data, error } = await supabase
+        .from('tracker_activity_log')
+        .delete()
+        .eq('id', activity_id)
+        .select('id, title')
+        .single()
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      return {
+        content: [{ type: 'text' as const, text: `Deleted activity: "${(data as Record<string, unknown>).title}" (${activity_id})` }],
+      }
+    }
+  )
+
   // ── update_partner ──────────────────────────────────────────────────
   server.tool(
     'update_partner',
