@@ -34,7 +34,10 @@ export async function proxy(request: NextRequest) {
   // Allow public paths through
   const isPublicPath =
     pathname.startsWith('/login') ||
-    pathname.startsWith('/auth/callback')
+    pathname.startsWith('/auth/callback') ||
+    pathname.startsWith('/.well-known/') ||
+    pathname.startsWith('/api/oauth/') ||
+    pathname.startsWith('/api/mcp')
 
   // Redirect unauthenticated users to login
   if (!user && !isPublicPath) {
