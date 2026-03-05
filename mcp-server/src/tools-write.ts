@@ -48,7 +48,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       priority: z.enum(PRIORITY_OPTIONS).optional().describe('Site priority (default: Pipeline)'),
       site_type: z.enum(SITE_TYPE_OPTIONS).optional().describe('Site type'),
       mw_current: z.number().optional().describe('Current MW capacity'),
-      mw_target: z.number().optional().describe('Target/potential MW capacity'),
+      mw_potential: z.number().optional().describe('Target/potential MW capacity'),
       regional_hub_id: z.string().uuid().optional().describe('Regional hub UUID'),
       utility_id: z.string().uuid().optional().describe('Utility partner UUID'),
       asset_owner_id: z.string().uuid().optional().describe('Asset owner partner UUID'),
@@ -56,7 +56,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       ahj: z.string().optional().describe('Authority Having Jurisdiction'),
     },
     WRITE_CREATE,
-    async ({ name, priority, site_type, mw_current, mw_target, regional_hub_id, utility_id, asset_owner_id, address, ahj }) => {
+    async ({ name, priority, site_type, mw_current, mw_potential, regional_hub_id, utility_id, asset_owner_id, address, ahj }) => {
       const supabase = getClient()
 
       const { data, error } = await supabase
@@ -66,7 +66,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
           priority: priority ?? 'Pipeline',
           site_type: site_type ?? null,
           mw_current: mw_current ?? null,
-          mw_target: mw_target ?? null,
+          mw_potential: mw_potential ?? null,
           regional_hub_id: regional_hub_id ?? null,
           utility_id: utility_id ?? null,
           asset_owner_id: asset_owner_id ?? null,
@@ -157,7 +157,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
     'Create a new parcel record linked to a site. Use get_site first to confirm the site_id.',
     {
       site_id: z.string().uuid().describe('The site UUID this parcel belongs to'),
-      apn: z.string().optional().describe('Assessor Parcel Number'),
+      apn: z.string().describe('Assessor Parcel Number (required)'),
       area_acres: z.number().optional().describe('Area in acres'),
       landowner_id: z.string().uuid().optional().describe('Landowner UUID'),
       notes: z.string().optional().describe('Parcel notes'),
@@ -170,7 +170,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .from('tracker_parcels')
         .insert({
           site_id,
-          apn: apn ?? null,
+          apn,
           area_acres: area_acres ?? null,
           landowner_id: landowner_id ?? null,
           notes: notes ?? null,
@@ -340,7 +340,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       site_id: z.string().uuid().describe('The site UUID'),
       name: z.string().optional().describe('Site name'),
       mw_current: z.number().optional().describe('Current MW capacity'),
-      mw_target: z.number().optional().describe('Target/potential MW capacity'),
+      mw_potential: z.number().optional().describe('Target/potential MW capacity'),
       priority: z.enum(PRIORITY_OPTIONS).optional().describe('Site priority'),
       site_type: z.enum(SITE_TYPE_OPTIONS).optional().describe('Site type'),
       regional_hub_id: z.string().uuid().optional().describe('Regional hub UUID'),
@@ -353,14 +353,14 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       archive_reason: z.string().optional().describe('Reason for archiving'),
     },
     WRITE_DESTRUCTIVE, // archive=true is destructive
-    async ({ site_id, name, mw_current, mw_target, priority, site_type, regional_hub_id, utility_id, asset_owner_id, address, ahj, summary_note, archive, archive_reason }) => {
+    async ({ site_id, name, mw_current, mw_potential, priority, site_type, regional_hub_id, utility_id, asset_owner_id, address, ahj, summary_note, archive, archive_reason }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
       const changes: string[] = []
 
       if (name !== undefined) { update.name = name; changes.push(`name → ${name}`) }
       if (mw_current !== undefined) { update.mw_current = mw_current; changes.push(`mw_current → ${mw_current}`) }
-      if (mw_target !== undefined) { update.mw_target = mw_target; changes.push(`mw_target → ${mw_target}`) }
+      if (mw_potential !== undefined) { update.mw_potential = mw_potential; changes.push(`mw_potential → ${mw_potential}`) }
       if (priority !== undefined) { update.priority = priority; changes.push(`priority → ${priority}`) }
       if (site_type !== undefined) { update.site_type = site_type; changes.push(`type → ${site_type}`) }
       if (regional_hub_id !== undefined) { update.regional_hub_id = regional_hub_id; changes.push('hub updated') }
@@ -720,21 +720,21 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
     {
       landowner_id: z.string().uuid().describe('The landowner UUID'),
       name: z.string().optional().describe('Landowner name'),
-      contact_name: z.string().optional().describe('Primary contact name'),
-      contact_email: z.string().optional().describe('Contact email'),
-      contact_phone: z.string().optional().describe('Contact phone'),
+      email: z.string().optional().describe('Email address'),
+      phone: z.string().optional().describe('Phone number'),
+      mailing_address: z.string().optional().describe('Mailing address'),
       notes: z.string().optional().describe('Notes about the landowner'),
     },
     WRITE_MUTATE,
-    async ({ landowner_id, name, contact_name, contact_email, contact_phone, notes }) => {
+    async ({ landowner_id, name, email, phone, mailing_address, notes }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = {}
       const changes: string[] = []
 
       if (name !== undefined) { update.name = name; changes.push(`name → ${name}`) }
-      if (contact_name !== undefined) { update.contact_name = contact_name; changes.push(`contact_name → ${contact_name}`) }
-      if (contact_email !== undefined) { update.contact_email = contact_email; changes.push(`contact_email → ${contact_email}`) }
-      if (contact_phone !== undefined) { update.contact_phone = contact_phone; changes.push(`contact_phone → ${contact_phone}`) }
+      if (email !== undefined) { update.email = email; changes.push(`email → ${email}`) }
+      if (phone !== undefined) { update.phone = phone; changes.push(`phone → ${phone}`) }
+      if (mailing_address !== undefined) { update.mailing_address = mailing_address; changes.push('mailing address updated') }
       if (notes !== undefined) { update.notes = notes; changes.push('notes updated') }
 
       if (changes.length === 0) {

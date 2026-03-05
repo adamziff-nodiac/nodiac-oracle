@@ -56,7 +56,7 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
         hub: s.hub_name,
         priority: s.priority,
         mw_current: s.mw_current,
-        mw_target: s.mw_target,
+        mw_potential: s.mw_potential,
         utility: s.utility_name,
         asset_owner: s.asset_owner_name,
         phases: {
@@ -322,7 +322,7 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
         .from('tracker_parcels')
         .select('*, landowner:tracker_landowners(id, name)')
         .eq('site_id', site_id)
-        .order('parcel_number')
+        .order('apn')
 
       if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
       return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
