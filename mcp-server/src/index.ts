@@ -29,6 +29,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { getAuthenticatedClient } from './auth.js'
 import { registerReadTools } from './tools-read.js'
 import { registerWriteTools } from './tools-write.js'
+import { registerResources } from './resources.js'
+import { registerPrompts } from './prompts.js'
 
 function log(msg: string) {
   process.stderr.write(`[nodiac-mcp] ${msg}\n`)
@@ -55,9 +57,11 @@ async function main() {
     version: '1.0.0',
   })
 
-  // Register all tools
+  // Register all capabilities
   registerReadTools(server, getClient)
   registerWriteTools(server, getClient)
+  registerResources(server)
+  registerPrompts(server)
 
   // Connect via stdio
   const transport = new StdioServerTransport()

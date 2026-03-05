@@ -14,6 +14,13 @@ import {
 } from './constants.js'
 import { getCurrentUserEmail } from './auth.js'
 
+/** Update existing record — idempotent (same input → same result) */
+const WRITE_MUTATE = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const
+/** Create new record — NOT idempotent (calling twice creates duplicates) */
+const WRITE_CREATE = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false } as const
+/** Archive/delete — destructive but idempotent */
+const WRITE_DESTRUCTIVE = { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false } as const
+
 async function logActivity(
   supabase: SupabaseClient,
   siteId: string,
@@ -35,7 +42,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── update_checkpoint ───────────────────────────────────────────────
   server.tool(
     'update_checkpoint',
-    `Update a checkpoint on a site. Each checkpoint has status, forecast date, completed date, and owner. Financial checkpoints (power_deposit, permit_approved, fiber_secured, eng_equip_ordered) also have amount and amount_status fields. Valid checkpoints: ${CHECKPOINT_PREFIXES.join(', ')}`,
+    `Update a checkpoint on a site. Each checkpoint has status, forecast date, completed date, and owner. Financial checkpoints (power_deposit, permit_approved, fiber_secured, eng_equip_ordered) also have amount and amount_status fields. Provide at least one field to update. Valid checkpoints: ${CHECKPOINT_PREFIXES.join(', ')}`,
     {
       site_id: z.string().uuid().describe('The site UUID'),
       checkpoint: z.enum(CHECKPOINT_PREFIXES).describe('The checkpoint prefix'),
@@ -47,12 +54,14 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       amount_status: z.enum(AMOUNT_STATUS_OPTIONS).optional().describe('Amount status (only for financial checkpoints)'),
       note: z.string().optional().describe('Optional note to attach to this checkpoint'),
     },
+    WRITE_MUTATE,
     async ({ site_id, checkpoint, status, forecast, completed, owner, amount, amount_status, note }) => {
       const supabase = getClient()
 
       // Validate financial fields
       if ((amount !== undefined || amount_status !== undefined) && !isFinancialCheckpoint(checkpoint)) {
         return {
+          isError: true,
           content: [{ type: 'text' as const, text: `Error: amount/amount_status only valid for financial checkpoints (power_deposit, permit_approved, fiber_secured, eng_equip_ordered). Got: ${checkpoint}` }],
         }
       }
@@ -87,7 +96,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       }
 
       if (changes.length === 0) {
-        return { content: [{ type: 'text' as const, text: 'Error: No fields to update. Provide at least one of: status, forecast, completed, owner, amount, amount_status.' }] }
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update. Provide at least one of: status, forecast, completed, owner, amount, amount_status.' }] }
       }
 
       // Handle checkpoint note
@@ -111,7 +120,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select('id, name')
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
 
       // Auto-log the change
       await logActivity(
@@ -130,7 +139,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── update_site ─────────────────────────────────────────────────────
   server.tool(
     'update_site',
-    'Update site metadata: name, MW, priority, type, hub, utility, asset owner, notes, or archive status.',
+    'Update site metadata: name, MW, priority, type, hub, utility, asset owner, notes, or archive status. Use list_sites or get_site first to find the site_id. Setting archive=true is destructive (hides site from default views).',
     {
       site_id: z.string().uuid().describe('The site UUID'),
       name: z.string().optional().describe('Site name'),
@@ -147,6 +156,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       archive: z.boolean().optional().describe('Set true to archive, false to unarchive'),
       archive_reason: z.string().optional().describe('Reason for archiving'),
     },
+    WRITE_DESTRUCTIVE, // archive=true is destructive
     async ({ site_id, name, mw_current, mw_target, priority, site_type, hub_id, utility_id, asset_owner_id, address, ahj, summary_note, archive, archive_reason }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -183,7 +193,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       }
 
       if (changes.length === 0) {
-        return { content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
       }
 
       const { data, error } = await supabase
@@ -193,7 +203,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select('id, name')
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
 
       await logActivity(supabase, site_id, 'Site updated', changes.join(', '))
 
@@ -206,7 +216,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── log_activity ────────────────────────────────────────────────────
   server.tool(
     'log_activity',
-    'Log an activity (call, email, meeting, etc.) against a site. Use this to record interactions from Gmail, calls, or meetings.',
+    'Log an activity (call, email, meeting, etc.) against a site. Use this to record interactions, meeting notes, or status updates. Each log is timestamped and attributed to the authenticated user.',
     {
       site_id: z.string().uuid().describe('The site UUID'),
       title: z.string().describe('Short title for the activity'),
@@ -214,6 +224,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       source: z.enum(ACTIVITY_SOURCE_OPTIONS).optional().describe('Source type: call, email, slack, meeting, manual, other'),
       source_link: z.string().optional().describe('Link to source (e.g., Gmail thread URL, Google Doc URL)'),
     },
+    WRITE_CREATE,
     async ({ site_id, title, summary, source, source_link }) => {
       const supabase = getClient()
 
@@ -230,7 +241,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select()
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
       return {
         content: [{ type: 'text' as const, text: `Logged activity: "${title}" (${(data as Record<string, unknown>).id})` }],
       }
@@ -240,7 +251,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── update_partner ──────────────────────────────────────────────────
   server.tool(
     'update_partner',
-    'Update a power partner: relationship stage, type, LOI status, capacity, rate structure, notes.',
+    'Update a power partner: relationship stage, type, LOI status, capacity, rate structure, notes. Use list_partners first to find the partner_id.',
     {
       partner_id: z.string().uuid().describe('The partner UUID'),
       name: z.string().optional().describe('Partner name'),
@@ -252,6 +263,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       ix_process_notes: z.string().optional().describe('IX process notes'),
       attio_link: z.string().optional().describe('Link to Attio CRM record'),
     },
+    WRITE_MUTATE,
     async ({ partner_id, name, type, relationship_stage, loi_signed, available_capacity, rate_structure, ix_process_notes, attio_link }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -267,7 +279,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (attio_link !== undefined) { update.attio_link = attio_link; changes.push('Attio link updated') }
 
       if (changes.length === 0) {
-        return { content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
       }
 
       const { data, error } = await supabase
@@ -277,7 +289,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select('id, name')
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
       return {
         content: [{ type: 'text' as const, text: `Updated partner "${(data as Record<string, unknown>).name}": ${changes.join(', ')}` }],
       }
@@ -287,7 +299,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── update_hub ──────────────────────────────────────────────────────
   server.tool(
     'update_hub',
-    'Update a regional hub: name, status, target MW, notes.',
+    'Update a regional hub: name, status, target MW, notes. Use list_hubs first to find the hub_id.',
     {
       hub_id: z.string().uuid().describe('The hub UUID'),
       name: z.string().optional().describe('Hub name'),
@@ -295,6 +307,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       target_mw: z.number().optional().describe('Target MW for this hub'),
       notes: z.string().optional().describe('Hub notes'),
     },
+    WRITE_MUTATE,
     async ({ hub_id, name, status, target_mw, notes }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
@@ -306,7 +319,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (notes !== undefined) { update.notes = notes; changes.push('notes updated') }
 
       if (changes.length === 0) {
-        return { content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
       }
 
       const { data, error } = await supabase
@@ -316,7 +329,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select('id, name')
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
       return {
         content: [{ type: 'text' as const, text: `Updated hub "${(data as Record<string, unknown>).name}": ${changes.join(', ')}` }],
       }
@@ -326,7 +339,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── add_landowner ───────────────────────────────────────────────────
   server.tool(
     'add_landowner',
-    'Add a new landowner and optionally link them to a site.',
+    'Add a new landowner and optionally link them to a site. If site_id is provided, also creates the site-landowner relationship with proximity, purpose, and lease status.',
     {
       name: z.string().describe('Landowner name'),
       email: z.string().optional().describe('Email address'),
@@ -338,6 +351,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       purpose: z.array(z.enum(LANDOWNER_PURPOSE_OPTIONS)).optional().describe('Purpose(s): DC Location, Fiber Route, Access Easement, Utility Easement'),
       lease_status: z.enum(LEASE_STATUS_OPTIONS).optional().describe('Lease status'),
     },
+    WRITE_CREATE,
     async ({ name, email, phone, mailing_address, notes, site_id, proximity, purpose, lease_status }) => {
       const supabase = getClient()
 
@@ -353,7 +367,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select()
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
 
       const landownerData = landowner as Record<string, unknown>
 
@@ -370,7 +384,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
           })
 
         if (linkError) {
-          return { content: [{ type: 'text' as const, text: `Landowner created (${landownerData.id}) but failed to link to site: ${linkError.message}` }] }
+          return { isError: true, content: [{ type: 'text' as const, text: `Landowner created (${landownerData.id}) but failed to link to site: ${linkError.message}` }] }
         }
 
         await logActivity(supabase, site_id, 'Landowner added', `Added ${name}${proximity ? ` (${proximity})` : ''}`)
@@ -385,7 +399,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
   // ── update_landowner_lease ──────────────────────────────────────────
   server.tool(
     'update_landowner_lease',
-    'Update the lease status, proximity, or purpose for a landowner-site relationship.',
+    'Update the lease status, proximity, or purpose for a landowner-site relationship. Use list_landowners with a site_id to find the landowner_id.',
     {
       site_id: z.string().uuid().describe('The site UUID'),
       landowner_id: z.string().uuid().describe('The landowner UUID'),
@@ -393,6 +407,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       proximity: z.enum(LANDOWNER_PROXIMITY_OPTIONS).optional().describe('Updated proximity'),
       purpose: z.array(z.enum(LANDOWNER_PURPOSE_OPTIONS)).optional().describe('Updated purpose(s)'),
     },
+    WRITE_MUTATE,
     async ({ site_id, landowner_id, lease_status, proximity, purpose }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = {}
@@ -403,7 +418,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (purpose !== undefined) { update.purpose = purpose; changes.push(`purpose → ${purpose.join(', ')}`) }
 
       if (changes.length === 0) {
-        return { content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
       }
 
       const { error } = await supabase
@@ -412,7 +427,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .eq('site_id', site_id)
         .eq('landowner_id', landowner_id)
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
 
       await logActivity(supabase, site_id, 'Landowner lease updated', changes.join(', '))
 
@@ -433,6 +448,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       landowner_id: z.string().uuid().optional().describe('Assign a landowner to this parcel'),
       notes: z.string().optional().describe('Parcel notes'),
     },
+    WRITE_MUTATE,
     async ({ parcel_id, apn, area_acres, landowner_id, notes }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = {}
@@ -444,7 +460,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (notes !== undefined) { update.notes = notes; changes.push('notes updated') }
 
       if (changes.length === 0) {
-        return { content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
       }
 
       const { data, error } = await supabase
@@ -454,7 +470,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .select('id, site_id')
         .single()
 
-      if (error) return { content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
 
       const parcel = data as Record<string, unknown>
       if (parcel.site_id) {
