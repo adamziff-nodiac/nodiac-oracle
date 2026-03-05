@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 import { storeSupabaseSession } from '@/lib/mcp/token-store'
 
 const ALLOWED_DOMAIN = 'nodiac.ai'
@@ -14,12 +14,18 @@ export async function GET(req: NextRequest) {
     return new NextResponse('Missing required parameters', { status: 400 })
   }
 
-  // Exchange Google/Supabase code for a session
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: { flowType: 'pkce' },
-  })
+  // Use @supabase/ssr with cookie storage to read the PKCE code_verifier
+  // that was set during the authorize step.
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return req.cookies.getAll() },
+        setAll() { /* not needed for callback */ },
+      },
+    }
+  )
 
   const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
   if (error || !sessionData.session) {
@@ -42,9 +48,8 @@ export async function GET(req: NextRequest) {
   })
 
   // Look up the redirect URI from the stored auth code
-  // We need to redirect back to Claude with our auth code
-  const { createClient: createServiceClient } = await import('@supabase/supabase-js')
-  const serviceClient = createServiceClient(
+  const { createClient } = await import('@supabase/supabase-js')
+  const serviceClient = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SECRET_KEY!,
   )

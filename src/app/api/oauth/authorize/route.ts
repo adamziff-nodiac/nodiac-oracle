@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import { createServerClient } from '@supabase/ssr'
 import { getClient, storeAuthCode } from '@/lib/mcp/token-store'
 import { getOrigin } from '@/lib/mcp/origin'
 
@@ -43,12 +43,20 @@ export async function GET(req: NextRequest) {
     state,
   })
 
-  // Now redirect to Supabase Google OAuth
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  const supabase = createClient(supabaseUrl, supabaseKey, {
-    auth: { flowType: 'pkce' },
-  })
+  // Create Supabase client with cookie storage so PKCE code_verifier
+  // persists across the redirect to Google and back to our callback.
+  const pendingCookies: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    {
+      cookies: {
+        getAll() { return req.cookies.getAll() },
+        setAll(cookies) { pendingCookies.push(...cookies) },
+      },
+    }
+  )
 
   const origin = getOrigin()
   const callbackUrl = `${origin}/api/oauth/callback?auth_code=${authCode}&state=${state}`
@@ -59,7 +67,7 @@ export async function GET(req: NextRequest) {
       redirectTo: callbackUrl,
       skipBrowserRedirect: true,
       queryParams: {
-        hd: 'nodiac.ai', // hint Google to show only @nodiac.ai accounts
+        hd: 'nodiac.ai',
       },
     },
   })
@@ -68,5 +76,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'server_error', error_description: 'Failed to initiate Google OAuth' }, { status: 500 })
   }
 
-  return NextResponse.redirect(data.url)
+  // Attach Supabase PKCE cookies to the redirect response
+  const response = NextResponse.redirect(data.url)
+  for (const { name, value, options } of pendingCookies) {
+    response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2])
+  }
+
+  return response
 }
