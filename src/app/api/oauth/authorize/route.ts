@@ -46,7 +46,9 @@ export async function GET(req: NextRequest) {
   // Now redirect to Supabase Google OAuth
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
-  const supabase = createClient(supabaseUrl, supabaseKey)
+  const supabase = createClient(supabaseUrl, supabaseKey, {
+    auth: { flowType: 'pkce' },
+  })
 
   const origin = getOrigin()
   const callbackUrl = `${origin}/api/oauth/callback?auth_code=${authCode}&state=${state}`
