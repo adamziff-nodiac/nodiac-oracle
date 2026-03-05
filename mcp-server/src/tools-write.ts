@@ -713,6 +713,69 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
     }
   )
 
+  // ── link_landowner_site ──────────────────────────────────────────────
+  server.tool(
+    'link_landowner_site',
+    'Link an existing landowner to a site (creates a site_landowner record). Use list_landowners and list_sites to get the IDs.',
+    {
+      site_id: z.string().uuid().describe('The site UUID'),
+      landowner_id: z.string().uuid().describe('The landowner UUID'),
+      proximity: z.enum(LANDOWNER_PROXIMITY_OPTIONS).describe('Proximity: Collocated or Adjacent'),
+      purpose: z.array(z.enum(LANDOWNER_PURPOSE_OPTIONS)).optional().describe('Purpose(s): DC Location, Fiber Route, Access Easement, Utility Easement'),
+      lease_status: z.enum(LEASE_STATUS_OPTIONS).optional().describe('Lease status (default: No Contact)'),
+    },
+    WRITE_CREATE,
+    async ({ site_id, landowner_id, proximity, purpose, lease_status }) => {
+      const supabase = getClient()
+
+      const { error } = await supabase
+        .from('tracker_site_landowners')
+        .insert({
+          site_id,
+          landowner_id,
+          proximity,
+          purpose: purpose ?? [],
+          lease_status: lease_status ?? 'No Contact',
+        })
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      await logActivity(supabase, site_id, 'Landowner linked', `Landowner ${landowner_id} linked (${proximity})`)
+
+      return {
+        content: [{ type: 'text' as const, text: `Linked landowner ${landowner_id} to site ${site_id}` }],
+      }
+    }
+  )
+
+  // ── unlink_landowner_site ─────────────────────────────────────────────
+  server.tool(
+    'unlink_landowner_site',
+    'Remove a landowner-site link. Use list_landowners with site_id to find existing links.',
+    {
+      site_id: z.string().uuid().describe('The site UUID'),
+      landowner_id: z.string().uuid().describe('The landowner UUID'),
+    },
+    WRITE_DESTRUCTIVE,
+    async ({ site_id, landowner_id }) => {
+      const supabase = getClient()
+
+      const { error } = await supabase
+        .from('tracker_site_landowners')
+        .delete()
+        .eq('site_id', site_id)
+        .eq('landowner_id', landowner_id)
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      await logActivity(supabase, site_id, 'Landowner unlinked', `Landowner ${landowner_id} removed`)
+
+      return {
+        content: [{ type: 'text' as const, text: `Unlinked landowner ${landowner_id} from site ${site_id}` }],
+      }
+    }
+  )
+
   // ── update_landowner ────────────────────────────────────────────────
   server.tool(
     'update_landowner',
