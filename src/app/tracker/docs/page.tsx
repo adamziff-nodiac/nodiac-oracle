@@ -122,9 +122,13 @@ const sections = [
   { id: 'phases', label: 'Phases & Checkpoints' },
   { id: 'statuses', label: 'Status Definitions' },
   { id: 'financial', label: 'Financial Checkpoints' },
+  { id: 'deposits', label: 'Deposits Page' },
+  { id: 'metrics', label: 'Metrics Page' },
+  { id: 'partners', label: 'Partners Page' },
   { id: 'priority', label: 'Priority Levels' },
   { id: 'construction-ready', label: 'Construction Ready' },
   { id: 'speed', label: 'Speed Metrics' },
+  { id: 'site-management', label: 'Site Management' },
   { id: 'archiving', label: 'Archiving' },
   { id: 'assumptions', label: 'Key Assumptions' },
 ]
@@ -224,6 +228,9 @@ export default function DocsPage() {
             <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
               The <strong className="text-zinc-900 dark:text-zinc-100">Portfolio Grid</strong> shows one row per site with 7 phase-level badges. Click any site to drill into the full 21 checkpoints on its detail page.
             </p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Beyond the portfolio, the tracker has dedicated pages: <strong className="text-zinc-900 dark:text-zinc-100">Deposits</strong> tracks financial payments across all sites, <strong className="text-zinc-900 dark:text-zinc-100">Metrics</strong> provides portfolio-level analytics (MW, speed, capex), and <strong className="text-zinc-900 dark:text-zinc-100">Partners</strong> manages utility and IPP relationships independently of specific sites.
+            </p>
           </section>
 
           {/* Phases & Checkpoints */}
@@ -317,6 +324,99 @@ export default function DocsPage() {
             </p>
           </section>
 
+          {/* Deposits Page */}
+          <section id="deposits" className="scroll-mt-6">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-8 mb-3">Deposits Page</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              The Deposits page aggregates all financial checkpoint deposits across sites and groups them by payment lifecycle stage:
+            </p>
+            <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Ready to Send</strong> -- Quoted or Approved deposits that are not blocked. These need action.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Blocked</strong> -- Quoted or Approved deposits where the checkpoint phase is Blocked. Needs resolution before payment.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Pending</strong> -- Estimated deposits. The amount is rough and needs a formal quote.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Paid</strong> -- Confirmed payments. No further action needed.
+              </li>
+            </ul>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Each deposit can be edited inline -- click the amount to update the dollar value, or use the dropdowns to change the <strong className="text-zinc-900 dark:text-zinc-100">Payment Status</strong> (Estimated/Quoted/Approved/Paid) or <strong className="text-zinc-900 dark:text-zinc-100">Phase Status</strong> (the checkpoint&apos;s progress status). Summary cards at the top show totals per group.
+            </p>
+          </section>
+
+          {/* Metrics Page */}
+          <section id="metrics" className="scroll-mt-6">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-8 mb-3">Metrics Page</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Portfolio-level analytics across all active sites. Use the toggle at the top to include or exclude archived sites.
+            </p>
+            <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">MW by Stage</strong> -- Visualizes how MW capacity is distributed across development phases.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Speed Metrics</strong> -- Portfolio averages for Days to IX, Days to Ready, and Days to COD.
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Capex Analysis</strong> -- Per-site breakdown of total capex, capex/MW, and a <strong className="text-zinc-900 dark:text-zinc-100">Basis</strong> column showing whether figures are Actual (all amounts paid/approved), Mixed (some paid, some estimated), or Estimated (all rough numbers).
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Hub Breakdown</strong> -- MW totals and site counts grouped by regional hub.
+              </li>
+            </ul>
+          </section>
+
+          {/* Partners Page */}
+          <section id="partners" className="scroll-mt-6">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-8 mb-3">Partners Page</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Tracks utility and IPP relationships across the portfolio. Partners exist independently of sites -- you can add a partner before any sites are associated (e.g., an LOI with a co-op where we haven&apos;t identified specific locations yet).
+            </p>
+            <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mt-4 mb-2">Partner Types</h3>
+            <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Distribution Co-op</strong> -- Local electric cooperative that distributes power to end users
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">G&T Co-op</strong> -- Generation & Transmission cooperative (wholesaler to distribution co-ops)
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Municipal Utility</strong> -- City-owned utility
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">IOU</strong> -- Investor-owned utility
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">IPP</strong> -- Independent Power Producer (asset owner / capital partner)
+              </li>
+            </ul>
+            <h3 className="text-base font-medium text-zinc-900 dark:text-zinc-100 mt-4 mb-2">Relationship Stages</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              Each partner has a relationship stage: <strong className="text-zinc-900 dark:text-zinc-100">Identified</strong> → <strong className="text-zinc-900 dark:text-zinc-100">Initial Contact</strong> → <strong className="text-zinc-900 dark:text-zinc-100">Capacity Discussion</strong> → <strong className="text-zinc-900 dark:text-zinc-100">Under Contract</strong>.
+            </p>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              The partners list shows type, stage, LOI status, associated hubs, and a count of linked sites. Click any partner to open a detail panel where you can edit all fields, view linked sites, and add notes. Partners can be created, edited, and deleted directly from this page.
+            </p>
+          </section>
+
           {/* Priority Levels */}
           <section id="priority" className="scroll-mt-6">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-8 mb-3">Priority Levels</h2>
@@ -389,6 +489,35 @@ export default function DocsPage() {
             </p>
           </section>
 
+          {/* Site Management */}
+          <section id="site-management" className="scroll-mt-6">
+            <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-8 mb-3">Site Management</h2>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              From a site&apos;s detail page, you can edit most fields inline:
+            </p>
+            <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400 mb-3">
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Checkpoint statuses</strong> -- Click any status badge to change it
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Site details</strong> -- Hub, Utility, Asset Owner, and MW are editable in the sidebar
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Operational context</strong> -- Summary, Next Steps, Blockers, and Waiting On sections can be edited with a click
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
+                <strong className="text-zinc-900 dark:text-zinc-100">Financial amounts</strong> -- Click the amount on any financial checkpoint to update the dollar value
+              </li>
+            </ul>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed mb-3">
+              The <strong className="text-zinc-900 dark:text-zinc-100">Actions</strong> panel at the bottom of the sidebar lets you archive/unarchive a site or permanently delete it. Deletion requires confirmation and cannot be undone.
+            </p>
+          </section>
+
           {/* Archiving */}
           <section id="archiving" className="scroll-mt-6">
             <h2 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mt-8 mb-3">Archiving</h2>
@@ -436,7 +565,7 @@ export default function DocsPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
-                <strong className="text-zinc-900 dark:text-zinc-100">Financial amounts are actuals, not budgets.</strong> The amount field tracks what was actually quoted or paid, not what was budgeted.
+                <strong className="text-zinc-900 dark:text-zinc-100">Financial amounts reflect their status.</strong> Amount status indicates whether a number is an Estimate, a formal Quote, Approved for payment, or Paid. The Capex Basis column on the Metrics page shows the overall confidence level.
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
