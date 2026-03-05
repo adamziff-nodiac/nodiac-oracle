@@ -316,6 +316,27 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
     }
   )
 
+  // ── list_parcels ───────────────────────────────────────────────────
+  server.tool(
+    'list_parcels',
+    'List parcels for a site, including parcel numbers, acreage, landowner info, and notes.',
+    {
+      site_id: z.string().uuid().describe('The site UUID'),
+    },
+    READ_ONLY,
+    async ({ site_id }) => {
+      const supabase = getClient()
+      const { data, error } = await supabase
+        .from('tracker_parcels')
+        .select('*, landowner:tracker_landowners(id, name)')
+        .eq('site_id', site_id)
+        .order('parcel_number')
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
+    }
+  )
+
   // ── get_recent_activity ─────────────────────────────────────────────
   server.tool(
     'get_recent_activity',
