@@ -49,14 +49,14 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       site_type: z.enum(SITE_TYPE_OPTIONS).optional().describe('Site type'),
       mw_current: z.number().optional().describe('Current MW capacity'),
       mw_target: z.number().optional().describe('Target/potential MW capacity'),
-      hub_id: z.string().uuid().optional().describe('Regional hub UUID'),
+      regional_hub_id: z.string().uuid().optional().describe('Regional hub UUID'),
       utility_id: z.string().uuid().optional().describe('Utility partner UUID'),
       asset_owner_id: z.string().uuid().optional().describe('Asset owner partner UUID'),
       address: z.string().optional().describe('Site address'),
       ahj: z.string().optional().describe('Authority Having Jurisdiction'),
     },
     WRITE_CREATE,
-    async ({ name, priority, site_type, mw_current, mw_target, hub_id, utility_id, asset_owner_id, address, ahj }) => {
+    async ({ name, priority, site_type, mw_current, mw_target, regional_hub_id, utility_id, asset_owner_id, address, ahj }) => {
       const supabase = getClient()
 
       const { data, error } = await supabase
@@ -67,7 +67,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
           site_type: site_type ?? null,
           mw_current: mw_current ?? null,
           mw_target: mw_target ?? null,
-          hub_id: hub_id ?? null,
+          regional_hub_id: regional_hub_id ?? null,
           utility_id: utility_id ?? null,
           asset_owner_id: asset_owner_id ?? null,
           address: address ?? null,
@@ -343,7 +343,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       mw_target: z.number().optional().describe('Target/potential MW capacity'),
       priority: z.enum(PRIORITY_OPTIONS).optional().describe('Site priority'),
       site_type: z.enum(SITE_TYPE_OPTIONS).optional().describe('Site type'),
-      hub_id: z.string().uuid().optional().describe('Regional hub UUID'),
+      regional_hub_id: z.string().uuid().optional().describe('Regional hub UUID'),
       utility_id: z.string().uuid().optional().describe('Utility partner UUID'),
       asset_owner_id: z.string().uuid().optional().describe('Asset owner partner UUID'),
       address: z.string().optional().describe('Site address'),
@@ -353,7 +353,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       archive_reason: z.string().optional().describe('Reason for archiving'),
     },
     WRITE_DESTRUCTIVE, // archive=true is destructive
-    async ({ site_id, name, mw_current, mw_target, priority, site_type, hub_id, utility_id, asset_owner_id, address, ahj, summary_note, archive, archive_reason }) => {
+    async ({ site_id, name, mw_current, mw_target, priority, site_type, regional_hub_id, utility_id, asset_owner_id, address, ahj, summary_note, archive, archive_reason }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
       const changes: string[] = []
@@ -363,7 +363,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (mw_target !== undefined) { update.mw_target = mw_target; changes.push(`mw_target → ${mw_target}`) }
       if (priority !== undefined) { update.priority = priority; changes.push(`priority → ${priority}`) }
       if (site_type !== undefined) { update.site_type = site_type; changes.push(`type → ${site_type}`) }
-      if (hub_id !== undefined) { update.hub_id = hub_id; changes.push('hub updated') }
+      if (regional_hub_id !== undefined) { update.regional_hub_id = regional_hub_id; changes.push('hub updated') }
       if (utility_id !== undefined) { update.utility_id = utility_id; changes.push('utility updated') }
       if (asset_owner_id !== undefined) { update.asset_owner_id = asset_owner_id; changes.push('asset owner updated') }
       if (address !== undefined) { update.address = address; changes.push('address updated') }
