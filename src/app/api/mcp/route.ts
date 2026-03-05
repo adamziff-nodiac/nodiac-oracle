@@ -60,7 +60,14 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ error: 'Method not allowed. Use POST for MCP requests.' }, { status: 405 })
+  // Some clients (browsers, health checks) probe with GET.
+  // Return a helpful message instead of an error.
+  return NextResponse.json({
+    name: 'Nodiac Tracker MCP Server',
+    description: 'Remote MCP server for the Nodiac portfolio tracker. Connect via Claude.ai Connectors.',
+    transport: 'streamable-http',
+    method: 'POST',
+  })
 }
 
 export async function DELETE() {
