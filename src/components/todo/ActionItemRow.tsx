@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, Check, ChevronDown, ChevronRight, Clock, AlertTriangle, Loader2 } from 'lucide-react'
+import { Star, Check, ChevronDown, ChevronRight, Clock, AlertTriangle, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ActionItemWithContext, TeamMember } from '@/lib/tracker/types'
 import { StyledSelect } from '@/components/ui/StyledSelect'
@@ -14,6 +14,7 @@ interface ActionItemRowProps {
   onToggleDone: (id: string, done: boolean) => void
   onToggleFlag: (id: string, flagged: boolean) => void
   onUpdate: (id: string, updates: Record<string, unknown>) => void
+  onDelete?: (id: string) => void
 }
 
 function getAgeBadge(createdAt: string, isWaiting: boolean) {
@@ -30,7 +31,7 @@ function getAgeBadge(createdAt: string, isWaiting: boolean) {
   return { days, color }
 }
 
-export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onToggleFlag, onUpdate }: ActionItemRowProps) {
+export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onToggleFlag, onUpdate, onDelete }: ActionItemRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState(item.notes ?? '')
@@ -183,11 +184,35 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
                 <span className="text-zinc-600 dark:text-zinc-400">{item.hub_name}</span>
               </div>
             )}
+            {item.status === 'waiting' && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-zinc-400 dark:text-zinc-500">Waiting on</span>
+                <input
+                  type="text"
+                  value={item.waiting_on ?? ''}
+                  onChange={(e) => onUpdate(item.id, { waiting_on: e.target.value || null })}
+                  onClick={(e) => e.stopPropagation()}
+                  placeholder="Who?"
+                  className="text-[11px] bg-transparent text-amber-500 dark:text-amber-400 border-0 border-b border-dashed border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-nodiac-secondary px-0 py-0 w-[120px]"
+                />
+              </div>
+            )}
             {item.hard_deadline && (
               <div className="flex items-center gap-1.5">
                 <span className="text-zinc-400 dark:text-zinc-500">Deadline</span>
                 <span className="text-zinc-600 dark:text-zinc-400">{new Date(item.hard_deadline).toLocaleDateString()}</span>
               </div>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onDelete(item.id) }}
+                disabled={isSaving}
+                className="flex items-center gap-1 text-zinc-400 dark:text-zinc-600 hover:text-red-400 transition-colors ml-auto cursor-pointer disabled:opacity-40"
+              >
+                <Trash2 className="w-3 h-3" />
+                <span className="text-[10px]">Delete</span>
+              </button>
             )}
           </div>
 

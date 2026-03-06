@@ -104,20 +104,9 @@ export interface TrackerSiteOverview extends TrackerSite {
   is_archived: boolean
 }
 
-// Site notes JSONB shape
+// Site notes JSONB shape (action items now live in tracker_action_items table)
 export interface SiteNotes {
   summary?: string
-  next_steps?: string[]
-  blockers?: Array<{
-    issue: string
-    contact?: string
-    since?: string
-  }>
-  waiting_on?: Array<{
-    who: string
-    what: string
-    since?: string
-  }>
   updated_at?: string
 }
 

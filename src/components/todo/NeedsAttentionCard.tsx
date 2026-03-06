@@ -1,24 +1,22 @@
 'use client'
 
-import { AlertTriangle, Clock, AlertCircle } from 'lucide-react'
+import { AlertTriangle, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 interface NeedsAttentionCardProps {
-  type: 'stalled' | 'stale' | 'deadline'
+  type: 'stale' | 'deadline'
   title: string
   description: string
   link: string
 }
 
 const icons = {
-  stalled: AlertCircle,
   stale: Clock,
   deadline: AlertTriangle,
 }
 
 const colors = {
-  stalled: 'text-zinc-400',
   stale: 'text-amber-500',
   deadline: 'text-red-400',
 }

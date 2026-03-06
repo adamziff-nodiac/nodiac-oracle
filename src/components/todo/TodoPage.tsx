@@ -103,17 +103,29 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     }
   }
 
-  async function handleAdd(siteId: string, title: string, assignedTo?: string | null) {
+  async function handleAdd(siteId: string, title: string, assignedTo?: string | null, status?: string, waitingOn?: string | null) {
     const res = await fetch('/api/todo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         site_id: siteId,
         title,
+        status: status ?? 'next',
         assigned_to: assignedTo !== undefined ? assignedTo : (selectedMember || null),
+        waiting_on: waitingOn ?? null,
       }),
     })
     if (res.ok) await fetchItems()
+  }
+
+  async function handleDelete(id: string) {
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, { method: 'DELETE' })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   // Filter items by status
@@ -137,20 +149,8 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     waitingGroups.set(key, group)
   }
 
-  // Compute needs attention alerts
-  const alerts: Array<{ type: 'stalled' | 'stale' | 'deadline'; title: string; description: string; link: string }> = []
-
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-  const staleItems = [...nextItems, ...waitingItems].filter(i => new Date(i.created_at) < fourteenDaysAgo)
-  for (const item of staleItems.slice(0, 5)) {
-    const days = Math.floor((Date.now() - new Date(item.created_at).getTime()) / (1000 * 60 * 60 * 24))
-    alerts.push({
-      type: 'stale',
-      title: item.title,
-      description: `${days}d · ${item.site_name}`,
-      link: `/tracker/${item.site_id}`,
-    })
-  }
+  // Compute needs attention alerts (only deadlines — stale items already have age badges inline)
+  const alerts: Array<{ type: 'stale' | 'deadline'; title: string; description: string; link: string }> = []
 
   const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
   const upcomingDeadlines = [...nextItems, ...waitingItems]
@@ -165,17 +165,6 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     })
   }
 
-  const activeSiteIds = new Set([...nextItems, ...waitingItems].map(i => i.site_id))
-  const stalledSites = sites.filter(s => !s.is_archived && !activeSiteIds.has(s.id))
-  for (const site of stalledSites.slice(0, 5)) {
-    alerts.push({
-      type: 'stalled',
-      title: site.name,
-      description: 'No active items',
-      link: `/tracker/${site.id}`,
-    })
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
@@ -185,7 +174,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
             {getGreeting()}, {currentName}
           </h1>
           <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mt-0.5 tabular-nums">
-            {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} · {waitingItems.length} waiting{staleItems.length > 0 ? ` · ${staleItems.length} stale` : ''}
+            {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} · {waitingItems.length} waiting
           </p>
         </div>
         <StyledSelect
@@ -226,6 +215,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
                 onUpdate={handleUpdate}
+                onDelete={handleDelete}
               />
             ))
           )}
@@ -256,8 +246,10 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
                 onUpdate={handleUpdate}
+                onDelete={handleDelete}
               />
             ))}
+            <QuickAddAction sites={sites} teamMembers={teamMembers} defaultStatus="waiting" onAdd={handleAdd} />
           </div>
         </section>
       )}

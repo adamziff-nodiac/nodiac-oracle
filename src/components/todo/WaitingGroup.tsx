@@ -12,9 +12,10 @@ interface WaitingGroupProps {
   onToggleDone: (id: string, done: boolean) => void
   onToggleFlag: (id: string, flagged: boolean) => void
   onUpdate: (id: string, updates: Record<string, unknown>) => void
+  onDelete?: (id: string) => void
 }
 
-export function WaitingGroup({ waitingOn, items, teamMembers, savingIds, onToggleDone, onToggleFlag, onUpdate }: WaitingGroupProps) {
+export function WaitingGroup({ waitingOn, items, teamMembers, savingIds, onToggleDone, onToggleFlag, onUpdate, onDelete }: WaitingGroupProps) {
   return (
     <div>
       <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/[0.04] dark:bg-amber-500/[0.03] border-b border-zinc-100 dark:border-[#1e1e36]">
@@ -33,6 +34,7 @@ export function WaitingGroup({ waitingOn, items, teamMembers, savingIds, onToggl
           onToggleDone={onToggleDone}
           onToggleFlag={onToggleFlag}
           onUpdate={onUpdate}
+          onDelete={onDelete}
         />
       ))}
     </div>

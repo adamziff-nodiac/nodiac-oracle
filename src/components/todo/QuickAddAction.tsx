@@ -8,23 +8,28 @@ import { StyledSelect } from '@/components/ui/StyledSelect'
 interface QuickAddActionProps {
   sites: TrackerSiteOverview[]
   teamMembers?: TeamMember[]
-  onAdd: (siteId: string, title: string, assignedTo?: string | null) => Promise<void> | void
+  defaultStatus?: 'next' | 'waiting'
+  onAdd: (siteId: string, title: string, assignedTo?: string | null, status?: string, waitingOn?: string | null) => Promise<void> | void
 }
 
-export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProps) {
+export function QuickAddAction({ sites, teamMembers, defaultStatus = 'next', onAdd }: QuickAddActionProps) {
   const [active, setActive] = useState(false)
   const [title, setTitle] = useState('')
   const [siteId, setSiteId] = useState('')
   const [assignedTo, setAssignedTo] = useState('')
+  const [waitingOn, setWaitingOn] = useState('')
   const [saving, setSaving] = useState(false)
+  const isWaiting = defaultStatus === 'waiting'
 
   async function handleSubmit() {
     if (!siteId || !title.trim() || saving) return
+    if (isWaiting && !waitingOn.trim()) return
     setSaving(true)
     try {
-      await onAdd(siteId, title.trim(), assignedTo || null)
+      await onAdd(siteId, title.trim(), assignedTo || null, defaultStatus, isWaiting ? waitingOn.trim() : null)
       setTitle('')
       setAssignedTo('')
+      setWaitingOn('')
       setActive(false)
     } finally {
       setSaving(false)
@@ -39,7 +44,7 @@ export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProp
         className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors py-1.5 px-3 cursor-pointer border-b border-transparent"
       >
         <Plus className="w-3 h-3" />
-        Add action item
+        {isWaiting ? 'Add waiting item' : 'Add action item'}
       </button>
     )
   }
@@ -66,12 +71,23 @@ export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProp
           className="max-w-[110px]"
         />
       )}
+      {isWaiting && (
+        <input
+          type="text"
+          value={waitingOn}
+          onChange={(e) => setWaitingOn(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Escape' && !saving) setActive(false) }}
+          placeholder="Waiting on..."
+          disabled={saving}
+          className="text-[12px] bg-transparent text-amber-500 dark:text-amber-400 placeholder:text-amber-400/40 border-0 focus:outline-none disabled:opacity-50 w-[100px]"
+        />
+      )}
       <input
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape' && !saving) setActive(false) }}
-        placeholder="What needs to happen?"
+        placeholder={isWaiting ? 'What are you waiting for?' : 'What needs to happen?'}
         autoFocus
         disabled={saving}
         className="flex-1 text-[12px] bg-transparent text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400/50 dark:placeholder:text-zinc-600 border-0 focus:outline-none disabled:opacity-50 min-w-0"
