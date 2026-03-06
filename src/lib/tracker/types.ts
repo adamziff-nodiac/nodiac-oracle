@@ -9,7 +9,7 @@ export interface TrackerSite {
   utility_id: string | null
   asset_owner_id: string | null
   mw_current: number | null
-  mw_target: number | null
+  mw_potential: number | null
   priority: string
   site_notes: Record<string, unknown> | null
   checkpoint_notes: Record<string, unknown> | null
@@ -17,10 +17,19 @@ export interface TrackerSite {
   archived_reason: string | null
   created_at: string
   updated_at: string
-  // IPP pipeline columns
+  // Location & geography
   latitude: number | null
   longitude: number | null
+  coordinates: string | null
+  address: string | null
+  ahj: string | null
   fips_code: string | null
+  // Site metadata
+  site_type: 'Solar' | 'Wind' | 'Solar + BESS' | 'Substation' | 'Other' | null
+  interconnection_voltage_kv: number | null
+  interested_offtakers: string[] | null
+  portfolio_site_id: string | null
+  // Screening
   screening_score: number | null
   screening_tier: string | null
   score_breakdown: Record<string, unknown> | null
