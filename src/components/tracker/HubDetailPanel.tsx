@@ -153,7 +153,7 @@ export function HubDetailPanel({ hub, isNew, onSave, onDelete, onClose }: HubDet
               Notes
             </label>
             <textarea
-              value={draft.notes ?? ''}
+              value={typeof draft.notes === 'object' && draft.notes !== null ? JSON.stringify(draft.notes, null, 2) : (draft.notes ?? '')}
               onChange={e => updateField('notes', e.target.value || null)}
               placeholder="Hub notes..."
               rows={3}
