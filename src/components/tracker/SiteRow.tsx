@@ -1,20 +1,15 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { PHASES } from '@/lib/tracker/constants'
+import { PHASES, getCurrentSubStep, type PhaseKey } from '@/lib/tracker/constants'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
-import { PhaseBadge } from './PhaseBadge'
+import { SubStepBadge } from './SubStepBadge'
 import { PriorityIndicator } from './PriorityIndicator'
 import { Check } from 'lucide-react'
 
 interface SiteRowProps {
   site: TrackerSiteOverview
   onClick: () => void
-}
-
-function getPhaseStatus(site: TrackerSiteOverview, phaseKey: string): string {
-  const key = `${phaseKey}_phase` as keyof TrackerSiteOverview
-  return (site[key] as string) ?? 'Not Started'
 }
 
 export function SiteRow({ site, onClick }: SiteRowProps) {
@@ -52,14 +47,18 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
           {site.utility_name ?? '--'}
         </span>
       </td>
-      {PHASES.map(phase => (
-        <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
-          <PhaseBadge
-            status={getPhaseStatus(site, phase.key) as 'Not Started' | 'In Progress' | 'Complete' | 'Waiting' | 'N/A'}
-            abbrev={phase.abbrev}
-          />
-        </td>
-      ))}
+      {PHASES.map(phase => {
+        const subStep = getCurrentSubStep(phase.key as PhaseKey, site as Record<string, unknown>)
+        return (
+          <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
+            <SubStepBadge
+              phase={phase.key as PhaseKey}
+              subStep={subStep}
+              site={site as Record<string, unknown>}
+            />
+          </td>
+        )
+      })}
       <td className="px-3 py-2 whitespace-nowrap text-center">
         {site.construction_ready && (
           <Check className="w-4 h-4 text-emerald-500 mx-auto" />
