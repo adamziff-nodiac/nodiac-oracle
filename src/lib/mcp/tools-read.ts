@@ -60,7 +60,6 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
         utility: s.utility_name,
         asset_owner: s.asset_owner_name,
         phases: {
-          site_qualification: s.site_qualification_phase,
           site_control: s.site_control_phase,
           power: s.power_phase,
           permitting: s.permitting_phase,
@@ -137,7 +136,7 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
       }
 
       const blockedSites = sites.filter((s: Record<string, unknown>) => {
-        const phases = ['site_qualification_phase', 'site_control_phase', 'power_phase', 'permitting_phase', 'fiber_phase', 'engineering_phase', 'construction_phase']
+        const phases = ['site_control_phase', 'power_phase', 'permitting_phase', 'fiber_phase', 'engineering_phase', 'construction_phase']
         return phases.some(p => (s as Record<string, unknown>)[p] === 'Waiting')
       })
 

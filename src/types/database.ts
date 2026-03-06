@@ -1564,7 +1564,8 @@ export type Database = {
             | Database["public"]["Enums"]["checkpoint_status"]
             | null
           site_notes: Json | null
-          site_qualification_phase: string | null
+          has_activity: boolean | null
+          dev_start_date: string | null
           site_qualified_completed: string | null
           site_qualified_forecast: string | null
           site_qualified_owner: string | null
