@@ -15,7 +15,7 @@ export default function TrackerLayout({ children }: { children: React.ReactNode 
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm border-b border-zinc-200 dark:border-[#2a2a40]">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
           <LogoLink size="sm" />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <ThemeToggle />
             <Navigation />
           </div>

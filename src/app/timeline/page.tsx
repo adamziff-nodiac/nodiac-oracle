@@ -105,7 +105,7 @@ export default function TimelineListPage() {
       <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-sm border-b border-gray-200 dark:border-white/5">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <LogoLink />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <ThemeToggle />
             <Navigation />
           </div>
