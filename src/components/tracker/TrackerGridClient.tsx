@@ -8,9 +8,9 @@ import { PHASES } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { FilterBar } from './FilterBar'
 import { SiteRow } from './SiteRow'
-import { ToastContainer } from './Toast'
+import { ToastContainer, showToast } from './Toast'
 
-type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'construction_ready' | 'next_step'
+type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'asset_owner_name' | 'utility_name' | 'construction_ready' | 'next_step'
 type SortDir = 'asc' | 'desc'
 
 const PRIORITY_ORDER: Record<string, number> = {
@@ -29,6 +29,9 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   const [showArchived, setShowArchived] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [showAddSite, setShowAddSite] = useState(false)
+  const [newSiteName, setNewSiteName] = useState('')
+  const [adding, setAdding] = useState(false)
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -74,6 +77,12 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         case 'construction_ready':
           cmp = (a.construction_ready ? 1 : 0) - (b.construction_ready ? 1 : 0)
           break
+        case 'asset_owner_name':
+          cmp = (a.asset_owner_name ?? '').localeCompare(b.asset_owner_name ?? '')
+          break
+        case 'utility_name':
+          cmp = (a.utility_name ?? '').localeCompare(b.utility_name ?? '')
+          break
         case 'next_step':
           cmp = (a.next_step ?? '').localeCompare(b.next_step ?? '')
           break
@@ -105,6 +114,29 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
   }
 
+  async function handleAddSite() {
+    if (!newSiteName.trim()) return
+    setAdding(true)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { data, error } = await (supabase as any)
+        .from('tracker_sites')
+        .insert({ name: newSiteName.trim(), priority: 'Lead' })
+        .select('id')
+        .single()
+
+      if (error) throw error
+      setShowAddSite(false)
+      setNewSiteName('')
+      router.push(`/tracker/${data.id}`)
+    } catch {
+      showToast('Failed to create site', 'error')
+    } finally {
+      setAdding(false)
+    }
+  }
+
   function SortHeader({ label, sortId, className }: { label: string; sortId: SortKey; className?: string }) {
     return (
       <th
@@ -132,6 +164,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         onArchiveToggle={() => setShowArchived(!showArchived)}
         siteCount={filteredSites.length}
         totalMw={totalMw}
+        onAddSite={() => setShowAddSite(true)}
       />
 
       <div className="overflow-x-auto border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
@@ -142,6 +175,8 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
               <SortHeader label="Hub" sortId="hub_name" />
               <SortHeader label="MW" sortId="mw_current" className="text-right" />
               <SortHeader label="Priority" sortId="priority" />
+              <SortHeader label="Partner" sortId="asset_owner_name" />
+              <SortHeader label="Utility" sortId="utility_name" />
               {PHASES.map(p => (
                 <th
                   key={p.key}
@@ -165,7 +200,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
             ))}
             {filteredSites.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-4 py-8 text-center text-[13px] text-zinc-400 dark:text-zinc-600">
+                <td colSpan={15} className="px-4 py-8 text-center text-[13px] text-zinc-400 dark:text-zinc-600">
                   No sites match the current filters
                 </td>
               </tr>
@@ -173,6 +208,40 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
           </tbody>
         </table>
       </div>
+
+      {showAddSite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-xl p-6 w-full max-w-md shadow-2xl">
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Add New Site</h3>
+            <input
+              type="text"
+              placeholder="Site name"
+              value={newSiteName}
+              onChange={e => setNewSiteName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && newSiteName.trim()) handleAddSite() }}
+              autoFocus
+              className="w-full px-3 py-2 rounded-lg text-[14px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-nodiac-secondary mb-4"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => { setShowAddSite(false); setNewSiteName('') }}
+                className="px-4 py-2 rounded-lg text-[13px] font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAddSite}
+                disabled={!newSiteName.trim() || adding}
+                className="px-4 py-2 rounded-lg text-[13px] font-medium bg-nodiac-secondary text-nodiac-primary-dark hover:bg-nodiac-secondary/80 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {adding ? 'Creating...' : 'Create Site'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <ToastContainer />
     </div>

@@ -1,7 +1,7 @@
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SubNav } from '@/components/tracker/SubNav'
-import Link from 'next/link'
+import { LogoLink } from '@/components/LogoLink'
 
 export const metadata = {
   title: 'Tracker - Nodiac Oracle',
@@ -14,12 +14,7 @@ export default function TrackerLayout({ children }: { children: React.ReactNode 
       {/* Header */}
       <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm border-b border-zinc-200 dark:border-[#2a2a40]">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 py-3 flex justify-between items-center">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
-              <span className="text-white font-bold text-sm">N</span>
-            </div>
-            <span className="text-zinc-900 dark:text-white font-semibold text-lg hidden sm:inline">Nodiac</span>
-          </Link>
+          <LogoLink size="sm" />
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Navigation />

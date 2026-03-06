@@ -42,6 +42,16 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
       <td className="px-3 py-2 whitespace-nowrap">
         <PriorityIndicator priority={site.priority ?? 'Pipeline'} />
       </td>
+      <td className="px-3 py-2 whitespace-nowrap">
+        <span className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate block max-w-[120px]">
+          {site.asset_owner_name ?? '--'}
+        </span>
+      </td>
+      <td className="px-3 py-2 whitespace-nowrap">
+        <span className="text-[13px] text-zinc-500 dark:text-zinc-400 truncate block max-w-[120px]">
+          {site.utility_name ?? '--'}
+        </span>
+      </td>
       {PHASES.map(phase => (
         <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
           <PhaseBadge

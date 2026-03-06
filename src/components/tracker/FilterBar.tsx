@@ -14,6 +14,7 @@ interface FilterBarProps {
   onArchiveToggle: () => void
   siteCount: number
   totalMw: number
+  onAddSite?: () => void
 }
 
 export function FilterBar({
@@ -26,6 +27,7 @@ export function FilterBar({
   onArchiveToggle,
   siteCount,
   totalMw,
+  onAddSite,
 }: FilterBarProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 px-4 py-2.5 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
@@ -90,6 +92,15 @@ export function FilterBar({
         <span>
           <span className="font-medium text-zinc-900 dark:text-zinc-100">{totalMw.toFixed(1)}</span> MW
         </span>
+        {onAddSite && (
+          <button
+            type="button"
+            onClick={onAddSite}
+            className="px-3 py-1.5 rounded-md text-[12px] font-medium bg-nodiac-secondary text-nodiac-primary-dark hover:bg-nodiac-secondary/80 transition-colors cursor-pointer"
+          >
+            + Add Site
+          </button>
+        )}
       </div>
     </div>
   )

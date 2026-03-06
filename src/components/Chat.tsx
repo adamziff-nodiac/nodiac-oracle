@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import Link from 'next/link'
 import { AIModel, Perspective, AI_MODELS } from '@/types'
 import { useVoice } from '@/lib/useVoice'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,6 +18,7 @@ import { ThemeToggle } from './ThemeToggle'
 import { AuthButton } from './auth/AuthButton'
 import { ChatHistory } from './ChatHistory'
 import { NodiacContext } from './NodiacContext'
+import { LogoLink } from './LogoLink'
 import { Navigation } from './Navigation'
 import { Plus, Menu, X } from 'lucide-react'
 
@@ -336,12 +336,7 @@ export function Chat() {
         {/* Top Navigation Header */}
         <header className="fixed top-0 right-0 left-0 lg:left-80 z-40 p-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
-                <span className="text-white font-bold text-lg">N</span>
-              </div>
-              <span className="text-gray-900 dark:text-white font-semibold text-xl hidden sm:inline">Nodiac</span>
-            </Link>
+            <LogoLink />
             <Navigation />
           </div>
         </header>
