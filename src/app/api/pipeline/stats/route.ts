@@ -17,6 +17,7 @@ export async function GET() {
     async function safeQuery(table: string, columns: string) {
       try {
         const result = await sb.from(table).select(columns)
+        if (result?.error) return []
         return result?.data ?? []
       } catch {
         return []
@@ -52,8 +53,7 @@ export async function GET() {
 
     // IPP breakdown
     // Get upload → ipp_id mapping
-    const uploadsResult = await sb.from('portfolio_uploads').select('id, ipp_id').catch(() => ({ data: [] }))
-    const uploads = uploadsResult.data ?? []
+    const uploads = await safeQuery('portfolio_uploads', 'id, ipp_id')
     const uploadIppMap = new Map<string, string>()
     for (const u of uploads as Array<{ id: string; ipp_id: string | null }>) {
       if (u.ipp_id) uploadIppMap.set(u.id, u.ipp_id)
