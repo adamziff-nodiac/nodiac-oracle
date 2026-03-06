@@ -42,8 +42,13 @@ export function PipelineDashboard() {
 
   useEffect(() => {
     fetch('/api/pipeline/stats')
-      .then(r => r.json())
-      .then(setData)
+      .then(r => {
+        if (!r.ok) throw new Error('API error')
+        return r.json()
+      })
+      .then(d => {
+        if (d.funnel) setData(d)
+      })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])

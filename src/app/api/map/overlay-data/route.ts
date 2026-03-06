@@ -19,8 +19,10 @@ export async function GET() {
         .not('longitude', 'is', null),
     ])
 
-    if (hubsResult.error) throw hubsResult.error
-    if (sitesResult.error) throw sitesResult.error
+    // If tables/columns don't exist yet (migration not applied), return empty
+    if (hubsResult.error || sitesResult.error) {
+      return NextResponse.json({ hubs: [], trackerSites: [] })
+    }
 
     const allSites = (sitesResult.data ?? []) as Array<{
       id: string; name: string; priority: string; latitude: number; longitude: number;

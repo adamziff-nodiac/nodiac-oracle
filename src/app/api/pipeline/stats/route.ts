@@ -12,15 +12,13 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any
 
+    // Fetch data — gracefully handle missing tables (migration not yet applied)
     const [portfolioSitesResult, trackerSitesResult, ippsResult, hubsResult] = await Promise.all([
-      sb.from('portfolio_sites').select('id, tier, upload_id, site_score'),
-      sb.from('tracker_site_overview').select('id, name, priority, ipp_id, ipp_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude'),
-      sb.from('tracker_ipps').select('id, name'),
-      sb.from('tracker_regional_hubs').select('id, name, status'),
+      sb.from('portfolio_sites').select('id, tier, upload_id, site_score').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
+      sb.from('tracker_site_overview').select('id, name, priority, ipp_id, ipp_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
+      sb.from('tracker_ipps').select('id, name').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
+      sb.from('tracker_regional_hubs').select('id, name, status').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
     ])
-
-    if (portfolioSitesResult.error) throw portfolioSitesResult.error
-    if (trackerSitesResult.error) throw trackerSitesResult.error
 
     const portfolioSites = portfolioSitesResult.data ?? []
     const trackerSites = trackerSitesResult.data ?? []
@@ -49,7 +47,7 @@ export async function GET() {
 
     // IPP breakdown
     // Get upload → ipp_id mapping
-    const uploadsResult = await sb.from('portfolio_uploads').select('id, ipp_id')
+    const uploadsResult = await sb.from('portfolio_uploads').select('id, ipp_id').catch(() => ({ data: [] }))
     const uploads = uploadsResult.data ?? []
     const uploadIppMap = new Map<string, string>()
     for (const u of uploads as Array<{ id: string; ipp_id: string | null }>) {
