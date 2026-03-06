@@ -36,23 +36,23 @@ export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProp
       <button
         type="button"
         onClick={() => setActive(true)}
-        className="flex items-center gap-1.5 text-[12px] text-zinc-400 hover:text-nodiac-secondary transition-colors py-2 px-1 cursor-pointer"
+        className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors py-1.5 px-3 cursor-pointer border-b border-transparent"
       >
-        <Plus className="w-3.5 h-3.5" />
+        <Plus className="w-3 h-3" />
         Add action item
       </button>
     )
   }
 
   return (
-    <div className="flex items-center gap-2 py-2">
+    <div className="flex items-center gap-2 py-1.5 px-3 border-b border-zinc-100 dark:border-[#1e1e36]">
       <StyledSelect
         value={siteId}
         onChange={setSiteId}
         options={sites.map(s => ({ value: s.id, label: s.name }))}
         placeholder="Site..."
         size="sm"
-        className="max-w-[160px]"
+        className="max-w-[140px]"
       />
       {teamMembers && teamMembers.length > 0 && (
         <StyledSelect
@@ -63,7 +63,7 @@ export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProp
             ...teamMembers.map(m => ({ value: m.id, label: m.display_name })),
           ]}
           size="sm"
-          className="max-w-[120px]"
+          className="max-w-[110px]"
         />
       )}
       <input
@@ -71,33 +71,29 @@ export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProp
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape' && !saving) setActive(false) }}
-        placeholder="Action item title..."
+        placeholder="What needs to happen?"
+        autoFocus
         disabled={saving}
-        className="flex-1 text-[12px] bg-transparent text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1.5 focus:outline-none focus:border-nodiac-secondary disabled:opacity-50"
+        className="flex-1 text-[12px] bg-transparent text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400/50 dark:placeholder:text-zinc-600 border-0 focus:outline-none disabled:opacity-50 min-w-0"
       />
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!siteId || !title.trim() || saving}
-        className="text-[11px] font-medium px-2.5 py-1.5 rounded bg-nodiac-secondary/20 text-nodiac-secondary hover:bg-nodiac-secondary/30 transition-colors disabled:opacity-40 cursor-pointer flex items-center gap-1"
-      >
-        {saving ? (
-          <>
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Saving
-          </>
-        ) : (
-          'Add'
-        )}
-      </button>
-      <button
-        type="button"
-        onClick={() => setActive(false)}
-        disabled={saving}
-        className="text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer disabled:opacity-40"
-      >
-        Cancel
-      </button>
+      <div className="flex items-center gap-1.5 flex-shrink-0">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!siteId || !title.trim() || saving}
+          className="text-[11px] font-medium px-2 py-1 rounded bg-nodiac-secondary/15 text-nodiac-secondary hover:bg-nodiac-secondary/25 transition-colors disabled:opacity-30 cursor-pointer flex items-center gap-1"
+        >
+          {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Add'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActive(false)}
+          disabled={saving}
+          className="text-[11px] text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 cursor-pointer disabled:opacity-40 px-1"
+        >
+          Esc
+        </button>
+      </div>
     </div>
   )
 }

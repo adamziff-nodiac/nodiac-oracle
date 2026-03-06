@@ -20,11 +20,11 @@ function getAgeBadge(createdAt: string, isWaiting: boolean) {
   const days = Math.floor((Date.now() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24))
   const thresholds = isWaiting ? { amber: 14, red: 30 } : { amber: 7, red: 14 }
 
-  let color = 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'
+  let color = 'text-emerald-500'
   if (days >= thresholds.red) {
-    color = 'bg-red-500/15 text-red-600 dark:text-red-400'
+    color = 'text-red-400'
   } else if (days >= thresholds.amber) {
-    color = 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+    color = 'text-amber-400'
   }
 
   return { days, color }
@@ -38,47 +38,53 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
   const isWaiting = item.status === 'waiting'
   const age = getAgeBadge(item.created_at, isWaiting)
 
-  // Hard deadline warning
   const deadlineSoon = item.hard_deadline && (() => {
     const daysUntil = Math.floor((new Date(item.hard_deadline!).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     return daysUntil <= 7 && daysUntil >= 0
   })()
 
   return (
-    <div className={cn(
-      'group border border-zinc-200 dark:border-[#2a2a40] rounded-lg transition-colors',
-      isDone && 'opacity-50',
-      item.flagged && !isDone && 'border-l-2 border-l-amber-400'
-    )}>
+    <>
       <div
-        className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-zinc-50 dark:hover:bg-[#1a1a30] rounded-lg"
+        className={cn(
+          'group flex items-center gap-2.5 px-3 py-2 cursor-pointer transition-colors duration-75',
+          'hover:bg-zinc-50/80 dark:hover:bg-white/[0.03]',
+          'border-b border-zinc-100 dark:border-[#1e1e36] last:border-b-0',
+          expanded && 'bg-zinc-50/50 dark:bg-white/[0.02]',
+          isDone && 'opacity-40',
+          item.flagged && !isDone && 'border-l-2 border-l-amber-400 pl-[10px]'
+        )}
         onClick={() => setExpanded(!expanded)}
       >
-        {/* Done checkbox */}
+        {/* Checkbox */}
         <button
           type="button"
           disabled={isSaving}
           onClick={(e) => { e.stopPropagation(); onToggleDone(item.id, !isDone) }}
           className={cn(
-            'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer',
+            'flex-shrink-0 w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center transition-all cursor-pointer',
             isDone
-              ? 'bg-nodiac-secondary border-nodiac-secondary'
-              : 'border-zinc-300 dark:border-zinc-600 hover:border-nodiac-secondary',
-            isSaving && 'opacity-50 cursor-not-allowed'
+              ? 'bg-nodiac-secondary/80 border-nodiac-secondary/80'
+              : 'border-zinc-300 dark:border-zinc-600 hover:border-nodiac-secondary/60',
+            isSaving && 'opacity-40 cursor-not-allowed'
           )}
         >
-          {isDone && <Check className="w-3 h-3 text-white" />}
+          {isDone && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
         </button>
 
-        {/* Flag toggle */}
+        {/* Flag */}
         <button
           type="button"
           disabled={isSaving}
           onClick={(e) => { e.stopPropagation(); onToggleFlag(item.id, !item.flagged) }}
-          className={cn('flex-shrink-0 cursor-pointer', isSaving && 'opacity-50 cursor-not-allowed')}
+          className={cn(
+            'flex-shrink-0 cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity',
+            item.flagged && '!opacity-100',
+            isSaving && 'cursor-not-allowed'
+          )}
         >
           <Star className={cn(
-            'w-4 h-4 transition-colors',
+            'w-3.5 h-3.5',
             item.flagged ? 'fill-amber-400 text-amber-400' : 'text-zinc-300 dark:text-zinc-600 hover:text-amber-400'
           )} />
         </button>
@@ -91,57 +97,57 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
           {item.title}
         </span>
 
-        {/* Waiting on badge */}
-        {isWaiting && item.waiting_on && (
-          <span className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full flex-shrink-0">
-            <Clock className="w-3 h-3" />
-            {item.waiting_on}
-          </span>
-        )}
+        {/* Right-aligned metadata cluster */}
+        <div className="flex items-center gap-2 flex-shrink-0">
+          {/* Waiting badge (inline) */}
+          {isWaiting && item.waiting_on && (
+            <span className="hidden sm:flex items-center gap-1 text-[10px] text-amber-500/80 truncate max-w-[100px]">
+              <Clock className="w-3 h-3 flex-shrink-0" />
+              {item.waiting_on}
+            </span>
+          )}
 
-        {/* Site name */}
-        <Link
-          href={`/tracker/${item.site_id}`}
-          onClick={(e) => e.stopPropagation()}
-          className="text-[11px] text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors flex-shrink-0 max-w-[120px] truncate"
-        >
-          {item.site_name}
-        </Link>
+          {/* Site link */}
+          <Link
+            href={`/tracker/${item.site_id}`}
+            onClick={(e) => e.stopPropagation()}
+            className="text-[11px] text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors truncate max-w-[100px]"
+          >
+            {item.site_name}
+          </Link>
 
-        {/* Hard deadline pill */}
-        {deadlineSoon && (
-          <span className="flex items-center gap-1 text-[10px] font-medium text-red-600 dark:text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded-full flex-shrink-0">
-            <AlertTriangle className="w-3 h-3" />
-            {new Date(item.hard_deadline!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-          </span>
-        )}
+          {/* Deadline pill */}
+          {deadlineSoon && (
+            <span className="flex items-center gap-0.5 text-[10px] font-medium text-red-400 flex-shrink-0">
+              <AlertTriangle className="w-3 h-3" />
+              {new Date(item.hard_deadline!).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+            </span>
+          )}
 
-        {/* Age badge / Saving indicator */}
-        {isSaving ? (
-          <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
-            <Loader2 className="w-3 h-3 animate-spin" />
-            Saving
-          </span>
-        ) : (
-          <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 tabular-nums', age.color)}>
-            {age.days}d
-          </span>
-        )}
+          {/* Age / Saving */}
+          {isSaving ? (
+            <Loader2 className="w-3 h-3 text-zinc-400 animate-spin flex-shrink-0" />
+          ) : (
+            <span className={cn('text-[10px] font-medium tabular-nums w-[28px] text-right flex-shrink-0', age.color)}>
+              {age.days}d
+            </span>
+          )}
 
-        {/* Expand chevron */}
-        {expanded ? (
-          <ChevronDown className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-        ) : (
-          <ChevronRight className="w-3.5 h-3.5 text-zinc-400 flex-shrink-0" />
-        )}
+          {/* Chevron */}
+          {expanded ? (
+            <ChevronDown className="w-3 h-3 text-zinc-400/60 flex-shrink-0" />
+          ) : (
+            <ChevronRight className="w-3 h-3 text-zinc-400/40 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+          )}
+        </div>
       </div>
 
-      {/* Expanded detail */}
+      {/* Expanded inline */}
       {expanded && (
-        <div className="px-3 pb-3 pt-1 border-t border-zinc-100 dark:border-[#2a2a40] space-y-2">
-          <div className="grid grid-cols-2 gap-2 text-[12px]">
-            <div className="flex items-center gap-1">
-              <span className="text-zinc-400">Status: </span>
+        <div className="px-3 py-2.5 bg-zinc-50/30 dark:bg-white/[0.015] border-b border-zinc-100 dark:border-[#1e1e36]">
+          <div className="pl-[52px] flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-zinc-400 dark:text-zinc-500">Status</span>
               <StyledSelect
                 value={item.status}
                 onChange={(val) => onUpdate(item.id, { status: val })}
@@ -154,20 +160,8 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
                 variant="ghost"
               />
             </div>
-            {item.hub_name && (
-              <div>
-                <span className="text-zinc-400">Hub: </span>
-                <span className="text-zinc-700 dark:text-zinc-300">{item.hub_name}</span>
-              </div>
-            )}
-            {item.hard_deadline && (
-              <div>
-                <span className="text-zinc-400">Deadline: </span>
-                <span className="text-zinc-700 dark:text-zinc-300">{new Date(item.hard_deadline).toLocaleDateString()}</span>
-              </div>
-            )}
-            <div className="flex items-center gap-1">
-              <span className="text-zinc-400">Assigned: </span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-zinc-400 dark:text-zinc-500">Assigned</span>
               {teamMembers && teamMembers.length > 0 ? (
                 <StyledSelect
                   value={item.assigned_to ?? ''}
@@ -180,44 +174,54 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
                   variant="ghost"
                 />
               ) : (
-                <span className="text-zinc-700 dark:text-zinc-300">{item.assigned_to_name ?? 'Unassigned'}</span>
+                <span className="text-zinc-600 dark:text-zinc-400">{item.assigned_to_name ?? 'Unassigned'}</span>
               )}
             </div>
+            {item.hub_name && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-zinc-400 dark:text-zinc-500">Hub</span>
+                <span className="text-zinc-600 dark:text-zinc-400">{item.hub_name}</span>
+              </div>
+            )}
+            {item.hard_deadline && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-zinc-400 dark:text-zinc-500">Deadline</span>
+                <span className="text-zinc-600 dark:text-zinc-400">{new Date(item.hard_deadline).toLocaleDateString()}</span>
+              </div>
+            )}
           </div>
 
           {/* Notes */}
-          <div>
-            <span className="text-[11px] text-zinc-400">Notes</span>
+          <div className="pl-[52px] mt-2">
             {editingNotes ? (
-              <div className="mt-1">
-                <textarea
-                  value={notesDraft}
-                  onChange={(e) => setNotesDraft(e.target.value)}
-                  onBlur={() => {
+              <textarea
+                value={notesDraft}
+                onChange={(e) => setNotesDraft(e.target.value)}
+                onBlur={() => {
+                  onUpdate(item.id, { notes: notesDraft || null })
+                  setEditingNotes(false)
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.metaKey) {
                     onUpdate(item.id, { notes: notesDraft || null })
                     setEditingNotes(false)
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && e.metaKey) {
-                      onUpdate(item.id, { notes: notesDraft || null })
-                      setEditingNotes(false)
-                    }
-                  }}
-                  autoFocus
-                  className="w-full mt-1 text-[12px] bg-transparent text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded p-2 focus:outline-none focus:border-nodiac-secondary resize-y min-h-[50px]"
-                />
-              </div>
+                  }
+                }}
+                autoFocus
+                className="w-full text-[12px] bg-white dark:bg-[#12122a] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-[#2a2a40] rounded px-2 py-1.5 focus:outline-none focus:border-nodiac-secondary/50 resize-y min-h-[40px]"
+                placeholder="Add notes..."
+              />
             ) : (
               <div
-                className="mt-1 text-[12px] text-zinc-600 dark:text-zinc-400 cursor-pointer hover:bg-zinc-50 dark:hover:bg-[#1a1a30] rounded p-1 min-h-[24px]"
+                className="text-[12px] text-zinc-500 dark:text-zinc-500 cursor-pointer hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors py-0.5"
                 onClick={(e) => { e.stopPropagation(); setNotesDraft(item.notes ?? ''); setEditingNotes(true) }}
               >
-                {item.notes || <span className="italic text-zinc-400">Add notes...</span>}
+                {item.notes || <span className="text-zinc-400/60 dark:text-zinc-600">Add notes...</span>}
               </div>
             )}
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
