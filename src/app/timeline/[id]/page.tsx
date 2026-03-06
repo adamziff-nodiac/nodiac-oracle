@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
+import { LogoLink } from '@/components/LogoLink'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { TimelineBuilder } from '@/components/timeline/TimelineBuilder'
@@ -188,11 +189,7 @@ export default function TimelineEditorPage() {
       <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-nodiac-dark dark:via-slate-900 dark:to-nodiac-dark">
         <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-sm border-b border-gray-200 dark:border-white/5">
           <div className="max-w-6xl mx-auto flex justify-between items-center">
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
-                <span className="text-white font-bold text-lg">N</span>
-              </div>
-            </Link>
+            <LogoLink />
             <Navigation />
           </div>
         </header>
@@ -222,11 +219,7 @@ export default function TimelineEditorPage() {
               <span className="hidden sm:inline">Back</span>
             </Link>
             <div className="h-6 w-px bg-gray-200 dark:bg-white/10" />
-            <Link href="/" className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-nodiac-primary to-nodiac-secondary flex items-center justify-center">
-                <span className="text-white font-bold text-sm">N</span>
-              </div>
-            </Link>
+            <LogoLink size="sm" />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />

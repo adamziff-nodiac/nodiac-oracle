@@ -15,10 +15,17 @@ interface PhaseBadgeProps {
   abbrev: string
 }
 
+const STATUS_LABEL: Record<string, string> = {
+  'Not Started': '--',
+  'In Progress': 'In Progress',
+  'Complete': '✓',
+  'Blocked': 'Blocked',
+}
+
 export function PhaseBadge({ status, abbrev }: PhaseBadgeProps) {
   if (status === 'N/A') {
     return (
-      <span className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-medium tracking-wide min-w-[40px] text-zinc-400 dark:text-zinc-600">
+      <span className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-medium tracking-wide min-w-[56px] text-zinc-400 dark:text-zinc-600">
         --
       </span>
     )
@@ -27,12 +34,12 @@ export function PhaseBadge({ status, abbrev }: PhaseBadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-medium tracking-wide min-w-[40px] transition-colors duration-150',
+        'inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-medium tracking-wide min-w-[56px] transition-colors duration-150',
         STATUS_COLORS[status]
       )}
       title={`${abbrev}: ${status}`}
     >
-      {abbrev}
+      {STATUS_LABEL[status] ?? '--'}
     </span>
   )
 }

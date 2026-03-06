@@ -100,7 +100,7 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
     }
   }
 
-  async function handleSave(partner: TrackerPartnerWithCounts) {
+  async function handleSave(partner: TrackerPartnerWithCounts, pendingHubIds?: string[]) {
     const { site_count, hub_names, ...dbFields } = partner
     void site_count
     void hub_names
@@ -121,7 +121,26 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
           .single()
 
         if (error) throw error
-        setPartners(prev => [...prev, { ...data, site_count: 0, hub_names: [] }])
+
+        // Link pending hubs for new partner
+        const linkedHubNames: string[] = []
+        if (pendingHubIds && pendingHubIds.length > 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { error: hubError } = await (supabase as any)
+            .from('tracker_partner_hubs')
+            .insert(pendingHubIds.map(hubId => ({ partner_id: data.id, hub_id: hubId })))
+
+          if (hubError) {
+            console.error('Failed to link hubs:', hubError)
+          } else {
+            for (const hubId of pendingHubIds) {
+              const hub = hubs.find(h => h.id === hubId)
+              if (hub) linkedHubNames.push(hub.name)
+            }
+          }
+        }
+
+        setPartners(prev => [...prev, { ...data, site_count: 0, hub_names: linkedHubNames }])
         showToast('Partner created', 'success')
       } else {
         // Update existing partner
@@ -351,6 +370,7 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
         <PartnerDetailPanel
           partner={selectedPartner}
           isNew={isCreating}
+          hubs={hubs.map(h => ({ id: h.id, name: h.name }))}
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => { setSelectedPartner(null); setIsCreating(false) }}

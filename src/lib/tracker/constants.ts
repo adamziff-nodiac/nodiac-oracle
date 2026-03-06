@@ -61,6 +61,9 @@ export type PartnerType = typeof PARTNER_TYPE_OPTIONS[number]
 export const RELATIONSHIP_STAGE_OPTIONS = ['Identified', 'Initial Contact', 'Capacity Discussion', 'Under Contract'] as const
 export type RelationshipStage = typeof RELATIONSHIP_STAGE_OPTIONS[number]
 
+export const HUB_STATUS_OPTIONS = ['Planning', 'Active Development', 'Operational'] as const
+export type HubStatus = typeof HUB_STATUS_OPTIONS[number]
+
 // Phase status -> color mapping for the grid
 export const PHASE_COLORS: Record<string, string> = {
   'Not Started': 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400',

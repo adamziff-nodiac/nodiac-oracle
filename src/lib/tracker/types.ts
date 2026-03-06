@@ -26,8 +26,17 @@ export interface TrackerSite {
 export interface TrackerHub {
   id: string
   name: string
-  description: string | null
+  target_mw: number | null
+  status: string | null
+  notes: string | null
   created_at: string
+  updated_at: string
+}
+
+// Extended hub type with computed fields for the list view
+export interface TrackerHubWithCounts extends TrackerHub {
+  partner_count: number
+  site_count: number
 }
 
 // TODO: Replace with Tables<'tracker_power_partners'> after types regenerated

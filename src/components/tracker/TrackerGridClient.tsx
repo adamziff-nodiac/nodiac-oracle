@@ -8,9 +8,10 @@ import { PHASES } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { FilterBar } from './FilterBar'
 import { SiteRow } from './SiteRow'
+import { AddSiteModal } from './AddSiteModal'
 import { ToastContainer } from './Toast'
 
-type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'construction_ready' | 'next_step'
+type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'asset_owner_name' | 'utility_name' | 'construction_ready' | 'next_step'
 type SortDir = 'asc' | 'desc'
 
 const PRIORITY_ORDER: Record<string, number> = {
@@ -25,10 +26,13 @@ interface TrackerGridClientProps {
 export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps) {
   const router = useRouter()
   const [selectedPriority, setSelectedPriority] = useState<string | null>(null)
-  const [selectedHub, setSelectedHub] = useState<string | null>(null)
+  const [selectedHubs, setSelectedHubs] = useState<string[]>([])
+  const [selectedUtilities, setSelectedUtilities] = useState<string[]>([])
+  const [selectedPartners, setSelectedPartners] = useState<string[]>([])
   const [showArchived, setShowArchived] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const [showAddSite, setShowAddSite] = useState(false)
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -41,6 +45,18 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
 
   const hubNames = useMemo(() => hubs.map(h => h.name), [hubs])
 
+  const utilityNames = useMemo(() => {
+    const names = new Set<string>()
+    sites.forEach(s => { if (s.utility_name) names.add(s.utility_name) })
+    return [...names].sort()
+  }, [sites])
+
+  const partnerNames = useMemo(() => {
+    const names = new Set<string>()
+    sites.forEach(s => { if (s.asset_owner_name) names.add(s.asset_owner_name) })
+    return [...names].sort()
+  }, [sites])
+
   const filteredSites = useMemo(() => {
     let result = sites
 
@@ -50,8 +66,14 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     if (selectedPriority) {
       result = result.filter(s => s.priority === selectedPriority)
     }
-    if (selectedHub) {
-      result = result.filter(s => s.hub_name === selectedHub)
+    if (selectedHubs.length > 0) {
+      result = result.filter(s => s.hub_name && selectedHubs.includes(s.hub_name))
+    }
+    if (selectedUtilities.length > 0) {
+      result = result.filter(s => s.utility_name && selectedUtilities.includes(s.utility_name))
+    }
+    if (selectedPartners.length > 0) {
+      result = result.filter(s => s.asset_owner_name && selectedPartners.includes(s.asset_owner_name))
     }
 
     // Sort
@@ -74,6 +96,12 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         case 'construction_ready':
           cmp = (a.construction_ready ? 1 : 0) - (b.construction_ready ? 1 : 0)
           break
+        case 'asset_owner_name':
+          cmp = (a.asset_owner_name ?? '').localeCompare(b.asset_owner_name ?? '')
+          break
+        case 'utility_name':
+          cmp = (a.utility_name ?? '').localeCompare(b.utility_name ?? '')
+          break
         case 'next_step':
           cmp = (a.next_step ?? '').localeCompare(b.next_step ?? '')
           break
@@ -89,7 +117,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
 
     return result
-  }, [sites, selectedPriority, selectedHub, showArchived, sortKey, sortDir])
+  }, [sites, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, sortKey, sortDir])
 
   const totalMw = useMemo(() =>
     filteredSites.reduce((sum, s) => sum + (s.mw_current ?? 0), 0),
@@ -124,14 +152,21 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
       <FilterBar
         priorities={[]}
         hubs={hubNames}
+        utilities={utilityNames}
+        partners={partnerNames}
         selectedPriority={selectedPriority}
-        selectedHub={selectedHub}
+        selectedHubs={selectedHubs}
+        selectedUtilities={selectedUtilities}
+        selectedPartners={selectedPartners}
         showArchived={showArchived}
         onPriorityChange={setSelectedPriority}
-        onHubChange={setSelectedHub}
+        onHubsChange={setSelectedHubs}
+        onUtilitiesChange={setSelectedUtilities}
+        onPartnersChange={setSelectedPartners}
         onArchiveToggle={() => setShowArchived(!showArchived)}
         siteCount={filteredSites.length}
         totalMw={totalMw}
+        onAddSite={() => setShowAddSite(true)}
       />
 
       <div className="overflow-x-auto border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
@@ -142,6 +177,8 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
               <SortHeader label="Hub" sortId="hub_name" />
               <SortHeader label="MW" sortId="mw_current" className="text-right" />
               <SortHeader label="Priority" sortId="priority" />
+              <SortHeader label="Partner" sortId="asset_owner_name" />
+              <SortHeader label="Utility" sortId="utility_name" />
               {PHASES.map(p => (
                 <th
                   key={p.key}
@@ -165,7 +202,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
             ))}
             {filteredSites.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-4 py-8 text-center text-[13px] text-zinc-400 dark:text-zinc-600">
+                <td colSpan={15} className="px-4 py-8 text-center text-[13px] text-zinc-400 dark:text-zinc-600">
                   No sites match the current filters
                 </td>
               </tr>
@@ -173,6 +210,10 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
           </tbody>
         </table>
       </div>
+
+      {showAddSite && (
+        <AddSiteModal onClose={() => setShowAddSite(false)} />
+      )}
 
       <ToastContainer />
     </div>

@@ -14,6 +14,8 @@ import { PhaseCheckpointGroup } from './PhaseCheckpointGroup'
 import { SpeedMetric } from './SpeedMetric'
 import { ActivityLog } from './ActivityLog'
 import { ToastContainer, showToast } from './Toast'
+import { LandownersSection } from './LandownersSection'
+import { ParcelsSection } from './ParcelsSection'
 
 interface SiteDetailClientProps {
   initialSite: TrackerSiteOverview
@@ -187,6 +189,42 @@ export function SiteDetailClient({ initialSite, initialActivity, partners, hubs 
                   handleSiteFieldUpdate('asset_owner_id', id, { asset_owner_name: p?.name ?? null })
                 }}
               />
+              <EditableText
+                label="Address"
+                value={site['address'] as string | null}
+                onSave={(v) => handleSiteFieldUpdate('address', v)}
+              />
+              <EditableText
+                label="Coordinates"
+                value={site['coordinates'] as string | null}
+                onSave={(v) => handleSiteFieldUpdate('coordinates', v)}
+                actions={
+                  site['coordinates'] ? (
+                    <div className="flex gap-0.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(site['coordinates'] as string)
+                          showToast('Copied', 'success')
+                        }}
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-[#1a1a30] transition-colors cursor-pointer"
+                        title="Copy coordinates"
+                      >
+                        Copy
+                      </button>
+                      <a
+                        href={`https://www.google.com/maps?q=${encodeURIComponent(site['coordinates'] as string)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-1.5 py-0.5 rounded text-[10px] font-medium text-nodiac-secondary hover:text-nodiac-secondary/80 hover:bg-zinc-100 dark:hover:bg-[#1a1a30] transition-colors"
+                        title="Open in Google Maps"
+                      >
+                        Maps
+                      </a>
+                    </div>
+                  ) : undefined
+                }
+              />
               <EditableNumber
                 label="MW Current"
                 value={site.mw_current}
@@ -208,6 +246,12 @@ export function SiteDetailClient({ initialSite, initialActivity, partners, hubs 
               )}
             </dl>
           </div>
+
+          {/* Landowners */}
+          <LandownersSection siteId={site.id} />
+
+          {/* Parcels */}
+          <ParcelsSection siteId={site.id} />
 
           {/* Activity Log */}
           <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
@@ -391,6 +435,62 @@ function EditableSelect({
         >
           {displayValue ?? '--'}
         </button>
+      </dd>
+    </div>
+  )
+}
+
+function EditableText({
+  label,
+  value,
+  onSave,
+  actions,
+}: {
+  label: string
+  value: string | null
+  onSave: (v: string | null) => void
+  actions?: React.ReactNode
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value ?? '')
+
+  function handleSave() {
+    onSave(draft.trim() || null)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="flex justify-between items-center">
+        <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
+        <dd>
+          <input
+            type="text"
+            value={draft}
+            onChange={e => setDraft(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setEditing(false) }}
+            autoFocus
+            className="w-40 px-2 py-1 rounded text-[13px] font-medium bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-nodiac-secondary"
+          />
+        </dd>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex justify-between items-center">
+      <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
+      <dd className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => { setDraft(value ?? ''); setEditing(true) }}
+          className="text-zinc-900 dark:text-zinc-100 font-medium hover:bg-zinc-100 dark:hover:bg-[#1a1a30] px-2 py-0.5 rounded transition-colors cursor-pointer truncate max-w-[140px]"
+          title={value ?? undefined}
+        >
+          {value ?? '--'}
+        </button>
+        {actions}
       </dd>
     </div>
   )

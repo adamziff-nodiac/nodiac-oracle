@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { TrackerSiteOverview, TrackerHub, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity } from './types'
+import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity } from './types'
 
 export async function getTrackerSites(): Promise<TrackerSiteOverview[]> {
   const supabase = await createClient()
@@ -37,6 +37,82 @@ export async function getTrackerHubs(): Promise<TrackerHub[]> {
 
   if (error) throw error
   return (data ?? []) as TrackerHub[]
+}
+
+export async function getHubsWithCounts(): Promise<TrackerHubWithCounts[]> {
+  const supabase = await createClient()
+
+  // Fetch hubs, partner-hub links, and sites in parallel
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [hubsResult, hubLinksResult, sitesResult] = await Promise.all([
+    (supabase as any).from('tracker_regional_hubs').select('*').order('name'),
+    (supabase as any).from('tracker_partner_hubs').select('partner_id, hub_id'),
+    (supabase as any).from('tracker_site_overview').select('id, hub_name'),
+  ])
+
+  if (hubsResult.error) throw hubsResult.error
+  const hubs = (hubsResult.data ?? []) as TrackerHub[]
+  const hubLinks = (hubLinksResult.data ?? []) as Array<{ partner_id: string; hub_id: string }>
+  const sites = (sitesResult.data ?? []) as Array<{ id: string; hub_name: string | null }>
+
+  // Count partners per hub
+  const partnerCountMap = new Map<string, number>()
+  for (const link of hubLinks) {
+    partnerCountMap.set(link.hub_id, (partnerCountMap.get(link.hub_id) ?? 0) + 1)
+  }
+
+  // Count sites per hub (by hub name match from site_overview view)
+  const siteCountMap = new Map<string, number>()
+  for (const site of sites) {
+    if (site.hub_name) {
+      siteCountMap.set(site.hub_name, (siteCountMap.get(site.hub_name) ?? 0) + 1)
+    }
+  }
+
+  return hubs.map(h => ({
+    ...h,
+    partner_count: partnerCountMap.get(h.id) ?? 0,
+    site_count: siteCountMap.get(h.name) ?? 0,
+  }))
+}
+
+export async function getHubSites(hubName: string): Promise<TrackerSiteOverview[]> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('tracker_site_overview')
+    .select('*')
+    .eq('hub_name', hubName)
+    .order('name')
+
+  if (error) throw error
+  return (data ?? []) as TrackerSiteOverview[]
+}
+
+export async function getHubPartners(hubId: string): Promise<TrackerPartner[]> {
+  const supabase = await createClient()
+
+  // Get partner IDs linked to this hub
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: links, error: linksError } = await (supabase as any)
+    .from('tracker_partner_hubs')
+    .select('partner_id')
+    .eq('hub_id', hubId)
+
+  if (linksError) throw linksError
+  const partnerIds = ((links ?? []) as Array<{ partner_id: string }>).map(l => l.partner_id)
+
+  if (partnerIds.length === 0) return []
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('tracker_power_partners')
+    .select('*')
+    .in('id', partnerIds)
+    .order('name')
+
+  if (error) throw error
+  return (data ?? []) as TrackerPartner[]
 }
 
 export async function getTrackerPartners(): Promise<TrackerPartner[]> {
