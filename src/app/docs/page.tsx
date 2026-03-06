@@ -133,8 +133,8 @@ export default function DocsPage() {
             ))}
           </div>
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 space-y-2">
-            <Link href="/regional-hubs" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
-              <ArrowLeft className="w-3.5 h-3.5" /> Regional Hubs
+            <Link href="/plan" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
+              <ArrowLeft className="w-3.5 h-3.5" /> Plan
             </Link>
             <Link href="/screening" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
               <ArrowLeft className="w-3.5 h-3.5" /> Site Screening
@@ -147,7 +147,7 @@ export default function DocsPage() {
           {/* Title */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Link href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">Hubs</Link>
+              <Link href="/plan" className="text-sm text-nodiac-secondary hover:underline">Plan</Link>
               <span className="text-gray-600">/</span>
               <Link href="/screening" className="text-sm text-nodiac-secondary hover:underline">Screening</Link>
               <span className="text-gray-600">/</span>

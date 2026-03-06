@@ -25,13 +25,15 @@ import { createClient } from '@/lib/supabase/client'
 
 const primaryNav = [
   { href: '/', label: 'Home', icon: Home },
-  { href: '/regional-hubs', label: 'Score', icon: Map },
+  { href: '/plan', label: 'Plan', icon: Map },
   { href: '/screening', label: 'Screen', icon: FileSearch },
-  { href: '/pipeline', label: 'Pipeline', icon: GitBranch },
   { href: '/tracker', label: 'Develop', icon: ClipboardList },
 ]
 
+const pipelineStatsNav = { href: '/pipeline', label: 'Pipeline Stats', icon: GitBranch }
+
 const secondaryNav = [
+  pipelineStatsNav,
   { href: '/chat', label: 'Oracle Chat', icon: MessageSquare },
   { href: '/timeline', label: 'Timelines', icon: BarChart3 },
   { href: '/docs', label: 'Docs', icon: BookOpen },

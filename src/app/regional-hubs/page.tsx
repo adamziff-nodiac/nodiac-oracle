@@ -143,11 +143,11 @@ export default function RegionalHubsPage() {
       <section className="pt-28 pb-10 px-6">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-5xl sm:text-6xl font-black text-gray-900 dark:text-white tracking-tight leading-[1.1]">
-            Regional Hub Strategy
+            Plan
           </h1>
           <p className="mt-4 text-xl text-gray-600 dark:text-nodiac-dusty-lilac max-w-2xl leading-relaxed">
-            Scoring every US county across seven criteria to identify optimal locations for
-            Nodiac&apos;s distributed data center hubs.
+            Rank counties by infrastructure fit to identify optimal locations for
+            Nodiac&apos;s distributed compute hubs.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-3">
             <Link

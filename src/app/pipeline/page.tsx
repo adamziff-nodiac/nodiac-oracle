@@ -22,10 +22,10 @@ export default function PipelinePage() {
         <div className="max-w-5xl mx-auto">
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Pipeline
+              Pipeline Stats
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
-              Full funnel from screening to construction
+              Full-funnel metrics from screening through construction
             </p>
           </div>
           <PipelineDashboard />

@@ -4,8 +4,8 @@ import Link from 'next/link'
 import {
   Map,
   FileSearch,
-  GitBranch,
   ClipboardList,
+  GitBranch,
   MessageSquare,
   BarChart3,
   ArrowRight,
@@ -16,9 +16,9 @@ import { LogoLink } from '@/components/LogoLink'
 
 const pipeline = [
   {
-    href: '/regional-hubs',
+    href: '/plan',
     icon: Map,
-    title: 'Score',
+    title: 'Plan',
     description: 'Rank counties by infrastructure fit',
     step: 1,
   },
@@ -30,18 +30,11 @@ const pipeline = [
     step: 2,
   },
   {
-    href: '/pipeline',
-    icon: GitBranch,
-    title: 'Pipeline',
-    description: 'Track deal flow across partners',
-    step: 3,
-  },
-  {
     href: '/tracker',
     icon: ClipboardList,
     title: 'Develop',
     description: 'Manage sites through construction',
-    step: 4,
+    step: 3,
   },
 ]
 
@@ -72,8 +65,8 @@ export default function HomePage() {
             </p>
           </div>
 
-          {/* Pipeline - Connected horizontal flow (desktop) */}
-          <div className="mb-24 relative">
+          {/* Pipeline - 3-step flow: Plan → Screen → Develop */}
+          <div className="mb-16 relative">
             {/* Ambient glow behind pipeline */}
             <div className="absolute inset-0 -inset-x-20 hidden dark:block pointer-events-none">
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-nodiac-primary/8 rounded-full blur-[100px]" />
@@ -85,16 +78,16 @@ export default function HomePage() {
               <div className="relative">
                 {/* Gradient connecting line — eggplant to teal */}
                 <div
-                  className="absolute top-9 left-[12.5%] right-[12.5%] h-px"
+                  className="absolute top-9 left-[16.67%] right-[16.67%] h-px"
                   style={{ background: 'linear-gradient(to right, #490f42, #6b1f5a, #4de2e4)' }}
                 />
                 {/* Soft glow version of the line */}
                 <div
-                  className="absolute top-9 left-[12.5%] right-[12.5%] h-px blur-sm opacity-60 hidden dark:block"
+                  className="absolute top-9 left-[16.67%] right-[16.67%] h-px blur-sm opacity-60 hidden dark:block"
                   style={{ background: 'linear-gradient(to right, #490f42, #6b1f5a, #4de2e4)' }}
                 />
 
-                <div className="grid grid-cols-4 gap-0">
+                <div className="grid grid-cols-3 gap-0">
                   {pipeline.map((stage, i) => {
                     const Icon = stage.icon
                     return (
@@ -178,6 +171,34 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Pipeline Stats — separate from the 3-step flow */}
+          <div className="mb-16">
+            <Link
+              href="/pipeline"
+              className="group relative block overflow-hidden rounded-xl border border-zinc-200/80 dark:border-[#2a2a40] bg-white dark:bg-[#16162a] p-5 transition-all duration-300 hover:border-nodiac-secondary/30 dark:hover:border-nodiac-secondary/30 hover:shadow-lg dark:hover:shadow-[0_4px_24px_rgba(77,226,228,0.06)]"
+            >
+              {/* Subtle gradient accent bar */}
+              <div
+                className="absolute top-0 left-0 right-0 h-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(to right, #490f42, #6b1f5a, #4de2e4)' }}
+              />
+              <div className="flex items-center gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-nodiac-primary/8 dark:bg-nodiac-primary/15 group-hover:bg-nodiac-secondary/10 dark:group-hover:bg-nodiac-secondary/10 transition-colors duration-300">
+                  <GitBranch className="w-4.5 h-4.5 text-nodiac-primary/60 dark:text-nodiac-soft-orchid/70 group-hover:text-nodiac-secondary transition-colors duration-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[15px] font-semibold text-zinc-900 dark:text-white group-hover:text-nodiac-secondary/90 dark:group-hover:text-nodiac-secondary transition-colors duration-300">
+                    Pipeline Stats
+                  </div>
+                  <div className="text-[13px] text-zinc-400 dark:text-zinc-500 mt-0.5">
+                    Full-funnel metrics from screening through construction
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-nodiac-secondary group-hover:translate-x-0.5 transition-all duration-300 flex-shrink-0" />
+              </div>
+            </Link>
           </div>
 
           {/* Utilities - minimal row at bottom */}
