@@ -8,7 +8,8 @@ import { PHASES } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { FilterBar } from './FilterBar'
 import { SiteRow } from './SiteRow'
-import { ToastContainer, showToast } from './Toast'
+import { AddSiteModal } from './AddSiteModal'
+import { ToastContainer } from './Toast'
 
 type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'asset_owner_name' | 'utility_name' | 'construction_ready' | 'next_step'
 type SortDir = 'asc' | 'desc'
@@ -32,8 +33,6 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [showAddSite, setShowAddSite] = useState(false)
-  const [newSiteName, setNewSiteName] = useState('')
-  const [adding, setAdding] = useState(false)
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -134,29 +133,6 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
   }
 
-  async function handleAddSite() {
-    if (!newSiteName.trim()) return
-    setAdding(true)
-    try {
-      const { createClient } = await import('@/lib/supabase/client')
-      const supabase = createClient()
-      const { data, error } = await (supabase as any)
-        .from('tracker_sites')
-        .insert({ name: newSiteName.trim(), priority: 'Lead' })
-        .select('id')
-        .single()
-
-      if (error) throw error
-      setShowAddSite(false)
-      setNewSiteName('')
-      router.push(`/tracker/${data.id}`)
-    } catch {
-      showToast('Failed to create site', 'error')
-    } finally {
-      setAdding(false)
-    }
-  }
-
   function SortHeader({ label, sortId, className }: { label: string; sortId: SortKey; className?: string }) {
     return (
       <th
@@ -236,37 +212,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
       </div>
 
       {showAddSite && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-xl p-6 w-full max-w-md shadow-2xl">
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Add New Site</h3>
-            <input
-              type="text"
-              placeholder="Site name"
-              value={newSiteName}
-              onChange={e => setNewSiteName(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && newSiteName.trim()) handleAddSite() }}
-              autoFocus
-              className="w-full px-3 py-2 rounded-lg text-[14px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-nodiac-secondary mb-4"
-            />
-            <div className="flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => { setShowAddSite(false); setNewSiteName('') }}
-                className="px-4 py-2 rounded-lg text-[13px] font-medium text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleAddSite}
-                disabled={!newSiteName.trim() || adding}
-                className="px-4 py-2 rounded-lg text-[13px] font-medium bg-nodiac-secondary text-nodiac-primary-dark hover:bg-nodiac-secondary/80 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {adding ? 'Creating...' : 'Create Site'}
-              </button>
-            </div>
-          </div>
-        </div>
+        <AddSiteModal onClose={() => setShowAddSite(false)} />
       )}
 
       <ToastContainer />
