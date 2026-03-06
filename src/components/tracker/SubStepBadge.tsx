@@ -129,7 +129,7 @@ function SubStepTooltip({
   return createPortal(
     <div
       ref={tooltipRef}
-      className="fixed z-[9999] py-1.5 px-1 bg-white dark:bg-[#1c1c34] border border-zinc-200 dark:border-[#2a2a40] rounded-lg shadow-lg shadow-black/10 dark:shadow-black/40 min-w-[180px] max-w-[240px]"
+      className="fixed z-[9999] py-1.5 px-1 bg-white dark:bg-[#1c1c34] border border-zinc-200 dark:border-[#2a2a40] rounded-lg shadow-lg shadow-black/10 dark:shadow-black/40 min-w-[200px] max-w-[280px]"
       style={{ top: pos.top, left: pos.left, transform: 'translateX(-50%)' }}
     >
       {checkpoints.map((cp) => {
@@ -150,7 +150,7 @@ function SubStepTooltip({
               'text-zinc-600 dark:text-zinc-400 truncate flex-1',
               isCurrent && 'font-medium text-zinc-900 dark:text-zinc-200'
             )}>
-              {cp.gridLabel}
+              {cp.label}
             </span>
             {cp.financial && amount != null && (
               <span className="text-[10px] text-zinc-400 dark:text-zinc-500 tabular-nums shrink-0">

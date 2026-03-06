@@ -25,8 +25,8 @@ export const CHECKPOINTS: Checkpoint[] = [
   { prefix: 'control_engaged', label: 'Site Control Engaged', gridLabel: 'Engaged', phase: 'site_control', financial: false },
   { prefix: 'control_secured', label: 'Site Control Secured', gridLabel: 'Secured', phase: 'site_control', financial: false },
   { prefix: 'power_capacity_check', label: 'Capacity Check Submitted', gridLabel: 'Cap Check', phase: 'power', financial: false },
-  { prefix: 'power_capacity_indication', label: 'Capacity Indication Received', gridLabel: 'Cap Received', phase: 'power', financial: false },
-  { prefix: 'power_service_request', label: 'Service Request Submitted', gridLabel: 'Svc Request', phase: 'power', financial: false },
+  { prefix: 'power_capacity_indication', label: 'Capacity Indication Received', gridLabel: 'Cap Ind', phase: 'power', financial: false },
+  { prefix: 'power_service_request', label: 'Service Request Submitted', gridLabel: 'Svc Req', phase: 'power', financial: false },
   { prefix: 'power_deposit', label: 'Deposit Paid', gridLabel: 'Deposit', phase: 'power', financial: true },
   { prefix: 'power_utility_design', label: 'Utility Design Complete', gridLabel: 'Util Design', phase: 'power', financial: false },
   { prefix: 'power_connection', label: 'Connection Agreement Signed', gridLabel: 'Connected', phase: 'power', financial: false },
@@ -40,7 +40,7 @@ export const CHECKPOINTS: Checkpoint[] = [
   { prefix: 'construction_equip_delivered', label: 'Equipment Delivered', gridLabel: 'Delivered', phase: 'construction', financial: false },
   { prefix: 'construction_complete', label: 'Construction Complete', gridLabel: 'Built', phase: 'construction', financial: false },
   { prefix: 'construction_energized', label: 'Energized', gridLabel: 'Energized', phase: 'construction', financial: false },
-  { prefix: 'construction_commissioned', label: 'Commissioning Complete', gridLabel: 'Commissioned', phase: 'construction', financial: false },
+  { prefix: 'construction_commissioned', label: 'Commissioning Complete', gridLabel: "Comm'd", phase: 'construction', financial: false },
 ]
 
 // These arrays mirror the Postgres enums — used for UI dropdowns.
