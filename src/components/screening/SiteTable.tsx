@@ -129,7 +129,7 @@ export function SiteTable({
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
-      <table className="w-full text-sm min-w-[600px] sm:min-w-0">
+      <table className="w-full text-sm min-w-[600px]">
         <thead>
           <tr className="border-b border-gray-200 dark:border-white/10 text-left">
             {hasSelection && (
