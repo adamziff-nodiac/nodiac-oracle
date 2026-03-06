@@ -1,6 +1,5 @@
 // Checkpoint definitions — the source of truth for UI rendering
 export const PHASES = [
-  { key: 'site_qualification', label: 'Site Qualification', abbrev: 'Qualify' },
   { key: 'site_control', label: 'Site Control', abbrev: 'Control' },
   { key: 'power', label: 'Power', abbrev: 'Power' },
   { key: 'permitting', label: 'Permitting', abbrev: 'Permit' },
@@ -19,8 +18,6 @@ export interface Checkpoint {
 }
 
 export const CHECKPOINTS: Checkpoint[] = [
-  { prefix: 'site_identified', label: 'Site Identified', phase: 'site_qualification', financial: false },
-  { prefix: 'site_qualified', label: 'Site Qualified', phase: 'site_qualification', financial: false },
   { prefix: 'control_engaged', label: 'Site Control Engaged', phase: 'site_control', financial: false },
   { prefix: 'control_secured', label: 'Site Control Secured', phase: 'site_control', financial: false },
   { prefix: 'power_capacity_check', label: 'Capacity Check Submitted', phase: 'power', financial: false },

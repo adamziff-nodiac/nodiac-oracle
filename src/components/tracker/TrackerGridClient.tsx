@@ -35,6 +35,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [showAddSite, setShowAddSite] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showAllSites, setShowAllSites] = useState(false)
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -59,8 +60,17 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     return [...names].sort()
   }, [sites])
 
+  // Counts for the toggle
+  const activeSiteCount = useMemo(() => sites.filter(s => s.has_activity && !s.is_archived).length, [sites])
+  const allSiteCount = useMemo(() => sites.filter(s => !s.is_archived).length, [sites])
+
   const filteredSites = useMemo(() => {
     let result = sites
+
+    // Filter by activity status
+    if (!showAllSites) {
+      result = result.filter(s => s.has_activity)
+    }
 
     // Text search across key fields
     if (searchQuery.trim()) {
@@ -131,7 +141,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
 
     return result
-  }, [sites, searchQuery, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, sortKey, sortDir])
+  }, [sites, searchQuery, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, showAllSites, sortKey, sortDir])
 
   const totalMw = useMemo(() =>
     filteredSites.reduce((sum, s) => sum + (s.mw_current ?? 0), 0),
@@ -173,11 +183,15 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         selectedUtilities={selectedUtilities}
         selectedPartners={selectedPartners}
         showArchived={showArchived}
+        showAllSites={showAllSites}
+        activeSiteCount={activeSiteCount}
+        allSiteCount={allSiteCount}
         onPriorityChange={setSelectedPriority}
         onHubsChange={setSelectedHubs}
         onUtilitiesChange={setSelectedUtilities}
         onPartnersChange={setSelectedPartners}
         onArchiveToggle={() => setShowArchived(!showArchived)}
+        onShowAllSitesToggle={() => setShowAllSites(!showAllSites)}
         siteCount={filteredSites.length}
         totalMw={totalMw}
         onAddSite={() => setShowAddSite(true)}

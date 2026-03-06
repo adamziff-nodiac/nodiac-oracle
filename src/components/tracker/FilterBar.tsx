@@ -14,11 +14,15 @@ interface FilterBarProps {
   selectedUtilities: string[]
   selectedPartners: string[]
   showArchived: boolean
+  showAllSites?: boolean
+  activeSiteCount?: number
+  allSiteCount?: number
   onPriorityChange: (p: string | null) => void
   onHubsChange: (h: string[]) => void
   onUtilitiesChange: (u: string[]) => void
   onPartnersChange: (p: string[]) => void
   onArchiveToggle: () => void
+  onShowAllSitesToggle?: () => void
   siteCount: number
   totalMw: number
   onAddSite?: () => void
@@ -33,11 +37,15 @@ export function FilterBar({
   selectedUtilities,
   selectedPartners,
   showArchived,
+  showAllSites,
+  activeSiteCount,
+  allSiteCount,
   onPriorityChange,
   onHubsChange,
   onUtilitiesChange,
   onPartnersChange,
   onArchiveToggle,
+  onShowAllSitesToggle,
   siteCount,
   totalMw,
   onAddSite,
@@ -108,6 +116,38 @@ export function FilterBar({
           />
           Archived
         </label>
+
+        {onShowAllSitesToggle && (
+          <>
+            <div className="w-px h-4 bg-zinc-200 dark:bg-[#2a2a40] mx-1" />
+            <div className="flex items-center rounded-md border border-zinc-200 dark:border-[#2a2a40] overflow-hidden">
+              <button
+                type="button"
+                onClick={showAllSites ? onShowAllSitesToggle : undefined}
+                className={cn(
+                  'px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                  !showAllSites
+                    ? 'bg-nodiac-primary text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a30]'
+                )}
+              >
+                Active{activeSiteCount != null ? ` (${activeSiteCount})` : ''}
+              </button>
+              <button
+                type="button"
+                onClick={!showAllSites ? onShowAllSitesToggle : undefined}
+                className={cn(
+                  'px-2.5 py-1 text-[11px] font-medium transition-colors cursor-pointer',
+                  showAllSites
+                    ? 'bg-nodiac-primary text-white'
+                    : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a30]'
+                )}
+              >
+                All Sites{allSiteCount != null ? ` (${allSiteCount})` : ''}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">

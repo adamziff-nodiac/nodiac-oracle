@@ -23,7 +23,8 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
       onClick={onClick}
       className={cn(
         'cursor-pointer transition-colors duration-100 hover:bg-zinc-50 dark:hover:bg-[#1a1a30] border-b border-zinc-100 dark:border-[#22223a] group',
-        site.is_archived && 'opacity-50'
+        site.is_archived && 'opacity-50',
+        !site.has_activity && !site.is_archived && 'opacity-50'
       )}
     >
       <td className="px-3 py-2 whitespace-nowrap sticky left-0 z-[5] bg-white dark:bg-[#16162a] group-hover:bg-zinc-50 dark:group-hover:bg-[#1a1a30] transition-colors duration-100">

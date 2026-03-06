@@ -16,7 +16,6 @@ interface MetricsClientProps {
 }
 
 const PHASE_BAR_COLORS: Record<string, string> = {
-  'site_qualification': 'bg-zinc-300 dark:bg-zinc-600',
   'site_control': 'bg-zinc-400 dark:bg-zinc-500',
   'power': 'bg-amber-400 dark:bg-amber-600',
   'permitting': 'bg-sky-400 dark:bg-sky-600',
