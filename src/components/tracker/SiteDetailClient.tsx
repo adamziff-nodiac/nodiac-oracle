@@ -403,7 +403,7 @@ function EditableSelect({
     return (
       <div className="flex justify-between items-center">
         <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
-        <dd>
+        <dd className="relative">
           <select
             value={value ?? ''}
             onChange={e => {
@@ -412,13 +412,16 @@ function EditableSelect({
             }}
             onBlur={() => setEditing(false)}
             autoFocus
-            className="px-2 py-1 rounded text-[13px] font-medium bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer max-w-[160px]"
+            className="px-2 py-1 pr-7 rounded text-[13px] font-medium bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer max-w-[160px] appearance-none focus:ring-2 focus:ring-nodiac-secondary/50 focus:border-nodiac-secondary/50 outline-none transition-colors"
           >
             <option value="">--</option>
             {options.map(o => (
               <option key={o.id} value={o.id}>{o.name}</option>
             ))}
           </select>
+          <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2">
+            <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
         </dd>
       </div>
     )

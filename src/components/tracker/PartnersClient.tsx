@@ -255,27 +255,37 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
             </button>
           ))}
 
-          <select
-            value={selectedStage ?? ''}
-            onChange={e => setSelectedStage(e.target.value || null)}
-            className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer"
-          >
-            <option value="">All Stages</option>
-            {RELATIONSHIP_STAGE_OPTIONS.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={selectedStage ?? ''}
+              onChange={e => setSelectedStage(e.target.value || null)}
+              className="px-2.5 py-1 pr-7 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer appearance-none focus:ring-2 focus:ring-nodiac-secondary/50 focus:border-nodiac-secondary/50 outline-none transition-colors"
+            >
+              <option value="">All Stages</option>
+              {RELATIONSHIP_STAGE_OPTIONS.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2">
+              <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </div>
+          </div>
 
-          <select
-            value={selectedHub ?? ''}
-            onChange={e => setSelectedHub(e.target.value || null)}
-            className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer"
-          >
-            <option value="">All Hubs</option>
-            {hubNames.map(h => (
-              <option key={h} value={h}>{h}</option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              value={selectedHub ?? ''}
+              onChange={e => setSelectedHub(e.target.value || null)}
+              className="px-2.5 py-1 pr-7 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer appearance-none focus:ring-2 focus:ring-nodiac-secondary/50 focus:border-nodiac-secondary/50 outline-none transition-colors"
+            >
+              <option value="">All Hubs</option>
+              {hubNames.map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2">
+              <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">

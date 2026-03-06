@@ -250,14 +250,17 @@ function ParcelDetail({
         </div>
       </div>
 
-      <div>
+      <div className="relative">
         <div className={labelClass}>Landowner</div>
-        <select value={landownerId} onChange={e => setLandownerId(e.target.value)} className={cn(inputClass, 'cursor-pointer')}>
+        <select value={landownerId} onChange={e => setLandownerId(e.target.value)} className={cn(inputClass, 'cursor-pointer appearance-none pr-7')}>
           <option value="">-- None --</option>
           {landowners.map(lo => (
             <option key={lo.id} value={lo.id}>{lo.name}</option>
           ))}
         </select>
+        <div className="pointer-events-none absolute right-1.5 bottom-1.5">
+          <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </div>
       </div>
 
       <div>
@@ -391,14 +394,17 @@ function AddParcelForm({
         </div>
       </div>
 
-      <div>
+      <div className="relative">
         <div className={labelClass}>Landowner</div>
-        <select value={landownerId} onChange={e => setLandownerId(e.target.value)} className={cn(inputClass, 'cursor-pointer')}>
+        <select value={landownerId} onChange={e => setLandownerId(e.target.value)} className={cn(inputClass, 'cursor-pointer appearance-none pr-7')}>
           <option value="">-- None --</option>
           {landowners.map(lo => (
             <option key={lo.id} value={lo.id}>{lo.name}</option>
           ))}
         </select>
+        <div className="pointer-events-none absolute right-1.5 bottom-1.5">
+          <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        </div>
       </div>
 
       <div>

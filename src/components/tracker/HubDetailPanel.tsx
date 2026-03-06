@@ -118,20 +118,23 @@ export function HubDetailPanel({ hub, isNew, onSave, onDelete, onClose }: HubDet
 
           {/* Status & Target MW */}
           <div className="grid grid-cols-2 gap-4">
-            <div>
+            <div className="relative">
               <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 Status
               </label>
               <select
                 value={draft.status ?? ''}
                 onChange={e => updateField('status', e.target.value || null)}
-                className="mt-1 w-full px-3 py-2 rounded-md text-[13px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                className="mt-1 w-full px-3 py-2 pr-8 rounded-md text-[13px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer appearance-none focus:ring-2 focus:ring-nodiac-secondary/50 focus:border-nodiac-secondary/50 outline-none transition-colors"
               >
                 <option value="">Select status...</option>
                 {HUB_STATUS_OPTIONS.map(s => (
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
+              <div className="pointer-events-none absolute right-2.5 bottom-2.5">
+                <svg className="h-4 w-4 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </div>
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">

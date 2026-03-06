@@ -335,17 +335,23 @@ function LandownerDetail({
           Site Link Details
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <div>
+          <div className="relative">
             <div className={labelClass}>Proximity</div>
-            <select value={proximity} onChange={e => setProximity(e.target.value as Proximity)} className={cn(inputClass, 'cursor-pointer')}>
+            <select value={proximity} onChange={e => setProximity(e.target.value as Proximity)} className={cn(inputClass, 'cursor-pointer appearance-none pr-7')}>
               {PROXIMITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
+            <div className="pointer-events-none absolute right-1.5 bottom-1.5">
+              <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </div>
           </div>
-          <div>
+          <div className="relative">
             <div className={labelClass}>Lease Status</div>
-            <select value={leaseStatus} onChange={e => setLeaseStatus(e.target.value as LeaseStatus)} className={cn(inputClass, 'cursor-pointer')}>
+            <select value={leaseStatus} onChange={e => setLeaseStatus(e.target.value as LeaseStatus)} className={cn(inputClass, 'cursor-pointer appearance-none pr-7')}>
               {LEASE_STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
             </select>
+            <div className="pointer-events-none absolute right-1.5 bottom-1.5">
+              <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            </div>
           </div>
         </div>
 
@@ -599,17 +605,23 @@ function AddLandownerForm({
 
       {/* Junction fields */}
       <div className="grid grid-cols-2 gap-2">
-        <div>
+        <div className="relative">
           <div className={labelClass}>Proximity</div>
-          <select value={proximity} onChange={e => setProximity(e.target.value as Proximity)} className={cn(inputClass, 'cursor-pointer')}>
+          <select value={proximity} onChange={e => setProximity(e.target.value as Proximity)} className={cn(inputClass, 'cursor-pointer appearance-none pr-7')}>
             {PROXIMITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
+          <div className="pointer-events-none absolute right-1.5 bottom-1.5">
+            <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
         </div>
-        <div>
+        <div className="relative">
           <div className={labelClass}>Lease Status</div>
-          <select value={leaseStatus} onChange={e => setLeaseStatus(e.target.value as LeaseStatus)} className={cn(inputClass, 'cursor-pointer')}>
+          <select value={leaseStatus} onChange={e => setLeaseStatus(e.target.value as LeaseStatus)} className={cn(inputClass, 'cursor-pointer appearance-none pr-7')}>
             {LEASE_STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
           </select>
+          <div className="pointer-events-none absolute right-1.5 bottom-1.5">
+            <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+          </div>
         </div>
       </div>
 

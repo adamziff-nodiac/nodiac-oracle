@@ -40,7 +40,7 @@ export function ModelSelector({ selectedModel, onModelChange, disabled }: ModelS
         disabled={disabled}
         className={cn(
           'block w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-4 py-2.5',
-          'text-sm text-gray-900 dark:text-gray-100 focus:border-nodiac-primary focus:ring-nodiac-primary',
+          'text-sm text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-nodiac-secondary/50 focus:border-nodiac-secondary/50 outline-none transition-colors',
           'disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed',
           'cursor-pointer appearance-none'
         )}

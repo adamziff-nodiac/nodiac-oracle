@@ -121,18 +121,21 @@ export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: Pha
                   </div>
 
                   {/* Owner */}
-                  <div>
+                  <div className="relative">
                     <div className="sm:hidden text-[11px] text-zinc-400">Owner</div>
                     <select
                       value={owner ?? ''}
                       onChange={e => onUpdate(checkpoint.prefix, 'owner', e.target.value || null)}
-                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 cursor-pointer appearance-none w-[80px] text-zinc-700 dark:text-zinc-300"
+                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 cursor-pointer appearance-none w-[80px] pr-5 text-zinc-700 dark:text-zinc-300 transition-colors"
                     >
                       <option value="">--</option>
                       {OWNER_OPTIONS.map(o => (
                         <option key={o} value={o}>{o}</option>
                       ))}
                     </select>
+                    <div className="pointer-events-none absolute right-0 bottom-1">
+                      <svg className="h-3.5 w-3.5 text-zinc-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                    </div>
                   </div>
 
                   {/* Amount (financial only) */}

@@ -38,6 +38,16 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
 }
 
+/* Dark mode select dropdown styling */
+.dark select {
+  color-scheme: dark;
+}
+
+.dark select option {
+  background-color: #1a1a2e;
+  color: #e5e5e7;
+}
+
 /* Custom scrollbar - Light mode */
 ::-webkit-scrollbar {
   width: 8px;
