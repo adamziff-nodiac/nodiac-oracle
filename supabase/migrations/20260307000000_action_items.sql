@@ -95,13 +95,13 @@ WHERE ts.site_notes->'next_steps' IS NOT NULL
 INSERT INTO tracker_action_items (site_id, title, status, waiting_on, notes, source)
 SELECT
   ts.id,
-  blocker->>'issue',
+  (b.val)->>'issue',
   'waiting',
-  blocker->>'contact',
-  blocker->>'issue',
+  (b.val)->>'contact',
+  (b.val)->>'issue',
   'manual'
 FROM tracker_sites ts,
-  jsonb_array_elements(ts.site_notes->'blockers') AS blocker
+  jsonb_array_elements(ts.site_notes->'blockers') AS b(val)
 WHERE ts.site_notes->'blockers' IS NOT NULL
   AND jsonb_array_length(ts.site_notes->'blockers') > 0;
 
@@ -109,13 +109,13 @@ WHERE ts.site_notes->'blockers' IS NOT NULL
 INSERT INTO tracker_action_items (site_id, title, status, waiting_on, waiting_since, notes, source)
 SELECT
   ts.id,
-  wo->>'what',
+  (w.val)->>'what',
   'waiting',
-  wo->>'who',
-  CASE WHEN wo->>'since' IS NOT NULL THEN (wo->>'since')::timestamptz ELSE NULL END,
-  wo->>'who' || ': ' || wo->>'what',
+  (w.val)->>'who',
+  CASE WHEN (w.val)->>'since' IS NOT NULL THEN ((w.val)->>'since')::timestamptz ELSE NULL END,
+  ((w.val)->>'who') || ': ' || ((w.val)->>'what'),
   'manual'
 FROM tracker_sites ts,
-  jsonb_array_elements(ts.site_notes->'waiting_on') AS wo
+  jsonb_array_elements(ts.site_notes->'waiting_on') AS w(val)
 WHERE ts.site_notes->'waiting_on' IS NOT NULL
   AND jsonb_array_length(ts.site_notes->'waiting_on') > 0;
