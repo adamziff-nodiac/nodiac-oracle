@@ -25,7 +25,9 @@ interface TrackerGridClientProps {
 export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps) {
   const router = useRouter()
   const [selectedPriority, setSelectedPriority] = useState<string | null>(null)
-  const [selectedHub, setSelectedHub] = useState<string | null>(null)
+  const [selectedHubs, setSelectedHubs] = useState<string[]>([])
+  const [selectedUtilities, setSelectedUtilities] = useState<string[]>([])
+  const [selectedPartners, setSelectedPartners] = useState<string[]>([])
   const [showArchived, setShowArchived] = useState(false)
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -44,6 +46,18 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
 
   const hubNames = useMemo(() => hubs.map(h => h.name), [hubs])
 
+  const utilityNames = useMemo(() => {
+    const names = new Set<string>()
+    sites.forEach(s => { if (s.utility_name) names.add(s.utility_name) })
+    return [...names].sort()
+  }, [sites])
+
+  const partnerNames = useMemo(() => {
+    const names = new Set<string>()
+    sites.forEach(s => { if (s.asset_owner_name) names.add(s.asset_owner_name) })
+    return [...names].sort()
+  }, [sites])
+
   const filteredSites = useMemo(() => {
     let result = sites
 
@@ -53,8 +67,14 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     if (selectedPriority) {
       result = result.filter(s => s.priority === selectedPriority)
     }
-    if (selectedHub) {
-      result = result.filter(s => s.hub_name === selectedHub)
+    if (selectedHubs.length > 0) {
+      result = result.filter(s => s.hub_name && selectedHubs.includes(s.hub_name))
+    }
+    if (selectedUtilities.length > 0) {
+      result = result.filter(s => s.utility_name && selectedUtilities.includes(s.utility_name))
+    }
+    if (selectedPartners.length > 0) {
+      result = result.filter(s => s.asset_owner_name && selectedPartners.includes(s.asset_owner_name))
     }
 
     // Sort
@@ -98,7 +118,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
 
     return result
-  }, [sites, selectedPriority, selectedHub, showArchived, sortKey, sortDir])
+  }, [sites, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, sortKey, sortDir])
 
   const totalMw = useMemo(() =>
     filteredSites.reduce((sum, s) => sum + (s.mw_current ?? 0), 0),
@@ -156,11 +176,17 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
       <FilterBar
         priorities={[]}
         hubs={hubNames}
+        utilities={utilityNames}
+        partners={partnerNames}
         selectedPriority={selectedPriority}
-        selectedHub={selectedHub}
+        selectedHubs={selectedHubs}
+        selectedUtilities={selectedUtilities}
+        selectedPartners={selectedPartners}
         showArchived={showArchived}
         onPriorityChange={setSelectedPriority}
-        onHubChange={setSelectedHub}
+        onHubsChange={setSelectedHubs}
+        onUtilitiesChange={setSelectedUtilities}
+        onPartnersChange={setSelectedPartners}
         onArchiveToggle={() => setShowArchived(!showArchived)}
         siteCount={filteredSites.length}
         totalMw={totalMw}

@@ -2,15 +2,22 @@
 
 import { cn } from '@/lib/utils'
 import { PRIORITY_OPTIONS } from '@/lib/tracker/constants'
+import { FilterDropdown } from './FilterDropdown'
 
 interface FilterBarProps {
   priorities: readonly string[]
   hubs: string[]
+  utilities: string[]
+  partners: string[]
   selectedPriority: string | null
-  selectedHub: string | null
+  selectedHubs: string[]
+  selectedUtilities: string[]
+  selectedPartners: string[]
   showArchived: boolean
   onPriorityChange: (p: string | null) => void
-  onHubChange: (h: string | null) => void
+  onHubsChange: (h: string[]) => void
+  onUtilitiesChange: (u: string[]) => void
+  onPartnersChange: (p: string[]) => void
   onArchiveToggle: () => void
   siteCount: number
   totalMw: number
@@ -19,11 +26,17 @@ interface FilterBarProps {
 
 export function FilterBar({
   hubs,
+  utilities,
+  partners,
   selectedPriority,
-  selectedHub,
+  selectedHubs,
+  selectedUtilities,
+  selectedPartners,
   showArchived,
   onPriorityChange,
-  onHubChange,
+  onHubsChange,
+  onUtilitiesChange,
+  onPartnersChange,
   onArchiveToggle,
   siteCount,
   totalMw,
@@ -63,16 +76,28 @@ export function FilterBar({
           </button>
         ))}
 
-        <select
-          value={selectedHub ?? ''}
-          onChange={e => onHubChange(e.target.value || null)}
-          className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer"
-        >
-          <option value="">All Hubs</option>
-          {hubs.map(h => (
-            <option key={h} value={h}>{h}</option>
-          ))}
-        </select>
+        <div className="w-px h-4 bg-zinc-200 dark:bg-[#2a2a40] mx-1" />
+
+        <FilterDropdown
+          label="Hub"
+          options={hubs}
+          selected={selectedHubs}
+          onChange={onHubsChange}
+        />
+        <FilterDropdown
+          label="Utility"
+          options={utilities}
+          selected={selectedUtilities}
+          onChange={onUtilitiesChange}
+        />
+        <FilterDropdown
+          label="Partner"
+          options={partners}
+          selected={selectedPartners}
+          onChange={onPartnersChange}
+        />
+
+        <div className="w-px h-4 bg-zinc-200 dark:bg-[#2a2a40] mx-1" />
 
         <label className="flex items-center gap-1.5 text-[12px] text-zinc-500 dark:text-zinc-400 cursor-pointer">
           <input
