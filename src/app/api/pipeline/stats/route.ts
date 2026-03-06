@@ -12,18 +12,23 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any
 
-    // Fetch data — gracefully handle missing tables (migration not yet applied)
-    const [portfolioSitesResult, trackerSitesResult, ippsResult, hubsResult] = await Promise.all([
-      sb.from('portfolio_sites').select('id, tier, upload_id, site_score').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
-      sb.from('tracker_site_overview').select('id, name, priority, ipp_id, ipp_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
-      sb.from('tracker_ipps').select('id, name').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
-      sb.from('tracker_regional_hubs').select('id, name, status').then((r: { data: unknown; error: unknown }) => r).catch(() => ({ data: [], error: null })),
-    ])
+    // Fetch data — gracefully handle missing tables/columns (migration not yet applied)
+    // Use safe query helper that always returns an array
+    async function safeQuery(table: string, columns: string) {
+      try {
+        const result = await sb.from(table).select(columns)
+        return result?.data ?? []
+      } catch {
+        return []
+      }
+    }
 
-    const portfolioSites = portfolioSitesResult.data ?? []
-    const trackerSites = trackerSitesResult.data ?? []
-    const ipps = ippsResult.data ?? []
-    const hubs = hubsResult.data ?? []
+    const [portfolioSites, trackerSites, ipps, hubs] = await Promise.all([
+      safeQuery('portfolio_sites', 'id, tier, upload_id, site_score'),
+      safeQuery('tracker_site_overview', 'id, name, priority, ipp_id, ipp_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude'),
+      safeQuery('tracker_ipps', 'id, name'),
+      safeQuery('tracker_regional_hubs', 'id, name, status'),
+    ])
 
     // Funnel numbers
     const screened = portfolioSites.length

@@ -55,8 +55,10 @@ CREATE INDEX IF NOT EXISTS idx_tracker_sites_ipp ON tracker_sites(ipp_id);
 
 -- ---------------------------------------------------------------------------
 -- Recreate view: tracker_site_overview (add new columns + ipp_name)
+-- Must DROP first because s.* column order changes with new tracker_sites columns
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE VIEW tracker_site_overview AS
+DROP VIEW IF EXISTS tracker_site_overview;
+CREATE VIEW tracker_site_overview AS
 SELECT
   s.*,
   h.name AS hub_name,
