@@ -14,9 +14,10 @@ export async function GET() {
 
     const [hubsResult, sitesResult] = await Promise.all([
       sb.from('tracker_regional_hubs').select('id, name, status'),
-      sb.from('tracker_site_overview').select('id, name, priority, latitude, longitude, hub_name, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase')
+      sb.from('tracker_site_overview').select('id, name, priority, latitude, longitude, hub_name, has_activity, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase')
         .not('latitude', 'is', null)
-        .not('longitude', 'is', null),
+        .not('longitude', 'is', null)
+        .eq('has_activity', true),
     ])
 
     // If tables/columns don't exist yet (migration not applied), return empty
