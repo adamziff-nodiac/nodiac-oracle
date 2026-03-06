@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { TrackerHubWithCounts, TrackerPartner, TrackerSiteOverview } from '@/lib/tracker/types'
 import { HUB_STATUS_OPTIONS } from '@/lib/tracker/constants'
 import { cn } from '@/lib/utils'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface HubDetailPanelProps {
   hub: TrackerHubWithCounts
@@ -122,16 +123,16 @@ export function HubDetailPanel({ hub, isNew, onSave, onDelete, onClose }: HubDet
               <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 Status
               </label>
-              <select
+              <StyledSelect
                 value={draft.status ?? ''}
-                onChange={e => updateField('status', e.target.value || null)}
-                className="mt-1 w-full px-3 py-2 rounded-md text-[13px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer"
-              >
-                <option value="">Select status...</option>
-                {HUB_STATUS_OPTIONS.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                onChange={(val) => updateField('status', val || null)}
+                options={[
+                  { value: '', label: 'Select status...' },
+                  ...HUB_STATUS_OPTIONS.map(s => ({ value: s, label: s })),
+                ]}
+                size="md"
+                className="mt-1 w-full"
+              />
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">

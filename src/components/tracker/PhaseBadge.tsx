@@ -6,12 +6,12 @@ const STATUS_COLORS: Record<string, string> = {
   'Not Started': 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400',
   'In Progress': 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
   'Complete': 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-200',
-  'Blocked': 'bg-red-200 text-red-800 dark:bg-red-700/50 dark:text-red-200',
+  'Waiting': 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
   'N/A': '',
 }
 
 interface PhaseBadgeProps {
-  status: 'Not Started' | 'In Progress' | 'Complete' | 'Blocked' | 'N/A'
+  status: 'Not Started' | 'In Progress' | 'Complete' | 'Waiting' | 'N/A'
   abbrev: string
 }
 
@@ -19,7 +19,7 @@ const STATUS_LABEL: Record<string, string> = {
   'Not Started': '--',
   'In Progress': 'In Progress',
   'Complete': '✓',
-  'Blocked': 'Blocked',
+  'Waiting': 'Waiting',
 }
 
 export function PhaseBadge({ status, abbrev }: PhaseBadgeProps) {

@@ -5,8 +5,8 @@ import { PerspectivesProvider } from '@/contexts/PerspectivesContext'
 import { TTSProvider } from '@/contexts/TTSContext'
 
 export const metadata: Metadata = {
-  title: 'Nodiac Oracle - Multi-Perspective AI Advisor',
-  description: 'Get insights from different industry perspectives on data centers and clean energy',
+  title: 'Nodiac Oracle',
+  description: 'Development pipeline for distributed AI compute infrastructure',
   icons: {
     icon: '/favicon.svg',
     apple: '/favicon.svg',

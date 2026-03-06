@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from './Toast'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 const PROXIMITY_OPTIONS = ['Collocated', 'Adjacent'] as const
 const PURPOSE_OPTIONS = ['DC Location', 'Fiber Route', 'Access Easement', 'Utility Easement'] as const
@@ -337,15 +338,21 @@ function LandownerDetail({
         <div className="grid grid-cols-2 gap-2">
           <div>
             <div className={labelClass}>Proximity</div>
-            <select value={proximity} onChange={e => setProximity(e.target.value as Proximity)} className={cn(inputClass, 'cursor-pointer')}>
-              {PROXIMITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <StyledSelect
+              value={proximity}
+              onChange={(val) => setProximity(val as Proximity)}
+              options={PROXIMITY_OPTIONS.map(o => ({ value: o, label: o }))}
+              size="sm"
+            />
           </div>
           <div>
             <div className={labelClass}>Lease Status</div>
-            <select value={leaseStatus} onChange={e => setLeaseStatus(e.target.value as LeaseStatus)} className={cn(inputClass, 'cursor-pointer')}>
-              {LEASE_STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <StyledSelect
+              value={leaseStatus}
+              onChange={(val) => setLeaseStatus(val as LeaseStatus)}
+              options={LEASE_STATUS_OPTIONS.map(o => ({ value: o, label: o }))}
+              size="sm"
+            />
           </div>
         </div>
 
@@ -601,15 +608,21 @@ function AddLandownerForm({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <div className={labelClass}>Proximity</div>
-          <select value={proximity} onChange={e => setProximity(e.target.value as Proximity)} className={cn(inputClass, 'cursor-pointer')}>
-            {PROXIMITY_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
+          <StyledSelect
+            value={proximity}
+            onChange={(val) => setProximity(val as Proximity)}
+            options={PROXIMITY_OPTIONS.map(o => ({ value: o, label: o }))}
+            size="sm"
+          />
         </div>
         <div>
           <div className={labelClass}>Lease Status</div>
-          <select value={leaseStatus} onChange={e => setLeaseStatus(e.target.value as LeaseStatus)} className={cn(inputClass, 'cursor-pointer')}>
-            {LEASE_STATUS_OPTIONS.map(o => <option key={o} value={o}>{o}</option>)}
-          </select>
+          <StyledSelect
+            value={leaseStatus}
+            onChange={(val) => setLeaseStatus(val as LeaseStatus)}
+            options={LEASE_STATUS_OPTIONS.map(o => ({ value: o, label: o }))}
+            size="sm"
+          />
         </div>
       </div>
 

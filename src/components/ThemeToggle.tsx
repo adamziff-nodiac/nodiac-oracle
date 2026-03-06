@@ -39,7 +39,7 @@ export function ThemeToggle() {
   if (!mounted) {
     return (
       <button
-        className="p-2 rounded-lg bg-gray-100 text-gray-600"
+        className="p-2 rounded-lg bg-white/70 dark:bg-white/[0.04] border border-gray-200/80 dark:border-white/[0.08] text-gray-500"
         aria-label="Toggle theme"
       >
         <Sun className="w-4 h-4" />
@@ -52,8 +52,8 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className={cn(
         'p-2 rounded-lg transition-colors',
-        'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300',
-        'hover:bg-gray-200 dark:hover:bg-gray-600'
+        'bg-white/70 dark:bg-white/[0.04] border border-gray-200/80 dark:border-white/[0.08] text-gray-500 dark:text-gray-400',
+        'hover:text-gray-700 dark:hover:text-gray-200'
       )}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >

@@ -55,7 +55,7 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
       {PHASES.map(phase => (
         <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
           <PhaseBadge
-            status={getPhaseStatus(site, phase.key) as 'Not Started' | 'In Progress' | 'Complete' | 'Blocked' | 'N/A'}
+            status={getPhaseStatus(site, phase.key) as 'Not Started' | 'In Progress' | 'Complete' | 'Waiting' | 'N/A'}
             abbrev={phase.abbrev}
           />
         </td>

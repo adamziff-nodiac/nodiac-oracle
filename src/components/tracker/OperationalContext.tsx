@@ -354,67 +354,16 @@ export function OperationalContext({ notes, onUpdate }: OperationalContextProps)
     onUpdate?.({ ...currentNotes, summary, updated_at: new Date().toISOString() })
   }
 
-  function updateNextSteps(next_steps: string[]) {
-    onUpdate?.({ ...currentNotes, next_steps, updated_at: new Date().toISOString() })
-  }
-
-  function updateBlockers(blockers: Array<{ issue: string; contact?: string; since?: string }>) {
-    onUpdate?.({ ...currentNotes, blockers, updated_at: new Date().toISOString() })
-  }
-
-  function updateWaitingOn(waiting_on: Array<{ who: string; what: string; since?: string }>) {
-    onUpdate?.({ ...currentNotes, waiting_on, updated_at: new Date().toISOString() })
-  }
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {/* Summary */}
-      <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
-          Summary
-        </div>
-        <EditableText
-          value={currentNotes.summary ?? ''}
-          placeholder="No summary"
-          onSave={updateSummary}
-        />
+    <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
+        Summary
       </div>
-
-      {/* Next Steps */}
-      <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
-          Next Steps
-        </div>
-        <EditableList
-          items={currentNotes.next_steps ?? []}
-          placeholder="No next steps"
-          onSave={updateNextSteps}
-        />
-      </div>
-
-      {/* Blockers */}
-      <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
-          Blockers
-        </div>
-        <EditableBlockerList
-          items={currentNotes.blockers ?? []}
-          placeholder="No blockers"
-          onSave={updateBlockers}
-        />
-      </div>
-
-      {/* Waiting On */}
-      <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
-        <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
-          Waiting On
-        </div>
-        <EditableWaitingList
-          items={currentNotes.waiting_on ?? []}
-          placeholder="Not waiting on anything"
-          onSave={updateWaitingOn}
-        />
-      </div>
+      <EditableText
+        value={currentNotes.summary ?? ''}
+        placeholder="No summary"
+        onSave={updateSummary}
+      />
     </div>
   )
 }

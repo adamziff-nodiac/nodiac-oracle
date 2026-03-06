@@ -1618,7 +1618,7 @@ export type Database = {
         | "Not Started"
         | "In Progress"
         | "Complete"
-        | "Blocked"
+        | "Waiting"
         | "N/A"
       hub_status: "Planning" | "Active Development" | "Operational"
       landowner_proximity: "Collocated" | "Adjacent"
@@ -1783,7 +1783,7 @@ export const Constants = {
         "Not Started",
         "In Progress",
         "Complete",
-        "Blocked",
+        "Waiting",
         "N/A",
       ],
       hub_status: ["Planning", "Active Development", "Operational"],

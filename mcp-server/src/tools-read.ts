@@ -363,4 +363,59 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
       return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
     }
   )
+
+  // ── list_action_items ─────────────────────────────────────────────────
+  server.tool(
+    'list_action_items',
+    'List action items with optional filters by site, assignee, or status. Returns items from the tracker_action_items_with_context view which includes site_name, hub_name, assigned_to_name, and created_by_name. Default: excludes done items unless include_done=true.',
+    {
+      site_id: z.string().uuid().optional().describe('Filter to a specific site'),
+      assigned_to: z.string().uuid().optional().describe('Filter by assigned team member UUID. Use list_team_members to find it.'),
+      status: z.enum(['next', 'waiting', 'done']).optional().describe('Filter by status: next, waiting, done'),
+      include_done: z.boolean().optional().describe('Include done items (default: false)'),
+    },
+    READ_ONLY,
+    async ({ site_id, assigned_to, status, include_done }) => {
+      const supabase = getClient()
+      let query = supabase
+        .from('tracker_action_items_with_context')
+        .select('*')
+        .order('flagged', { ascending: false })
+        .order('created_at', { ascending: true })
+
+      if (site_id) {
+        query = query.eq('site_id', site_id)
+      }
+      if (assigned_to) {
+        query = query.eq('assigned_to', assigned_to)
+      }
+      if (status) {
+        query = query.eq('status', status)
+      } else if (!include_done) {
+        query = query.neq('status', 'done')
+      }
+
+      const { data, error } = await query
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
+    }
+  )
+
+  // ── list_team_members ─────────────────────────────────────────────────
+  server.tool(
+    'list_team_members',
+    'List all team members. Returns id, display_name, email, user_id, and created_at. Use this to find team member UUIDs for assigning action items.',
+    {},
+    READ_ONLY,
+    async () => {
+      const supabase = getClient()
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('id, display_name, email, user_id, created_at')
+        .order('display_name')
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
+    }
+  )
 }

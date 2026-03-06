@@ -186,7 +186,7 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
             Upload a CSV of potential sites to score them against our regional hub criteria
           </p>
           <div className="flex justify-center gap-3 mt-4">
-            <a href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">&larr; Regional Hubs</a>
+            <a href="/plan" className="text-sm text-nodiac-secondary hover:underline">&larr; Plan</a>
             <span className="text-gray-400 dark:text-gray-600">&middot;</span>
             <a href="/scoring" className="text-sm text-nodiac-secondary hover:underline">Scoring Methodology</a>
           </div>
@@ -352,12 +352,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           </p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
-          <SearchInput
-            value={searchQuery}
-            onChange={setSearchQuery}
-            placeholder="Search sites..."
-            className="w-40 sm:w-52"
-          />
           <a
             href="/scoring#site-screening"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -557,8 +551,16 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
         </div>
       )}
 
-      {/* Table */}
+      {/* Search + Table */}
       <div className="px-4 sm:px-6 py-4">
+        <div className="mb-3">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search sites..."
+            className="w-full sm:w-64"
+          />
+        </div>
         <SiteTable
           sites={sites}
           selectedSiteId={selectedSiteId}

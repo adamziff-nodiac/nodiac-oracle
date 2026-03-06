@@ -8,6 +8,7 @@ import { PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS } from '@/lib/tracker/
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { PartnerDetailPanel } from './PartnerDetailPanel'
 import { ToastContainer, showToast } from './Toast'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 import { cn } from '@/lib/utils'
 
 const STAGE_COLORS: Record<string, string> = {
@@ -255,27 +256,27 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
             </button>
           ))}
 
-          <select
+          <StyledSelect
             value={selectedStage ?? ''}
-            onChange={e => setSelectedStage(e.target.value || null)}
-            className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer"
-          >
-            <option value="">All Stages</option>
-            {RELATIONSHIP_STAGE_OPTIONS.map(s => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedStage(val || null)}
+            options={[
+              { value: '', label: 'All Stages' },
+              ...RELATIONSHIP_STAGE_OPTIONS.map(s => ({ value: s, label: s })),
+            ]}
+            size="sm"
+            variant="ghost"
+          />
 
-          <select
+          <StyledSelect
             value={selectedHub ?? ''}
-            onChange={e => setSelectedHub(e.target.value || null)}
-            className="px-2.5 py-1 rounded-md text-[12px] font-medium bg-transparent border border-zinc-300 dark:border-[#2a2a40] text-zinc-700 dark:text-zinc-300 cursor-pointer"
-          >
-            <option value="">All Hubs</option>
-            {hubNames.map(h => (
-              <option key={h} value={h}>{h}</option>
-            ))}
-          </select>
+            onChange={(val) => setSelectedHub(val || null)}
+            options={[
+              { value: '', label: 'All Hubs' },
+              ...hubNames.map(h => ({ value: h, label: h })),
+            ]}
+            size="sm"
+            variant="ghost"
+          />
         </div>
 
         <div className="flex items-center gap-4">
@@ -313,7 +314,7 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
             {filteredPartners.map(partner => (
               <tr
                 key={partner.id}
-                onClick={() => { setIsCreating(false); setSelectedPartner(partner) }}
+                onClick={() => router.push(`/tracker/partners/${partner.id}`)}
                 className="border-t border-zinc-100 dark:border-[#1e1e36] hover:bg-zinc-50 dark:hover:bg-[#1a1a30] cursor-pointer transition-colors duration-100"
               >
                 <td className="px-3 py-3 text-[13px] font-medium text-zinc-900 dark:text-zinc-100 whitespace-nowrap">

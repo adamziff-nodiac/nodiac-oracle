@@ -9,7 +9,7 @@ const STATUS_BG: Record<string, string> = {
   'Not Started': 'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-500',
   'In Progress': 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
   'Complete': 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400',
-  'Blocked': 'bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400',
+  'Waiting': 'bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400',
   'N/A': 'bg-transparent text-zinc-400 dark:text-zinc-600',
 }
 
@@ -17,7 +17,7 @@ const DOT_COLORS: Record<string, string> = {
   'Not Started': 'bg-zinc-400',
   'In Progress': 'bg-amber-500',
   'Complete': 'bg-emerald-500',
-  'Blocked': 'bg-red-500',
+  'Waiting': 'bg-amber-500',
   'N/A': 'bg-zinc-300 dark:bg-zinc-600',
 }
 

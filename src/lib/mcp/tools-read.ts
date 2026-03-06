@@ -12,7 +12,7 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
   // ── list_sites ──────────────────────────────────────────────────────
   server.tool(
     'list_sites',
-    'List all tracker sites with phase statuses and metrics. Returns: id, name, hub, priority, MW, utility, asset_owner, phase statuses (Not Started/In Progress/Complete/Blocked), construction_ready flag, and capex. Use get_site for full checkpoint details on a single site.',
+    'List all tracker sites with phase statuses and metrics. Returns: id, name, hub, priority, MW, utility, asset_owner, phase statuses (Not Started/In Progress/Complete/Waiting), construction_ready flag, and capex. Use get_site for full checkpoint details on a single site.',
     {
       hub_name: z.string().optional().describe('Filter by regional hub name (partial match)'),
       priority: z.string().optional().describe('Filter by priority: Lead, Active, Pipeline, On Hold, Deprioritized'),
@@ -138,7 +138,7 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
 
       const blockedSites = sites.filter((s: Record<string, unknown>) => {
         const phases = ['site_qualification_phase', 'site_control_phase', 'power_phase', 'permitting_phase', 'fiber_phase', 'engineering_phase', 'construction_phase']
-        return phases.some(p => (s as Record<string, unknown>)[p] === 'Blocked')
+        return phases.some(p => (s as Record<string, unknown>)[p] === 'Waiting')
       })
 
       const totalCapex = sites.reduce((sum: number, s: Record<string, unknown>) =>

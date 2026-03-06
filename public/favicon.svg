@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#490f42"/>
-      <stop offset="100%" stop-color="#4de2e4"/>
-    </linearGradient>
-  </defs>
-  <rect width="32" height="32" rx="6" fill="url(#bg)"/>
-  <text x="16" y="23" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="700" fill="white" text-anchor="middle">N</text>
+  <rect x="1" y="1" width="20" height="20" rx="4.5" ry="4.5" fill="none" stroke="#490f42" stroke-width="3.5"/>
+  <rect x="11" y="11" width="20" height="20" rx="4.5" ry="4.5" fill="none" stroke="#6b7280" stroke-width="3.5"/>
+  <rect x="11" y="11" width="10" height="10" rx="2" ry="2" fill="#490f42" opacity="0.85"/>
 </svg>

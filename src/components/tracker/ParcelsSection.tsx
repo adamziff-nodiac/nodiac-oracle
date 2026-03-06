@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { showToast } from './Toast'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface Parcel {
   id: string
@@ -252,12 +253,15 @@ function ParcelDetail({
 
       <div>
         <div className={labelClass}>Landowner</div>
-        <select value={landownerId} onChange={e => setLandownerId(e.target.value)} className={cn(inputClass, 'cursor-pointer')}>
-          <option value="">-- None --</option>
-          {landowners.map(lo => (
-            <option key={lo.id} value={lo.id}>{lo.name}</option>
-          ))}
-        </select>
+        <StyledSelect
+          value={landownerId}
+          onChange={setLandownerId}
+          options={[
+            { value: '', label: '-- None --' },
+            ...landowners.map(lo => ({ value: lo.id, label: lo.name })),
+          ]}
+          size="sm"
+        />
       </div>
 
       <div>
@@ -393,12 +397,15 @@ function AddParcelForm({
 
       <div>
         <div className={labelClass}>Landowner</div>
-        <select value={landownerId} onChange={e => setLandownerId(e.target.value)} className={cn(inputClass, 'cursor-pointer')}>
-          <option value="">-- None --</option>
-          {landowners.map(lo => (
-            <option key={lo.id} value={lo.id}>{lo.name}</option>
-          ))}
-        </select>
+        <StyledSelect
+          value={landownerId}
+          onChange={setLandownerId}
+          options={[
+            { value: '', label: '-- None --' },
+            ...landowners.map(lo => ({ value: lo.id, label: lo.name })),
+          ]}
+          size="sm"
+        />
       </div>
 
       <div>

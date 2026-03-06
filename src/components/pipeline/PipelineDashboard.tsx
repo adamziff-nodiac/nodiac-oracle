@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
-import { Loader2, Map as MapIcon, BarChart3, Users, Zap } from 'lucide-react'
+import { Loader2, Map as MapIcon, Users, Zap } from 'lucide-react'
 import { FunnelChart } from './FunnelChart'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { cn } from '@/lib/utils'
@@ -17,7 +17,7 @@ interface FunnelData {
 
 interface StatsData {
   total_mw: number
-  avg_score: number | null
+
   partner_count: number
   hub_count: number
 }
@@ -90,7 +90,6 @@ export function PipelineDashboard() {
 
   const statCards = [
     { label: 'Total MW', value: stats.total_mw ? `${stats.total_mw.toFixed(0)}` : '0', icon: Zap },
-    { label: 'Avg Score', value: stats.avg_score ? stats.avg_score.toFixed(1) : '\u2014', icon: BarChart3 },
     { label: 'Partners', value: stats.partner_count.toString(), icon: Users },
     { label: 'Hubs', value: stats.hub_count.toString(), icon: MapIcon },
   ]
@@ -106,7 +105,7 @@ export function PipelineDashboard() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         {statCards.map(card => {
           const Icon = card.icon
           return (
@@ -191,14 +190,14 @@ export function PipelineDashboard() {
           View Tracker &rarr;
         </Link>
         <Link
-          href="/regional-hubs"
+          href="/plan"
           className={cn(
             'px-4 py-2 rounded-lg text-sm font-medium transition-colors',
             'bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10',
             'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-white/10'
           )}
         >
-          Regional Hubs &rarr;
+          Plan &rarr;
         </Link>
       </div>
     </div>

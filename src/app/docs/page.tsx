@@ -98,6 +98,7 @@ const TOC = [
   { id: 'limitations', label: 'Assumptions & Limitations' },
   { id: 'roadmap', label: 'Planned Improvements' },
   { id: 'technical', label: 'Technical Reference' },
+  { id: 'todo-system', label: 'Action Items & Todo' },
 ]
 
 /* ── Page ──────────────────────────────────────────── */
@@ -132,8 +133,8 @@ export default function DocsPage() {
             ))}
           </div>
           <div className="mt-8 pt-6 border-t border-gray-200 dark:border-white/10 space-y-2">
-            <Link href="/regional-hubs" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
-              <ArrowLeft className="w-3.5 h-3.5" /> Regional Hubs
+            <Link href="/plan" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
+              <ArrowLeft className="w-3.5 h-3.5" /> Plan
             </Link>
             <Link href="/screening" className="flex items-center gap-2 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80">
               <ArrowLeft className="w-3.5 h-3.5" /> Site Screening
@@ -146,7 +147,7 @@ export default function DocsPage() {
           {/* Title */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <Link href="/regional-hubs" className="text-sm text-nodiac-secondary hover:underline">Hubs</Link>
+              <Link href="/plan" className="text-sm text-nodiac-secondary hover:underline">Plan</Link>
               <span className="text-gray-600">/</span>
               <Link href="/screening" className="text-sm text-nodiac-secondary hover:underline">Screening</Link>
               <span className="text-gray-600">/</span>
@@ -1133,6 +1134,90 @@ src/hooks/useWeightedScores.ts        # Client-side composite scoring + quantile
                 </ol>
               </div>
             </details>
+          </Section>
+
+          {/* ── Action Items & Todo System ─────────────── */}
+          <Section id="todo-system" title="Action Items & Todo">
+            <SubSection title="What is /todo?">
+              <p>
+                Your daily dashboard. Shows what you need to do, what you&apos;re waiting on, and what needs attention.
+                Inspired by the Getting Things Done (GTD) framework. Every action item is tied to a site &mdash;
+                general tasks live elsewhere (Notion, etc.).
+              </p>
+            </SubSection>
+
+            <SubSection title="Statuses">
+              <DataBox>
+                <p><Label>Next</Label> &mdash; You can act on this right now. Nothing is blocking it. Example: &quot;Call Xcel to verify interconnection capacity.&quot;</p>
+                <p><Label>Waiting</Label> &mdash; The ball is in someone else&apos;s court. Always says WHO you&apos;re waiting on and SINCE WHEN. Example: &quot;Waiting on County Planning &mdash; zoning variance decision &mdash; since Feb 3.&quot;</p>
+                <p><Label>Done</Label> &mdash; Completed. Automatically timestamped when you mark it done.</p>
+              </DataBox>
+              <p>
+                There is no &quot;Blocked&quot; status. If something is blocked by an external condition, mark it as <strong>Waiting</strong> with
+                a note explaining the blocker. &quot;Blocked&quot; felt too heavy for normal process delays like waiting for a utility response.
+              </p>
+            </SubSection>
+
+            <SubSection title="Flags">
+              <p>
+                Flag an item when it&apos;s your top priority RIGHT NOW. Flagged items pin to the top of your list.
+                There are no priority levels (high/medium/low) &mdash; just flagged or not. Re-evaluate flags during your weekly review.
+              </p>
+            </SubSection>
+
+            <SubSection title="Age-Based Urgency">
+              <p>
+                Most action items don&apos;t have real deadlines. Fake due dates (&quot;I&apos;ll do this by Friday&quot;) clutter the system
+                and kill trust. Instead, urgency comes from how long an item has been sitting:
+              </p>
+              <DataBox>
+                <p><span className="text-emerald-500 font-semibold">Green (&lt; 7 days)</span> &mdash; Fresh, no rush</p>
+                <p><span className="text-amber-500 font-semibold">Amber (7&ndash;14 days)</span> &mdash; Getting stale, review it</p>
+                <p><span className="text-red-500 font-semibold">Red (&gt; 14 days)</span> &mdash; This has been sitting too long. Either do it, delegate it, or drop it.</p>
+              </DataBox>
+            </SubSection>
+
+            <SubSection title="Hard Deadlines">
+              <p>
+                Only for real, externally-imposed deadlines: permit hearing dates, lease expirations, regulatory filing windows,
+                interconnection application deadlines. If you&apos;re tempted to add a deadline, ask: &quot;Will something bad happen if
+                this date passes?&quot; If no, don&apos;t add one.
+              </p>
+            </SubSection>
+
+            <SubSection title="Defer Until">
+              <p>
+                If an item isn&apos;t actionable until a future date (e.g., &quot;Follow up after March board meeting&quot;), set a defer
+                date. The item disappears from your working views until that date, then reappears automatically.
+              </p>
+            </SubSection>
+
+            <SubSection title="Waiting For">
+              <p>
+                Track every external dependency. Always include WHO and SINCE WHEN. During weekly review, scan for items
+                waiting &gt; 14 days and create a follow-up action (&quot;Nudge County Planning about zoning variance&quot;).
+              </p>
+            </SubSection>
+
+            <SubSection title="Needs Attention">
+              <p>
+                The system automatically flags: sites with no next action defined (stalled), items sitting &gt; 14 days,
+                and hard deadlines within 14 days. These aren&apos;t stored &mdash; they&apos;re computed fresh each time.
+              </p>
+            </SubSection>
+
+            <SubSection title="Weekly Review">
+              <p>
+                Once a week (Wednesday mornings recommended), spend 30&ndash;60 minutes:
+              </p>
+              <ol className="list-decimal list-inside space-y-1.5 ml-2 text-sm">
+                <li>Process your inbox &mdash; any uncaptured action items from calls/emails this week?</li>
+                <li>Scan stalled sites &mdash; define a next action for each, or archive the site</li>
+                <li>Review waiting items &mdash; anything stale? Create follow-up actions.</li>
+                <li>Review flags &mdash; still your top priorities? Remove stale flags, add new ones.</li>
+                <li>Check upcoming hard deadlines (next 30 days)</li>
+              </ol>
+            </SubSection>
           </Section>
         </main>
       </div>
