@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseFleetCSV } from '@/lib/csv/parse-fleet-csv'
+import { lookupUtilityByPoint } from '@/lib/geo/utility-territories'
 
 /** Find a value in raw_data by checking multiple possible key names (case-insensitive). */
 function findRawValue(rd: Record<string, string>, keys: string[]): string | undefined {
@@ -82,8 +83,93 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
+    // Auto-assign utilities based on HIFLD territory lookup
+    const inserted = (insertedSites ?? []) as Array<{ id: string; name: string }>
+    if (inserted.length > 0) {
+      // Re-fetch the inserted sites to get their coordinates
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: sitesWithCoords } = await (supabase as any)
+        .from('tracker_sites')
+        .select('id, name, latitude, longitude, utility_id')
+        .in('id', inserted.map(s => s.id))
+
+      const toAssign = (sitesWithCoords ?? []).filter(
+        (s: { latitude: number | null; longitude: number | null; utility_id: string | null }) =>
+          s.latitude != null && s.longitude != null && !s.utility_id
+      )
+
+      // Fetch existing partners for matching
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: allPartners } = await (supabase as any)
+        .from('tracker_power_partners')
+        .select('id, name')
+
+      const partnerByName = new Map<string, string>(
+        (allPartners ?? []).map((p: { id: string; name: string }) => [p.name.toLowerCase(), p.id])
+      )
+
+      for (const site of toAssign) {
+        try {
+          const territory = await lookupUtilityByPoint(site.latitude, site.longitude)
+          if (!territory) continue
+
+          const hifldName = territory.name
+          let utilityPartnerId = partnerByName.get(hifldName.toLowerCase())
+
+          // Try fuzzy match
+          if (!utilityPartnerId) {
+            const normalized = (s: string) =>
+              s.toLowerCase().replace(/\b(inc|llc|co|corp|cooperative|coop|electric|energy|power|of|the)\b/g, '').replace(/[^a-z0-9]/g, '')
+            const hifldNorm = normalized(hifldName)
+            for (const [name, id] of partnerByName) {
+              if (normalized(name) === hifldNorm) {
+                utilityPartnerId = id
+                break
+              }
+            }
+          }
+
+          // Create new partner if needed
+          if (!utilityPartnerId) {
+            const displayName = hifldName.toLowerCase().split(/\s+/).map((w, i) => {
+              const skip = ['of', 'the', 'and', 'for', 'in', 'at', 'by', 'to', 'or', 'an', 'a', 'co', 'inc', 'llc']
+              if (i > 0 && skip.includes(w)) return w
+              return w.charAt(0).toUpperCase() + w.slice(1)
+            }).join(' ')
+
+            const typeMap: Record<string, string> = {
+              'INVESTOR OWNED': 'IOU',
+              'COOPERATIVE': 'Distribution Co-op',
+              'MUNICIPAL': 'Municipal Utility',
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: newPartner } = await (supabase as any)
+              .from('tracker_power_partners')
+              .insert({ name: displayName, type: typeMap[territory.type] ?? null })
+              .select('id')
+              .single()
+
+            if (newPartner) {
+              utilityPartnerId = newPartner.id
+              partnerByName.set(hifldName.toLowerCase(), newPartner.id)
+            }
+          }
+
+          if (utilityPartnerId) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await (supabase as any)
+              .from('tracker_sites')
+              .update({ utility_id: utilityPartnerId })
+              .eq('id', site.id)
+          }
+        } catch {
+          // Non-fatal — site was created, utility just wasn't assigned
+        }
+      }
+    }
+
     // Build a virtual "upload" identifier for the client flow
-    // Use a deterministic ID based on upload name + timestamp
     const uploadId = `upload_${Date.now()}`
 
     return NextResponse.json({
@@ -91,7 +177,7 @@ export async function POST(request: NextRequest) {
       upload_name: name,
       site_count: parsedSites.length,
       partner_id: partnerId,
-      site_names: (insertedSites ?? []).map((s: { name: string }) => s.name),
+      site_names: inserted.map(s => s.name),
     })
   } catch (err) {
     return NextResponse.json(
