@@ -14,6 +14,12 @@ interface PromoteSitesModalProps {
   onPromoted: () => void
 }
 
+const selectClass = cn(
+  'mt-1 w-full rounded-lg border px-3 py-2 text-sm transition-colors',
+  'border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800',
+  'text-gray-900 dark:text-white cursor-pointer'
+)
+
 export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesModalProps) {
   const [hubs, setHubs] = useState<Hub[]>([])
   const [partners, setPartners] = useState<Partner[]>([])
@@ -63,17 +69,17 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-md mx-4 p-6"
+        className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-white/10 shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
             Add to Pipeline
           </h3>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10">
-            <X className="w-4 h-4 text-gray-500" />
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 min-h-[44px] min-w-[44px] flex items-center justify-center">
+            <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
@@ -85,7 +91,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
             </p>
             <button
               onClick={onClose}
-              className="w-full py-2 rounded-lg bg-nodiac-secondary text-nodiac-dark text-sm font-semibold hover:bg-nodiac-secondary/90 transition-colors"
+              className="w-full py-2.5 rounded-lg bg-nodiac-secondary text-nodiac-dark text-sm font-semibold hover:bg-nodiac-secondary/90 transition-colors"
             >
               Done
             </button>
@@ -104,7 +110,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               <select
                 value={selectedPartner}
                 onChange={e => setSelectedPartner(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                className={selectClass}
               >
                 <option value="">None</option>
                 {partners.map(p => (
@@ -121,7 +127,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               <select
                 value={selectedHub}
                 onChange={e => setSelectedHub(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                className={selectClass}
               >
                 <option value="">None</option>
                 {hubs.map(hub => (
@@ -138,7 +144,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               <select
                 value={priority}
                 onChange={e => setPriority(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
+                className={selectClass}
               >
                 {['Lead', 'Active', 'Pipeline', 'On Hold', 'Deprioritized'].map(p => (
                   <option key={p} value={p}>{p}</option>
@@ -151,7 +157,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
             <div className="flex gap-2">
               <button
                 onClick={onClose}
-                className="flex-1 py-2 rounded-lg border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                className="flex-1 py-2.5 rounded-lg border border-gray-200 dark:border-white/10 text-sm text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
               >
                 Cancel
               </button>
@@ -159,7 +165,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
                 onClick={handlePromote}
                 disabled={loading}
                 className={cn(
-                  'flex-1 py-2 rounded-lg text-sm font-semibold transition-colors',
+                  'flex-1 py-2.5 rounded-lg text-sm font-semibold transition-colors',
                   loading
                     ? 'bg-gray-200 dark:bg-gray-700 text-gray-400'
                     : 'bg-nodiac-secondary text-nodiac-dark hover:bg-nodiac-secondary/90'
