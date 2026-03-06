@@ -35,7 +35,7 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
     <div className="max-w-xl mx-auto">
       <div
         className={`
-          relative border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer
+          relative border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all cursor-pointer
           ${dragActive
             ? 'border-nodiac-secondary bg-nodiac-secondary/5'
             : 'border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/30 bg-gray-100 dark:bg-white/5'
