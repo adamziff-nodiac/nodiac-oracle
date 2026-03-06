@@ -19,7 +19,7 @@ function getGreeting() {
   return 'Good evening'
 }
 
-export function TodoHeroWidget() {
+export function TodoHeroWidget({ compact = false }: { compact?: boolean } = {}) {
   const [stats, setStats] = useState<TodoStats | null>(null)
 
   useEffect(() => {
@@ -29,6 +29,40 @@ export function TodoHeroWidget() {
       .catch(() => {})
   }, [])
 
+  // Compact mode: inline stats next to page title, or nothing if no items
+  if (compact) {
+    if (!stats || (stats.next === 0 && stats.waiting === 0)) return null
+
+    return (
+      <div className="flex items-center gap-3 text-[12px] text-zinc-500 dark:text-zinc-400">
+        <span className="flex items-center gap-1">
+          <ListChecks className="w-3 h-3 text-nodiac-secondary" />
+          {stats.next}
+        </span>
+        <span className="flex items-center gap-1">
+          <Clock className="w-3 h-3 text-amber-500" />
+          {stats.waiting}
+        </span>
+        {stats.stalled > 0 && (
+          <span className="flex items-center gap-1">
+            <AlertTriangle className="w-3 h-3 text-red-500" />
+            {stats.stalled}
+          </span>
+        )}
+        {stats.flaggedNext && (
+          <Link
+            href="/tracker/action-items"
+            className="flex items-center gap-1 text-[11px] text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors ml-1 truncate max-w-[250px]"
+          >
+            <span className="truncate">{stats.flaggedNext.title}</span>
+            <ArrowRight className="w-3 h-3 flex-shrink-0" />
+          </Link>
+        )}
+      </div>
+    )
+  }
+
+  // Full mode: homepage hero
   if (!stats || (stats.next === 0 && stats.waiting === 0)) {
     return (
       <div className="mb-20">
@@ -74,10 +108,10 @@ export function TodoHeroWidget() {
       )}
 
       <Link
-        href="/todo"
+        href="/tracker/action-items"
         className="inline-flex items-center gap-1.5 mt-4 text-sm text-nodiac-secondary hover:text-nodiac-secondary/80 transition-colors"
       >
-        See all on /todo
+        See all action items
         <ArrowRight className="w-3.5 h-3.5" />
       </Link>
     </div>
