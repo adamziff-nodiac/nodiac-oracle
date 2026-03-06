@@ -55,6 +55,13 @@ export function PipelineDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
+  const filteredIpps = useMemo(() => {
+    const ipps = data?.ipp_breakdown ?? []
+    if (!ippSearch.trim()) return ipps
+    const q = ippSearch.toLowerCase()
+    return ipps.filter(ipp => ipp.name.toLowerCase().includes(q))
+  }, [data?.ipp_breakdown, ippSearch])
+
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -72,12 +79,6 @@ export function PipelineDashboard() {
   }
 
   const { funnel, stats, ipp_breakdown } = data
-
-  const filteredIpps = useMemo(() => {
-    if (!ippSearch.trim()) return ipp_breakdown
-    const q = ippSearch.toLowerCase()
-    return ipp_breakdown.filter(ipp => ipp.name.toLowerCase().includes(q))
-  }, [ipp_breakdown, ippSearch])
 
   const funnelStages = [
     { label: 'Screened', value: funnel.screened, color: '#c77dba' },
