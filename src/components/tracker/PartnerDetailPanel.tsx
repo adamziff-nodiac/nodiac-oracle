@@ -9,6 +9,7 @@ import { PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS } from '@/lib/tracker/
 import { showToast } from './Toast'
 import { cn } from '@/lib/utils'
 import { StyledSelect } from '@/components/ui/StyledSelect'
+import { AttioSummaryCard } from './AttioSummaryCard'
 
 interface PartnerDetailPanelProps {
   partner: TrackerPartnerWithCounts
@@ -243,13 +244,31 @@ export function PartnerDetailPanel({ partner, isNew, hubs, onSave, onDelete, onC
               placeholder="Known rate info..."
               multiline
             />
-            <DetailField
-              label="Attio Link"
-              value={draft.attio_link}
-              onChange={v => updateField('attio_link', v)}
-              placeholder="https://app.attio.com/..."
-            />
           </div>
+
+          {/* Open in Attio Button */}
+          {draft.attio_record_id && (
+            <a
+              href={`https://app.attio.com/companies/${draft.attio_record_id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-nodiac-secondary/15 text-nodiac-secondary hover:bg-nodiac-secondary/25 transition-colors w-fit"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              Open in Attio
+            </a>
+          )}
+
+          {/* Attio CRM Summary Card */}
+          {!isNew && (
+            <AttioSummaryCard
+              partnerId={partner.id}
+              attioRecordId={draft.attio_record_id}
+              relationshipStage={draft.relationship_stage}
+            />
+          )}
 
           {/* Hubs */}
           <div>

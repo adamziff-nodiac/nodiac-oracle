@@ -58,6 +58,7 @@ export interface TrackerPartner {
   rate_structure: string | null
   available_capacity: string | null
   attio_link: string | null
+  attio_record_id: string | null
   notes: Record<string, unknown> | null
   created_at: string
   updated_at: string
@@ -163,3 +164,32 @@ export interface CheckpointNote {
   updated: string
 }
 export type CheckpointNotes = Record<string, CheckpointNote>
+
+// Attio CRM Summary types
+export interface AttioContact {
+  name: string
+  title: string | null
+  email: string | null
+  connection_strength: string | null
+  last_interaction: string | null
+}
+
+export interface AttioDeal {
+  stage: string | null
+  type: string | null
+  owner: string | null
+}
+
+export interface AttioSummary {
+  available: boolean
+  company_name: string | null
+  domain: string | null
+  industry: string | null
+  connection_strength: string | null
+  strongest_connection_user: string | null
+  last_interaction: string | null
+  next_interaction: string | null
+  contacts: AttioContact[]
+  deal: AttioDeal | null
+  next_steps: string | null
+}
