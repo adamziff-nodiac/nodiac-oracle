@@ -13,6 +13,7 @@ import {
   PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS,
   HUB_STATUS_OPTIONS, ACTIVITY_SOURCE_OPTIONS,
   LANDOWNER_PROXIMITY_OPTIONS, LANDOWNER_PURPOSE_OPTIONS, LEASE_STATUS_OPTIONS,
+  ACTION_ITEM_STATUS_OPTIONS, ACTION_ITEM_SOURCE_OPTIONS,
   isFinancialCheckpoint,
 } from './constants'
 
@@ -57,9 +58,12 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       asset_owner_id: z.string().uuid().optional().describe('Asset owner partner UUID'),
       address: z.string().optional().describe('Site address'),
       ahj: z.string().optional().describe('Authority Having Jurisdiction'),
+      interconnection_voltage_kv: z.string().optional().describe('Interconnection voltage (e.g. "12.47 kV", "34.5 kV")'),
+      latitude: z.number().optional().describe('Latitude coordinate'),
+      longitude: z.number().optional().describe('Longitude coordinate'),
     },
     WRITE_CREATE,
-    async ({ name, priority, site_type, mw_current, mw_potential, regional_hub_id, utility_id, asset_owner_id, address, ahj }) => {
+    async ({ name, priority, site_type, mw_current, mw_potential, regional_hub_id, utility_id, asset_owner_id, address, ahj, interconnection_voltage_kv, latitude, longitude }) => {
       const supabase = getClient()
 
       const { data, error } = await supabase
@@ -75,6 +79,9 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
           asset_owner_id: asset_owner_id ?? null,
           address: address ?? null,
           ahj: ahj ?? null,
+          interconnection_voltage_kv: interconnection_voltage_kv ?? null,
+          latitude: latitude ?? null,
+          longitude: longitude ?? null,
         })
         .select('id, name')
         .single()
@@ -97,9 +104,11 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       available_capacity: z.string().optional().describe('Available capacity description'),
       rate_structure: z.string().optional().describe('Rate structure details'),
       notes: z.string().optional().describe('Partner notes (JSON or plain text)'),
+      attio_record_id: z.string().optional().describe('Attio CRM record ID'),
+      parent_gt_id: z.string().uuid().optional().describe('Parent G&T co-op partner UUID (for distribution co-ops)'),
     },
     WRITE_CREATE,
-    async ({ name, type, relationship_stage, available_capacity, rate_structure, notes }) => {
+    async ({ name, type, relationship_stage, available_capacity, rate_structure, notes, attio_record_id, parent_gt_id }) => {
       const supabase = getClient()
 
       const { data, error } = await supabase
@@ -111,6 +120,8 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
           available_capacity: available_capacity ?? null,
           rate_structure: rate_structure ?? null,
           notes: notes ? { summary: notes } : null,
+          attio_record_id: attio_record_id ?? null,
+          parent_gt_id: parent_gt_id ?? null,
         })
         .select('id, name')
         .single()
@@ -331,12 +342,15 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       asset_owner_id: z.string().uuid().optional().describe('Asset owner partner UUID'),
       address: z.string().optional().describe('Site address'),
       ahj: z.string().optional().describe('Authority Having Jurisdiction'),
+      interconnection_voltage_kv: z.string().optional().describe('Interconnection voltage (e.g. "12.47 kV", "34.5 kV")'),
+      latitude: z.number().optional().describe('Latitude coordinate'),
+      longitude: z.number().optional().describe('Longitude coordinate'),
       summary_note: z.string().optional().describe('Update the site summary note'),
       archive: z.boolean().optional().describe('Set true to archive, false to unarchive'),
       archive_reason: z.string().optional().describe('Reason for archiving'),
     },
     WRITE_DESTRUCTIVE,
-    async ({ site_id, name, mw_current, mw_potential, priority, site_type, regional_hub_id, utility_id, asset_owner_id, address, ahj, summary_note, archive, archive_reason }) => {
+    async ({ site_id, name, mw_current, mw_potential, priority, site_type, regional_hub_id, utility_id, asset_owner_id, address, ahj, interconnection_voltage_kv, latitude, longitude, summary_note, archive, archive_reason }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
       const changes: string[] = []
@@ -351,6 +365,9 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (asset_owner_id !== undefined) { update.asset_owner_id = asset_owner_id; changes.push('asset owner updated') }
       if (address !== undefined) { update.address = address; changes.push('address updated') }
       if (ahj !== undefined) { update.ahj = ahj; changes.push(`AHJ → ${ahj}`) }
+      if (interconnection_voltage_kv !== undefined) { update.interconnection_voltage_kv = interconnection_voltage_kv; changes.push(`voltage → ${interconnection_voltage_kv}`) }
+      if (latitude !== undefined) { update.latitude = latitude; changes.push(`lat → ${latitude}`) }
+      if (longitude !== undefined) { update.longitude = longitude; changes.push(`lng → ${longitude}`) }
 
       if (summary_note !== undefined) {
         const { data: current } = await supabase.from('tracker_sites').select('site_notes').eq('id', site_id).single()
@@ -466,10 +483,12 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       rate_structure: z.string().optional().describe('Rate structure details'),
       ix_process_notes: z.string().optional().describe('IX process notes'),
       attio_link: z.string().optional().describe('Link to Attio CRM record'),
+      attio_record_id: z.string().optional().describe('Attio CRM record ID'),
+      parent_gt_id: z.string().uuid().optional().describe('Parent G&T co-op partner UUID (for distribution co-ops)'),
       notes: z.string().optional().describe('Partner notes (replaces existing notes.summary)'),
     },
     WRITE_MUTATE,
-    async ({ partner_id, name, type, relationship_stage, loi_signed, available_capacity, rate_structure, ix_process_notes, attio_link, notes }) => {
+    async ({ partner_id, name, type, relationship_stage, loi_signed, available_capacity, rate_structure, ix_process_notes, attio_link, attio_record_id, parent_gt_id, notes }) => {
       const supabase = getClient()
       const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
       const changes: string[] = []
@@ -482,6 +501,8 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
       if (rate_structure !== undefined) { update.rate_structure = rate_structure; changes.push('rate structure updated') }
       if (ix_process_notes !== undefined) { update.ix_process_notes = ix_process_notes; changes.push('IX notes updated') }
       if (attio_link !== undefined) { update.attio_link = attio_link; changes.push('Attio link updated') }
+      if (attio_record_id !== undefined) { update.attio_record_id = attio_record_id; changes.push('Attio record ID updated') }
+      if (parent_gt_id !== undefined) { update.parent_gt_id = parent_gt_id; changes.push('parent G&T updated') }
       if (notes !== undefined) {
         const { data: current } = await supabase.from('tracker_power_partners').select('notes').eq('id', partner_id).single()
         const existing = (current?.notes as Record<string, unknown>) ?? {}
@@ -854,6 +875,151 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
 
       return {
         content: [{ type: 'text' as const, text: `Deleted parcel ${parcel_id}` }],
+      }
+    }
+  )
+
+  // ── create_action_item ─────────────────────────────────────────────
+  server.tool(
+    'create_action_item',
+    'Create a new action item (todo) for a site. Use list_team_members first to get assigned_to UUID. Titles should be concrete verb-first actions (e.g. "Call Xcel to verify capacity").',
+    {
+      site_id: z.string().uuid().describe('The site UUID this action belongs to'),
+      title: z.string().describe('Concrete action title (verb-first, e.g. "Call Xcel to verify capacity")'),
+      status: z.enum(ACTION_ITEM_STATUS_OPTIONS).optional().describe('Status: next (default), waiting, done'),
+      assigned_to: z.string().uuid().optional().describe('Team member UUID'),
+      flagged: z.boolean().optional().describe('Flag as top priority'),
+      waiting_on: z.string().optional().describe('WHO you are waiting on (for status=waiting)'),
+      waiting_since: z.string().optional().describe('When ball left your court (ISO date)'),
+      defer_until: z.string().optional().describe('Hide until this date (YYYY-MM-DD)'),
+      hard_deadline: z.string().optional().describe('Real externally-imposed deadline only (YYYY-MM-DD)'),
+      notes: z.string().optional().describe('Additional notes'),
+      source: z.enum(ACTION_ITEM_SOURCE_OPTIONS).optional().describe('Source: manual (default), ai, call'),
+    },
+    WRITE_CREATE,
+    async ({ site_id, title, status, assigned_to, flagged, waiting_on, waiting_since, defer_until, hard_deadline, notes, source }) => {
+      const supabase = getClient()
+
+      const { data, error } = await supabase
+        .from('tracker_action_items')
+        .insert({
+          site_id,
+          title,
+          status: status ?? 'next',
+          assigned_to: assigned_to ?? null,
+          flagged: flagged ?? false,
+          waiting_on: waiting_on ?? null,
+          waiting_since: waiting_since ?? (status === 'waiting' ? new Date().toISOString() : null),
+          defer_until: defer_until ?? null,
+          hard_deadline: hard_deadline ?? null,
+          notes: notes ?? null,
+          source: source ?? 'manual',
+        })
+        .select('id')
+        .single()
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      await logActivity(supabase, site_id, 'Action item created', title, getUserEmail())
+
+      return {
+        content: [{ type: 'text' as const, text: `Created action item "${title}" (${(data as Record<string, unknown>).id})` }],
+      }
+    }
+  )
+
+  // ── update_action_item ─────────────────────────────────────────────
+  server.tool(
+    'update_action_item',
+    'Update an action item. Use list_action_items to find the item ID. Automatically sets completed_at when status changes to done, and waiting_since when status changes to waiting.',
+    {
+      item_id: z.string().uuid().describe('The action item UUID'),
+      title: z.string().optional().describe('Updated title'),
+      status: z.enum(ACTION_ITEM_STATUS_OPTIONS).optional().describe('Status: next, waiting, done'),
+      assigned_to: z.string().uuid().optional().describe('Team member UUID'),
+      flagged: z.boolean().optional().describe('Flag as top priority'),
+      waiting_on: z.string().optional().describe('WHO you are waiting on'),
+      waiting_since: z.string().optional().describe('When ball left your court (ISO date)'),
+      defer_until: z.string().optional().describe('Hide until this date (YYYY-MM-DD), or empty string to clear'),
+      hard_deadline: z.string().optional().describe('Real deadline (YYYY-MM-DD), or empty string to clear'),
+      notes: z.string().optional().describe('Additional notes'),
+    },
+    WRITE_MUTATE,
+    async ({ item_id, title, status, assigned_to, flagged, waiting_on, waiting_since, defer_until, hard_deadline, notes }) => {
+      const supabase = getClient()
+      const update: Record<string, unknown> = {}
+      const changes: string[] = []
+
+      if (title !== undefined) { update.title = title; changes.push(`title → ${title}`) }
+      if (status !== undefined) {
+        update.status = status
+        changes.push(`status → ${status}`)
+        if (status === 'done') update.completed_at = new Date().toISOString()
+        if (status === 'waiting' && waiting_since === undefined) update.waiting_since = new Date().toISOString()
+        if (status === 'next') { update.completed_at = null; update.waiting_on = null; update.waiting_since = null }
+      }
+      if (assigned_to !== undefined) { update.assigned_to = assigned_to; changes.push('assignee updated') }
+      if (flagged !== undefined) { update.flagged = flagged; changes.push(`flagged → ${flagged}`) }
+      if (waiting_on !== undefined) { update.waiting_on = waiting_on; changes.push(`waiting on → ${waiting_on}`) }
+      if (waiting_since !== undefined) { update.waiting_since = waiting_since; changes.push('waiting since updated') }
+      if (defer_until !== undefined) { update.defer_until = defer_until || null; changes.push(defer_until ? `defer until → ${defer_until}` : 'defer cleared') }
+      if (hard_deadline !== undefined) { update.hard_deadline = hard_deadline || null; changes.push(hard_deadline ? `deadline → ${hard_deadline}` : 'deadline cleared') }
+      if (notes !== undefined) { update.notes = notes; changes.push('notes updated') }
+
+      if (changes.length === 0) {
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update.' }] }
+      }
+
+      const { data, error } = await supabase
+        .from('tracker_action_items')
+        .update(update)
+        .eq('id', item_id)
+        .select('id, site_id, title')
+        .single()
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      const item = data as Record<string, unknown>
+      if (item.site_id) {
+        await logActivity(supabase, item.site_id as string, 'Action item updated', `"${item.title}": ${changes.join(', ')}`, getUserEmail())
+      }
+
+      return {
+        content: [{ type: 'text' as const, text: `Updated action item "${item.title}": ${changes.join(', ')}` }],
+      }
+    }
+  )
+
+  // ── delete_action_item ─────────────────────────────────────────────
+  server.tool(
+    'delete_action_item',
+    'Delete an action item. Use list_action_items to find the item ID.',
+    {
+      item_id: z.string().uuid().describe('The action item UUID'),
+    },
+    WRITE_DESTRUCTIVE,
+    async ({ item_id }) => {
+      const supabase = getClient()
+
+      const { data: item } = await supabase
+        .from('tracker_action_items')
+        .select('id, site_id, title')
+        .eq('id', item_id)
+        .single()
+
+      const { error } = await supabase
+        .from('tracker_action_items')
+        .delete()
+        .eq('id', item_id)
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      if (item?.site_id) {
+        await logActivity(supabase, item.site_id, 'Action item deleted', `"${item.title}" removed`, getUserEmail())
+      }
+
+      return {
+        content: [{ type: 'text' as const, text: `Deleted action item "${item?.title ?? item_id}"` }],
       }
     }
   )

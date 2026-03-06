@@ -31,6 +31,8 @@ export const ACTIVITY_SOURCE_OPTIONS = ['call', 'email', 'slack', 'meeting', 'ma
 export const LANDOWNER_PROXIMITY_OPTIONS = ['Collocated', 'Adjacent'] as const
 export const LANDOWNER_PURPOSE_OPTIONS = ['DC Location', 'Fiber Route', 'Access Easement', 'Utility Easement'] as const
 export const LEASE_STATUS_OPTIONS = ['No Contact', 'Engaged', 'Amendment In Progress', 'Signed'] as const
+export const ACTION_ITEM_STATUS_OPTIONS = ['next', 'waiting', 'done'] as const
+export const ACTION_ITEM_SOURCE_OPTIONS = ['manual', 'ai', 'call'] as const
 
 export function isFinancialCheckpoint(prefix: string): boolean {
   return (FINANCIAL_CHECKPOINTS as readonly string[]).includes(prefix)

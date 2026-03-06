@@ -328,6 +328,54 @@ export function registerReadTools(server: McpServer, getClient: () => SupabaseCl
     }
   )
 
+  // ── list_action_items ──────────────────────────────────────────────
+  server.tool(
+    'list_action_items',
+    'List action items (todos) with context. Filter by site, status, or assignee. Returns title, status (next/waiting/done), site name, hub name, assigned_to, flags, age, deadline, and notes.',
+    {
+      site_id: z.string().uuid().optional().describe('Filter to a specific site'),
+      assigned_to: z.string().uuid().optional().describe('Filter by team member UUID'),
+      status: z.string().optional().describe('Comma-separated statuses: next,waiting,done (default: next,waiting)'),
+    },
+    READ_ONLY,
+    async ({ site_id, assigned_to, status }) => {
+      const supabase = getClient()
+      const statuses = (status ?? 'next,waiting').split(',').map(s => s.trim())
+
+      let query = supabase
+        .from('tracker_action_items_with_context')
+        .select('*')
+        .in('status', statuses)
+        .order('flagged', { ascending: false })
+        .order('created_at')
+
+      if (site_id) query = query.eq('site_id', site_id)
+      if (assigned_to) query = query.eq('assigned_to', assigned_to)
+
+      const { data, error } = await query
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
+    }
+  )
+
+  // ── list_team_members ─────────────────────────────────────────────
+  server.tool(
+    'list_team_members',
+    'List all team members (for assigning action items).',
+    {},
+    READ_ONLY,
+    async () => {
+      const supabase = getClient()
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('id, display_name, email')
+        .order('display_name')
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      return { content: [{ type: 'text' as const, text: JSON.stringify(data ?? [], null, 2) }] }
+    }
+  )
+
   // ── get_recent_activity ─────────────────────────────────────────────
   server.tool(
     'get_recent_activity',
