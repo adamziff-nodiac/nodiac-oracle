@@ -244,36 +244,6 @@ export async function getHubCentroids(): Promise<HubCentroid[]> {
   }).filter((h): h is HubCentroid => h !== null)
 }
 
-export async function getPromotedSitesMap(uploadId: string): Promise<Record<string, string>> {
-  const supabase = await createClient()
-
-  // Get portfolio_site_ids for this upload
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: portfolioSites, error: psError } = await (supabase as any)
-    .from('portfolio_sites')
-    .select('id')
-    .eq('upload_id', uploadId)
-
-  if (psError) throw psError
-  const psIds = ((portfolioSites ?? []) as Array<{ id: string }>).map(s => s.id)
-  if (psIds.length === 0) return {}
-
-  // Find tracker_sites that reference any of these portfolio_site_ids
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: trackerSites, error: tsError } = await (supabase as any)
-    .from('tracker_sites')
-    .select('id, portfolio_site_id')
-    .in('portfolio_site_id', psIds)
-
-  if (tsError) throw tsError
-
-  const map: Record<string, string> = {}
-  for (const ts of (trackerSites ?? []) as Array<{ id: string; portfolio_site_id: string }>) {
-    map[ts.portfolio_site_id] = ts.id
-  }
-  return map
-}
-
 // ── Action Items ──────────────────────────────────────
 
 export async function getActionItems(filters?: {

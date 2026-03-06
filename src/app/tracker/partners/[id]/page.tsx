@@ -48,27 +48,18 @@ export default async function PartnerDetailRoute({ params }: PartnerDetailPagePr
   // Fetch tracker sites linked to this partner (as utility or asset_owner)
   const trackerSites = await getPartnerSites(id)
 
-  // Try to count screening sites associated with this partner
-  // The portfolio_uploads table may have partner-linked uploads; fall back gracefully
+  // Count screening sites from tracker_sites (sites with screening_score linked to this partner)
   let screeningSiteCount = 0
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: screeningUploads } = await (supabase as any)
-      .from('portfolio_uploads')
-      .select('id')
-      .eq('partner_id', id)
-
-    if (screeningUploads && screeningUploads.length > 0) {
-      const uploadIds = (screeningUploads as Array<{ id: string }>).map(u => u.id)
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { count } = await (supabase as any)
-        .from('portfolio_sites')
-        .select('id', { count: 'exact', head: true })
-        .in('upload_id', uploadIds)
-      screeningSiteCount = count ?? 0
-    }
+    const { count } = await (supabase as any)
+      .from('tracker_sites')
+      .select('id', { count: 'exact', head: true })
+      .not('screening_score', 'is', null)
+      .or(`ipp_id.eq.${id},utility_id.eq.${id},asset_owner_id.eq.${id}`)
+    screeningSiteCount = count ?? 0
   } catch {
-    // Screening count is non-critical — partner_id column may not exist on portfolio_uploads
+    // Non-critical — screening count is best-effort
   }
 
   return (

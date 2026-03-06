@@ -13,25 +13,48 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { data: upload, error: uploadError } = await supabase
-    .from('portfolio_uploads')
-    .select('*')
-    .eq('id', id)
-    .single()
+  // Query tracker_sites filtered by partner (id is a partner UUID)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
 
-  if (uploadError || !upload) {
-    return NextResponse.json({ error: 'Upload not found' }, { status: 404 })
-  }
-
-  const { data: sites, error: sitesError } = await supabase
-    .from('portfolio_sites')
+  // Try to interpret `id` as a partner UUID
+  const { data: sites, error: sitesError } = await sb
+    .from('tracker_sites')
     .select('*')
-    .eq('upload_id', id)
-    .order('site_name')
+    .or(`ipp_id.eq.${id},utility_id.eq.${id},asset_owner_id.eq.${id}`)
+    .not('screening_score', 'is', null)
+    .order('name')
 
   if (sitesError) {
     return NextResponse.json({ error: sitesError.message }, { status: 500 })
   }
 
-  return NextResponse.json({ upload, sites })
+  // Map tracker_sites rows to PortfolioSite-compatible shape for the client
+  const mappedSites = ((sites ?? []) as Array<Record<string, unknown>>).map(s => ({
+    id: s.id,
+    upload_id: id,
+    site_name: s.name,
+    latitude: s.latitude,
+    longitude: s.longitude,
+    county: null,
+    state: null,
+    fips_code: s.fips_code,
+    raw_data: {},
+    site_score: s.screening_score,
+    tier: s.screening_tier,
+    score_breakdown: s.score_breakdown,
+    utility_type: null,
+  }))
+
+  // Build a virtual upload record
+  const upload = {
+    id,
+    user_id: user.id,
+    name: `Partner Portfolio`,
+    site_count: mappedSites.length,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  }
+
+  return NextResponse.json({ upload, sites: mappedSites })
 }

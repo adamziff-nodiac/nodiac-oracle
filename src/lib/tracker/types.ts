@@ -18,12 +18,12 @@ export interface TrackerSite {
   created_at: string
   updated_at: string
   // IPP pipeline columns
-  portfolio_site_id: string | null
   latitude: number | null
   longitude: number | null
   fips_code: string | null
   screening_score: number | null
   screening_tier: string | null
+  score_breakdown: Record<string, unknown> | null
   // Checkpoint columns: each prefix has _status, _forecast, _completed, _owner
   // Financial checkpoints also have _amount and _amount_status
   [key: string]: unknown
@@ -84,13 +84,14 @@ export interface TrackerSiteOverview extends TrackerSite {
   hub_name: string | null
   utility_name: string | null
   asset_owner_name: string | null
-  site_qualification_phase: string
   site_control_phase: string
   power_phase: string
   permitting_phase: string
   fiber_phase: string
   engineering_phase: string
   construction_phase: string
+  has_activity: boolean
+  dev_start_date: string | null
   construction_ready: boolean
   construction_ready_date: string | null
   total_capex: number

@@ -40,7 +40,6 @@ export function registerResources(server: McpServer) {
           lease_status: [...LEASE_STATUS_OPTIONS],
         },
         phases: {
-          site_qualification: ['site_identified', 'site_qualified'],
           site_control: ['control_engaged', 'control_secured'],
           power: ['power_capacity_check', 'power_capacity_indication', 'power_service_request', 'power_deposit', 'power_utility_design', 'power_connection'],
           permitting: ['permit_requirements', 'permit_approved'],

@@ -38,8 +38,7 @@ export function categorizeSite(site: TrackerSiteOverview): SiteStatusCategory {
   if (
     site.priority === 'Deprioritized' ||
     site.priority === 'On Hold' ||
-    site.is_archived === true ||
-    site.site_qualification_phase === 'Not Started'
+    site.is_archived === true
   ) {
     return 'not_developing'
   }
@@ -47,9 +46,9 @@ export function categorizeSite(site: TrackerSiteOverview): SiteStatusCategory {
   // Screened Only: has screening score but no active development phases
   if (
     site.screening_score != null &&
-    site.site_qualification_phase === 'Not Started' &&
     site.site_control_phase === 'Not Started' &&
-    site.power_phase === 'Not Started'
+    site.power_phase === 'Not Started' &&
+    !site.has_activity
   ) {
     return 'screened_only'
   }
@@ -68,10 +67,8 @@ export function categorizeSite(site: TrackerSiteOverview): SiteStatusCategory {
     return 'active_development'
   }
 
-  // Early Development: qualification or site control phases
+  // Early Development: site control phase
   if (
-    site.site_qualification_phase === 'In Progress' ||
-    site.site_qualification_phase === 'Complete' ||
     site.site_control_phase === 'In Progress' ||
     site.site_control_phase === 'Complete'
   ) {
@@ -94,8 +91,6 @@ function getCurrentPhaseLabel(site: TrackerSiteOverview): string {
   if (site.permitting_phase === 'In Progress') return 'Permitting'
   if (site.power_phase === 'In Progress') return 'Power'
   if (site.site_control_phase === 'In Progress') return 'Site Control'
-  if (site.site_qualification_phase === 'In Progress') return 'Qualification'
-  if (site.site_qualification_phase === 'Complete') return 'Qualified'
   return 'Screening'
 }
 

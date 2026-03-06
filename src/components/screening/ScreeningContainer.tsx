@@ -5,10 +5,9 @@ import Link from 'next/link'
 import { CsvUploader } from './CsvUploader'
 import { ScreeningMap } from './ScreeningMap'
 import { SiteTable, type NearestHub } from './SiteTable'
-import { PromoteSitesModal } from './PromoteSitesModal'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import type { ProgressStep } from '@/hooks/usePortfolio'
-import { RotateCcw, Check, Loader2, Info, ArrowLeft, ArrowRight } from 'lucide-react'
+import { RotateCcw, Check, Loader2, Info, ArrowLeft } from 'lucide-react'
 import { SearchInput } from '@/components/ui/SearchInput'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
 import { WeightControls } from '@/components/regional-hubs/WeightControls'
@@ -76,11 +75,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
   // Search state
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Selection state for promote flow
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const [showPromoteModal, setShowPromoteModal] = useState(false)
-  const [promotedMap, setPromotedMap] = useState<Record<string, string>>({})
-
   // Overlay data
   const [overlayHubs, setOverlayHubs] = useState<OverlayHub[]>([])
   const [overlayTrackerSites, setOverlayTrackerSites] = useState<OverlayTrackerSite[]>([])
@@ -98,15 +92,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
       })
       .catch(() => {})
   }, [state])
-
-  // Fetch promoted sites map
-  useEffect(() => {
-    if (state !== 'done' || !upload?.id || isPrebuilt) return
-    fetch(`/api/screening/promoted?upload_id=${upload.id}`)
-      .then(r => r.json())
-      .then(data => setPromotedMap(data.promoted ?? {}))
-      .catch(() => {})
-  }, [state, upload?.id, isPrebuilt])
 
   // Compute nearest hub for each site
   const nearestHubs = useMemo(() => {
@@ -146,33 +131,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
       return next
     })
   }, [])
-
-  const handleToggleSelect = useCallback((siteId: string) => {
-    setSelectedIds(prev => {
-      const next = new Set(prev)
-      if (next.has(siteId)) next.delete(siteId)
-      else next.add(siteId)
-      return next
-    })
-  }, [])
-
-  const handleSelectAll = useCallback(() => {
-    setSelectedIds(prev => {
-      if (prev.size === sites.length) return new Set()
-      return new Set(sites.map(s => s.id))
-    })
-  }, [sites])
-
-  const handlePromoted = useCallback(() => {
-    // Re-fetch promoted map
-    if (upload?.id) {
-      fetch(`/api/screening/promoted?upload_id=${upload.id}`)
-        .then(r => r.json())
-        .then(data => setPromotedMap(data.promoted ?? {}))
-        .catch(() => {})
-    }
-    setSelectedIds(new Set())
-  }, [upload?.id])
 
   // Upload phase
   if (state === 'idle' || (state === 'error' && !isPrebuilt)) {
@@ -336,8 +294,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
     okay: sites.filter(s => s.tier === 'okay').length,
     bad: sites.filter(s => s.tier === 'bad').length,
   }
-
-  const selectedSites = sites.filter(s => selectedIds.has(s.id))
 
   return (
     <div className="space-y-0">
@@ -535,22 +491,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
         />
       </div>
 
-      {/* Selection action bar */}
-      {selectedIds.size > 0 && (
-        <div className="sticky bottom-0 z-40 px-4 sm:px-6 py-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-300">
-            <strong>{selectedIds.size}</strong> site{selectedIds.size !== 1 ? 's' : ''} selected
-          </span>
-          <button
-            onClick={() => setShowPromoteModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-nodiac-secondary text-nodiac-dark text-sm font-semibold rounded-lg hover:bg-nodiac-secondary/90 transition-colors"
-          >
-            Add to Pipeline
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
-
       {/* Search + Table */}
       <div className="px-4 sm:px-6 py-4">
         <div className="mb-3">
@@ -567,23 +507,10 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           onSiteSelect={handleSiteSelect}
           countyScores={countyScores}
           citationRegistry={citationRegistry}
-          selectedIds={selectedIds}
-          onToggleSelect={handleToggleSelect}
-          onSelectAll={handleSelectAll}
-          promotedMap={promotedMap}
           nearestHubs={nearestHubs}
           searchQuery={searchQuery}
         />
       </div>
-
-      {/* Promote Modal */}
-      {showPromoteModal && (
-        <PromoteSitesModal
-          sites={selectedSites}
-          onClose={() => setShowPromoteModal(false)}
-          onPromoted={handlePromoted}
-        />
-      )}
     </div>
   )
 }
