@@ -6,7 +6,7 @@ import type { PortfolioSite } from '@/types/screening'
 import { cn } from '@/lib/utils'
 
 interface Hub { id: string; name: string }
-interface IPP { id: string; name: string }
+interface Partner { id: string; name: string }
 
 interface PromoteSitesModalProps {
   sites: PortfolioSite[]
@@ -16,9 +16,9 @@ interface PromoteSitesModalProps {
 
 export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesModalProps) {
   const [hubs, setHubs] = useState<Hub[]>([])
-  const [ipps, setIPPs] = useState<IPP[]>([])
+  const [partners, setPartners] = useState<Partner[]>([])
   const [selectedHub, setSelectedHub] = useState('')
-  const [selectedIPP, setSelectedIPP] = useState('')
+  const [selectedPartner, setSelectedPartner] = useState('')
   const [priority, setPriority] = useState('Pipeline')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -28,9 +28,9 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
     Promise.all([
       fetch('/api/tracker/hubs').then(r => r.json()).catch(() => []),
       fetch('/api/ipp').then(r => r.json()).catch(() => []),
-    ]).then(([hubData, ippData]) => {
+    ]).then(([hubData, partnerData]) => {
       setHubs(Array.isArray(hubData) ? hubData : [])
-      setIPPs(Array.isArray(ippData) ? ippData : [])
+      setPartners(Array.isArray(partnerData) ? partnerData : [])
     })
   }, [])
 
@@ -44,7 +44,7 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           portfolio_site_ids: sites.map(s => s.id),
-          ipp_id: selectedIPP || undefined,
+          partner_id: selectedPartner || undefined,
           hub_id: selectedHub || undefined,
           priority,
         }),
@@ -96,19 +96,19 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               {sites.length} site{sites.length !== 1 ? 's' : ''} selected
             </p>
 
-            {/* IPP selector */}
+            {/* Partner selector */}
             <div>
               <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                IPP
+                Partner
               </label>
               <select
-                value={selectedIPP}
-                onChange={e => setSelectedIPP(e.target.value)}
+                value={selectedPartner}
+                onChange={e => setSelectedPartner(e.target.value)}
                 className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
               >
                 <option value="">None</option>
-                {ipps.map(ipp => (
-                  <option key={ipp.id} value={ipp.id}>{ipp.name}</option>
+                {partners.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>

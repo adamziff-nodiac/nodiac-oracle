@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity, TrackerIPP } from './types'
+import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity } from './types'
 
 export async function getTrackerSites(): Promise<TrackerSiteOverview[]> {
   const supabase = await createClient()
@@ -201,58 +201,6 @@ export async function getSiteActivity(siteId: string, limit = 20): Promise<Track
   return (data ?? []) as TrackerActivity[]
 }
 
-// --- IPP Queries ---
-
-export async function getTrackerIPPs(): Promise<TrackerIPP[]> {
-  const supabase = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
-    .from('tracker_ipps')
-    .select('*')
-    .order('name')
-
-  if (error) throw error
-  return (data ?? []) as TrackerIPP[]
-}
-
-export async function getTrackerIPP(id: string): Promise<TrackerIPP | null> {
-  const supabase = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
-    .from('tracker_ipps')
-    .select('*')
-    .eq('id', id)
-    .single()
-
-  if (error) throw error
-  return data as TrackerIPP | null
-}
-
-export async function getIPPPortfolios(ippId: string) {
-  const supabase = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
-    .from('portfolio_uploads')
-    .select('*')
-    .eq('ipp_id', ippId)
-    .order('created_at', { ascending: false })
-
-  if (error) throw error
-  return data ?? []
-}
-
-export async function getIPPSites(ippId: string): Promise<TrackerSiteOverview[]> {
-  const supabase = await createClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data, error } = await (supabase as any)
-    .from('tracker_site_overview')
-    .select('*')
-    .eq('ipp_id', ippId)
-    .order('name')
-
-  if (error) throw error
-  return (data ?? []) as TrackerSiteOverview[]
-}
 
 export interface HubCentroid {
   id: string

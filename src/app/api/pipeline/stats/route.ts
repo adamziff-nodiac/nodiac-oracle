@@ -12,15 +12,12 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any
 
-    // Safe RPC helper — runs raw SQL via Supabase's rpc or falls back to safe queries
     async function safeQuery(table: string, columns: string) {
       try {
-        // Use count header to get total, but fetch all rows with pagination
         const result = await sb.from(table).select(columns, { count: 'exact' })
         if (result?.error) return []
         const total = result.count ?? result.data?.length ?? 0
         if (total <= 1000) return result.data ?? []
-        // Fetch remaining pages
         const allRows = [...(result.data ?? [])]
         let offset = 1000
         while (offset < total) {
@@ -35,10 +32,10 @@ export async function GET() {
       }
     }
 
-    const [portfolioSites, trackerSites, ipps, hubs] = await Promise.all([
+    const [portfolioSites, trackerSites, partners, hubs] = await Promise.all([
       safeQuery('portfolio_sites', 'id, tier, upload_id, site_score'),
-      safeQuery('tracker_site_overview', 'id, name, priority, ipp_id, ipp_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude'),
-      safeQuery('tracker_ipps', 'id, name'),
+      safeQuery('tracker_site_overview', 'id, name, priority, asset_owner_id, asset_owner_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude'),
+      safeQuery('tracker_power_partners', 'id, name'),
       safeQuery('tracker_regional_hubs', 'id, name, status'),
     ])
 
@@ -62,31 +59,38 @@ export async function GET() {
       ? scoredSites.reduce((sum: number, s: { site_score: number }) => sum + Number(s.site_score), 0) / scoredSites.length
       : null
 
-    // IPP breakdown
-    const uploads = await safeQuery('portfolio_uploads', 'id, ipp_id')
-    const uploadIppMap = new Map<string, string>()
-    for (const u of uploads as Array<{ id: string; ipp_id: string | null }>) {
-      if (u.ipp_id) uploadIppMap.set(u.id, u.ipp_id)
+    // Partner breakdown — match portfolio uploads to partners by name
+    const uploads = await safeQuery('portfolio_uploads', 'id, name')
+    // Build upload_id → partner_id map by matching upload name containing partner name
+    const uploadPartnerMap = new Map<string, string>()
+    for (const u of uploads as Array<{ id: string; name: string }>) {
+      const uploadName = (u.name ?? '').toLowerCase()
+      for (const p of partners as Array<{ id: string; name: string }>) {
+        if (uploadName.includes(p.name.toLowerCase())) {
+          uploadPartnerMap.set(u.id, p.id)
+          break
+        }
+      }
     }
 
-    const ippBreakdown = (ipps as Array<{ id: string; name: string }>).map(ipp => {
-      const ippPortfolioSites = portfolioSites.filter((s: { upload_id: string }) =>
-        uploadIppMap.get(s.upload_id) === ipp.id
+    const partnerBreakdown = (partners as Array<{ id: string; name: string }>).map(partner => {
+      const partnerPortfolioSites = portfolioSites.filter((s: { upload_id: string }) =>
+        uploadPartnerMap.get(s.upload_id) === partner.id
       )
-      const ippTrackerSites = trackerSites.filter((s: { ipp_id: string | null }) =>
-        s.ipp_id === ipp.id
+      const partnerTrackerSites = trackerSites.filter((s: { asset_owner_id: string | null }) =>
+        s.asset_owner_id === partner.id
       )
       return {
-        id: ipp.id,
-        name: ipp.name,
-        screened: ippPortfolioSites.length,
-        strong_fit: ippPortfolioSites.filter((s: { tier: string }) => s.tier === 'good').length,
-        in_pipeline: ippTrackerSites.length,
-        active_dev: ippTrackerSites.filter((s: { priority: string }) =>
+        id: partner.id,
+        name: partner.name,
+        screened: partnerPortfolioSites.length,
+        strong_fit: partnerPortfolioSites.filter((s: { tier: string }) => s.tier === 'good').length,
+        in_pipeline: partnerTrackerSites.length,
+        active_dev: partnerTrackerSites.filter((s: { priority: string }) =>
           s.priority === 'Lead' || s.priority === 'Active'
         ).length,
       }
-    })
+    }).filter(p => p.screened > 0 || p.in_pipeline > 0)
 
     // Hub centroids for map
     const hubCentroids = (hubs as Array<{ id: string; name: string; status: string | null }>).map(hub => {
@@ -106,8 +110,8 @@ export async function GET() {
 
     return NextResponse.json({
       funnel: { screened, strong_fit: strongFit, in_pipeline: inPipeline, active_dev: activeDev, construction_ready: constructionReady },
-      stats: { total_mw: totalMw, avg_score: avgScore, ipp_count: ipps.length, hub_count: hubs.length },
-      ipp_breakdown: ippBreakdown,
+      stats: { total_mw: totalMw, avg_score: avgScore, partner_count: partners.length, hub_count: hubs.length },
+      partner_breakdown: partnerBreakdown,
       hub_centroids: hubCentroids,
       tracker_sites: trackerSites,
     })

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { batchLookupFips } from '@/lib/geo/fips-lookup'
 import { batchCheckCoopTerritory } from '@/lib/geo/coop-territory-lookup'
-import { scoreSite, buildSiteBreakdown } from '@/lib/scoring/site-scorer'
+import { scoreSite, buildSiteBreakdown, assignPercentileTiers } from '@/lib/scoring/site-scorer'
 import { classifyUtilityType } from '@/lib/scoring/utility-classifier'
 import type { SiteScoreBreakdown } from '@/types/screening'
 import type { Json } from '@/types/database'
@@ -205,7 +205,18 @@ export async function POST(
     })
   }
 
-  // Step 6: Batch update all sites in one call
+  // Step 6: Assign percentile-based tiers across the portfolio
+  // (scoreSite only assigns placeholder tiers — real tiers are relative to the portfolio)
+  const tieredUpdates = assignPercentileTiers(updates)
+  const tieredResults = assignPercentileTiers(results)
+
+  // Copy tiers back so DB gets the real tier values
+  for (let i = 0; i < tieredUpdates.length; i++) {
+    updates[i].tier = tieredUpdates[i].tier
+    results[i].tier = tieredResults[i].tier
+  }
+
+  // Step 7: Batch update all sites in one call
   if (updates.length > 0) {
     const { error: updateError } = await supabase
       .from('portfolio_sites')

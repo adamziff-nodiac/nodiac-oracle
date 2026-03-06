@@ -4,14 +4,14 @@ import { useState, useCallback, useRef } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
 
 interface CsvUploaderProps {
-  onUpload: (file: File, ippName?: string) => void
+  onUpload: (file: File, partnerName?: string) => void
   isUploading: boolean
 }
 
 export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [ippName, setIppName] = useState('')
+  const [partnerName, setPartnerName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -29,8 +29,8 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
   }, [])
 
   const handleSubmit = useCallback(() => {
-    if (selectedFile) onUpload(selectedFile, ippName.trim() || undefined)
-  }, [selectedFile, ippName, onUpload])
+    if (selectedFile) onUpload(selectedFile, partnerName.trim() || undefined)
+  }, [selectedFile, partnerName, onUpload])
 
   return (
     <div className="max-w-xl mx-auto">
@@ -83,15 +83,15 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
             </button>
           </div>
 
-          {/* IPP Name field */}
+          {/* Partner Name field */}
           <div>
             <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              IPP Name <span className="font-normal normal-case">(optional)</span>
+              Partner Name <span className="font-normal normal-case">(optional)</span>
             </label>
             <input
               type="text"
-              value={ippName}
-              onChange={e => setIppName(e.target.value)}
+              value={partnerName}
+              onChange={e => setPartnerName(e.target.value)}
               placeholder="e.g. Greenbacker, Hexagon Energy"
               className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               onClick={e => e.stopPropagation()}

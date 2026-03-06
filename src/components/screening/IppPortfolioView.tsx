@@ -2,36 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, ExternalLink, Mail, User } from 'lucide-react'
-import type { TrackerIPP, TrackerSiteOverview } from '@/lib/tracker/types'
+import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react'
+import type { TrackerPartner, TrackerSiteOverview } from '@/lib/tracker/types'
 import type { PortfolioUpload } from '@/types/screening'
 import { cn } from '@/lib/utils'
 
-interface IppPortfolioViewProps {
-  ippId: string
+interface PartnerPortfolioViewProps {
+  partnerId: string
 }
 
-export function IppPortfolioView({ ippId }: IppPortfolioViewProps) {
-  const [ipp, setIPP] = useState<TrackerIPP | null>(null)
+export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
+  const [partner, setPartner] = useState<TrackerPartner | null>(null)
   const [portfolios, setPortfolios] = useState<PortfolioUpload[]>([])
   const [sites, setSites] = useState<TrackerSiteOverview[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetch(`/api/ipp/${ippId}`)
+    fetch(`/api/ipp/${partnerId}`)
       .then(r => {
-        if (!r.ok) throw new Error('IPP not found')
+        if (!r.ok) throw new Error('Partner not found')
         return r.json()
       })
       .then(data => {
-        setIPP(data.ipp)
+        setPartner(data.partner)
         setPortfolios(data.portfolios ?? [])
         setSites(data.sites ?? [])
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false))
-  }, [ippId])
+  }, [partnerId])
 
   if (loading) {
     return (
@@ -41,10 +41,10 @@ export function IppPortfolioView({ ippId }: IppPortfolioViewProps) {
     )
   }
 
-  if (error || !ipp) {
+  if (error || !partner) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-500 dark:text-gray-400">{error || 'IPP not found'}</p>
+        <p className="text-gray-500 dark:text-gray-400">{error || 'Partner not found'}</p>
         <Link href="/screening" className="text-sm text-nodiac-secondary hover:underline">
           &larr; Back to Screening
         </Link>
@@ -72,34 +72,21 @@ export function IppPortfolioView({ ippId }: IppPortfolioViewProps) {
             <ArrowLeft className="w-4 h-4 text-gray-500" />
           </Link>
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-            {ipp.name}
+            {partner.name}
           </h2>
         </div>
 
         <div className="flex flex-wrap gap-4 text-sm text-gray-500 dark:text-gray-400">
-          {ipp.contact_name && (
-            <span className="flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" />
-              {ipp.contact_name}
-            </span>
+          {partner.relationship_stage && (
+            <span>{partner.relationship_stage}</span>
           )}
-          {ipp.contact_email && (
-            <a href={`mailto:${ipp.contact_email}`} className="flex items-center gap-1.5 hover:text-nodiac-secondary transition-colors">
-              <Mail className="w-3.5 h-3.5" />
-              {ipp.contact_email}
-            </a>
-          )}
-          {ipp.attio_link && (
-            <a href={ipp.attio_link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-nodiac-secondary transition-colors">
+          {partner.attio_link && (
+            <a href={partner.attio_link} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-nodiac-secondary transition-colors">
               <ExternalLink className="w-3.5 h-3.5" />
               Attio
             </a>
           )}
         </div>
-
-        {ipp.notes && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{ipp.notes}</p>
-        )}
       </div>
 
       {/* Upload History */}

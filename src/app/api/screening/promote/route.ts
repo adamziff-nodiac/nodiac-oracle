@@ -10,9 +10,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { portfolio_site_ids, ipp_id, hub_id, priority } = body as {
+    const { portfolio_site_ids, partner_id, hub_id, priority } = body as {
       portfolio_site_ids: string[]
-      ipp_id?: string
+      partner_id?: string
       hub_id?: string
       priority?: string
     }
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       fips_code: site.fips_code,
       screening_score: site.site_score,
       screening_tier: site.tier,
-      ipp_id: ipp_id || null,
+      asset_owner_id: partner_id || null,
       regional_hub_id: hub_id || null,
       priority: priority || 'Pipeline',
       site_identified_status: 'Complete',

@@ -18,11 +18,11 @@ interface FunnelData {
 interface StatsData {
   total_mw: number
   avg_score: number | null
-  ipp_count: number
+  partner_count: number
   hub_count: number
 }
 
-interface IppBreakdown {
+interface PartnerBreakdown {
   id: string
   name: string
   screened: number
@@ -34,13 +34,13 @@ interface IppBreakdown {
 interface PipelineData {
   funnel: FunnelData
   stats: StatsData
-  ipp_breakdown: IppBreakdown[]
+  partner_breakdown: PartnerBreakdown[]
 }
 
 export function PipelineDashboard() {
   const [data, setData] = useState<PipelineData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [ippSearch, setIppSearch] = useState('')
+  const [partnerSearch, setPartnerSearch] = useState('')
 
   useEffect(() => {
     fetch('/api/pipeline/stats')
@@ -55,12 +55,12 @@ export function PipelineDashboard() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filteredIpps = useMemo(() => {
-    const ipps = data?.ipp_breakdown ?? []
-    if (!ippSearch.trim()) return ipps
-    const q = ippSearch.toLowerCase()
-    return ipps.filter(ipp => ipp.name.toLowerCase().includes(q))
-  }, [data?.ipp_breakdown, ippSearch])
+  const filteredPartners = useMemo(() => {
+    const partners = data?.partner_breakdown ?? []
+    if (!partnerSearch.trim()) return partners
+    const q = partnerSearch.toLowerCase()
+    return partners.filter(p => p.name.toLowerCase().includes(q))
+  }, [data?.partner_breakdown, partnerSearch])
 
   if (loading) {
     return (
@@ -78,7 +78,7 @@ export function PipelineDashboard() {
     )
   }
 
-  const { funnel, stats, ipp_breakdown } = data
+  const { funnel, stats, partner_breakdown } = data
 
   const funnelStages = [
     { label: 'Screened', value: funnel.screened, color: '#c77dba' },
@@ -91,7 +91,7 @@ export function PipelineDashboard() {
   const statCards = [
     { label: 'Total MW', value: stats.total_mw ? `${stats.total_mw.toFixed(0)}` : '0', icon: Zap },
     { label: 'Avg Score', value: stats.avg_score ? stats.avg_score.toFixed(1) : '\u2014', icon: BarChart3 },
-    { label: 'IPPs', value: stats.ipp_count.toString(), icon: Users },
+    { label: 'Partners', value: stats.partner_count.toString(), icon: Users },
     { label: 'Hubs', value: stats.hub_count.toString(), icon: MapIcon },
   ]
 
@@ -123,17 +123,17 @@ export function PipelineDashboard() {
         })}
       </div>
 
-      {/* IPP Breakdown */}
-      {ipp_breakdown.length > 0 && (
+      {/* Partner Breakdown */}
+      {partner_breakdown.length > 0 && (
         <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-              Breakdown by IPP
+              Breakdown by Partner
             </h3>
             <SearchInput
-              value={ippSearch}
-              onChange={setIppSearch}
-              placeholder="Search IPPs..."
+              value={partnerSearch}
+              onChange={setPartnerSearch}
+              placeholder="Search partners..."
               className="w-40 sm:w-52"
             />
           </div>
@@ -141,7 +141,7 @@ export function PipelineDashboard() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-200 dark:border-white/10 text-left">
-                  <th className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">IPP</th>
+                  <th className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Partner</th>
                   <th className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Screened</th>
                   <th className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">Strong Fit</th>
                   <th className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider text-right">In Pipeline</th>
@@ -149,20 +149,17 @@ export function PipelineDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredIpps.map(ipp => (
-                  <tr key={ipp.id} className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5">
+                {filteredPartners.map(partner => (
+                  <tr key={partner.id} className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5">
                     <td className="px-3 py-2.5">
-                      <Link
-                        href={`/screening/ipp/${ipp.id}`}
-                        className="text-gray-900 dark:text-white font-medium hover:text-nodiac-secondary transition-colors"
-                      >
-                        {ipp.name}
-                      </Link>
+                      <span className="text-gray-900 dark:text-white font-medium">
+                        {partner.name}
+                      </span>
                     </td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{ipp.screened}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{ipp.strong_fit}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{ipp.in_pipeline}</td>
-                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{ipp.active_dev}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{partner.screened}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{partner.strong_fit}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{partner.in_pipeline}</td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-gray-600 dark:text-gray-300">{partner.active_dev}</td>
                   </tr>
                 ))}
               </tbody>

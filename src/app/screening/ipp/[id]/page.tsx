@@ -4,8 +4,8 @@ interface PageProps {
   params: Promise<{ id: string }>
 }
 
-export default async function IppPortfolioPage({ params }: PageProps) {
+export default async function PartnerPortfolioPage({ params }: PageProps) {
   const { id } = await params
 
-  return <IppPortfolioView ippId={id} />
+  return <IppPortfolioView partnerId={id} />
 }

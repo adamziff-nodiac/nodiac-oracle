@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const name = (formData.get('name') as string) || file?.name || 'Untitled Upload'
-    const ippName = (formData.get('ipp_name') as string)?.trim() || null
+    const partnerName = (formData.get('ipp_name') as string)?.trim() || null
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -35,34 +35,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No valid sites found in CSV' }, { status: 400 })
     }
 
-    // Create or find IPP if name provided
-    let ippId: string | null = null
-    if (ippName) {
+    // Find partner by name if provided
+    let partnerId: string | null = null
+    if (partnerName) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const sb = supabase as any
-
-      // Try to find existing IPP
       const { data: existing } = await sb
-        .from('tracker_ipps')
+        .from('tracker_power_partners')
         .select('id')
-        .eq('name', ippName)
+        .ilike('name', partnerName)
         .maybeSingle()
 
       if (existing) {
-        ippId = existing.id
-      } else {
-        // Create new IPP
-        const { data: created, error: createErr } = await sb
-          .from('tracker_ipps')
-          .insert({ name: ippName })
-          .select('id')
-          .single()
-
-        if (createErr) {
-          console.error('Failed to create IPP:', createErr)
-        } else {
-          ippId = created.id
-        }
+        partnerId = existing.id
       }
     }
 
@@ -72,7 +57,6 @@ export async function POST(request: NextRequest) {
       name,
       site_count: parsedSites.length,
     }
-    if (ippId) uploadRow.ipp_id = ippId
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: upload, error: uploadError } = await (supabase as any)
@@ -113,7 +97,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       upload_id: upload.id,
       site_count: parsedSites.length,
-      ipp_id: ippId,
+      partner_id: partnerId,
     })
   } catch (err) {
     return NextResponse.json(
