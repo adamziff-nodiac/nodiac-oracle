@@ -20,7 +20,7 @@ export function Navigation() {
   const pathname = usePathname()
 
   return (
-    <nav className="flex items-center gap-1 bg-white/70 dark:bg-nodiac-dark/50 backdrop-blur-sm rounded-full px-2 py-1 border border-gray-200 dark:border-white/10">
+    <nav className="flex items-center gap-1 bg-white/70 dark:bg-nodiac-dark/50 backdrop-blur-sm rounded-full px-2 py-1 border border-gray-200 dark:border-white/10 overflow-x-auto max-w-[calc(100vw-12rem)]" style={{ scrollbarWidth: 'none' }}>
       {navItems.map((item) => {
         const isActive = pathname === item.href ||
           (item.href !== '/' && pathname.startsWith(item.href))
@@ -31,7 +31,7 @@ export function Navigation() {
             key={item.href}
             href={item.href}
             className={cn(
-              'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all',
+              'flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0',
               isActive
                 ? 'bg-nodiac-primary text-white'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
