@@ -1,5 +1,17 @@
 import type { CheckpointStatus, AmountStatus } from './constants'
 
+// IPP entity
+export interface TrackerIPP {
+  id: string
+  name: string
+  contact_name: string | null
+  contact_email: string | null
+  notes: string | null
+  attio_link: string | null
+  created_at: string
+  updated_at: string
+}
+
 // Base tracker_sites row type
 // TODO: Replace with Tables<'tracker_sites'> after `supabase gen types` includes tracker tables
 export interface TrackerSite {
@@ -17,6 +29,14 @@ export interface TrackerSite {
   archived_reason: string | null
   created_at: string
   updated_at: string
+  // IPP pipeline columns
+  portfolio_site_id: string | null
+  latitude: number | null
+  longitude: number | null
+  fips_code: string | null
+  screening_score: number | null
+  screening_tier: string | null
+  ipp_id: string | null
   // Checkpoint columns: each prefix has _status, _forecast, _completed, _owner
   // Financial checkpoints also have _amount and _amount_status
   [key: string]: unknown
@@ -77,6 +97,7 @@ export interface TrackerSiteOverview extends TrackerSite {
   hub_name: string | null
   utility_name: string | null
   asset_owner_name: string | null
+  ipp_name: string | null
   site_qualification_phase: string
   site_control_phase: string
   power_phase: string

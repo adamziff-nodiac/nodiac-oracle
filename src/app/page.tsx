@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Map, FileSearch, ClipboardList, MessageSquare, BarChart3 } from 'lucide-react'
+import { ArrowRight, Map, FileSearch, ClipboardList, MessageSquare, BarChart3, GitBranch } from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LogoLink } from '@/components/LogoLink'
@@ -24,12 +24,20 @@ const pipeline = [
     step: 2,
   },
   {
+    href: '/pipeline',
+    icon: GitBranch,
+    title: 'Pipeline',
+    description: 'Executive funnel view from screening to construction with IPP breakdown and progress tracking',
+    color: 'from-nodiac-secondary to-emerald-500',
+    step: 3,
+  },
+  {
     href: '/tracker',
     icon: ClipboardList,
     title: 'Develop',
     description: 'Track sites through qualification, control, power, permitting, fiber, engineering, and construction',
-    color: 'from-nodiac-secondary to-emerald-500',
-    step: 3,
+    color: 'from-emerald-500 to-emerald-700',
+    step: 4,
   },
 ]
 
@@ -80,12 +88,15 @@ export default function HomePage() {
             <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 text-center mb-6">
               Development Pipeline
             </div>
-            <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto relative">
+            <div className="grid md:grid-cols-4 gap-4 max-w-5xl mx-auto relative">
               {/* Connecting arrows (visible on md+) */}
-              <div className="hidden md:flex absolute top-1/2 left-[33.33%] -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="hidden md:flex absolute top-1/2 left-[25%] -translate-x-1/2 -translate-y-1/2 z-10">
                 <ArrowRight className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
               </div>
-              <div className="hidden md:flex absolute top-1/2 left-[66.66%] -translate-x-1/2 -translate-y-1/2 z-10">
+              <div className="hidden md:flex absolute top-1/2 left-[50%] -translate-x-1/2 -translate-y-1/2 z-10">
+                <ArrowRight className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
+              </div>
+              <div className="hidden md:flex absolute top-1/2 left-[75%] -translate-x-1/2 -translate-y-1/2 z-10">
                 <ArrowRight className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
               </div>
 

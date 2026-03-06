@@ -59,13 +59,20 @@ export interface FipsLookupResult {
 }
 
 export const TIER_COLORS: Record<SiteTier, string> = {
-  good: '#4de2e4',    // nodiac-secondary (teal/blue)
-  okay: '#b48fc1',    // nodiac-soft-orchid (purple)
-  bad: '#9ca3af',     // gray-400 (de-emphasized)
+  good: '#c77dba',    // bright orchid — matches regional hub tier 1
+  okay: '#6b1f5a',    // deep purple — matches regional hub tier 2
+  bad: '#2a3060',     // navy — matches regional hub tier 3
 }
 
 export const TIER_LABELS: Record<SiteTier, string> = {
   good: 'Strong Fit',
   okay: 'Moderate Fit',
   bad: 'Weak Fit',
+}
+
+// Text-safe colors for badges/labels (readable on both light and dark backgrounds)
+export const TIER_TEXT_COLORS: Record<SiteTier, string> = {
+  good: '#c77dba',    // bright orchid — readable on both
+  okay: '#9b4d8e',    // lighter purple variant for text readability
+  bad: '#5b6294',     // lighter navy variant for text readability
 }

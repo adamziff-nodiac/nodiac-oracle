@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity } from './types'
+import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity, TrackerIPP } from './types'
 
 export async function getTrackerSites(): Promise<TrackerSiteOverview[]> {
   const supabase = await createClient()
@@ -199,6 +199,131 @@ export async function getSiteActivity(siteId: string, limit = 20): Promise<Track
 
   if (error) throw error
   return (data ?? []) as TrackerActivity[]
+}
+
+// --- IPP Queries ---
+
+export async function getTrackerIPPs(): Promise<TrackerIPP[]> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('tracker_ipps')
+    .select('*')
+    .order('name')
+
+  if (error) throw error
+  return (data ?? []) as TrackerIPP[]
+}
+
+export async function getTrackerIPP(id: string): Promise<TrackerIPP | null> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('tracker_ipps')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) throw error
+  return data as TrackerIPP | null
+}
+
+export async function getIPPPortfolios(ippId: string) {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('portfolio_uploads')
+    .select('*')
+    .eq('ipp_id', ippId)
+    .order('created_at', { ascending: false })
+
+  if (error) throw error
+  return data ?? []
+}
+
+export async function getIPPSites(ippId: string): Promise<TrackerSiteOverview[]> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('tracker_site_overview')
+    .select('*')
+    .eq('ipp_id', ippId)
+    .order('name')
+
+  if (error) throw error
+  return (data ?? []) as TrackerSiteOverview[]
+}
+
+export interface HubCentroid {
+  id: string
+  name: string
+  status: string | null
+  lat: number
+  lng: number
+  site_count: number
+}
+
+export async function getHubCentroids(): Promise<HubCentroid[]> {
+  const supabase = await createClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [hubsResult, sitesResult] = await Promise.all([
+    (supabase as any).from('tracker_regional_hubs').select('id, name, status'),
+    (supabase as any).from('tracker_sites').select('id, regional_hub_id, latitude, longitude')
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null),
+  ])
+
+  if (hubsResult.error) throw hubsResult.error
+  const hubs = (hubsResult.data ?? []) as Array<{ id: string; name: string; status: string | null }>
+  const sites = (sitesResult.data ?? []) as Array<{ id: string; regional_hub_id: string | null; latitude: number; longitude: number }>
+
+  return hubs.map(hub => {
+    const hubSites = sites.filter(s => s.regional_hub_id === hub.id)
+    if (hubSites.length === 0) return null
+
+    const lat = hubSites.reduce((sum, s) => sum + Number(s.latitude), 0) / hubSites.length
+    const lng = hubSites.reduce((sum, s) => sum + Number(s.longitude), 0) / hubSites.length
+
+    return {
+      id: hub.id,
+      name: hub.name,
+      status: hub.status,
+      lat,
+      lng,
+      site_count: hubSites.length,
+    }
+  }).filter((h): h is HubCentroid => h !== null)
+}
+
+export async function getPromotedSitesMap(uploadId: string): Promise<Record<string, string>> {
+  const supabase = await createClient()
+
+  // Get portfolio_site_ids for this upload
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: portfolioSites, error: psError } = await (supabase as any)
+    .from('portfolio_sites')
+    .select('id')
+    .eq('upload_id', uploadId)
+
+  if (psError) throw psError
+  const psIds = ((portfolioSites ?? []) as Array<{ id: string }>).map(s => s.id)
+  if (psIds.length === 0) return {}
+
+  // Find tracker_sites that reference any of these portfolio_site_ids
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: trackerSites, error: tsError } = await (supabase as any)
+    .from('tracker_sites')
+    .select('id, portfolio_site_id')
+    .in('portfolio_site_id', psIds)
+
+  if (tsError) throw tsError
+
+  const map: Record<string, string> = {}
+  for (const ts of (trackerSites ?? []) as Array<{ id: string; portfolio_site_id: string }>) {
+    map[ts.portfolio_site_id] = ts.id
+  }
+  return map
 }
 
 export async function getDepositSites(): Promise<TrackerSiteOverview[]> {

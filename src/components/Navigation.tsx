@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MessageSquare, BarChart3, Home, Map, FileSearch, BookOpen, ClipboardList } from 'lucide-react'
+import { MessageSquare, BarChart3, Home, Map, FileSearch, BookOpen, ClipboardList, GitBranch } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -11,6 +11,7 @@ const navItems = [
   { href: '/timeline', label: 'Timelines', icon: BarChart3 },
   { href: '/regional-hubs', label: 'Hubs', icon: Map },
   { href: '/screening', label: 'Screening', icon: FileSearch },
+  { href: '/pipeline', label: 'Pipeline', icon: GitBranch },
   { href: '/scoring', label: 'Scoring', icon: BookOpen },
   { href: '/tracker', label: 'Tracker', icon: ClipboardList },
 ]

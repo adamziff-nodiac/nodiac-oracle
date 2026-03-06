@@ -6,6 +6,8 @@ import 'mapbox-gl/dist/mapbox-gl.css'
 import { useIsDark } from '@/hooks/useIsDark'
 import type { PortfolioSite, SiteTier } from '@/types/screening'
 import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
+import { HubOverlayLayer, type OverlayHub } from './HubOverlayLayer'
+import { TrackerSiteOverlayLayer, type OverlayTrackerSite } from './TrackerSiteOverlayLayer'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -30,9 +32,17 @@ interface ScreeningMapProps {
   onSiteSelect: (siteId: string) => void
   visibleTiers: Set<SiteTier>
   countySaidi?: Record<string, CountySaidiData>
+  // Overlay data
+  overlayHubs?: OverlayHub[]
+  overlayTrackerSites?: OverlayTrackerSite[]
+  showHubs?: boolean
+  showTrackerSites?: boolean
 }
 
-export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers, countySaidi }: ScreeningMapProps) {
+export function ScreeningMap({
+  sites, selectedSiteId, onSiteSelect, visibleTiers, countySaidi,
+  overlayHubs, overlayTrackerSites, showHubs = true, showTrackerSites = false,
+}: ScreeningMapProps) {
   const [popupSite, setPopupSite] = useState<PortfolioSite | null>(null)
   const [expanded, setExpanded] = useState(false)
   const isDark = useIsDark()
@@ -51,7 +61,6 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
     }
     const lats = allWithCoords.map(s => Number(s.latitude))
     const lngs = allWithCoords.map(s => Number(s.longitude))
-    // On mobile (< 768px), zoom out more so the full US is visible
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
     const defaultZoom = isMobile ? 3 : 5
 
@@ -81,7 +90,6 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
     )
   }
 
-  // Build score breakdown rows for popup
   const breakdownRows = popupSite?.score_breakdown
     ? Object.entries(popupSite.score_breakdown)
         .filter(([, v]) => v != null)
@@ -97,6 +105,15 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
       onClick={() => { setPopupSite(null); setExpanded(false) }}
     >
+      {/* Overlay layers (rendered behind screening markers) */}
+      {showHubs && overlayHubs && overlayHubs.length > 0 && (
+        <HubOverlayLayer hubs={overlayHubs} />
+      )}
+      {showTrackerSites && overlayTrackerSites && overlayTrackerSites.length > 0 && (
+        <TrackerSiteOverlayLayer sites={overlayTrackerSites} />
+      )}
+
+      {/* Screening site markers */}
       {sitesWithCoords.map((site) => {
         const color = TIER_COLORS[site.tier as SiteTier] || '#666'
         const isSelected = site.id === selectedSiteId
@@ -111,7 +128,6 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
               handleMarkerClick(site)
             }}
           >
-            {/* Enlarged invisible hit area for mobile tap targets */}
             <div
               className="relative flex items-center justify-center cursor-pointer"
               style={{ width: 40, height: 40 }}
@@ -163,12 +179,11 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
                   {TIER_LABELS[popupSite.tier as SiteTier] || 'Unscored'}
                 </span>
                 <span className="text-gray-500">
-                  — {popupSite.site_score.toFixed(1)} / 10
+                  {'\u2014'} {popupSite.site_score.toFixed(1)} / 10
                 </span>
               </div>
             )}
 
-            {/* Projected uptime from county SAIDI data */}
             {popupSite.fips_code && countySaidi?.[popupSite.fips_code]?.avg_saidi != null && (() => {
               const saidi = countySaidi[popupSite.fips_code].avg_saidi!
               const uptime = (100 - (saidi / 525960) * 100)
@@ -180,7 +195,6 @@ export function ScreeningMap({ sites, selectedSiteId, onSiteSelect, visibleTiers
               )
             })()}
 
-            {/* Top criteria (always show top 3) */}
             {breakdownRows.length > 0 && (
               <div className="mt-2 space-y-1">
                 <p className="text-[10px] text-gray-400 uppercase tracking-wide font-semibold">Score Breakdown</p>
