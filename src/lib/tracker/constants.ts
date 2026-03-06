@@ -1,6 +1,5 @@
 // Checkpoint definitions — the source of truth for UI rendering
 export const PHASES = [
-  { key: 'site_qualification', label: 'Site Qualification', abbrev: 'Qualify' },
   { key: 'site_control', label: 'Site Control', abbrev: 'Control' },
   { key: 'power', label: 'Power', abbrev: 'Power' },
   { key: 'permitting', label: 'Permitting', abbrev: 'Permit' },
@@ -14,32 +13,31 @@ export type PhaseKey = typeof PHASES[number]['key']
 export interface Checkpoint {
   prefix: string
   label: string
+  gridLabel: string
   phase: PhaseKey
   financial: boolean
 }
 
 export const CHECKPOINTS: Checkpoint[] = [
-  { prefix: 'site_identified', label: 'Site Identified', phase: 'site_qualification', financial: false },
-  { prefix: 'site_qualified', label: 'Site Qualified', phase: 'site_qualification', financial: false },
-  { prefix: 'control_engaged', label: 'Site Control Engaged', phase: 'site_control', financial: false },
-  { prefix: 'control_secured', label: 'Site Control Secured', phase: 'site_control', financial: false },
-  { prefix: 'power_capacity_check', label: 'Capacity Check Submitted', phase: 'power', financial: false },
-  { prefix: 'power_capacity_indication', label: 'Capacity Indication Received', phase: 'power', financial: false },
-  { prefix: 'power_service_request', label: 'Service Request Submitted', phase: 'power', financial: false },
-  { prefix: 'power_deposit', label: 'Deposit Paid', phase: 'power', financial: true },
-  { prefix: 'power_utility_design', label: 'Utility Design Complete', phase: 'power', financial: false },
-  { prefix: 'power_connection', label: 'Connection Agreement Signed', phase: 'power', financial: false },
-  { prefix: 'permit_requirements', label: 'Permitting Requirements Assessed', phase: 'permitting', financial: false },
-  { prefix: 'permit_approved', label: 'Permits Approved', phase: 'permitting', financial: true },
-  { prefix: 'fiber_identified', label: 'Fiber Identified', phase: 'fiber', financial: false },
-  { prefix: 'fiber_capacity', label: 'Fiber Capacity Confirmed', phase: 'fiber', financial: false },
-  { prefix: 'fiber_secured', label: 'Fiber Secured', phase: 'fiber', financial: true },
-  { prefix: 'eng_design', label: 'Engineering Design Complete', phase: 'engineering', financial: false },
-  { prefix: 'eng_equip_ordered', label: 'Equipment Ordered', phase: 'engineering', financial: true },
-  { prefix: 'construction_equip_delivered', label: 'Equipment Delivered', phase: 'construction', financial: false },
-  { prefix: 'construction_complete', label: 'Construction Complete', phase: 'construction', financial: false },
-  { prefix: 'construction_energized', label: 'Energized', phase: 'construction', financial: false },
-  { prefix: 'construction_commissioned', label: 'Commissioning Complete', phase: 'construction', financial: false },
+  { prefix: 'control_engaged', label: 'Site Control Engaged', gridLabel: 'Engaged', phase: 'site_control', financial: false },
+  { prefix: 'control_secured', label: 'Site Control Secured', gridLabel: 'Secured', phase: 'site_control', financial: false },
+  { prefix: 'power_capacity_check', label: 'Capacity Check Submitted', gridLabel: 'Cap Check', phase: 'power', financial: false },
+  { prefix: 'power_capacity_indication', label: 'Capacity Indication Received', gridLabel: 'Cap Ind', phase: 'power', financial: false },
+  { prefix: 'power_service_request', label: 'Service Request Submitted', gridLabel: 'Svc Req', phase: 'power', financial: false },
+  { prefix: 'power_deposit', label: 'Deposit Paid', gridLabel: 'Deposit', phase: 'power', financial: true },
+  { prefix: 'power_utility_design', label: 'Utility Design Complete', gridLabel: 'Util Design', phase: 'power', financial: false },
+  { prefix: 'power_connection', label: 'Connection Agreement Signed', gridLabel: 'Connected', phase: 'power', financial: false },
+  { prefix: 'permit_requirements', label: 'Permitting Requirements Assessed', gridLabel: 'Assessed', phase: 'permitting', financial: false },
+  { prefix: 'permit_approved', label: 'Permits Approved', gridLabel: 'Approved', phase: 'permitting', financial: true },
+  { prefix: 'fiber_identified', label: 'Fiber Identified', gridLabel: 'Identified', phase: 'fiber', financial: false },
+  { prefix: 'fiber_capacity', label: 'Fiber Capacity Confirmed', gridLabel: 'Confirmed', phase: 'fiber', financial: false },
+  { prefix: 'fiber_secured', label: 'Fiber Secured', gridLabel: 'Secured', phase: 'fiber', financial: true },
+  { prefix: 'eng_design', label: 'Engineering Design Complete', gridLabel: 'Design', phase: 'engineering', financial: false },
+  { prefix: 'eng_equip_ordered', label: 'Equipment Ordered', gridLabel: 'Ordered', phase: 'engineering', financial: true },
+  { prefix: 'construction_equip_delivered', label: 'Equipment Delivered', gridLabel: 'Delivered', phase: 'construction', financial: false },
+  { prefix: 'construction_complete', label: 'Construction Complete', gridLabel: 'Built', phase: 'construction', financial: false },
+  { prefix: 'construction_energized', label: 'Energized', gridLabel: 'Energized', phase: 'construction', financial: false },
+  { prefix: 'construction_commissioned', label: 'Commissioning Complete', gridLabel: "Comm'd", phase: 'construction', financial: false },
 ]
 
 // These arrays mirror the Postgres enums — used for UI dropdowns.
@@ -80,4 +78,26 @@ export function getCheckpointValue(site: Record<string, unknown>, prefix: string
 // Helper: group checkpoints by phase
 export function getCheckpointsByPhase(phase: PhaseKey): Checkpoint[] {
   return CHECKPOINTS.filter(c => c.phase === phase)
+}
+
+// Sub-step granularity: identify the current checkpoint within a phase
+export interface SubStepInfo {
+  checkpoint: Checkpoint | null
+  status: CheckpointStatus
+  ordinal: number  // position in the phase's checkpoint list (for sorting)
+}
+
+export function getCurrentSubStep(phase: PhaseKey, site: Record<string, unknown>): SubStepInfo {
+  const checkpoints = getCheckpointsByPhase(phase)
+
+  for (let i = 0; i < checkpoints.length; i++) {
+    const cp = checkpoints[i]
+    const status = (getCheckpointValue(site, cp.prefix, 'status') as CheckpointStatus) ?? 'Not Started'
+    if (status !== 'Complete' && status !== 'N/A') {
+      return { checkpoint: cp, status, ordinal: i }
+    }
+  }
+
+  // All checkpoints are Complete or N/A
+  return { checkpoint: null, status: 'Complete', ordinal: checkpoints.length }
 }

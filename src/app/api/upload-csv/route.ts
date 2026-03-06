@@ -51,53 +51,47 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Create portfolio upload
-    const uploadRow: Record<string, unknown> = {
-      user_id: user.id,
-      name,
-      site_count: parsedSites.length,
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: upload, error: uploadError } = await (supabase as any)
-      .from('portfolio_uploads')
-      .insert(uploadRow)
-      .select()
-      .single()
-
-    if (uploadError || !upload) {
-      return NextResponse.json({ error: uploadError?.message || 'Failed to create upload' }, { status: 500 })
-    }
-
-    // Insert sites — extract county/state from raw_data when available
+    // Insert directly into tracker_sites (upsert on name conflict)
     const sitesToInsert = parsedSites.map((site) => {
       const rd = site.raw_data
-      const county = findRawValue(rd, ['county', 'county name', 'county_name']) || null
-      const state = findRawValue(rd, ['state', 'state name', 'state_name', 'state abbreviation']) || null
+      findRawValue(rd, ['county', 'county name', 'county_name'])
+      findRawValue(rd, ['state', 'state name', 'state_name', 'state abbreviation'])
 
-      return {
-        upload_id: upload.id,
-        site_name: site.site_name,
+      const row: Record<string, unknown> = {
+        name: site.site_name,
         latitude: site.latitude,
         longitude: site.longitude,
-        county,
-        state,
-        raw_data: site.raw_data,
+        priority: 'Pipeline',
       }
+
+      // Only set partner FK if found
+      if (partnerId) {
+        row.ipp_id = partnerId
+      }
+
+      return row
     })
 
-    const { error: sitesError } = await supabase
-      .from('portfolio_sites')
-      .insert(sitesToInsert)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: insertedSites, error: insertError } = await (supabase as any)
+      .from('tracker_sites')
+      .upsert(sitesToInsert, { onConflict: 'name', ignoreDuplicates: true })
+      .select('id, name')
 
-    if (sitesError) {
-      return NextResponse.json({ error: sitesError.message }, { status: 500 })
+    if (insertError) {
+      return NextResponse.json({ error: insertError.message }, { status: 500 })
     }
 
+    // Build a virtual "upload" identifier for the client flow
+    // Use a deterministic ID based on upload name + timestamp
+    const uploadId = `upload_${Date.now()}`
+
     return NextResponse.json({
-      upload_id: upload.id,
+      upload_id: uploadId,
+      upload_name: name,
       site_count: parsedSites.length,
       partner_id: partnerId,
+      site_names: (insertedSites ?? []).map((s: { name: string }) => s.name),
     })
   } catch (err) {
     return NextResponse.json(

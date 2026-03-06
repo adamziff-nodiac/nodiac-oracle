@@ -2,6 +2,7 @@ import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { SubNav } from '@/components/tracker/SubNav'
 import { LogoLink } from '@/components/LogoLink'
+import { TodoHeroWidget } from '@/components/todo/TodoHeroWidget'
 
 export const metadata = {
   title: 'Tracker - Nodiac Oracle',
@@ -25,9 +26,12 @@ export default function TrackerLayout({ children }: { children: React.ReactNode 
       {/* Tracker content */}
       <div className="max-w-[1920px] mx-auto px-3 sm:px-6 pt-4 sm:pt-6 pb-12">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Project Tracker
-          </h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              Project Tracker
+            </h1>
+            <TodoHeroWidget compact />
+          </div>
         </div>
         <SubNav />
         <div className="mt-4">

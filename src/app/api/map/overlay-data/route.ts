@@ -14,9 +14,10 @@ export async function GET() {
 
     const [hubsResult, sitesResult] = await Promise.all([
       sb.from('tracker_regional_hubs').select('id, name, status'),
-      sb.from('tracker_site_overview').select('id, name, priority, latitude, longitude, hub_name, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase')
+      sb.from('tracker_site_overview').select('id, name, priority, latitude, longitude, hub_name, has_activity, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase')
         .not('latitude', 'is', null)
-        .not('longitude', 'is', null),
+        .not('longitude', 'is', null)
+        .eq('has_activity', true),
     ])
 
     // If tables/columns don't exist yet (migration not applied), return empty
@@ -27,7 +28,7 @@ export async function GET() {
     const allSites = (sitesResult.data ?? []) as Array<{
       id: string; name: string; priority: string; latitude: number; longitude: number;
       hub_name: string | null;
-      site_qualification_phase: string; site_control_phase: string; power_phase: string;
+      site_control_phase: string; power_phase: string;
       permitting_phase: string; fiber_phase: string; engineering_phase: string; construction_phase: string;
     }>
 
@@ -53,9 +54,9 @@ export async function GET() {
       lng: Number(s.longitude),
       hub_name: s.hub_name,
       phase_summary: [
-        s.site_qualification_phase, s.site_control_phase, s.power_phase,
+        s.site_control_phase, s.power_phase,
         s.permitting_phase, s.fiber_phase, s.engineering_phase, s.construction_phase,
-      ].filter(p => p === 'Complete').length + '/7 phases',
+      ].filter(p => p === 'Complete').length + '/6 phases',
     }))
 
     return NextResponse.json({ hubs, trackerSites })

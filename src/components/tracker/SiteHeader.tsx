@@ -7,14 +7,15 @@ import { PriorityIndicator } from './PriorityIndicator'
 
 interface SiteHeaderProps {
   site: TrackerSiteOverview
+  backHref?: string
 }
 
-export function SiteHeader({ site }: SiteHeaderProps) {
+export function SiteHeader({ site, backHref = '/tracker' }: SiteHeaderProps) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
         <Link
-          href="/tracker"
+          href={backHref}
           className="flex items-center gap-1 text-[13px] text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors mb-2"
         >
           <ArrowLeft className="w-4 h-4" />

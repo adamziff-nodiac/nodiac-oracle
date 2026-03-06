@@ -9,6 +9,7 @@ import {
   HUB_STATUS_OPTIONS, ACTIVITY_SOURCE_OPTIONS,
   FINANCIAL_CHECKPOINTS,
   LANDOWNER_PROXIMITY_OPTIONS, LANDOWNER_PURPOSE_OPTIONS, LEASE_STATUS_OPTIONS,
+  ACTION_ITEM_STATUS_OPTIONS, ACTION_ITEM_SOURCE_OPTIONS,
 } from './constants'
 
 export function registerResources(server: McpServer) {
@@ -38,9 +39,10 @@ export function registerResources(server: McpServer) {
           landowner_proximity: [...LANDOWNER_PROXIMITY_OPTIONS],
           landowner_purpose: [...LANDOWNER_PURPOSE_OPTIONS],
           lease_status: [...LEASE_STATUS_OPTIONS],
+          action_item_status: [...ACTION_ITEM_STATUS_OPTIONS],
+          action_item_source: [...ACTION_ITEM_SOURCE_OPTIONS],
         },
         phases: {
-          site_qualification: ['site_identified', 'site_qualified'],
           site_control: ['control_engaged', 'control_secured'],
           power: ['power_capacity_check', 'power_capacity_indication', 'power_service_request', 'power_deposit', 'power_utility_design', 'power_connection'],
           permitting: ['permit_requirements', 'permit_approved'],
@@ -73,7 +75,20 @@ export function registerResources(server: McpServer) {
 3. Use get_site with a site_id for full checkpoint details
 4. Use list_partners / get_partner for utility relationship details
 5. Use list_hubs for regional hub overview
-6. Use get_recent_activity for audit trail
+6. Use list_action_items for action items (todos) — filter by site, assignee, or status
+7. Use list_team_members to get team member UUIDs for assignment
+8. Use get_recent_activity for audit trail
+
+## Action Items (GTD-style todos)
+- Every action item belongs to a site — no orphan tasks
+- Three statuses: next (actionable), waiting (ball in someone else's court), done
+- Use create_action_item with a verb-first title (e.g. "Call Xcel to verify capacity")
+- Set waiting_on (WHO) when status=waiting; waiting_since is auto-set
+- completed_at is auto-set when status changes to done
+- Flag items for top priority (pinned to top of /todo view)
+- defer_until hides items until a future date (GTD tickler)
+- hard_deadline is for REAL externally-imposed deadlines only (permits, filings)
+- source tracks origin: manual, ai, or call
 
 ## Updating Checkpoints
 1. First call get_site to see current checkpoint values
@@ -81,7 +96,7 @@ export function registerResources(server: McpServer) {
 3. Financial checkpoints (power_deposit, permit_approved, fiber_secured, eng_equip_ordered) also accept amount/amount_status
 
 ## Updating Sites
-- Use update_site for metadata changes (priority, MW, hub, utility, etc.)
+- Use update_site for metadata changes (priority, MW, hub, utility, voltage, coordinates, etc.)
 - Archive sites with update_site(archive=true, archive_reason="...")
 - All changes are auto-logged to the activity log
 
@@ -93,6 +108,7 @@ export function registerResources(server: McpServer) {
 ## Relationships
 - Sites belong to hubs and have utility/asset_owner partners
 - Partners can be linked to multiple hubs via partner-hub associations
+- Partners can have a parent_gt_id linking distribution co-ops to their G&T
 - Landowners are linked to sites with proximity, purpose, and lease status
 - Parcels belong to sites and can be assigned to landowners
 `

@@ -21,17 +21,7 @@ export async function GET(
       return NextResponse.json({ error: 'Partner not found' }, { status: 404 })
     }
 
-    // Get portfolio uploads linked via name matching
-    const { data: uploads } = await supabase
-      .from('portfolio_uploads')
-      .select('*')
-      .order('created_at', { ascending: false })
-
-    const partnerName = (partner as { name: string }).name.toLowerCase()
-    const matchedUploads = ((uploads ?? []) as Array<{ name: string; [key: string]: unknown }>)
-      .filter(u => u.name.toLowerCase().includes(partnerName))
-
-    // Get tracker sites for this partner
+    // Get tracker sites for this partner (screened sites are now in tracker_sites)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: sites } = await (supabase as any)
       .from('tracker_site_overview')
@@ -41,7 +31,6 @@ export async function GET(
 
     return NextResponse.json({
       partner,
-      portfolios: matchedUploads,
       sites: sites ?? [],
     })
   } catch {

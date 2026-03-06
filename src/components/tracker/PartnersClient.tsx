@@ -6,7 +6,6 @@ import { createClient } from '@/lib/supabase/client'
 import type { TrackerPartnerWithCounts, TrackerHub } from '@/lib/tracker/types'
 import { PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
-import { PartnerDetailPanel } from './PartnerDetailPanel'
 import { ToastContainer, showToast } from './Toast'
 import { StyledSelect } from '@/components/ui/StyledSelect'
 import { cn } from '@/lib/utils'
@@ -46,8 +45,6 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
   const [selectedHub, setSelectedHub] = useState<string | null>(null)
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
-  const [selectedPartner, setSelectedPartner] = useState<TrackerPartnerWithCounts | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -101,109 +98,22 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
     }
   }
 
-  async function handleSave(partner: TrackerPartnerWithCounts, pendingHubIds?: string[]) {
-    const { site_count, hub_names, ...dbFields } = partner
-    void site_count
-    void hub_names
-    const supabase = createClient()
-
-    try {
-      if (isCreating) {
-        // Create new partner
-        const { id: _id, created_at: _ca, updated_at: _ua, ...insertFields } = dbFields
-        void _id
-        void _ca
-        void _ua
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (supabase as any)
-          .from('tracker_power_partners')
-          .insert(insertFields)
-          .select()
-          .single()
-
-        if (error) throw error
-
-        // Link pending hubs for new partner
-        const linkedHubNames: string[] = []
-        if (pendingHubIds && pendingHubIds.length > 0) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { error: hubError } = await (supabase as any)
-            .from('tracker_partner_hubs')
-            .insert(pendingHubIds.map(hubId => ({ partner_id: data.id, hub_id: hubId })))
-
-          if (hubError) {
-            console.error('Failed to link hubs:', hubError)
-          } else {
-            for (const hubId of pendingHubIds) {
-              const hub = hubs.find(h => h.id === hubId)
-              if (hub) linkedHubNames.push(hub.name)
-            }
-          }
-        }
-
-        setPartners(prev => [...prev, { ...data, site_count: 0, hub_names: linkedHubNames }])
-        showToast('Partner created', 'success')
-      } else {
-        // Update existing partner
-        const { id, created_at: _ca, updated_at: _ua, ...updateFields } = dbFields
-        void _ca
-        void _ua
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await (supabase as any)
-          .from('tracker_power_partners')
-          .update(updateFields)
-          .eq('id', id)
-
-        if (error) throw error
-        setPartners(prev => prev.map(p => p.id === id ? partner : p))
-        showToast('Saved', 'success')
-      }
-    } catch {
-      showToast('Failed to save', 'error')
-    }
-
-    setSelectedPartner(null)
-    setIsCreating(false)
-  }
-
-  async function handleDelete(partnerId: string) {
+  async function handleCreate() {
+    const name = prompt('New partner name:')
+    if (!name?.trim()) return
     const supabase = createClient()
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { error } = await (supabase as any)
+      const { data, error } = await (supabase as any)
         .from('tracker_power_partners')
-        .delete()
-        .eq('id', partnerId)
-
+        .insert({ name: name.trim(), relationship_stage: 'Identified', attio_record_id: null })
+        .select()
+        .single()
       if (error) throw error
-      setPartners(prev => prev.filter(p => p.id !== partnerId))
-      showToast('Partner deleted', 'success')
+      router.push(`/tracker/partners/${data.id}`)
     } catch {
-      showToast('Failed to delete', 'error')
+      showToast('Failed to create partner', 'error')
     }
-
-    setSelectedPartner(null)
-  }
-
-  function handleCreate() {
-    setIsCreating(true)
-    setSelectedPartner({
-      id: '',
-      name: '',
-      type: null,
-      relationship_stage: 'Identified',
-      loi_signed: false,
-      parent_gt_id: null,
-      ix_process_notes: null,
-      rate_structure: null,
-      available_capacity: null,
-      attio_link: null,
-      notes: null,
-      created_at: '',
-      updated_at: '',
-      site_count: 0,
-      hub_names: [],
-    })
   }
 
   function SortHeader({ label, sortId, className }: { label: string; sortId: SortKey; className?: string }) {
@@ -365,18 +275,6 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
           </tbody>
         </table>
       </div>
-
-      {/* Detail Panel */}
-      {selectedPartner && (
-        <PartnerDetailPanel
-          partner={selectedPartner}
-          isNew={isCreating}
-          hubs={hubs.map(h => ({ id: h.id, name: h.name }))}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={() => { setSelectedPartner(null); setIsCreating(false) }}
-        />
-      )}
 
       <ToastContainer />
     </div>

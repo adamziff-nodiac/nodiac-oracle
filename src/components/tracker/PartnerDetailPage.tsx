@@ -11,6 +11,7 @@ import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { categorizeSite, STATUS_CATEGORY_CONFIG, type SiteStatusCategory } from './SiteStatusMap'
 import { ToastContainer, showToast } from './Toast'
 import { cn } from '@/lib/utils'
+import { AttioSummaryCard } from './AttioSummaryCard'
 import { ArrowLeft, MapPin, Zap, Building2, Search, Pencil, X, Check, ExternalLink } from 'lucide-react'
 
 const SiteStatusMap = dynamic(
@@ -206,12 +207,11 @@ export function PartnerDetailPage({ partner: initialPartner, hubNames, initialSi
                   onChange={v => setDraft(d => ({ ...d, ix_process_notes: v }))}
                   placeholder="How this partner handles IX..."
                 />
-                <DetailField
-                  label="Attio Link"
-                  value={draft.attio_link}
-                  onChange={v => setDraft(d => ({ ...d, attio_link: v }))}
-                  placeholder="https://app.attio.com/..."
-                />
+                {draft.attio_record_id && (
+                  <div className="text-[12px] text-zinc-400 dark:text-zinc-500 flex items-center gap-1.5">
+                    Attio linked <Check className="w-3 h-3 text-emerald-500" />
+                  </div>
+                )}
 
                 <label className="flex items-center gap-3 cursor-pointer col-span-full mt-1">
                   <input
@@ -237,15 +237,18 @@ export function PartnerDetailPage({ partner: initialPartner, hubNames, initialSi
                 {partner.ix_process_notes && (
                   <MetaItem label="IX Process" value={partner.ix_process_notes} />
                 )}
-                {partner.attio_link && (
+                {partner.attio_record_id && (
                   <a
-                    href={partner.attio_link}
+                    href={`https://app.attio.com/companies/${partner.attio_record_id}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-[12px] text-nodiac-secondary hover:underline"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[12px] font-medium bg-nodiac-secondary/15 text-nodiac-secondary hover:bg-nodiac-secondary/25 transition-colors"
                     onClick={e => e.stopPropagation()}
                   >
-                    Attio <ExternalLink className="w-3 h-3" />
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    Open in Attio
                   </a>
                 )}
               </div>
@@ -291,6 +294,13 @@ export function PartnerDetailPage({ partner: initialPartner, hubNames, initialSi
           <StatCard icon={<Zap className="w-4 h-4" />} label="Total MW" value={`${totalMW.toFixed(0)} MW`} />
         </div>
       </div>
+
+      {/* Attio CRM Summary */}
+      <AttioSummaryCard
+        partnerId={partner.id}
+        attioRecordId={partner.attio_record_id}
+        relationshipStage={partner.relationship_stage}
+      />
 
       {/* Map */}
       <SiteStatusMap sites={sites} className="h-[50vh] min-h-[400px]" />

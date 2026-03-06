@@ -24,9 +24,10 @@ interface SiteDetailClientProps {
   initialActivity: TrackerActivity[]
   partners: TrackerPartner[]
   hubs: TrackerHub[]
+  backHref?: string
 }
 
-export function SiteDetailClient({ initialSite, initialActivity, partners, hubs }: SiteDetailClientProps) {
+export function SiteDetailClient({ initialSite, initialActivity, partners, hubs, backHref = '/tracker' }: SiteDetailClientProps) {
   const router = useRouter()
   const [site, setSite] = useState(initialSite)
   const [activity] = useState(initialActivity)
@@ -116,7 +117,7 @@ export function SiteDetailClient({ initialSite, initialActivity, partners, hubs 
 
   return (
     <div className="flex flex-col gap-6">
-      <SiteHeader site={site} />
+      <SiteHeader site={site} backHref={backHref} />
 
       {site.is_archived && site.archived_at && (
         <ArchiveBanner

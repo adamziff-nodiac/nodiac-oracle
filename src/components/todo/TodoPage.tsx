@@ -47,7 +47,6 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     fetchItems()
   }, [fetchItems])
 
-  // Subscribe to realtime changes from other users/tabs
   useActionItemsRealtime(fetchItems)
 
   function addSavingId(id: string) {
@@ -104,17 +103,29 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     }
   }
 
-  async function handleAdd(siteId: string, title: string, assignedTo?: string | null) {
+  async function handleAdd(siteId: string, title: string, assignedTo?: string | null, status?: string, waitingOn?: string | null) {
     const res = await fetch('/api/todo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         site_id: siteId,
         title,
+        status: status ?? 'next',
         assigned_to: assignedTo !== undefined ? assignedTo : (selectedMember || null),
+        waiting_on: waitingOn ?? null,
       }),
     })
     if (res.ok) await fetchItems()
+  }
+
+  async function handleDelete(id: string) {
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, { method: 'DELETE' })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   // Filter items by status
@@ -138,23 +149,9 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     waitingGroups.set(key, group)
   }
 
-  // Compute needs attention alerts
-  const alerts: Array<{ type: 'stalled' | 'stale' | 'deadline'; title: string; description: string; link: string }> = []
+  // Compute needs attention alerts (only deadlines — stale items already have age badges inline)
+  const alerts: Array<{ type: 'stale' | 'deadline'; title: string; description: string; link: string }> = []
 
-  // Stale items (>14 days)
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000)
-  const staleItems = [...nextItems, ...waitingItems].filter(i => new Date(i.created_at) < fourteenDaysAgo)
-  for (const item of staleItems.slice(0, 5)) {
-    const days = Math.floor((Date.now() - new Date(item.created_at).getTime()) / (1000 * 60 * 60 * 24))
-    alerts.push({
-      type: 'stale',
-      title: item.title,
-      description: `${days} days old - ${item.site_name}`,
-      link: `/tracker/${item.site_id}`,
-    })
-  }
-
-  // Hard deadlines within 14 days
   const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
   const upcomingDeadlines = [...nextItems, ...waitingItems]
     .filter(i => i.hard_deadline && new Date(i.hard_deadline) <= twoWeeksOut && new Date(i.hard_deadline) >= now)
@@ -163,33 +160,21 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     alerts.push({
       type: 'deadline',
       title: item.title,
-      description: `Deadline in ${daysUntil} days - ${item.site_name}`,
+      description: `${daysUntil}d left · ${item.site_name}`,
       link: `/tracker/${item.site_id}`,
     })
   }
 
-  // Find sites with zero active items (stalled)
-  const activeSiteIds = new Set([...nextItems, ...waitingItems].map(i => i.site_id))
-  const stalledSites = sites.filter(s => !s.is_archived && !activeSiteIds.has(s.id))
-  for (const site of stalledSites.slice(0, 5)) {
-    alerts.push({
-      type: 'stalled',
-      title: site.name,
-      description: 'No active action items defined',
-      link: `/tracker/${site.id}`,
-    })
-  }
-
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-zinc-900 dark:text-white tracking-tight">
+          <h1 className="text-xl font-semibold text-zinc-900 dark:text-white tracking-tight">
             {getGreeting()}, {currentName}
           </h1>
-          <p className="text-[13px] text-zinc-400 dark:text-zinc-500 mt-1">
-            {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} · {waitingItems.length} waiting{staleItems.length > 0 ? ` · ${staleItems.length} need review` : ''}
+          <p className="text-[12px] text-zinc-400 dark:text-zinc-500 mt-0.5 tabular-nums">
+            {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} · {waitingItems.length} waiting
           </p>
         </div>
         <StyledSelect
@@ -204,21 +189,21 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
         />
       </div>
 
-      {/* Section 1: My Actions */}
+      {/* Section 1: Actions */}
       <section>
-        <div className="flex items-center gap-2 mb-3">
-          <ListChecks className="w-4 h-4 text-nodiac-secondary" />
-          <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+        <div className="flex items-center gap-2 mb-2">
+          <ListChecks className="w-3.5 h-3.5 text-nodiac-secondary" />
+          <h2 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
             Actions
           </h2>
-          <span className="text-[11px] text-zinc-400 bg-zinc-100 dark:bg-[#1a1a30] px-1.5 py-0.5 rounded-full">
+          <span className="text-[10px] text-zinc-400 dark:text-zinc-600 tabular-nums">
             {nextItems.length}
           </span>
         </div>
-        <div className="space-y-1.5">
+        <div className="bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg overflow-hidden">
           {nextItems.length === 0 ? (
-            <p className="text-[13px] text-zinc-400 dark:text-zinc-500 italic py-4 text-center">
-              No action items. Add one below or check the Needs Attention section.
+            <p className="text-[12px] text-zinc-400 dark:text-zinc-600 py-6 text-center">
+              No action items right now
             </p>
           ) : (
             nextItems.map(item => (
@@ -230,6 +215,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
                 onUpdate={handleUpdate}
+                onDelete={handleDelete}
               />
             ))
           )}
@@ -240,16 +226,16 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
       {/* Section 2: Waiting For */}
       {waitingGroups.size > 0 && (
         <section>
-          <div className="flex items-center gap-2 mb-3">
-            <Clock className="w-4 h-4 text-amber-500" />
-            <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock className="w-3.5 h-3.5 text-amber-500" />
+            <h2 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               Waiting For
             </h2>
-            <span className="text-[11px] text-zinc-400 bg-zinc-100 dark:bg-[#1a1a30] px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-600 tabular-nums">
               {waitingItems.length}
             </span>
           </div>
-          <div className="space-y-4">
+          <div className="bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg overflow-hidden">
             {Array.from(waitingGroups.entries()).map(([key, groupItems]) => (
               <WaitingGroup
                 key={key}
@@ -260,8 +246,10 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
                 onUpdate={handleUpdate}
+                onDelete={handleDelete}
               />
             ))}
+            <QuickAddAction sites={sites} teamMembers={teamMembers} defaultStatus="waiting" onAdd={handleAdd} />
           </div>
         </section>
       )}
@@ -269,16 +257,16 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
       {/* Section 3: Needs Attention */}
       {alerts.length > 0 && (
         <section>
-          <div className="flex items-center gap-2 mb-3">
-            <AlertTriangle className="w-4 h-4 text-red-500" />
-            <h2 className="text-sm font-semibold text-zinc-600 dark:text-zinc-400 uppercase tracking-wide">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+            <h2 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               Needs Attention
             </h2>
-            <span className="text-[11px] text-zinc-400 bg-zinc-100 dark:bg-[#1a1a30] px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] text-zinc-400 dark:text-zinc-600 tabular-nums">
               {alerts.length}
             </span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div className="bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg overflow-hidden">
             {alerts.map((alert, i) => (
               <NeedsAttentionCard key={i} {...alert} />
             ))}

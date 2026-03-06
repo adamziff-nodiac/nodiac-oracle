@@ -18,12 +18,12 @@ export interface TrackerSite {
   created_at: string
   updated_at: string
   // IPP pipeline columns
-  portfolio_site_id: string | null
   latitude: number | null
   longitude: number | null
   fips_code: string | null
   screening_score: number | null
   screening_tier: string | null
+  score_breakdown: Record<string, unknown> | null
   // Checkpoint columns: each prefix has _status, _forecast, _completed, _owner
   // Financial checkpoints also have _amount and _amount_status
   [key: string]: unknown
@@ -58,6 +58,7 @@ export interface TrackerPartner {
   rate_structure: string | null
   available_capacity: string | null
   attio_link: string | null
+  attio_record_id: string | null
   notes: Record<string, unknown> | null
   created_at: string
   updated_at: string
@@ -84,13 +85,14 @@ export interface TrackerSiteOverview extends TrackerSite {
   hub_name: string | null
   utility_name: string | null
   asset_owner_name: string | null
-  site_qualification_phase: string
   site_control_phase: string
   power_phase: string
   permitting_phase: string
   fiber_phase: string
   engineering_phase: string
   construction_phase: string
+  has_activity: boolean
+  dev_start_date: string | null
   construction_ready: boolean
   construction_ready_date: string | null
   total_capex: number
@@ -102,20 +104,9 @@ export interface TrackerSiteOverview extends TrackerSite {
   is_archived: boolean
 }
 
-// Site notes JSONB shape
+// Site notes JSONB shape (action items now live in tracker_action_items table)
 export interface SiteNotes {
   summary?: string
-  next_steps?: string[]
-  blockers?: Array<{
-    issue: string
-    contact?: string
-    since?: string
-  }>
-  waiting_on?: Array<{
-    who: string
-    what: string
-    since?: string
-  }>
   updated_at?: string
 }
 
@@ -162,3 +153,32 @@ export interface CheckpointNote {
   updated: string
 }
 export type CheckpointNotes = Record<string, CheckpointNote>
+
+// Attio CRM Summary types
+export interface AttioContact {
+  name: string
+  title: string | null
+  email: string | null
+  connection_strength: string | null
+  last_interaction: string | null
+}
+
+export interface AttioDeal {
+  stage: string | null
+  type: string | null
+  owner: string | null
+}
+
+export interface AttioSummary {
+  available: boolean
+  company_name: string | null
+  domain: string | null
+  industry: string | null
+  connection_strength: string | null
+  strongest_connection_user: string | null
+  last_interaction: string | null
+  next_interaction: string | null
+  contacts: AttioContact[]
+  deal: AttioDeal | null
+  next_steps: string | null
+}

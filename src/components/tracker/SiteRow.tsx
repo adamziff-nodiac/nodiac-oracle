@@ -1,9 +1,9 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { PHASES } from '@/lib/tracker/constants'
+import { PHASES, getCurrentSubStep, type PhaseKey } from '@/lib/tracker/constants'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
-import { PhaseBadge } from './PhaseBadge'
+import { SubStepBadge } from './SubStepBadge'
 import { PriorityIndicator } from './PriorityIndicator'
 import { Check } from 'lucide-react'
 
@@ -12,18 +12,14 @@ interface SiteRowProps {
   onClick: () => void
 }
 
-function getPhaseStatus(site: TrackerSiteOverview, phaseKey: string): string {
-  const key = `${phaseKey}_phase` as keyof TrackerSiteOverview
-  return (site[key] as string) ?? 'Not Started'
-}
-
 export function SiteRow({ site, onClick }: SiteRowProps) {
   return (
     <tr
       onClick={onClick}
       className={cn(
         'cursor-pointer transition-colors duration-100 hover:bg-zinc-50 dark:hover:bg-[#1a1a30] border-b border-zinc-100 dark:border-[#22223a] group',
-        site.is_archived && 'opacity-50'
+        site.is_archived && 'opacity-50',
+        !site.has_activity && !site.is_archived && 'opacity-50'
       )}
     >
       <td className="px-3 py-2 whitespace-nowrap sticky left-0 z-[5] bg-white dark:bg-[#16162a] group-hover:bg-zinc-50 dark:group-hover:bg-[#1a1a30] transition-colors duration-100">
@@ -52,14 +48,18 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
           {site.utility_name ?? '--'}
         </span>
       </td>
-      {PHASES.map(phase => (
-        <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
-          <PhaseBadge
-            status={getPhaseStatus(site, phase.key) as 'Not Started' | 'In Progress' | 'Complete' | 'Waiting' | 'N/A'}
-            abbrev={phase.abbrev}
-          />
-        </td>
-      ))}
+      {PHASES.map(phase => {
+        const subStep = getCurrentSubStep(phase.key as PhaseKey, site as Record<string, unknown>)
+        return (
+          <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
+            <SubStepBadge
+              phase={phase.key as PhaseKey}
+              subStep={subStep}
+              site={site as Record<string, unknown>}
+            />
+          </td>
+        )
+      })}
       <td className="px-3 py-2 whitespace-nowrap text-center">
         {site.construction_ready && (
           <Check className="w-4 h-4 text-emerald-500 mx-auto" />

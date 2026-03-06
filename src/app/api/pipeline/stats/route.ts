@@ -32,19 +32,18 @@ export async function GET() {
       }
     }
 
-    const [portfolioSites, trackerSites, partners, hubs] = await Promise.all([
-      safeQuery('portfolio_sites', 'id, tier, upload_id, site_score'),
-      safeQuery('tracker_site_overview', 'id, name, priority, asset_owner_id, asset_owner_name, hub_name, screening_score, screening_tier, mw_current, site_qualification_phase, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude'),
+    const [trackerSites, partners, hubs] = await Promise.all([
+      safeQuery('tracker_site_overview', 'id, name, priority, asset_owner_id, asset_owner_name, hub_name, screening_score, screening_tier, mw_current, has_activity, site_control_phase, power_phase, permitting_phase, fiber_phase, engineering_phase, construction_phase, construction_ready, latitude, longitude'),
       safeQuery('tracker_power_partners', 'id, name'),
       safeQuery('tracker_regional_hubs', 'id, name, status'),
     ])
 
-    // Funnel numbers
-    const screened = portfolioSites.length
-    const strongFit = portfolioSites.filter((s: { tier: string }) => s.tier === 'good').length
-    const inPipeline = trackerSites.length
-    const activeDev = trackerSites.filter((s: { priority: string }) =>
-      s.priority === 'Lead' || s.priority === 'Active'
+    // Funnel numbers — all from tracker_sites
+    const screened = trackerSites.filter((s: { screening_score: number | null }) => s.screening_score != null).length
+    const strongFit = trackerSites.filter((s: { screening_tier: string | null }) => s.screening_tier === 'good').length
+    const inPipeline = trackerSites.filter((s: { has_activity: boolean }) => s.has_activity).length
+    const activeDev = trackerSites.filter((s: { priority: string; has_activity: boolean }) =>
+      s.has_activity && (s.priority === 'Lead' || s.priority === 'Active')
     ).length
     const constructionReady = trackerSites.filter((s: { construction_ready: boolean }) =>
       s.construction_ready
@@ -54,40 +53,27 @@ export async function GET() {
     const totalMw = trackerSites.reduce((sum: number, s: { mw_current: number | null }) =>
       sum + (Number(s.mw_current) || 0), 0
     )
-    const scoredSites = portfolioSites.filter((s: { site_score: number | null }) => s.site_score != null)
+    const scoredSites = trackerSites.filter((s: { screening_score: number | null }) => s.screening_score != null)
     const avgScore = scoredSites.length > 0
-      ? scoredSites.reduce((sum: number, s: { site_score: number }) => sum + Number(s.site_score), 0) / scoredSites.length
+      ? scoredSites.reduce((sum: number, s: { screening_score: number }) => sum + Number(s.screening_score), 0) / scoredSites.length
       : null
 
-    // Partner breakdown — match portfolio uploads to partners by name
-    const uploads = await safeQuery('portfolio_uploads', 'id, name')
-    // Build upload_id → partner_id map by matching upload name containing partner name
-    const uploadPartnerMap = new Map<string, string>()
-    for (const u of uploads as Array<{ id: string; name: string }>) {
-      const uploadName = (u.name ?? '').toLowerCase()
-      for (const p of partners as Array<{ id: string; name: string }>) {
-        if (uploadName.includes(p.name.toLowerCase())) {
-          uploadPartnerMap.set(u.id, p.id)
-          break
-        }
-      }
-    }
-
+    // Partner breakdown from tracker_sites
     const partnerBreakdown = (partners as Array<{ id: string; name: string }>).map(partner => {
-      const partnerPortfolioSites = portfolioSites.filter((s: { upload_id: string }) =>
-        uploadPartnerMap.get(s.upload_id) === partner.id
-      )
       const partnerTrackerSites = trackerSites.filter((s: { asset_owner_id: string | null }) =>
         s.asset_owner_id === partner.id
+      )
+      const partnerScreened = partnerTrackerSites.filter((s: { screening_score: number | null }) =>
+        s.screening_score != null
       )
       return {
         id: partner.id,
         name: partner.name,
-        screened: partnerPortfolioSites.length,
-        strong_fit: partnerPortfolioSites.filter((s: { tier: string }) => s.tier === 'good').length,
-        in_pipeline: partnerTrackerSites.length,
-        active_dev: partnerTrackerSites.filter((s: { priority: string }) =>
-          s.priority === 'Lead' || s.priority === 'Active'
+        screened: partnerScreened.length,
+        strong_fit: partnerScreened.filter((s: { screening_tier: string | null }) => s.screening_tier === 'good').length,
+        in_pipeline: partnerTrackerSites.filter((s: { has_activity: boolean }) => s.has_activity).length,
+        active_dev: partnerTrackerSites.filter((s: { priority: string; has_activity: boolean }) =>
+          s.has_activity && (s.priority === 'Lead' || s.priority === 'Active')
         ).length,
       }
     }).filter(p => p.screened > 0 || p.in_pipeline > 0)

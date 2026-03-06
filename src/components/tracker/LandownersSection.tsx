@@ -21,6 +21,7 @@ interface Landowner {
   phone: string | null
   mailing_address: string | null
   notes: string | null
+  attio_record_id: string | null
 }
 
 interface LinkedLandowner extends Landowner {
@@ -28,6 +29,7 @@ interface LinkedLandowner extends Landowner {
   purpose: Purpose[]
   lease_status: LeaseStatus
   junction_notes: string | null
+  attio_record_id: string | null
 }
 
 function leaseStatusColor(status: LeaseStatus) {
@@ -63,7 +65,7 @@ export function LandownersSection({ siteId }: { siteId: string }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await (supabase as any)
       .from('tracker_site_landowners')
-      .select('proximity, purpose, lease_status, notes, landowner:tracker_landowners(id, name, email, phone, mailing_address, notes)')
+      .select('proximity, purpose, lease_status, notes, landowner:tracker_landowners(id, name, email, phone, mailing_address, notes, attio_record_id)')
       .eq('site_id', siteId)
 
     if (error) {
@@ -80,6 +82,7 @@ export function LandownersSection({ siteId }: { siteId: string }) {
       phone: row.landowner.phone,
       mailing_address: row.landowner.mailing_address,
       notes: row.landowner.notes,
+      attio_record_id: row.landowner.attio_record_id ?? null,
       proximity: row.proximity,
       purpose: row.purpose ?? [],
       lease_status: row.lease_status ?? 'No Contact',
@@ -161,9 +164,26 @@ function LandownerRow({
         className="w-full text-left px-3 py-2 rounded-md hover:bg-zinc-100 dark:hover:bg-[#1a1a30] transition-colors cursor-pointer"
       >
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[13px] font-medium text-zinc-900 dark:text-zinc-100 truncate">
-            {landowner.name}
-          </span>
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="text-[13px] font-medium text-zinc-900 dark:text-zinc-100 truncate">
+              {landowner.name}
+            </span>
+            {landowner.attio_record_id && (
+              <a
+                href={`https://app.attio.com/people/${landowner.attio_record_id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={e => e.stopPropagation()}
+                className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-medium bg-nodiac-secondary/15 text-nodiac-secondary hover:bg-nodiac-secondary/25 transition-colors shrink-0"
+                title="Open in Attio"
+              >
+                <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                Attio
+              </a>
+            )}
+          </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium', proximityColor(landowner.proximity))}>
               {landowner.proximity}

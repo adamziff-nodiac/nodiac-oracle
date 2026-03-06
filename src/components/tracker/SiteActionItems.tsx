@@ -85,13 +85,29 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
     }
   }
 
-  async function handleAdd(_siteId: string, title: string, assignedTo?: string | null) {
+  async function handleAdd(_siteId: string, title: string, assignedTo?: string | null, status?: string, waitingOn?: string | null) {
     const res = await fetch('/api/todo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ site_id: siteId, title, assigned_to: assignedTo ?? null }),
+      body: JSON.stringify({
+        site_id: siteId,
+        title,
+        status: status ?? 'next',
+        assigned_to: assignedTo ?? null,
+        waiting_on: waitingOn ?? null,
+      }),
     })
     if (res.ok) await fetchItems()
+  }
+
+  async function handleDelete(id: string) {
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, { method: 'DELETE' })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   const siteForPicker = [site]
@@ -125,12 +141,14 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
               onToggleDone={handleToggleDone}
               onToggleFlag={handleToggleFlag}
               onUpdate={handleUpdate}
+              onDelete={handleDelete}
             />
           ))}
         </div>
       )}
 
       <QuickAddAction sites={siteForPicker} teamMembers={teamMembers} onAdd={handleAdd} />
+      <QuickAddAction sites={siteForPicker} teamMembers={teamMembers} defaultStatus="waiting" onAdd={handleAdd} />
     </div>
   )
 }
