@@ -210,7 +210,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 min-w-0 w-full overflow-x-hidden">
       <FilterBar
         priorities={[]}
         hubs={hubNames}

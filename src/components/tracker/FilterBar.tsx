@@ -51,8 +51,8 @@ export function FilterBar({
   onAddSite,
 }: FilterBarProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 px-4 py-2.5 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
-      <div className="flex flex-wrap items-center gap-2">
+    <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-3 px-4 py-2.5 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
+      <div className="min-w-0 flex flex-wrap items-center gap-2">
         <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mr-1">
           Priority:
         </span>
@@ -150,7 +150,7 @@ export function FilterBar({
         )}
       </div>
 
-      <div className="flex items-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+      <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-500 dark:text-zinc-400">
         <span>
           <span className="font-medium text-zinc-900 dark:text-zinc-100">{siteCount}</span> sites
         </span>

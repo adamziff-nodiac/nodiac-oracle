@@ -18,8 +18,8 @@ export function SubNav() {
   const pathname = usePathname()
 
   return (
-    <div className="border-b border-zinc-200 dark:border-[#2a2a40]">
-      <div className="flex min-w-max items-center gap-1 overflow-x-auto px-1 sm:px-0 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="border-b border-zinc-200 dark:border-[#2a2a40] w-full overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex min-w-max items-center gap-1 px-1 sm:px-0">
         {tabs.map(tab => {
           const isActive = tab.href === '/tracker'
             ? pathname === '/tracker'
