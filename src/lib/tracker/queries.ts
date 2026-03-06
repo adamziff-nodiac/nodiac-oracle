@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity } from './types'
+import type { TrackerSiteOverview, TrackerHub, TrackerHubWithCounts, TrackerPartner, TrackerPartnerWithCounts, TrackerActivity, ActionItemWithContext, TeamMember } from './types'
 
 export async function getTrackerSites(): Promise<TrackerSiteOverview[]> {
   const supabase = await createClient()
@@ -272,6 +272,107 @@ export async function getPromotedSitesMap(uploadId: string): Promise<Record<stri
     map[ts.portfolio_site_id] = ts.id
   }
   return map
+}
+
+// ── Action Items ──────────────────────────────────────
+
+export async function getActionItems(filters?: {
+  assigned_to?: string
+  status?: string[]
+  site_id?: string
+}): Promise<ActionItemWithContext[]> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
+    .from('tracker_action_items_with_context')
+    .select('*')
+    .order('flagged', { ascending: false })
+    .order('created_at', { ascending: true })
+
+  if (filters?.assigned_to) {
+    query = query.eq('assigned_to', filters.assigned_to)
+  }
+  if (filters?.status && filters.status.length > 0) {
+    query = query.in('status', filters.status)
+  }
+  if (filters?.site_id) {
+    query = query.eq('site_id', filters.site_id)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+  return (data ?? []) as ActionItemWithContext[]
+}
+
+export async function getSiteActionItems(siteId: string): Promise<ActionItemWithContext[]> {
+  return getActionItems({ site_id: siteId, status: ['next', 'waiting'] })
+}
+
+export async function getActionItemStats(assignedTo?: string): Promise<{
+  next: number
+  waiting: number
+  stalled: number
+  flaggedNext: ActionItemWithContext | null
+}> {
+  const supabase = await createClient()
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let query = (supabase as any)
+    .from('tracker_action_items_with_context')
+    .select('*')
+    .in('status', ['next', 'waiting'])
+
+  if (assignedTo) {
+    query = query.eq('assigned_to', assignedTo)
+  }
+
+  const { data, error } = await query
+  if (error) throw error
+
+  const items = (data ?? []) as ActionItemWithContext[]
+  const nextItems = items.filter(i => i.status === 'next')
+  const waitingItems = items.filter(i => i.status === 'waiting')
+
+  // Find stalled: items older than 14 days
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+  const stalled = items.filter(i => i.created_at < fourteenDaysAgo).length
+
+  // Find first flagged next item
+  const flaggedNext = nextItems.find(i => i.flagged) ?? nextItems[0] ?? null
+
+  return {
+    next: nextItems.length,
+    waiting: waitingItems.length,
+    stalled,
+    flaggedNext,
+  }
+}
+
+// ── Team Members ──────────────────────────────────────
+
+export async function getTeamMembers(): Promise<TeamMember[]> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('team_members')
+    .select('*')
+    .order('display_name')
+
+  if (error) throw error
+  return (data ?? []) as TeamMember[]
+}
+
+export async function getTeamMemberByUserId(userId: string): Promise<TeamMember | null> {
+  const supabase = await createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
+    .from('team_members')
+    .select('*')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  if (error) throw error
+  return data as TeamMember | null
 }
 
 export async function getDepositSites(): Promise<TrackerSiteOverview[]> {

@@ -10,6 +10,7 @@ import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { SiteHeader } from './SiteHeader'
 import { ArchiveBanner } from './ArchiveBanner'
 import { OperationalContext } from './OperationalContext'
+import { SiteActionItems } from './SiteActionItems'
 import { PhaseCheckpointGroup } from './PhaseCheckpointGroup'
 import { SpeedMetric } from './SpeedMetric'
 import { ActivityLog } from './ActivityLog'
@@ -127,6 +128,8 @@ export function SiteDetailClient({ initialSite, initialActivity, partners, hubs 
         {/* Main column */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           <OperationalContext notes={notes} onUpdate={handleNotesUpdate} />
+
+          <SiteActionItems siteId={site.id} site={site} />
 
           {PHASES.map(phase => (
             <PhaseCheckpointGroup

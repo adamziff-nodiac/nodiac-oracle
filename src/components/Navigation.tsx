@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { MessageSquare, BarChart3, Home, Map, FileSearch, GitBranch, BookOpen, ClipboardList, LogOut, Loader2 } from 'lucide-react'
+import { MessageSquare, BarChart3, Home, Map, FileSearch, GitBranch, BookOpen, ClipboardList, ListChecks, Settings, LogOut, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { createClient } from '@/lib/supabase/client'
 
 const navItems = [
   { href: '/', label: 'Home', icon: Home },
+  { href: '/todo', label: 'Todo', icon: ListChecks },
   { href: '/chat', label: 'Oracle', icon: MessageSquare },
   { href: '/timeline', label: 'Timelines', icon: BarChart3 },
   { href: '/regional-hubs', label: 'Hubs', icon: Map },
@@ -17,6 +18,7 @@ const navItems = [
   { href: '/pipeline', label: 'Pipeline', icon: GitBranch },
   { href: '/scoring', label: 'Scoring', icon: BookOpen },
   { href: '/tracker', label: 'Tracker', icon: ClipboardList },
+  { href: '/settings', label: 'Settings', icon: Settings },
 ]
 
 export function Navigation() {

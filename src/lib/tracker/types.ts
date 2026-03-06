@@ -119,6 +119,43 @@ export interface SiteNotes {
   updated_at?: string
 }
 
+// Team member (maps Supabase auth user to display name)
+export interface TeamMember {
+  id: string
+  user_id: string | null
+  display_name: string
+  email: string | null
+  avatar_url: string | null
+  created_at: string
+}
+
+// Action item (GTD-inspired task tied to a site)
+export interface ActionItem {
+  id: string
+  site_id: string
+  title: string
+  status: 'next' | 'waiting' | 'done'
+  flagged: boolean
+  assigned_to: string | null
+  waiting_on: string | null
+  waiting_since: string | null
+  defer_until: string | null
+  hard_deadline: string | null
+  notes: string | null
+  source: 'manual' | 'ai' | 'call'
+  created_by: string | null
+  created_at: string
+  completed_at: string | null
+}
+
+// Action item with joined context from the view
+export interface ActionItemWithContext extends ActionItem {
+  site_name: string
+  hub_name: string | null
+  assigned_to_name: string | null
+  created_by_name: string | null
+}
+
 // Checkpoint notes JSONB shape
 export interface CheckpointNote {
   note: string
