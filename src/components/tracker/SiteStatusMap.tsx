@@ -19,10 +19,10 @@ export type SiteStatusCategory =
   | 'construction_ready'
 
 export const STATUS_CATEGORY_CONFIG: Record<SiteStatusCategory, { color: string; label: string }> = {
-  not_developing: { color: '#71717a', label: 'Not Developing' },
-  screened_only: { color: '#a78bfa', label: 'Screened Only' },
+  not_developing: { color: '#52525b', label: 'Not Developing' },
+  screened_only: { color: '#8b5cf6', label: 'Screened Only' },
   early_development: { color: '#f59e0b', label: 'Early Development' },
-  active_development: { color: '#3b82f6', label: 'Active Development' },
+  active_development: { color: '#4de2e4', label: 'Active Development' },
   construction_ready: { color: '#22c55e', label: 'Construction Ready' },
 }
 
