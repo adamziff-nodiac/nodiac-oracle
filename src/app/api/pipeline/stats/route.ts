@@ -41,9 +41,9 @@ export async function GET() {
     // Funnel numbers — all from tracker_sites
     const screened = trackerSites.filter((s: { screening_score: number | null }) => s.screening_score != null).length
     const strongFit = trackerSites.filter((s: { screening_tier: string | null }) => s.screening_tier === 'good').length
-    const inPipeline = trackerSites.length
-    const activeDev = trackerSites.filter((s: { priority: string }) =>
-      s.priority === 'Lead' || s.priority === 'Active'
+    const inPipeline = trackerSites.filter((s: { has_activity: boolean }) => s.has_activity).length
+    const activeDev = trackerSites.filter((s: { priority: string; has_activity: boolean }) =>
+      s.has_activity && (s.priority === 'Lead' || s.priority === 'Active')
     ).length
     const constructionReady = trackerSites.filter((s: { construction_ready: boolean }) =>
       s.construction_ready
@@ -71,9 +71,9 @@ export async function GET() {
         name: partner.name,
         screened: partnerScreened.length,
         strong_fit: partnerScreened.filter((s: { screening_tier: string | null }) => s.screening_tier === 'good').length,
-        in_pipeline: partnerTrackerSites.length,
-        active_dev: partnerTrackerSites.filter((s: { priority: string }) =>
-          s.priority === 'Lead' || s.priority === 'Active'
+        in_pipeline: partnerTrackerSites.filter((s: { has_activity: boolean }) => s.has_activity).length,
+        active_dev: partnerTrackerSites.filter((s: { priority: string; has_activity: boolean }) =>
+          s.has_activity && (s.priority === 'Lead' || s.priority === 'Active')
         ).length,
       }
     }).filter(p => p.screened > 0 || p.in_pipeline > 0)
