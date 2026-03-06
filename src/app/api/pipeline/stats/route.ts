@@ -12,13 +12,24 @@ export async function GET() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any
 
-    // Fetch data — gracefully handle missing tables/columns (migration not yet applied)
-    // Use safe query helper that always returns an array
+    // Safe RPC helper — runs raw SQL via Supabase's rpc or falls back to safe queries
     async function safeQuery(table: string, columns: string) {
       try {
-        const result = await sb.from(table).select(columns)
+        // Use count header to get total, but fetch all rows with pagination
+        const result = await sb.from(table).select(columns, { count: 'exact' })
         if (result?.error) return []
-        return result?.data ?? []
+        const total = result.count ?? result.data?.length ?? 0
+        if (total <= 1000) return result.data ?? []
+        // Fetch remaining pages
+        const allRows = [...(result.data ?? [])]
+        let offset = 1000
+        while (offset < total) {
+          const page = await sb.from(table).select(columns).range(offset, offset + 999)
+          if (page?.error || !page?.data?.length) break
+          allRows.push(...page.data)
+          offset += 1000
+        }
+        return allRows
       } catch {
         return []
       }
@@ -52,7 +63,6 @@ export async function GET() {
       : null
 
     // IPP breakdown
-    // Get upload → ipp_id mapping
     const uploads = await safeQuery('portfolio_uploads', 'id, ipp_id')
     const uploadIppMap = new Map<string, string>()
     for (const u of uploads as Array<{ id: string; ipp_id: string | null }>) {
