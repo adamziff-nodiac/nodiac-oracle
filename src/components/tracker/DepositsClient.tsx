@@ -69,13 +69,13 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
   const deposits = useMemo(() => extractDeposits(sites), [sites])
 
   const quotedOrApproved = deposits.filter(d => d.amountStatus === 'Quoted' || d.amountStatus === 'Approved')
-  const readyToSend = quotedOrApproved.filter(d => d.checkpointStatus !== 'Blocked')
-  const blocked = quotedOrApproved.filter(d => d.checkpointStatus === 'Blocked')
+  const readyToSend = quotedOrApproved.filter(d => d.checkpointStatus !== 'Waiting')
+  const waiting = quotedOrApproved.filter(d => d.checkpointStatus === 'Waiting')
   const pending = deposits.filter(d => d.amountStatus === 'Estimated')
   const paid = deposits.filter(d => d.amountStatus === 'Paid')
 
   const readyTotal = readyToSend.reduce((s, d) => s + (d.amount ?? 0), 0)
-  const blockedTotal = blocked.reduce((s, d) => s + (d.amount ?? 0), 0)
+  const waitingTotal = waiting.reduce((s, d) => s + (d.amount ?? 0), 0)
   const pendingTotal = pending.reduce((s, d) => s + (d.amount ?? 0), 0)
   const paidTotal = paid.reduce((s, d) => s + (d.amount ?? 0), 0)
 
@@ -170,7 +170,7 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
       {/* Summary cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <MetricCard label="Ready to Send" value={formatCurrency(readyTotal)} sublabel={`${readyToSend.length} deposits`} />
-        <MetricCard label="Blocked" value={formatCurrency(blockedTotal)} sublabel={`${blocked.length} deposits`} />
+        <MetricCard label="Waiting" value={formatCurrency(waitingTotal)} sublabel={`${waiting.length} deposits`} />
         <MetricCard label="Pending" value={formatCurrency(pendingTotal)} sublabel={`${pending.length} deposits`} />
         <MetricCard label="Total Paid" value={formatCurrency(paidTotal)} sublabel={`${paid.length} deposits`} />
       </div>
@@ -187,14 +187,14 @@ export function DepositsClient({ initialSites }: DepositsClientProps) {
         accent
       />
       <DepositGroup
-        title="Blocked"
-        total={blockedTotal}
-        items={blocked}
+        title="Waiting"
+        total={waitingTotal}
+        items={waiting}
         formatCurrency={formatCurrency}
         onAmountStatusChange={handleAmountStatusChange}
         onAmountChange={handleAmountChange}
         onCheckpointStatusChange={handleCheckpointStatusChange}
-        blocked
+        waiting
       />
       <DepositGroup
         title="Pending"
@@ -308,7 +308,7 @@ function DepositGroup({
   onAmountChange,
   onCheckpointStatusChange,
   accent,
-  blocked,
+  waiting,
   muted,
 }: {
   title: string
@@ -319,11 +319,11 @@ function DepositGroup({
   onAmountChange: (item: DepositItem, newAmount: number | null) => void
   onCheckpointStatusChange: (item: DepositItem, newStatus: CheckpointStatus) => void
   accent?: boolean
-  blocked?: boolean
+  waiting?: boolean
   muted?: boolean
 }) {
   return (
-    <div className={`${accent ? 'border-l-2 border-nodiac-secondary pl-4' : ''} ${blocked ? 'border-l-2 border-red-400 dark:border-red-500 pl-4' : ''} ${muted ? 'opacity-70' : ''}`}>
+    <div className={`${accent ? 'border-l-2 border-nodiac-secondary pl-4' : ''} ${waiting ? 'border-l-2 border-amber-400 dark:border-amber-500 pl-4' : ''} ${muted ? 'opacity-70' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
         <span className="text-sm font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
@@ -352,7 +352,7 @@ function DepositGroup({
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-left">Provider</th>
                   <th className="px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 text-center">
                     Phase Status
-                    <InfoTooltip text="The checkpoint's overall progress: Not Started → In Progress → Complete. A deposit can be Quoted but Blocked if something else needs to happen first." />
+                    <InfoTooltip text="The checkpoint's overall progress: Not Started → In Progress → Complete. A deposit can be Quoted but Waiting if something else needs to happen first." />
                   </th>
                 </tr>
               </thead>

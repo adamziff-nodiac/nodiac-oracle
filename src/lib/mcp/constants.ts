@@ -19,7 +19,7 @@ export const FINANCIAL_CHECKPOINTS = [
   'power_deposit', 'permit_approved', 'fiber_secured', 'eng_equip_ordered',
 ] as const
 
-export const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Complete', 'Blocked', 'N/A'] as const
+export const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Complete', 'Waiting', 'N/A'] as const
 export const AMOUNT_STATUS_OPTIONS = ['Estimated', 'Quoted', 'Approved', 'Paid'] as const
 export const PRIORITY_OPTIONS = ['Lead', 'Active', 'Pipeline', 'On Hold', 'Deprioritized'] as const
 export const SITE_TYPE_OPTIONS = ['Solar', 'Wind', 'Solar + BESS', 'Substation', 'Other'] as const

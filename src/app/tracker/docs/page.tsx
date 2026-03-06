@@ -259,7 +259,7 @@ export default function DocsPage() {
                       {status === 'Not Started' && 'Work hasn\'t begun on this checkpoint yet. Use this for future work, not for things that are actively being pursued.'}
                       {status === 'In Progress' && 'Active work underway. For example: the utility capacity inquiry has been submitted and you\'re waiting for a response, or lease negotiations are happening. If someone is spending time on it, it\'s In Progress.'}
                       {status === 'Complete' && 'This checkpoint is done. The deliverable exists (signed agreement, approved permit, payment confirmed). No more work needed.'}
-                      {status === 'Blocked' && 'Can\'t move forward due to an external dependency or issue. Example: permit application rejected, utility unresponsive for 30+ days, legal issue on the land title. Use the Blockers section on the site detail page to explain what\'s blocking.'}
+                      {status === 'Waiting' && 'Can\'t move forward due to an external dependency. Example: permit application rejected, utility unresponsive for 30+ days, legal issue on the land title. Use the Blockers section on the site detail page to explain what\'s blocking.'}
                       {status === 'N/A' && 'This checkpoint doesn\'t apply to this site. Example: a BTM site doesn\'t need a utility interconnection deposit. Mark it N/A so the phase can still show as Complete.'}
                     </p>
                   </div>
@@ -274,7 +274,7 @@ export default function DocsPage() {
             <ul className="space-y-2 text-sm text-zinc-600 dark:text-zinc-400">
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
-                If any checkpoint is <strong className="text-zinc-900 dark:text-zinc-100">Blocked</strong>, the phase shows as Blocked
+                If any checkpoint is <strong className="text-zinc-900 dark:text-zinc-100">Waiting</strong>, the phase shows as Waiting
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
@@ -333,11 +333,11 @@ export default function DocsPage() {
             <ul className="space-y-1.5 text-sm text-zinc-600 dark:text-zinc-400 mb-3">
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
-                <strong className="text-zinc-900 dark:text-zinc-100">Ready to Send</strong> -- Quoted or Approved deposits that are not blocked. These need action.
+                <strong className="text-zinc-900 dark:text-zinc-100">Ready to Send</strong> -- Quoted or Approved deposits that are not waiting. These need action.
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />
-                <strong className="text-zinc-900 dark:text-zinc-100">Blocked</strong> -- Quoted or Approved deposits where the checkpoint phase is Blocked. Needs resolution before payment.
+                <strong className="text-zinc-900 dark:text-zinc-100">Waiting</strong> -- Quoted or Approved deposits where the checkpoint phase is Waiting. Needs resolution before payment.
               </li>
               <li className="flex items-start gap-2">
                 <span className="w-1 h-1 rounded-full bg-zinc-400 mt-2 shrink-0" />

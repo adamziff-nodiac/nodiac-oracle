@@ -44,7 +44,7 @@ export const CHECKPOINTS: Checkpoint[] = [
 
 // These arrays mirror the Postgres enums — used for UI dropdowns.
 // After `supabase gen types`, you can also use Database['public']['Enums']['checkpoint_status'] etc.
-export const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Complete', 'Blocked', 'N/A'] as const
+export const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Complete', 'Waiting', 'N/A'] as const
 export type CheckpointStatus = typeof STATUS_OPTIONS[number]
 
 export const AMOUNT_STATUS_OPTIONS = ['Estimated', 'Quoted', 'Approved', 'Paid'] as const
@@ -69,7 +69,7 @@ export const PHASE_COLORS: Record<string, string> = {
   'Not Started': 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
   'In Progress': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
   'Complete': 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
-  'Blocked': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
+  'Waiting': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
 }
 
 // Helper: get checkpoint value from a site row

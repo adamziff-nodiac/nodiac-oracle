@@ -19,14 +19,14 @@ export function registerPrompts(server: McpServer) {
 
 1. Call get_portfolio_summary to get the high-level numbers
 2. Call list_sites to see all active sites
-3. Identify any sites with "Blocked" phase statuses
-4. For each blocked site, call get_site to understand what's blocking it
+3. Identify any sites with "Waiting" phase statuses
+4. For each waiting site, call get_site to understand what's holding it up
 5. Call get_recent_activity with limit=10 to see what's been happening
 
 Then write a structured review covering:
 - Portfolio overview (total sites, MW, capex)
 - Progress by priority tier (Lead, Active, Pipeline)
-- Blocked items requiring attention (with specific next steps)
+- Waiting items requiring attention (with specific next steps)
 - Recent activity highlights
 - Recommended next actions`,
         },

@@ -23,7 +23,7 @@ function getVal(site: Record<string, unknown>, prefix: string, suffix: string): 
 
 function computePhaseStatus(checkpoints: Checkpoint[], site: TrackerSiteOverview): string {
   const statuses = checkpoints.map(c => getVal(site as unknown as Record<string, unknown>, c.prefix, 'status') as string || 'Not Started')
-  if (statuses.some(s => s === 'Blocked')) return 'Blocked'
+  if (statuses.some(s => s === 'Waiting')) return 'Waiting'
   if (statuses.every(s => s === 'Complete' || s === 'N/A')) return 'Complete'
   if (statuses.some(s => s === 'In Progress')) return 'In Progress'
   return 'Not Started'
@@ -31,7 +31,7 @@ function computePhaseStatus(checkpoints: Checkpoint[], site: TrackerSiteOverview
 
 function shouldDefaultOpen(checkpoints: Checkpoint[], site: TrackerSiteOverview): boolean {
   const statuses = checkpoints.map(c => getVal(site as unknown as Record<string, unknown>, c.prefix, 'status') as string || 'Not Started')
-  return statuses.some(s => s === 'In Progress' || s === 'Blocked')
+  return statuses.some(s => s === 'In Progress' || s === 'Waiting')
 }
 
 export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: PhaseCheckpointGroupProps) {
@@ -52,7 +52,7 @@ export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: Pha
             'text-[11px] font-medium px-2 py-0.5 rounded-full',
             phaseStatus === 'Complete' && 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-200',
             phaseStatus === 'In Progress' && 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
-            phaseStatus === 'Blocked' && 'bg-red-200 text-red-800 dark:bg-red-700/50 dark:text-red-200',
+            phaseStatus === 'Waiting' && 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
             phaseStatus === 'Not Started' && 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400',
           )}>
             {phaseStatus}
