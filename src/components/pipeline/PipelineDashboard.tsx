@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { Loader2, Map as MapIcon, BarChart3, Users, Zap } from 'lucide-react'
 import { FunnelChart } from './FunnelChart'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { cn } from '@/lib/utils'
 
 interface FunnelData {
@@ -39,6 +40,7 @@ interface PipelineData {
 export function PipelineDashboard() {
   const [data, setData] = useState<PipelineData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [ippSearch, setIppSearch] = useState('')
 
   useEffect(() => {
     fetch('/api/pipeline/stats')
@@ -70,6 +72,12 @@ export function PipelineDashboard() {
   }
 
   const { funnel, stats, ipp_breakdown } = data
+
+  const filteredIpps = useMemo(() => {
+    if (!ippSearch.trim()) return ipp_breakdown
+    const q = ippSearch.toLowerCase()
+    return ipp_breakdown.filter(ipp => ipp.name.toLowerCase().includes(q))
+  }, [ipp_breakdown, ippSearch])
 
   const funnelStages = [
     { label: 'Screened', value: funnel.screened, color: '#c77dba' },
@@ -117,9 +125,17 @@ export function PipelineDashboard() {
       {/* IPP Breakdown */}
       {ipp_breakdown.length > 0 && (
         <div className="bg-white dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10 p-6">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-            Breakdown by IPP
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Breakdown by IPP
+            </h3>
+            <SearchInput
+              value={ippSearch}
+              onChange={setIppSearch}
+              placeholder="Search IPPs..."
+              className="w-40 sm:w-52"
+            />
+          </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -132,7 +148,7 @@ export function PipelineDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {ipp_breakdown.map(ipp => (
+                {filteredIpps.map(ipp => (
                   <tr key={ipp.id} className="border-b border-gray-100 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5">
                     <td className="px-3 py-2.5">
                       <Link

@@ -7,6 +7,7 @@ import type { PortfolioSite } from '@/types/screening'
 import type { PermittingCitation, CountyScore } from '@/types/regional-hubs'
 import { TierBadge } from './TierBadge'
 import { ScoringBreakdown } from './ScoringBreakdown'
+import { StyledCheckbox } from '@/components/ui/StyledCheckbox'
 import { cn } from '@/lib/utils'
 
 type SortKey = 'site_name' | 'county' | 'state' | 'utility_type' | 'tier' | 'site_score' | 'nearest_hub'
@@ -33,6 +34,8 @@ interface SiteTableProps {
   promotedMap?: Record<string, string>
   // Nearest hub data
   nearestHubs?: Record<string, NearestHub>
+  // Search filter
+  searchQuery?: string
 }
 
 function resolveCitations(
@@ -50,7 +53,7 @@ function resolveCitations(
 
 export function SiteTable({
   sites, selectedSiteId, onSiteSelect, countyScores, citationRegistry,
-  selectedIds, onToggleSelect, onSelectAll, promotedMap, nearestHubs,
+  selectedIds, onToggleSelect, onSelectAll, promotedMap, nearestHubs, searchQuery,
 }: SiteTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('site_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -58,8 +61,20 @@ export function SiteTable({
 
   const hasSelection = !!onToggleSelect
 
+  const filtered = useMemo(() => {
+    if (!searchQuery?.trim()) return sites
+    const q = searchQuery.toLowerCase()
+    return sites.filter(s =>
+      (s.site_name || '').toLowerCase().includes(q) ||
+      (s.county || '').toLowerCase().includes(q) ||
+      (s.state || '').toLowerCase().includes(q) ||
+      (s.utility_type || '').toLowerCase().includes(q) ||
+      (nearestHubs?.[s.id]?.name || '').toLowerCase().includes(q)
+    )
+  }, [sites, searchQuery, nearestHubs])
+
   const sorted = useMemo(() => {
-    return [...sites].sort((a, b) => {
+    return [...filtered].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
         case 'site_name':
@@ -89,7 +104,7 @@ export function SiteTable({
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
-  }, [sites, sortKey, sortDir, nearestHubs])
+  }, [filtered, sortKey, sortDir, nearestHubs])
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -107,7 +122,8 @@ export function SiteTable({
       : <ChevronDown className="w-3 h-3 inline ml-1" />
   }
 
-  const allSelected = selectedIds && sites.length > 0 && sites.every(s => selectedIds.has(s.id))
+  const allSelected = selectedIds && sorted.length > 0 && sorted.every(s => selectedIds.has(s.id))
+  const someSelected = selectedIds && selectedIds.size > 0 && !allSelected
 
   const colSpan = 6 + (hasSelection ? 1 : 0) + (nearestHubs ? 1 : 0)
 
@@ -118,11 +134,10 @@ export function SiteTable({
           <tr className="border-b border-gray-200 dark:border-white/10 text-left">
             {hasSelection && (
               <th className="px-3 py-2 w-8">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
+                <StyledCheckbox
+                  checked={!!allSelected}
+                  indeterminate={!!someSelected}
                   onChange={() => onSelectAll?.()}
-                  className="rounded border-gray-300 dark:border-white/20"
                 />
               </th>
             )}
@@ -197,12 +212,10 @@ export function SiteTable({
                   }}
                 >
                   {hasSelection && (
-                    <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
+                    <td className="px-3 py-2.5">
+                      <StyledCheckbox
                         checked={selectedIds?.has(site.id) ?? false}
                         onChange={() => onToggleSelect?.(site.id)}
-                        className="rounded border-gray-300 dark:border-white/20"
                       />
                     </td>
                   )}

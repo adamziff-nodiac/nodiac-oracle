@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { CsvUploader } from './CsvUploader'
 import { ScreeningMap } from './ScreeningMap'
@@ -9,6 +9,7 @@ import { PromoteSitesModal } from './PromoteSitesModal'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import type { ProgressStep } from '@/hooks/usePortfolio'
 import { RotateCcw, Check, Loader2, Info, ArrowLeft, ArrowRight } from 'lucide-react'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
 import { WeightControls } from '@/components/regional-hubs/WeightControls'
 import type { SiteTier } from '@/types/screening'
@@ -16,6 +17,7 @@ import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
 import { PREBUILT_PORTFOLIOS } from '@/data/portfolio-registry'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { cn } from '@/lib/utils'
+import { FullscreenToggle } from '@/components/ui/FullscreenToggle'
 import { haversineKm, kmToMiles } from '@/lib/geo/haversine'
 import type { OverlayHub } from './HubOverlayLayer'
 import type { OverlayTrackerSite } from './TrackerSiteOverlayLayer'
@@ -67,8 +69,12 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
     uploadCSV, reset, isPrebuilt,
   } = usePortfolio(prebuiltSlug)
   const { scores: countyScores, citationRegistry } = useCountyScores()
+  const screeningMapRef = useRef<HTMLDivElement>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [visibleTiers, setVisibleTiers] = useState<Set<SiteTier>>(new Set(ALL_TIERS))
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Selection state for promote flow
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -346,6 +352,12 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           </p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search sites..."
+            className="w-40 sm:w-52"
+          />
           <a
             href="/scoring#site-screening"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -509,7 +521,8 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           </>
         )}
       </div>
-      <div className="h-[50vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
+      <div ref={screeningMapRef} className="relative h-[50vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
+        <FullscreenToggle targetRef={screeningMapRef} className="absolute top-3 right-3 z-10" />
         <ScreeningMap
           sites={sites}
           selectedSiteId={selectedSiteId}
@@ -557,6 +570,7 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           onSelectAll={handleSelectAll}
           promotedMap={promotedMap}
           nearestHubs={nearestHubs}
+          searchQuery={searchQuery}
         />
       </div>
 
