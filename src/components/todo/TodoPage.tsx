@@ -104,14 +104,14 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     }
   }
 
-  async function handleAdd(siteId: string, title: string) {
+  async function handleAdd(siteId: string, title: string, assignedTo?: string | null) {
     const res = await fetch('/api/todo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         site_id: siteId,
         title,
-        assigned_to: selectedMember || null,
+        assigned_to: assignedTo !== undefined ? assignedTo : (selectedMember || null),
       }),
     })
     if (res.ok) await fetchItems()
@@ -225,6 +225,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
               <ActionItemRow
                 key={item.id}
                 item={item}
+                teamMembers={teamMembers}
                 isSaving={savingIds.has(item.id)}
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
@@ -232,7 +233,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
               />
             ))
           )}
-          <QuickAddAction sites={sites} onAdd={handleAdd} />
+          <QuickAddAction sites={sites} teamMembers={teamMembers} onAdd={handleAdd} />
         </div>
       </section>
 
@@ -254,6 +255,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
                 key={key}
                 waitingOn={key}
                 items={groupItems}
+                teamMembers={teamMembers}
                 savingIds={savingIds}
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}

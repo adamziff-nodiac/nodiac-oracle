@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ListChecks } from 'lucide-react'
-import type { ActionItemWithContext, TrackerSiteOverview } from '@/lib/tracker/types'
+import type { ActionItemWithContext, TrackerSiteOverview, TeamMember } from '@/lib/tracker/types'
 import { ActionItemRow } from '@/components/todo/ActionItemRow'
 import { QuickAddAction } from '@/components/todo/QuickAddAction'
 import { useActionItemsRealtime } from '@/lib/tracker/realtime'
@@ -14,6 +14,7 @@ interface SiteActionItemsProps {
 
 export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
   const [items, setItems] = useState<ActionItemWithContext[]>([])
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
 
   const fetchItems = useCallback(async () => {
@@ -22,6 +23,10 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
   }, [siteId])
 
   useEffect(() => { fetchItems() }, [fetchItems])
+
+  useEffect(() => {
+    fetch('/api/team-members').then(r => r.ok ? r.json() : []).then(setTeamMembers).catch(() => {})
+  }, [])
 
   // Subscribe to realtime changes from other users/tabs
   useActionItemsRealtime(fetchItems, siteId)
@@ -80,11 +85,11 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
     }
   }
 
-  async function handleAdd(_siteId: string, title: string) {
+  async function handleAdd(_siteId: string, title: string, assignedTo?: string | null) {
     const res = await fetch('/api/todo', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ site_id: siteId, title }),
+      body: JSON.stringify({ site_id: siteId, title, assigned_to: assignedTo ?? null }),
     })
     if (res.ok) await fetchItems()
   }
@@ -115,6 +120,7 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
             <ActionItemRow
               key={item.id}
               item={item}
+              teamMembers={teamMembers}
               isSaving={savingIds.has(item.id)}
               onToggleDone={handleToggleDone}
               onToggleFlag={handleToggleFlag}
@@ -124,7 +130,7 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
         </div>
       )}
 
-      <QuickAddAction sites={siteForPicker} onAdd={handleAdd} />
+      <QuickAddAction sites={siteForPicker} teamMembers={teamMembers} onAdd={handleAdd} />
     </div>
   )
 }

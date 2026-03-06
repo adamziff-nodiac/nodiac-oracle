@@ -1,19 +1,20 @@
 'use client'
 
 import { Clock } from 'lucide-react'
-import type { ActionItemWithContext } from '@/lib/tracker/types'
+import type { ActionItemWithContext, TeamMember } from '@/lib/tracker/types'
 import { ActionItemRow } from './ActionItemRow'
 
 interface WaitingGroupProps {
   waitingOn: string
   items: ActionItemWithContext[]
+  teamMembers?: TeamMember[]
   savingIds?: Set<string>
   onToggleDone: (id: string, done: boolean) => void
   onToggleFlag: (id: string, flagged: boolean) => void
   onUpdate: (id: string, updates: Record<string, unknown>) => void
 }
 
-export function WaitingGroup({ waitingOn, items, savingIds, onToggleDone, onToggleFlag, onUpdate }: WaitingGroupProps) {
+export function WaitingGroup({ waitingOn, items, teamMembers, savingIds, onToggleDone, onToggleFlag, onUpdate }: WaitingGroupProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2 px-1">
@@ -28,6 +29,7 @@ export function WaitingGroup({ waitingOn, items, savingIds, onToggleDone, onTogg
           <ActionItemRow
             key={item.id}
             item={item}
+            teamMembers={teamMembers}
             isSaving={savingIds?.has(item.id)}
             onToggleDone={onToggleDone}
             onToggleFlag={onToggleFlag}

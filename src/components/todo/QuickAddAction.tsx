@@ -2,26 +2,29 @@
 
 import { useState } from 'react'
 import { Plus, Loader2 } from 'lucide-react'
-import type { TrackerSiteOverview } from '@/lib/tracker/types'
+import type { TrackerSiteOverview, TeamMember } from '@/lib/tracker/types'
 import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface QuickAddActionProps {
   sites: TrackerSiteOverview[]
-  onAdd: (siteId: string, title: string) => Promise<void> | void
+  teamMembers?: TeamMember[]
+  onAdd: (siteId: string, title: string, assignedTo?: string | null) => Promise<void> | void
 }
 
-export function QuickAddAction({ sites, onAdd }: QuickAddActionProps) {
+export function QuickAddAction({ sites, teamMembers, onAdd }: QuickAddActionProps) {
   const [active, setActive] = useState(false)
   const [title, setTitle] = useState('')
   const [siteId, setSiteId] = useState('')
+  const [assignedTo, setAssignedTo] = useState('')
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit() {
     if (!siteId || !title.trim() || saving) return
     setSaving(true)
     try {
-      await onAdd(siteId, title.trim())
+      await onAdd(siteId, title.trim(), assignedTo || null)
       setTitle('')
+      setAssignedTo('')
       setActive(false)
     } finally {
       setSaving(false)
@@ -51,6 +54,18 @@ export function QuickAddAction({ sites, onAdd }: QuickAddActionProps) {
         size="sm"
         className="max-w-[160px]"
       />
+      {teamMembers && teamMembers.length > 0 && (
+        <StyledSelect
+          value={assignedTo}
+          onChange={setAssignedTo}
+          options={[
+            { value: '', label: 'Assign...' },
+            ...teamMembers.map(m => ({ value: m.id, label: m.display_name })),
+          ]}
+          size="sm"
+          className="max-w-[120px]"
+        />
+      )}
       <input
         type="text"
         value={title}

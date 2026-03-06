@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { Star, Check, ChevronDown, ChevronRight, Clock, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import type { ActionItemWithContext } from '@/lib/tracker/types'
+import type { ActionItemWithContext, TeamMember } from '@/lib/tracker/types'
 import { StyledSelect } from '@/components/ui/StyledSelect'
 import Link from 'next/link'
 
 interface ActionItemRowProps {
   item: ActionItemWithContext
+  teamMembers?: TeamMember[]
   isSaving?: boolean
   onToggleDone: (id: string, done: boolean) => void
   onToggleFlag: (id: string, flagged: boolean) => void
@@ -29,7 +30,7 @@ function getAgeBadge(createdAt: string, isWaiting: boolean) {
   return { days, color }
 }
 
-export function ActionItemRow({ item, isSaving, onToggleDone, onToggleFlag, onUpdate }: ActionItemRowProps) {
+export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onToggleFlag, onUpdate }: ActionItemRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState(item.notes ?? '')
@@ -165,12 +166,23 @@ export function ActionItemRow({ item, isSaving, onToggleDone, onToggleFlag, onUp
                 <span className="text-zinc-700 dark:text-zinc-300">{new Date(item.hard_deadline).toLocaleDateString()}</span>
               </div>
             )}
-            {item.assigned_to_name && (
-              <div>
-                <span className="text-zinc-400">Assigned: </span>
-                <span className="text-zinc-700 dark:text-zinc-300">{item.assigned_to_name}</span>
-              </div>
-            )}
+            <div className="flex items-center gap-1">
+              <span className="text-zinc-400">Assigned: </span>
+              {teamMembers && teamMembers.length > 0 ? (
+                <StyledSelect
+                  value={item.assigned_to ?? ''}
+                  onChange={(val) => onUpdate(item.id, { assigned_to: val || null })}
+                  options={[
+                    { value: '', label: 'Unassigned' },
+                    ...teamMembers.map(m => ({ value: m.id, label: m.display_name })),
+                  ]}
+                  size="xs"
+                  variant="ghost"
+                />
+              ) : (
+                <span className="text-zinc-700 dark:text-zinc-300">{item.assigned_to_name ?? 'Unassigned'}</span>
+              )}
+            </div>
           </div>
 
           {/* Notes */}
