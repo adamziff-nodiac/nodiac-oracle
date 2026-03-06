@@ -17,6 +17,7 @@ import { ActivityLog } from './ActivityLog'
 import { ToastContainer, showToast } from './Toast'
 import { LandownersSection } from './LandownersSection'
 import { ParcelsSection } from './ParcelsSection'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface SiteDetailClientProps {
   initialSite: TrackerSiteOverview
@@ -407,21 +408,20 @@ function EditableSelect({
       <div className="flex justify-between items-center">
         <dt className="text-zinc-500 dark:text-zinc-400">{label}</dt>
         <dd>
-          <select
+          <StyledSelect
             value={value ?? ''}
-            onChange={e => {
-              onSave(e.target.value || null)
+            onChange={(val) => {
+              onSave(val || null)
               setEditing(false)
             }}
-            onBlur={() => setEditing(false)}
-            autoFocus
-            className="px-2 py-1 rounded text-[13px] font-medium bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-300 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer max-w-[160px]"
-          >
-            <option value="">--</option>
-            {options.map(o => (
-              <option key={o.id} value={o.id}>{o.name}</option>
-            ))}
-          </select>
+            options={[
+              { value: '', label: '--' },
+              ...options.map(o => ({ value: o.id, label: o.name })),
+            ]}
+            size="sm"
+            align="right"
+            className="max-w-[180px]"
+          />
         </dd>
       </div>
     )

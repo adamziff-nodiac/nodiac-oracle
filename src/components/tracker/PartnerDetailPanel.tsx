@@ -8,6 +8,7 @@ import type { TrackerPartnerWithCounts, TrackerSiteOverview } from '@/lib/tracke
 import { PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS } from '@/lib/tracker/constants'
 import { showToast } from './Toast'
 import { cn } from '@/lib/utils'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface PartnerDetailPanelProps {
   partner: TrackerPartnerWithCounts
@@ -181,31 +182,31 @@ export function PartnerDetailPanel({ partner, isNew, hubs, onSave, onDelete, onC
               <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 Type
               </label>
-              <select
+              <StyledSelect
                 value={draft.type ?? ''}
-                onChange={e => updateField('type', e.target.value || null)}
-                className="mt-1 w-full px-3 py-2 rounded-md text-[13px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer"
-              >
-                <option value="">Select type...</option>
-                {PARTNER_TYPE_OPTIONS.map(t => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+                onChange={(val) => updateField('type', val || null)}
+                options={[
+                  { value: '', label: 'Select type...' },
+                  ...PARTNER_TYPE_OPTIONS.map(t => ({ value: t, label: t })),
+                ]}
+                size="md"
+                className="mt-1 w-full"
+              />
             </div>
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
                 Relationship Stage
               </label>
-              <select
+              <StyledSelect
                 value={draft.relationship_stage ?? ''}
-                onChange={e => updateField('relationship_stage', e.target.value || null)}
-                className="mt-1 w-full px-3 py-2 rounded-md text-[13px] bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-900 dark:text-zinc-100 cursor-pointer"
-              >
-                <option value="">Select stage...</option>
-                {RELATIONSHIP_STAGE_OPTIONS.map(s => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
+                onChange={(val) => updateField('relationship_stage', val || null)}
+                options={[
+                  { value: '', label: 'Select stage...' },
+                  ...RELATIONSHIP_STAGE_OPTIONS.map(s => ({ value: s, label: s })),
+                ]}
+                size="md"
+                className="mt-1 w-full"
+              />
             </div>
           </div>
 
@@ -277,18 +278,16 @@ export function PartnerDetailPanel({ partner, isNew, hubs, onSave, onDelete, onC
                   </span>
                 ))}
                 {availableHubs.length > 0 && (
-                  <select
+                  <StyledSelect
                     value=""
-                    onChange={e => {
-                      if (e.target.value) handleLinkHub(e.target.value)
-                    }}
-                    className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-500 dark:text-zinc-400 cursor-pointer"
-                  >
-                    <option value="">+ Add Hub</option>
-                    {availableHubs.map(hub => (
-                      <option key={hub.id} value={hub.id}>{hub.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => { if (val) handleLinkHub(val) }}
+                    options={[
+                      { value: '', label: '+ Add Hub' },
+                      ...availableHubs.map(hub => ({ value: hub.id, label: hub.name })),
+                    ]}
+                    size="xs"
+                    variant="ghost"
+                  />
                 )}
                 {linkedHubs.length === 0 && availableHubs.length === 0 && (
                   <span className="text-[13px] text-zinc-400 dark:text-zinc-600 italic">No hubs available</span>

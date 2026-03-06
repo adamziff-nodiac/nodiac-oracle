@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface QuickAddActionProps {
   sites: TrackerSiteOverview[]
@@ -36,17 +37,14 @@ export function QuickAddAction({ sites, onAdd }: QuickAddActionProps) {
 
   return (
     <div className="flex items-center gap-2 py-2">
-      <select
+      <StyledSelect
         value={siteId}
-        onChange={(e) => setSiteId(e.target.value)}
-        className="text-[12px] bg-transparent text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded px-2 py-1.5 max-w-[160px]"
-        autoFocus
-      >
-        <option value="">Site...</option>
-        {sites.map(s => (
-          <option key={s.id} value={s.id}>{s.name}</option>
-        ))}
-      </select>
+        onChange={setSiteId}
+        options={sites.map(s => ({ value: s.id, label: s.name }))}
+        placeholder="Site..."
+        size="sm"
+        className="max-w-[160px]"
+      />
       <input
         type="text"
         value={title}

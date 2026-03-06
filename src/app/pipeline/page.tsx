@@ -7,8 +7,8 @@ import { PipelineDashboard } from '@/components/pipeline/PipelineDashboard'
 
 export default function PipelinePage() {
   return (
-    <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-[#0f0f1a] dark:via-[#16162a] dark:to-[#0f0f1a]">
-      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm">
+    <div className="min-h-screen bg-nodiac-light dark:bg-[#0f0f1a]">
+      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm border-b border-zinc-200/50 dark:border-white/5">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <LogoLink />
           <div className="flex items-center gap-2 min-w-0">

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, Loader2 } from 'lucide-react'
 import type { PortfolioSite } from '@/types/screening'
 import { cn } from '@/lib/utils'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface Hub { id: string; name: string }
 interface Partner { id: string; name: string }
@@ -107,16 +108,16 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Partner
               </label>
-              <select
+              <StyledSelect
                 value={selectedPartner}
-                onChange={e => setSelectedPartner(e.target.value)}
-                className={selectClass}
-              >
-                <option value="">None</option>
-                {partners.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
+                onChange={setSelectedPartner}
+                options={[
+                  { value: '', label: 'None' },
+                  ...partners.map(p => ({ value: p.id, label: p.name })),
+                ]}
+                size="md"
+                className="mt-1"
+              />
             </div>
 
             {/* Hub selector */}
@@ -124,16 +125,16 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Hub
               </label>
-              <select
+              <StyledSelect
                 value={selectedHub}
-                onChange={e => setSelectedHub(e.target.value)}
-                className={selectClass}
-              >
-                <option value="">None</option>
-                {hubs.map(hub => (
-                  <option key={hub.id} value={hub.id}>{hub.name}</option>
-                ))}
-              </select>
+                onChange={setSelectedHub}
+                options={[
+                  { value: '', label: 'None' },
+                  ...hubs.map(hub => ({ value: hub.id, label: hub.name })),
+                ]}
+                size="md"
+                className="mt-1"
+              />
             </div>
 
             {/* Priority */}
@@ -141,15 +142,13 @@ export function PromoteSitesModal({ sites, onClose, onPromoted }: PromoteSitesMo
               <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 Priority
               </label>
-              <select
+              <StyledSelect
                 value={priority}
-                onChange={e => setPriority(e.target.value)}
-                className={selectClass}
-              >
-                {['Lead', 'Active', 'Pipeline', 'On Hold', 'Deprioritized'].map(p => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
+                onChange={setPriority}
+                options={['Lead', 'Active', 'Pipeline', 'On Hold', 'Deprioritized'].map(p => ({ value: p, label: p }))}
+                size="md"
+                className="mt-1"
+              />
             </div>
 
             {error && <p className="text-sm text-red-500">{error}</p>}

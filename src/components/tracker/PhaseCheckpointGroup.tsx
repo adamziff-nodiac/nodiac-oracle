@@ -7,6 +7,7 @@ import type { Checkpoint } from '@/lib/tracker/constants'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
 import { CheckpointStatusBadge } from './CheckpointStatusBadge'
 import { AmountStatusBadge } from './AmountStatusBadge'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 import { ChevronRight } from 'lucide-react'
 
 interface PhaseCheckpointGroupProps {
@@ -123,16 +124,17 @@ export function PhaseCheckpointGroup({ phase, checkpoints, site, onUpdate }: Pha
                   {/* Owner */}
                   <div>
                     <div className="sm:hidden text-[11px] text-zinc-400">Owner</div>
-                    <select
+                    <StyledSelect
                       value={owner ?? ''}
-                      onChange={e => onUpdate(checkpoint.prefix, 'owner', e.target.value || null)}
-                      className="text-[13px] bg-transparent border-b border-transparent hover:border-zinc-300 dark:hover:border-zinc-600 focus:border-nodiac-secondary focus:outline-none py-0.5 cursor-pointer appearance-none w-[80px] text-zinc-700 dark:text-zinc-300"
-                    >
-                      <option value="">--</option>
-                      {OWNER_OPTIONS.map(o => (
-                        <option key={o} value={o}>{o}</option>
-                      ))}
-                    </select>
+                      onChange={(val) => onUpdate(checkpoint.prefix, 'owner', val || null)}
+                      options={[
+                        { value: '', label: '--' },
+                        ...OWNER_OPTIONS.map(o => ({ value: o, label: o })),
+                      ]}
+                      size="xs"
+                      variant="inline"
+                      className="w-[80px]"
+                    />
                   </div>
 
                   {/* Amount (financial only) */}

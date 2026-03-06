@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Star, Check, ChevronDown, ChevronRight, Clock, AlertTriangle } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ActionItemWithContext } from '@/lib/tracker/types'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 import Link from 'next/link'
 
 interface ActionItemRowProps {
@@ -127,17 +128,19 @@ export function ActionItemRow({ item, onToggleDone, onToggleFlag, onUpdate }: Ac
       {expanded && (
         <div className="px-3 pb-3 pt-1 border-t border-zinc-100 dark:border-[#2a2a40] space-y-2">
           <div className="grid grid-cols-2 gap-2 text-[12px]">
-            <div>
+            <div className="flex items-center gap-1">
               <span className="text-zinc-400">Status: </span>
-              <select
+              <StyledSelect
                 value={item.status}
-                onChange={(e) => onUpdate(item.id, { status: e.target.value })}
-                className="bg-transparent text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded px-1.5 py-0.5 text-[12px]"
-              >
-                <option value="next">Next</option>
-                <option value="waiting">Waiting</option>
-                <option value="done">Done</option>
-              </select>
+                onChange={(val) => onUpdate(item.id, { status: val })}
+                options={[
+                  { value: 'next', label: 'Next' },
+                  { value: 'waiting', label: 'Waiting' },
+                  { value: 'done', label: 'Done' },
+                ]}
+                size="xs"
+                variant="ghost"
+              />
             </div>
             {item.hub_name && (
               <div>

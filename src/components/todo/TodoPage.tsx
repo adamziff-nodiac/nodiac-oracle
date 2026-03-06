@@ -7,6 +7,7 @@ import { ActionItemRow } from './ActionItemRow'
 import { WaitingGroup } from './WaitingGroup'
 import { NeedsAttentionCard } from './NeedsAttentionCard'
 import { QuickAddAction } from './QuickAddAction'
+import { StyledSelect } from '@/components/ui/StyledSelect'
 
 interface TodoPageProps {
   initialItems: ActionItemWithContext[]
@@ -166,16 +167,16 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
             {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} &middot; {waitingItems.length} waiting &middot; {staleItems.length} stale
           </p>
         </div>
-        <select
+        <StyledSelect
           value={selectedMember}
-          onChange={(e) => setSelectedMember(e.target.value)}
-          className="text-[13px] bg-white dark:bg-[#16162a] text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-[#2a2a40] rounded-lg px-3 py-2"
-        >
-          <option value="">All team members</option>
-          {teamMembers.map(m => (
-            <option key={m.id} value={m.id}>{m.display_name}</option>
-          ))}
-        </select>
+          onChange={setSelectedMember}
+          options={[
+            { value: '', label: 'All team members' },
+            ...teamMembers.map(m => ({ value: m.id, label: m.display_name })),
+          ]}
+          size="md"
+          align="right"
+        />
       </div>
 
       {/* Section 1: My Actions */}
