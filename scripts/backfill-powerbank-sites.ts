@@ -101,9 +101,10 @@ function parseCSV(text: string): CsvRow[] {
   }))
 }
 
-/** Map CSV technology to site_type enum value (Solar | Wind | Solar + BESS | Substation | Other) */
+/** Map CSV technology to site_type enum value */
 function mapSiteType(tech: string): string | null {
   const t = tech.toLowerCase()
+  if (t.includes('rooftop')) return 'Rooftop Solar'
   if (t.includes('solar')) return 'Solar'
   if (t.includes('wind')) return 'Wind'
   return 'Other'
