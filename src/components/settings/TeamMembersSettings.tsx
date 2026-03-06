@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Plus, Trash2, Link as LinkIcon, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Plus, Trash2, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { TeamMember } from '@/lib/tracker/types'
 
@@ -15,7 +15,6 @@ export function TeamMembersSettings({ initialMembers, currentUserId }: TeamMembe
   const [newName, setNewName] = useState('')
   const [newEmail, setNewEmail] = useState('')
   const [adding, setAdding] = useState(false)
-  const [linkingId, setLinkingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   async function fetchMembers() {
@@ -41,20 +40,6 @@ export function TeamMembersSettings({ initialMembers, currentUserId }: TeamMembe
     setAdding(false)
   }
 
-  async function handleLinkAccount(memberId: string) {
-    if (!currentUserId) return
-    setLinkingId(memberId)
-
-    const res = await fetch(`/api/team-members/${memberId}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: currentUserId }),
-    })
-
-    if (res.ok) fetchMembers()
-    setLinkingId(null)
-  }
-
   async function handleDelete(memberId: string) {
     setDeletingId(memberId)
     const res = await fetch(`/api/team-members/${memberId}`, { method: 'DELETE' })
@@ -62,15 +47,21 @@ export function TeamMembersSettings({ initialMembers, currentUserId }: TeamMembe
     setDeletingId(null)
   }
 
-  const isCurrentUserLinked = members.some(m => m.user_id === currentUserId)
+  // Check if the current user is linked to any member
+  const currentMember = members.find(m => m.user_id === currentUserId)
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">Team Members</h2>
         <p className="text-[13px] text-zinc-400 mt-1">
-          Manage who can be assigned action items. Link your account to claim your profile.
+          Team members who can be assigned action items. Accounts are linked automatically when a matching email signs in.
         </p>
+        {currentMember && (
+          <p className="text-[12px] text-emerald-600 dark:text-emerald-400 mt-2">
+            Signed in as {currentMember.display_name}
+          </p>
+        )}
       </div>
 
       {/* Members list */}
@@ -98,31 +89,18 @@ export function TeamMembersSettings({ initialMembers, currentUserId }: TeamMembe
                   <div className="text-[11px] text-zinc-400">{member.email}</div>
                 )}
               </div>
-              {member.user_id && (
+              {member.user_id ? (
                 <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
                   Linked
+                </span>
+              ) : (
+                <span className="text-[10px] text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-1.5 py-0.5 rounded-full">
+                  Not linked
                 </span>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Link account button — show if this member isn't linked and current user isn't linked elsewhere */}
-              {!member.user_id && currentUserId && !isCurrentUserLinked && (
-                <button
-                  type="button"
-                  onClick={() => handleLinkAccount(member.id)}
-                  disabled={linkingId === member.id}
-                  className="flex items-center gap-1 text-[11px] text-nodiac-secondary hover:text-nodiac-secondary/80 transition-colors cursor-pointer"
-                >
-                  {linkingId === member.id ? (
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                  ) : (
-                    <LinkIcon className="w-3 h-3" />
-                  )}
-                  Link my account
-                </button>
-              )}
-
               <button
                 type="button"
                 onClick={() => handleDelete(member.id)}
@@ -153,18 +131,18 @@ export function TeamMembersSettings({ initialMembers, currentUserId }: TeamMembe
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder="e.g. Eric"
+              placeholder="e.g. Eric Shannon"
               className="w-full text-[13px] bg-transparent text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded px-2.5 py-1.5 focus:outline-none focus:border-nodiac-secondary"
             />
           </div>
           <div className="flex-1 space-y-1">
-            <label className="text-[11px] text-zinc-500">Email (optional)</label>
+            <label className="text-[11px] text-zinc-500">Email</label>
             <input
               type="email"
               value={newEmail}
               onChange={(e) => setNewEmail(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
-              placeholder="eric@nodiac.com"
+              placeholder="eric.shannon@nodiac.ai"
               className="w-full text-[13px] bg-transparent text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700 rounded px-2.5 py-1.5 focus:outline-none focus:border-nodiac-secondary"
             />
           </div>

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 
 const tabs = [
   { href: '/tracker', label: 'Portfolio' },
+  { href: '/tracker/action-items', label: 'Action Items' },
   { href: '/tracker/deposits', label: 'Deposits' },
   { href: '/tracker/metrics', label: 'Metrics' },
   { href: '/tracker/hubs', label: 'Hubs' },

@@ -5,6 +5,7 @@ import { ListChecks } from 'lucide-react'
 import type { ActionItemWithContext, TrackerSiteOverview } from '@/lib/tracker/types'
 import { ActionItemRow } from '@/components/todo/ActionItemRow'
 import { QuickAddAction } from '@/components/todo/QuickAddAction'
+import { useActionItemsRealtime } from '@/lib/tracker/realtime'
 
 interface SiteActionItemsProps {
   siteId: string
@@ -13,6 +14,7 @@ interface SiteActionItemsProps {
 
 export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
   const [items, setItems] = useState<ActionItemWithContext[]>([])
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
 
   const fetchItems = useCallback(async () => {
     const res = await fetch(`/api/sites/${siteId}/actions`)
@@ -21,34 +23,61 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
 
   useEffect(() => { fetchItems() }, [fetchItems])
 
-  async function handleToggleDone(id: string, done: boolean) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, status: done ? 'done' as const : 'next' as const } : i))
-    const res = await fetch(`/api/todo/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: done ? 'done' : 'next' }),
+  // Subscribe to realtime changes from other users/tabs
+  useActionItemsRealtime(fetchItems, siteId)
+
+  function addSavingId(id: string) {
+    setSavingIds(prev => new Set(prev).add(id))
+  }
+
+  function removeSavingId(id: string) {
+    setSavingIds(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
     })
-    if (!res.ok) fetchItems()
+  }
+
+  async function handleToggleDone(id: string, done: boolean) {
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: done ? 'done' : 'next' }),
+      })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   async function handleToggleFlag(id: string, flagged: boolean) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, flagged } : i))
-    const res = await fetch(`/api/todo/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flagged }),
-    })
-    if (!res.ok) fetchItems()
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flagged }),
+      })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   async function handleUpdate(id: string, updates: Record<string, unknown>) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } as ActionItemWithContext : i))
-    const res = await fetch(`/api/todo/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    })
-    if (!res.ok) fetchItems()
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   async function handleAdd(_siteId: string, title: string) {
@@ -57,7 +86,7 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ site_id: siteId, title }),
     })
-    if (res.ok) fetchItems()
+    if (res.ok) await fetchItems()
   }
 
   const siteForPicker = [site]
@@ -86,6 +115,7 @@ export function SiteActionItems({ siteId, site }: SiteActionItemsProps) {
             <ActionItemRow
               key={item.id}
               item={item}
+              isSaving={savingIds.has(item.id)}
               onToggleDone={handleToggleDone}
               onToggleFlag={handleToggleFlag}
               onUpdate={handleUpdate}

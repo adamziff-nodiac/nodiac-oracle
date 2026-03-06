@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Star, Check, ChevronDown, ChevronRight, Clock, AlertTriangle } from 'lucide-react'
+import { Star, Check, ChevronDown, ChevronRight, Clock, AlertTriangle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { ActionItemWithContext } from '@/lib/tracker/types'
 import { StyledSelect } from '@/components/ui/StyledSelect'
@@ -9,6 +9,7 @@ import Link from 'next/link'
 
 interface ActionItemRowProps {
   item: ActionItemWithContext
+  isSaving?: boolean
   onToggleDone: (id: string, done: boolean) => void
   onToggleFlag: (id: string, flagged: boolean) => void
   onUpdate: (id: string, updates: Record<string, unknown>) => void
@@ -28,7 +29,7 @@ function getAgeBadge(createdAt: string, isWaiting: boolean) {
   return { days, color }
 }
 
-export function ActionItemRow({ item, onToggleDone, onToggleFlag, onUpdate }: ActionItemRowProps) {
+export function ActionItemRow({ item, isSaving, onToggleDone, onToggleFlag, onUpdate }: ActionItemRowProps) {
   const [expanded, setExpanded] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
   const [notesDraft, setNotesDraft] = useState(item.notes ?? '')
@@ -55,12 +56,14 @@ export function ActionItemRow({ item, onToggleDone, onToggleFlag, onUpdate }: Ac
         {/* Done checkbox */}
         <button
           type="button"
+          disabled={isSaving}
           onClick={(e) => { e.stopPropagation(); onToggleDone(item.id, !isDone) }}
           className={cn(
             'flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors cursor-pointer',
             isDone
               ? 'bg-nodiac-secondary border-nodiac-secondary'
-              : 'border-zinc-300 dark:border-zinc-600 hover:border-nodiac-secondary'
+              : 'border-zinc-300 dark:border-zinc-600 hover:border-nodiac-secondary',
+            isSaving && 'opacity-50 cursor-not-allowed'
           )}
         >
           {isDone && <Check className="w-3 h-3 text-white" />}
@@ -69,8 +72,9 @@ export function ActionItemRow({ item, onToggleDone, onToggleFlag, onUpdate }: Ac
         {/* Flag toggle */}
         <button
           type="button"
+          disabled={isSaving}
           onClick={(e) => { e.stopPropagation(); onToggleFlag(item.id, !item.flagged) }}
-          className="flex-shrink-0 cursor-pointer"
+          className={cn('flex-shrink-0 cursor-pointer', isSaving && 'opacity-50 cursor-not-allowed')}
         >
           <Star className={cn(
             'w-4 h-4 transition-colors',
@@ -111,10 +115,17 @@ export function ActionItemRow({ item, onToggleDone, onToggleFlag, onUpdate }: Ac
           </span>
         )}
 
-        {/* Age badge */}
-        <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 tabular-nums', age.color)}>
-          {age.days}d
-        </span>
+        {/* Age badge / Saving indicator */}
+        {isSaving ? (
+          <span className="flex items-center gap-1 text-[10px] font-medium text-zinc-400 px-1.5 py-0.5 rounded-full flex-shrink-0">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Saving
+          </span>
+        ) : (
+          <span className={cn('text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 tabular-nums', age.color)}>
+            {age.days}d
+          </span>
+        )}
 
         {/* Expand chevron */}
         {expanded ? (

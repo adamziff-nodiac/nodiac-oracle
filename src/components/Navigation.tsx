@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   Home,
-  ListChecks,
   Map,
   FileSearch,
   GitBranch,
@@ -26,7 +25,6 @@ import { createClient } from '@/lib/supabase/client'
 
 const primaryNav = [
   { href: '/', label: 'Home', icon: Home },
-  { href: '/todo', label: 'Todo', icon: ListChecks },
   { href: '/regional-hubs', label: 'Score', icon: Map },
   { href: '/screening', label: 'Screen', icon: FileSearch },
   { href: '/pipeline', label: 'Pipeline', icon: GitBranch },

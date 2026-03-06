@@ -10,6 +10,7 @@ import {
   PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS,
   HUB_STATUS_OPTIONS, ACTIVITY_SOURCE_OPTIONS,
   LANDOWNER_PROXIMITY_OPTIONS, LANDOWNER_PURPOSE_OPTIONS, LEASE_STATUS_OPTIONS,
+  ACTION_ITEM_STATUS_OPTIONS, ACTION_ITEM_SOURCE_OPTIONS,
   isFinancialCheckpoint,
 } from './constants.js'
 import { getCurrentUserEmail } from './auth.js'
@@ -872,6 +873,170 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
 
       return {
         content: [{ type: 'text' as const, text: `Deleted parcel ${parcel_id}` }],
+      }
+    }
+  )
+
+  // ── create_action_item ───────────────────────────────────────────────
+  server.tool(
+    'create_action_item',
+    'Create a new action item for a site. Use list_sites to find the site_id and list_team_members to find assignee UUIDs.',
+    {
+      site_id: z.string().uuid().describe('The site UUID. Use list_sites to find it.'),
+      title: z.string().describe('Action item title. Should be a concrete, verb-first action.'),
+      status: z.enum(ACTION_ITEM_STATUS_OPTIONS).optional().describe('Status: next, waiting, done (default: next)'),
+      assigned_to: z.string().uuid().optional().describe('Team member UUID. Use list_team_members to find it.'),
+      waiting_on: z.string().optional().describe('WHO you\'re waiting on (person or org). Only for status=waiting.'),
+      flagged: z.boolean().optional().describe('Flag as high priority (default: false)'),
+      hard_deadline: z.string().optional().describe('Hard deadline (YYYY-MM-DD). Only for real externally-imposed deadlines.'),
+      defer_until: z.string().optional().describe('Hide until this date (YYYY-MM-DD).'),
+      notes: z.string().optional().describe('Additional notes'),
+      source: z.enum(ACTION_ITEM_SOURCE_OPTIONS).optional().describe('Source: manual, ai, call (default: manual)'),
+    },
+    WRITE_CREATE,
+    async ({ site_id, title, status, assigned_to, waiting_on, flagged, hard_deadline, defer_until, notes, source }) => {
+      const supabase = getClient()
+
+      // Look up the current user as a team member for created_by
+      const email = getCurrentUserEmail()
+      let createdBy: string | null = null
+      if (email) {
+        const { data: member } = await supabase.from('team_members').select('id').eq('email', email).maybeSingle()
+        createdBy = member?.id ?? null
+      }
+
+      const effectiveStatus = status ?? 'next'
+
+      const insert: Record<string, unknown> = {
+        site_id,
+        title,
+        status: effectiveStatus,
+        assigned_to: assigned_to ?? null,
+        waiting_on: waiting_on ?? null,
+        flagged: flagged ?? false,
+        hard_deadline: hard_deadline ?? null,
+        defer_until: defer_until ?? null,
+        notes: notes ?? null,
+        source: source ?? 'manual',
+        created_by: createdBy,
+      }
+
+      if (effectiveStatus === 'waiting') {
+        insert.waiting_since = new Date().toISOString()
+      }
+
+      const { data, error } = await supabase
+        .from('tracker_action_items')
+        .insert(insert)
+        .select('id')
+        .single()
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      await logActivity(supabase, site_id, 'Action item created', `"${title}" (${effectiveStatus})`)
+
+      return {
+        content: [{ type: 'text' as const, text: `Created action item "${title}" (${(data as Record<string, unknown>).id})` }],
+      }
+    }
+  )
+
+  // ── update_action_item ───────────────────────────────────────────────
+  server.tool(
+    'update_action_item',
+    'Update an action item. Use list_action_items to find the action_item_id. Status transitions automatically manage completed_at and waiting_since timestamps.',
+    {
+      action_item_id: z.string().uuid().describe('The action item UUID'),
+      title: z.string().optional().describe('Action item title'),
+      status: z.enum(ACTION_ITEM_STATUS_OPTIONS).optional().describe('Status: next, waiting, done'),
+      assigned_to: z.string().uuid().optional().describe('Team member UUID'),
+      waiting_on: z.string().optional().describe('WHO you\'re waiting on (person or org)'),
+      flagged: z.boolean().optional().describe('Flag as high priority'),
+      hard_deadline: z.string().optional().describe('Hard deadline (YYYY-MM-DD)'),
+      defer_until: z.string().optional().describe('Hide until this date (YYYY-MM-DD)'),
+      notes: z.string().optional().describe('Additional notes'),
+    },
+    WRITE_MUTATE,
+    async ({ action_item_id, title, status, assigned_to, waiting_on, flagged, hard_deadline, defer_until, notes }) => {
+      const supabase = getClient()
+      const update: Record<string, unknown> = {}
+      const changes: string[] = []
+
+      if (title !== undefined) { update.title = title; changes.push(`title → ${title}`) }
+      if (assigned_to !== undefined) { update.assigned_to = assigned_to; changes.push('assignee updated') }
+      if (waiting_on !== undefined) { update.waiting_on = waiting_on; changes.push(`waiting on → ${waiting_on}`) }
+      if (flagged !== undefined) { update.flagged = flagged; changes.push(`flagged → ${flagged}`) }
+      if (hard_deadline !== undefined) { update.hard_deadline = hard_deadline; changes.push(`deadline → ${hard_deadline}`) }
+      if (defer_until !== undefined) { update.defer_until = defer_until; changes.push(`defer until → ${defer_until}`) }
+      if (notes !== undefined) { update.notes = notes; changes.push('notes updated') }
+
+      if (status !== undefined) {
+        update.status = status
+        changes.push(`status → ${status}`)
+
+        if (status === 'done') {
+          update.completed_at = new Date().toISOString()
+        } else {
+          // Moving away from done — clear completed_at
+          update.completed_at = null
+        }
+
+        if (status === 'waiting') {
+          update.waiting_since = new Date().toISOString()
+        }
+      }
+
+      if (changes.length === 0) {
+        return { isError: true, content: [{ type: 'text' as const, text: 'Error: No fields to update. Provide at least one of: title, status, assigned_to, waiting_on, flagged, hard_deadline, defer_until, notes.' }] }
+      }
+
+      const { data, error } = await supabase
+        .from('tracker_action_items')
+        .update(update)
+        .eq('id', action_item_id)
+        .select('id, title')
+        .single()
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      return {
+        content: [{ type: 'text' as const, text: `Updated action item "${(data as Record<string, unknown>).title}": ${changes.join(', ')}` }],
+      }
+    }
+  )
+
+  // ── delete_action_item ───────────────────────────────────────────────
+  server.tool(
+    'delete_action_item',
+    'Delete an action item. Use list_action_items to find the action_item_id. This is destructive and cannot be undone.',
+    {
+      action_item_id: z.string().uuid().describe('The action item UUID'),
+    },
+    WRITE_DESTRUCTIVE,
+    async ({ action_item_id }) => {
+      const supabase = getClient()
+
+      // Get site_id and title for activity logging before deleting
+      const { data: item } = await supabase
+        .from('tracker_action_items')
+        .select('id, site_id, title')
+        .eq('id', action_item_id)
+        .single()
+
+      const { error } = await supabase
+        .from('tracker_action_items')
+        .delete()
+        .eq('id', action_item_id)
+
+      if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+
+      const itemData = item as Record<string, unknown> | null
+      if (itemData?.site_id) {
+        await logActivity(supabase, itemData.site_id as string, 'Action item deleted', `"${itemData.title}" removed`)
+      }
+
+      return {
+        content: [{ type: 'text' as const, text: `Deleted action item ${action_item_id}` }],
       }
     }
   )

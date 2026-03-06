@@ -8,6 +8,7 @@ import { WaitingGroup } from './WaitingGroup'
 import { NeedsAttentionCard } from './NeedsAttentionCard'
 import { QuickAddAction } from './QuickAddAction'
 import { StyledSelect } from '@/components/ui/StyledSelect'
+import { useActionItemsRealtime } from '@/lib/tracker/realtime'
 
 interface TodoPageProps {
   initialItems: ActionItemWithContext[]
@@ -26,6 +27,7 @@ function getGreeting() {
 export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: TodoPageProps) {
   const [items, setItems] = useState(initialItems)
   const [selectedMember, setSelectedMember] = useState(currentMemberId ?? '')
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
 
   const currentName = teamMembers.find(m => m.id === selectedMember)?.display_name ?? 'there'
 
@@ -45,38 +47,61 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
     fetchItems()
   }, [fetchItems])
 
-  async function handleToggleDone(id: string, done: boolean) {
-    // Optimistic update
-    setItems(prev => prev.map(i => i.id === id ? { ...i, status: done ? 'done' as const : 'next' as const, completed_at: done ? new Date().toISOString() : null } : i))
+  // Subscribe to realtime changes from other users/tabs
+  useActionItemsRealtime(fetchItems)
 
-    const res = await fetch(`/api/todo/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: done ? 'done' : 'next' }),
+  function addSavingId(id: string) {
+    setSavingIds(prev => new Set(prev).add(id))
+  }
+
+  function removeSavingId(id: string) {
+    setSavingIds(prev => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
     })
-    if (!res.ok) fetchItems()
+  }
+
+  async function handleToggleDone(id: string, done: boolean) {
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: done ? 'done' : 'next' }),
+      })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   async function handleToggleFlag(id: string, flagged: boolean) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, flagged } : i))
-
-    const res = await fetch(`/api/todo/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ flagged }),
-    })
-    if (!res.ok) fetchItems()
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ flagged }),
+      })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   async function handleUpdate(id: string, updates: Record<string, unknown>) {
-    setItems(prev => prev.map(i => i.id === id ? { ...i, ...updates } as ActionItemWithContext : i))
-
-    const res = await fetch(`/api/todo/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates),
-    })
-    if (!res.ok) fetchItems()
+    addSavingId(id)
+    try {
+      await fetch(`/api/todo/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      })
+      await fetchItems()
+    } finally {
+      removeSavingId(id)
+    }
   }
 
   async function handleAdd(siteId: string, title: string) {
@@ -89,7 +114,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
         assigned_to: selectedMember || null,
       }),
     })
-    if (res.ok) fetchItems()
+    if (res.ok) await fetchItems()
   }
 
   // Filter items by status
@@ -164,7 +189,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
             {getGreeting()}, {currentName}
           </h1>
           <p className="text-[13px] text-zinc-400 dark:text-zinc-500 mt-1">
-            {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} &middot; {waitingItems.length} waiting &middot; {staleItems.length} stale
+            {nextItems.length} action{nextItems.length !== 1 ? 's' : ''} · {waitingItems.length} waiting{staleItems.length > 0 ? ` · ${staleItems.length} need review` : ''}
           </p>
         </div>
         <StyledSelect
@@ -200,6 +225,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
               <ActionItemRow
                 key={item.id}
                 item={item}
+                isSaving={savingIds.has(item.id)}
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
                 onUpdate={handleUpdate}
@@ -228,6 +254,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
                 key={key}
                 waitingOn={key}
                 items={groupItems}
+                savingIds={savingIds}
                 onToggleDone={handleToggleDone}
                 onToggleFlag={handleToggleFlag}
                 onUpdate={handleUpdate}

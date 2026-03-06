@@ -13,7 +13,6 @@ import {
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LogoLink } from '@/components/LogoLink'
-import { TodoHeroWidget } from '@/components/todo/TodoHeroWidget'
 
 const pipeline = [
   {
@@ -63,8 +62,15 @@ export default function HomePage() {
       {/* Main Content */}
       <main className="pt-32 pb-20 px-4">
         <div className="max-w-5xl mx-auto">
-          {/* Hero — personalized todo summary or static fallback */}
-          <TodoHeroWidget />
+          {/* Hero */}
+          <div className="mb-20">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-zinc-900 dark:text-white tracking-tight">
+              Oracle
+            </h1>
+            <p className="text-zinc-400 dark:text-zinc-500 mt-1 text-sm">
+              Development pipeline for distributed AI compute
+            </p>
+          </div>
 
           {/* Pipeline - Connected horizontal flow (desktop) */}
           <div className="mb-24 relative">

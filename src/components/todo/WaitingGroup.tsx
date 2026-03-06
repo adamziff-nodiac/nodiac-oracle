@@ -7,12 +7,13 @@ import { ActionItemRow } from './ActionItemRow'
 interface WaitingGroupProps {
   waitingOn: string
   items: ActionItemWithContext[]
+  savingIds?: Set<string>
   onToggleDone: (id: string, done: boolean) => void
   onToggleFlag: (id: string, flagged: boolean) => void
   onUpdate: (id: string, updates: Record<string, unknown>) => void
 }
 
-export function WaitingGroup({ waitingOn, items, onToggleDone, onToggleFlag, onUpdate }: WaitingGroupProps) {
+export function WaitingGroup({ waitingOn, items, savingIds, onToggleDone, onToggleFlag, onUpdate }: WaitingGroupProps) {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center gap-2 px-1">
@@ -27,6 +28,7 @@ export function WaitingGroup({ waitingOn, items, onToggleDone, onToggleFlag, onU
           <ActionItemRow
             key={item.id}
             item={item}
+            isSaving={savingIds?.has(item.id)}
             onToggleDone={onToggleDone}
             onToggleFlag={onToggleFlag}
             onUpdate={onUpdate}
