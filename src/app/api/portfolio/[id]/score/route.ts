@@ -21,7 +21,7 @@ type CountyScoreRow = {
 }
 
 export async function POST(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
@@ -32,40 +32,71 @@ export async function POST(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Fetch sites for this upload
-  const { data: sites, error: sitesError } = await supabase
-    .from('portfolio_sites')
-    .select('*')
-    .eq('upload_id', id)
-
-  if (sitesError || !sites) {
-    return NextResponse.json({ error: 'Failed to load sites' }, { status: 500 })
+  // Parse site names from the request body, or score by partner
+  let siteNames: string[] | null = null
+  try {
+    const body = await request.json()
+    siteNames = body.site_names ?? null
+  } catch {
+    // No body — fall back to scoring by partner/upload context
   }
 
-  // Step 1: Fetch ALL county_scores in a single query (~3,200 rows)
-  const { data: allCountyScores } = await supabase
+  // Fetch sites from tracker_sites
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+  let query = sb.from('tracker_sites').select('*')
+
+  if (siteNames && siteNames.length > 0) {
+    query = query.in('name', siteNames)
+  } else {
+    // If no site_names, try to find by ipp_id from the id param (if it's a UUID)
+    query = query.eq('ipp_id', id)
+  }
+
+  const { data: sites, error: sitesError } = await query
+  if (sitesError || !sites || sites.length === 0) {
+    // Fallback: score all unscored sites
+    const { data: unscoredSites, error: unscoredError } = await sb
+      .from('tracker_sites')
+      .select('*')
+      .is('screening_score', null)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+
+    if (unscoredError || !unscoredSites || unscoredSites.length === 0) {
+      return NextResponse.json({ scored: 0, results: [] })
+    }
+
+    return await scoreSites(supabase, unscoredSites)
+  }
+
+  return await scoreSites(supabase, sites)
+}
+
+async function scoreSites(supabase: ReturnType<typeof createClient> extends Promise<infer T> ? T : never, sites: Array<Record<string, unknown>>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sb = supabase as any
+
+  // Step 1: Fetch ALL county_scores in a single query
+  const { data: allCountyScores } = await sb
     .from('county_scores')
     .select('fips_code, county_name, state_abbr, coop_density_score, grid_reliability_score, clipped_curtailed_score, permitting_score, labor_score, fiber_score')
 
-  // Build lookup maps
   const scoresByFips = new Map<string, CountyScoreRow>()
   const fipsByCountyState = new Map<string, string>()
 
   if (allCountyScores) {
     for (const row of allCountyScores as CountyScoreRow[]) {
       scoresByFips.set(row.fips_code, row)
-      // Normalize: lowercase county + "|" + lowercase state abbreviation
       const key = `${row.county_name.toLowerCase()}|${row.state_abbr.toLowerCase()}`
       fipsByCountyState.set(key, row.fips_code)
     }
   }
 
-  // Step 2: Resolve FIPS for each site — try county/state match first, then batch FCC API
+  // Step 2: Resolve FIPS for each site
   type SiteResolution = {
-    site: typeof sites[number]
+    site: Record<string, unknown>
     fips_code: string | null
-    county: string | null
-    state: string | null
   }
 
   const resolved: SiteResolution[] = []
@@ -73,20 +104,8 @@ export async function POST(
 
   for (let i = 0; i < sites.length; i++) {
     const site = sites[i]
-    let fips_code = site.fips_code
-    let county = site.county
-    let state = site.state
+    let fips_code = site.fips_code as string | null
 
-    // Try county+state name matching from the data we already have
-    if (!fips_code && county && state) {
-      const key = `${county.toLowerCase()}|${state.toLowerCase()}`
-      const matched = fipsByCountyState.get(key)
-      if (matched) {
-        fips_code = matched
-      }
-    }
-
-    // If still no FIPS, queue for FCC API batch lookup
     if (!fips_code && site.latitude && site.longitude) {
       needsFccLookup.push({
         lat: Number(site.latitude),
@@ -95,22 +114,18 @@ export async function POST(
       })
     }
 
-    resolved.push({ site, fips_code, county, state })
+    resolved.push({ site, fips_code })
   }
 
   // Step 3: Batch FCC API lookup for unmatched sites
   if (needsFccLookup.length > 0) {
     const fccResults = await batchLookupFips(needsFccLookup, 5)
-
     for (const [idx, result] of fccResults) {
-      const r = resolved[idx]
-      r.fips_code = result.fips
-      if (!r.county) r.county = result.county_name
-      if (!r.state) r.state = result.state_name
+      resolved[idx].fips_code = result.fips
     }
   }
 
-  // Step 4: Batch check co-op territory for all sites with coordinates
+  // Step 4: Batch check co-op territory
   const coordsForCoopCheck: Array<{ lat: number; lon: number; index: number }> = []
   for (let i = 0; i < resolved.length; i++) {
     const site = resolved[i].site
@@ -127,51 +142,35 @@ export async function POST(
     ? await batchCheckCoopTerritory(coordsForCoopCheck, 5)
     : new Map()
 
-  // Step 5: Score each site — binary co-op territory check replaces keyword matching
+  // Step 5: Score each site
   const updates: Array<{
     id: string
-    upload_id: string
-    site_name: string
     fips_code: string | null
-    county: string | null
-    state: string | null
-    site_score: number | null
-    tier: string | null
+    screening_score: number | null
+    screening_tier: string | null
     score_breakdown: Json
-    utility_type: string | null
   }> = []
 
   const results: Array<{
     id: string
     site_name: string
     fips_code: string | null
-    county: string | null
-    state: string | null
     site_score: number | null
     tier: string | null
     score_breakdown: SiteScoreBreakdown
-    utility_type: string | null
   }> = []
 
   for (let i = 0; i < resolved.length; i++) {
-    const { site, fips_code, county, state } = resolved[i]
+    const { site, fips_code } = resolved[i]
     const countyScores = fips_code ? scoresByFips.get(fips_code) ?? null : null
     const breakdown = buildSiteBreakdown(countyScores)
 
-    // Co-op territory: binary spatial check (1.0 if inside co-op/public power territory, 0.0 if not)
+    // Co-op territory check
     const coopCheck = coopResults.get(i)
-    let utilityType: string | null = null
-
     if (coopCheck) {
       breakdown.coop_density = coopCheck.inCoopTerritory ? 1.0 : 0.0
-      if (coopCheck.inCoopTerritory) {
-        utilityType = coopCheck.utilityName ? `Co-op: ${coopCheck.utilityName}` : 'Co-op'
-      }
     } else {
-      // No coordinates — fall back to CSV keyword classification
-      const rawData = (site.raw_data ?? {}) as Record<string, unknown>
-      const classified = classifyUtilityType(rawData)
-      utilityType = classified.utilityType
+      const classified = classifyUtilityType({})
       if (classified.coopOverride !== null) {
         breakdown.coop_density = classified.coopOverride
       }
@@ -180,51 +179,48 @@ export async function POST(
     const { score, tier } = scoreSite(breakdown)
 
     updates.push({
-      id: site.id,
-      upload_id: site.upload_id,
-      site_name: site.site_name,
+      id: site.id as string,
       fips_code,
-      county,
-      state,
-      site_score: score,
-      tier,
+      screening_score: score,
+      screening_tier: tier,
       score_breakdown: breakdown as unknown as Json,
-      utility_type: utilityType,
     })
 
     results.push({
-      id: site.id,
-      site_name: site.site_name,
+      id: site.id as string,
+      site_name: site.name as string,
       fips_code,
-      county,
-      state,
       site_score: score,
       tier,
       score_breakdown: breakdown,
-      utility_type: utilityType,
     })
   }
 
-  // Step 6: Assign percentile-based tiers across the portfolio
-  // (scoreSite only assigns placeholder tiers — real tiers are relative to the portfolio)
-  const tieredUpdates = assignPercentileTiers(updates)
+  // Step 6: Assign percentile-based tiers
+  const tieredUpdates = assignPercentileTiers(updates.map((u, i) => ({ ...u, site_score: u.screening_score, tier: u.screening_tier, site_name: results[i].site_name })))
   const tieredResults = assignPercentileTiers(results)
 
-  // Copy tiers back so DB gets the real tier values
-  for (let i = 0; i < tieredUpdates.length; i++) {
-    updates[i].tier = tieredUpdates[i].tier
+  for (let i = 0; i < updates.length; i++) {
+    updates[i].screening_tier = tieredUpdates[i].tier
     results[i].tier = tieredResults[i].tier
   }
 
-  // Step 7: Batch update all sites in one call
+  // Step 7: Batch update tracker_sites
   if (updates.length > 0) {
-    const { error: updateError } = await supabase
-      .from('portfolio_sites')
-      .upsert(updates, { onConflict: 'id' })
+    for (const update of updates) {
+      const { error: updateError } = await sb
+        .from('tracker_sites')
+        .update({
+          fips_code: update.fips_code,
+          screening_score: update.screening_score,
+          screening_tier: update.screening_tier,
+          score_breakdown: update.score_breakdown,
+        })
+        .eq('id', update.id)
 
-    if (updateError) {
-      console.error('Batch update error:', updateError)
-      return NextResponse.json({ error: 'Failed to update site scores' }, { status: 500 })
+      if (updateError) {
+        console.error('Update error for site:', update.id, updateError)
+      }
     }
   }
 
