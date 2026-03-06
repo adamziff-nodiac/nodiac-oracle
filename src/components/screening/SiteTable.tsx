@@ -193,7 +193,7 @@ export function SiteTable({
                     <div className="flex items-center gap-2">
                       <span className="truncate">{site.site_name}</span>
                       <Link
-                        href={`/tracker?search=${encodeURIComponent(site.site_name)}`}
+                        href={`/tracker?q=${encodeURIComponent(site.site_name)}&all=1`}
                         onClick={e => e.stopPropagation()}
                         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
                       >
