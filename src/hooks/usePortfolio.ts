@@ -179,7 +179,7 @@ export function usePortfolio(prebuiltSlug?: string) {
     setScoringMode(mode)
   }, [])
 
-  const uploadCSV = useCallback(async (file: File) => {
+  const uploadCSV = useCallback(async (file: File, partnerName?: string) => {
     setState('uploading')
     setError(null)
 
@@ -187,6 +187,7 @@ export function usePortfolio(prebuiltSlug?: string) {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('name', file.name)
+      if (partnerName) formData.append('ipp_name', partnerName)
 
       const res = await fetch('/api/upload-csv', { method: 'POST', body: formData })
       if (!res.ok) {

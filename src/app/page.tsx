@@ -1,7 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowRight, Map, FileSearch, ClipboardList, MessageSquare, BarChart3 } from 'lucide-react'
+import {
+  Map,
+  FileSearch,
+  GitBranch,
+  ClipboardList,
+  MessageSquare,
+  BarChart3,
+  ArrowRight,
+} from 'lucide-react'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { LogoLink } from '@/components/LogoLink'
@@ -11,51 +19,40 @@ const pipeline = [
     href: '/regional-hubs',
     icon: Map,
     title: 'Score',
-    description: 'Analyze US counties for distributed data center potential using grid, fiber, and permitting data',
-    color: 'from-nodiac-soft-orchid to-nodiac-primary',
+    description: 'Rank counties by infrastructure fit',
     step: 1,
   },
   {
     href: '/screening',
     icon: FileSearch,
     title: 'Screen',
-    description: 'Import IPP portfolios, score individual sites, and qualify top candidates for development',
-    color: 'from-nodiac-primary to-nodiac-secondary',
+    description: 'Import and qualify partner sites',
     step: 2,
+  },
+  {
+    href: '/pipeline',
+    icon: GitBranch,
+    title: 'Pipeline',
+    description: 'Track deal flow across partners',
+    step: 3,
   },
   {
     href: '/tracker',
     icon: ClipboardList,
     title: 'Develop',
-    description: 'Track sites through qualification, control, power, permitting, fiber, engineering, and construction',
-    color: 'from-nodiac-secondary to-emerald-500',
-    step: 3,
-  },
-]
-
-const utilities = [
-  {
-    href: '/chat',
-    icon: MessageSquare,
-    title: 'Oracle Chat',
-    description: 'Multi-perspective AI advisor for data center strategy',
-  },
-  {
-    href: '/timeline',
-    icon: BarChart3,
-    title: 'Timelines',
-    description: 'Create project timelines for presentations',
+    description: 'Manage sites through construction',
+    step: 4,
   },
 ]
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-nodiac-light dark:bg-gradient-to-br dark:from-[#0f0f1a] dark:via-[#16162a] dark:to-[#0f0f1a]">
+    <div className="min-h-screen bg-nodiac-light dark:bg-[#0f0f1a]">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
+      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-[#0f0f1a]/80 backdrop-blur-sm border-b border-zinc-200/50 dark:border-white/5">
+        <div className="max-w-6xl mx-auto flex justify-between items-center gap-2">
           <LogoLink />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <ThemeToggle />
             <Navigation />
           </div>
@@ -63,86 +60,142 @@ export default function HomePage() {
       </header>
 
       {/* Main Content */}
-      <main className="pt-28 pb-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Hero */}
-          <div className="text-center mb-16">
-            <h1 className="text-4xl sm:text-5xl font-bold text-zinc-900 dark:text-white mb-3 tracking-tight">
+      <main className="pt-32 pb-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          {/* Hero - minimal, left-aligned */}
+          <div className="mb-20">
+            <h1 className="text-3xl sm:text-4xl font-semibold text-zinc-900 dark:text-white tracking-tight">
               Oracle
             </h1>
-            <p className="text-lg text-zinc-500 dark:text-zinc-400 max-w-xl mx-auto">
-              Development pipeline for distributed AI compute infrastructure
+            <p className="text-zinc-400 dark:text-zinc-500 mt-1 text-sm">
+              Development pipeline for distributed AI compute
             </p>
           </div>
 
-          {/* Pipeline Flow */}
-          <div className="mb-16">
-            <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 text-center mb-6">
-              Development Pipeline
+          {/* Pipeline - Connected horizontal flow (desktop) */}
+          <div className="mb-24 relative">
+            {/* Ambient glow behind pipeline */}
+            <div className="absolute inset-0 -inset-x-20 hidden dark:block pointer-events-none">
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-nodiac-primary/8 rounded-full blur-[100px]" />
+              <div className="absolute top-1/2 right-[15%] -translate-y-1/2 w-[200px] h-[200px] bg-nodiac-secondary/5 rounded-full blur-[80px]" />
             </div>
-            <div className="grid md:grid-cols-3 gap-4 max-w-5xl mx-auto relative">
-              {/* Connecting arrows (visible on md+) */}
-              <div className="hidden md:flex absolute top-1/2 left-[33.33%] -translate-x-1/2 -translate-y-1/2 z-10">
-                <ArrowRight className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
+
+            {/* Desktop: horizontal pipeline with connecting track */}
+            <div className="hidden md:block relative">
+              <div className="relative">
+                {/* Gradient connecting line — eggplant to teal */}
+                <div
+                  className="absolute top-9 left-[12.5%] right-[12.5%] h-px"
+                  style={{ background: 'linear-gradient(to right, #490f42, #6b1f5a, #4de2e4)' }}
+                />
+                {/* Soft glow version of the line */}
+                <div
+                  className="absolute top-9 left-[12.5%] right-[12.5%] h-px blur-sm opacity-60 hidden dark:block"
+                  style={{ background: 'linear-gradient(to right, #490f42, #6b1f5a, #4de2e4)' }}
+                />
+
+                <div className="grid grid-cols-4 gap-0">
+                  {pipeline.map((stage, i) => {
+                    const Icon = stage.icon
+                    return (
+                      <Link
+                        key={stage.href}
+                        href={stage.href}
+                        className="group relative flex flex-col items-center text-center px-4"
+                      >
+                        {/* Node on the track */}
+                        <div className="relative z-10 flex items-center justify-center w-[4.5rem] h-[4.5rem] rounded-2xl bg-white dark:bg-[#161625] border border-nodiac-primary/15 dark:border-nodiac-primary/30 group-hover:border-nodiac-secondary/50 dark:group-hover:border-nodiac-secondary/50 transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(77,226,228,0.15)] dark:group-hover:shadow-[0_0_24px_rgba(77,226,228,0.12)] group-hover:scale-105">
+                          {/* Inner gradient overlay on hover */}
+                          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-nodiac-primary/5 to-nodiac-secondary/5 dark:from-nodiac-primary/10 dark:to-nodiac-secondary/10" />
+                          <Icon className="relative z-10 w-5 h-5 text-zinc-400 dark:text-nodiac-soft-orchid/70 group-hover:text-nodiac-secondary transition-colors duration-300" />
+                        </div>
+
+                        {/* Label below node */}
+                        <div className="mt-5">
+                          <span className="text-[11px] font-semibold text-nodiac-primary/50 dark:text-nodiac-secondary/40 uppercase tracking-wider">
+                            Step {stage.step}
+                          </span>
+                          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mt-0.5 tracking-tight group-hover:text-nodiac-secondary/90 dark:group-hover:text-nodiac-secondary transition-colors duration-300">
+                            {stage.title}
+                          </h2>
+                          <p className="text-[13px] text-zinc-400 dark:text-zinc-500 mt-1 leading-snug">
+                            {stage.description}
+                          </p>
+                        </div>
+
+                        {/* Teal arrow between nodes */}
+                        {i < pipeline.length - 1 && (
+                          <div className="absolute top-9 right-0 translate-x-1/2 -translate-y-1/2 z-20">
+                            <ArrowRight className="w-3.5 h-3.5 text-nodiac-primary/40 dark:text-nodiac-secondary/50" />
+                          </div>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
               </div>
-              <div className="hidden md:flex absolute top-1/2 left-[66.66%] -translate-x-1/2 -translate-y-1/2 z-10">
-                <ArrowRight className="w-6 h-6 text-zinc-300 dark:text-zinc-600" />
+            </div>
+
+            {/* Mobile: vertical pipeline with connecting track */}
+            <div className="md:hidden relative">
+              <div className="relative">
+                {/* Vertical gradient connecting line */}
+                <div
+                  className="absolute top-9 bottom-9 left-9 w-px"
+                  style={{ background: 'linear-gradient(to bottom, #490f42, #6b1f5a, #4de2e4)' }}
+                />
+
+                <div className="flex flex-col gap-0">
+                  {pipeline.map((stage) => {
+                    const Icon = stage.icon
+                    return (
+                      <Link
+                        key={stage.href}
+                        href={stage.href}
+                        className="group relative flex items-start gap-5 py-5 px-1"
+                      >
+                        {/* Node */}
+                        <div className="relative z-10 flex-shrink-0 flex items-center justify-center w-[4.5rem] h-[4.5rem] rounded-2xl bg-white dark:bg-[#161625] border border-nodiac-primary/15 dark:border-nodiac-primary/30 group-hover:border-nodiac-secondary/50 dark:group-hover:border-nodiac-secondary/50 transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(77,226,228,0.15)] dark:group-hover:shadow-[0_0_24px_rgba(77,226,228,0.12)]">
+                          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-nodiac-primary/5 to-nodiac-secondary/5 dark:from-nodiac-primary/10 dark:to-nodiac-secondary/10" />
+                          <Icon className="relative z-10 w-5 h-5 text-zinc-400 dark:text-nodiac-soft-orchid/70 group-hover:text-nodiac-secondary transition-colors duration-300" />
+                        </div>
+
+                        {/* Text */}
+                        <div className="pt-2">
+                          <span className="text-[11px] font-semibold text-nodiac-primary/50 dark:text-nodiac-secondary/40 uppercase tracking-wider">
+                            Step {stage.step}
+                          </span>
+                          <h2 className="text-lg font-semibold text-zinc-900 dark:text-white mt-0.5 tracking-tight group-hover:text-nodiac-secondary/90 dark:group-hover:text-nodiac-secondary transition-colors duration-300">
+                            {stage.title}
+                          </h2>
+                          <p className="text-[13px] text-zinc-400 dark:text-zinc-500 mt-0.5 leading-snug">
+                            {stage.description}
+                          </p>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
               </div>
-
-              {pipeline.map((stage) => {
-                const Icon = stage.icon
-                return (
-                  <Link
-                    key={stage.href}
-                    href={stage.href}
-                    className="group relative overflow-hidden rounded-xl bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 p-6 hover:border-nodiac-secondary/50 dark:hover:border-nodiac-secondary/30 transition-all shadow-sm hover:shadow-lg hover:-translate-y-0.5 duration-200"
-                  >
-                    <div className={`absolute inset-0 bg-gradient-to-br ${stage.color} opacity-0 group-hover:opacity-5 dark:group-hover:opacity-10 transition-opacity`} />
-
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-zinc-100 dark:bg-white/10 text-[12px] font-bold text-zinc-400 dark:text-zinc-500">
-                        {stage.step}
-                      </span>
-                      <div className={`inline-flex p-2 rounded-lg bg-gradient-to-br ${stage.color}`}>
-                        <Icon className="w-4 h-4 text-white" />
-                      </div>
-                    </div>
-
-                    <h2 className="text-xl font-semibold text-zinc-900 dark:text-white mb-1.5">
-                      {stage.title}
-                    </h2>
-                    <p className="text-[13px] text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                      {stage.description}
-                    </p>
-                  </Link>
-                )
-              })}
             </div>
           </div>
 
-          {/* Utilities */}
-          <div className="max-w-3xl mx-auto">
-            <div className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400 dark:text-zinc-500 text-center mb-4">
-              Utilities
-            </div>
-            <div className="grid sm:grid-cols-2 gap-3">
-              {utilities.map((tool) => {
-                const Icon = tool.icon
-                return (
-                  <Link
-                    key={tool.href}
-                    href={tool.href}
-                    className="group flex items-center gap-3 rounded-lg bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 px-4 py-3 hover:border-zinc-300 dark:hover:border-white/20 transition-all"
-                  >
-                    <Icon className="w-4 h-4 text-zinc-400 dark:text-zinc-500 group-hover:text-nodiac-secondary transition-colors" />
-                    <div>
-                      <span className="text-[13px] font-medium text-zinc-900 dark:text-white">{tool.title}</span>
-                      <span className="text-[12px] text-zinc-400 dark:text-zinc-500 ml-2">{tool.description}</span>
-                    </div>
-                  </Link>
-                )
-              })}
-            </div>
+          {/* Utilities - minimal row at bottom */}
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t border-zinc-200 dark:border-nodiac-primary/20 pt-6">
+            <Link
+              href="/chat"
+              className="group flex items-center gap-2 text-sm text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors py-2"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>Oracle Chat</span>
+            </Link>
+            <Link
+              href="/timeline"
+              className="group flex items-center gap-2 text-sm text-zinc-400 dark:text-zinc-500 hover:text-nodiac-secondary transition-colors py-2"
+            >
+              <BarChart3 className="w-3.5 h-3.5" />
+              <span>Timelines</span>
+            </Link>
           </div>
         </div>
       </main>

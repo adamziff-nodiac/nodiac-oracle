@@ -335,7 +335,7 @@ export function Chat() {
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* Top Navigation Header */}
         <header className="fixed top-0 right-0 left-0 lg:left-80 z-40 p-4 bg-gray-50/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="max-w-6xl mx-auto flex justify-between items-center gap-2">
             <LogoLink />
             <Navigation />
           </div>

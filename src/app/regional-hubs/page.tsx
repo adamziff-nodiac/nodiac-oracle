@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useMemo } from 'react'
+import { useState, useCallback, useRef, useMemo, type RefObject } from 'react'
 import Link from 'next/link'
 import { SlidersHorizontal, X, Info, Pencil, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
 import { LogoLink } from '@/components/LogoLink'
@@ -25,6 +25,7 @@ import { CountyDetailPanel } from '@/components/regional-hubs/CountyDetailPanel'
 import { MapLegend } from '@/components/regional-hubs/MapLegend'
 import { TierLegend } from '@/components/regional-hubs/TierLegend'
 import { ExportControls } from '@/components/regional-hubs/ExportControls'
+import { FullscreenToggle } from '@/components/ui/FullscreenToggle'
 import { CountyRankingGrid } from '@/components/regional-hubs/CountyRankingGrid'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { useWeightedScores } from '@/hooks/useWeightedScores'
@@ -131,7 +132,7 @@ export default function RegionalHubsPage() {
       <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-transparent backdrop-blur-sm">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center">
           <LogoLink />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <ThemeToggle />
             <Navigation />
           </div>
@@ -716,8 +717,9 @@ export default function RegionalHubsPage() {
                   />
                 )}
 
-                {/* Export button */}
-                <div className="absolute top-4 right-4 z-10">
+                {/* Export & fullscreen buttons */}
+                <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
+                  <FullscreenToggle targetRef={mapExportRef as RefObject<HTMLElement>} />
                   <ExportControls targetRef={mapExportRef} viewMode={viewMode} hideOnExportRefs={[panelRef, mobileBtnRef]} />
                 </div>
 

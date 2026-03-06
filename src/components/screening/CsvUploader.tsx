@@ -4,13 +4,14 @@ import { useState, useCallback, useRef } from 'react'
 import { Upload, FileText, X } from 'lucide-react'
 
 interface CsvUploaderProps {
-  onUpload: (file: File) => void
+  onUpload: (file: File, partnerName?: string) => void
   isUploading: boolean
 }
 
 export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
   const [dragActive, setDragActive] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [partnerName, setPartnerName] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -28,14 +29,14 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
   }, [])
 
   const handleSubmit = useCallback(() => {
-    if (selectedFile) onUpload(selectedFile)
-  }, [selectedFile, onUpload])
+    if (selectedFile) onUpload(selectedFile, partnerName.trim() || undefined)
+  }, [selectedFile, partnerName, onUpload])
 
   return (
     <div className="max-w-xl mx-auto">
       <div
         className={`
-          relative border-2 border-dashed rounded-xl p-12 text-center transition-all cursor-pointer
+          relative border-2 border-dashed rounded-xl p-8 sm:p-12 text-center transition-all cursor-pointer
           ${dragActive
             ? 'border-nodiac-secondary bg-nodiac-secondary/5'
             : 'border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/30 bg-gray-100 dark:bg-white/5'
@@ -63,31 +64,47 @@ export function CsvUploader({ onUpload, isUploading }: CsvUploaderProps) {
       </div>
 
       {selectedFile && (
-        <div className="mt-4 flex items-center justify-between bg-gray-100 dark:bg-white/5 rounded-lg px-4 py-3 border border-gray-200 dark:border-white/10">
-          <div className="flex items-center gap-3">
-            <FileText className="w-5 h-5 text-nodiac-secondary" />
-            <div>
-              <p className="text-sm text-gray-900 dark:text-white font-medium">{selectedFile.name}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                {(selectedFile.size / 1024).toFixed(1)} KB
-              </p>
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center justify-between bg-gray-100 dark:bg-white/5 rounded-lg px-4 py-3 border border-gray-200 dark:border-white/10">
+            <div className="flex items-center gap-3">
+              <FileText className="w-5 h-5 text-nodiac-secondary" />
+              <div>
+                <p className="text-sm text-gray-900 dark:text-white font-medium">{selectedFile.name}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {(selectedFile.size / 1024).toFixed(1)} KB
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
             <button
               onClick={(e) => { e.stopPropagation(); setSelectedFile(null) }}
               className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400"
             >
               <X className="w-4 h-4" />
             </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleSubmit() }}
-              disabled={isUploading}
-              className="px-4 py-2 bg-nodiac-secondary text-nodiac-dark text-sm font-semibold rounded-lg hover:bg-nodiac-secondary/90 transition-colors disabled:opacity-50"
-            >
-              {isUploading ? 'Processing...' : 'Score Sites'}
-            </button>
           </div>
+
+          {/* Partner Name field */}
+          <div>
+            <label className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+              Partner Name <span className="font-normal normal-case">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={partnerName}
+              onChange={e => setPartnerName(e.target.value)}
+              placeholder="e.g. Greenbacker, Hexagon Energy"
+              className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
+
+          <button
+            onClick={(e) => { e.stopPropagation(); handleSubmit() }}
+            disabled={isUploading}
+            className="w-full py-2.5 bg-nodiac-secondary text-nodiac-dark text-sm font-semibold rounded-lg hover:bg-nodiac-secondary/90 transition-colors disabled:opacity-50"
+          >
+            {isUploading ? 'Processing...' : 'Score Sites'}
+          </button>
         </div>
       )}
     </div>

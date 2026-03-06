@@ -17,6 +17,13 @@ export interface TrackerSite {
   archived_reason: string | null
   created_at: string
   updated_at: string
+  // IPP pipeline columns
+  portfolio_site_id: string | null
+  latitude: number | null
+  longitude: number | null
+  fips_code: string | null
+  screening_score: number | null
+  screening_tier: string | null
   // Checkpoint columns: each prefix has _status, _forecast, _completed, _owner
   // Financial checkpoints also have _amount and _amount_status
   [key: string]: unknown

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
+import { SearchInput } from '@/components/ui/SearchInput'
 // Sites come from server component props and update via router.refresh() on realtime changes
 import { useRouter } from 'next/navigation'
 import type { TrackerSiteOverview, TrackerHub } from '@/lib/tracker/types'
@@ -33,6 +34,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   const [sortKey, setSortKey] = useState<SortKey>('priority')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
   const [showAddSite, setShowAddSite] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -59,6 +61,18 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
 
   const filteredSites = useMemo(() => {
     let result = sites
+
+    // Text search across key fields
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(s =>
+        (s.name ?? '').toLowerCase().includes(q) ||
+        (s.hub_name ?? '').toLowerCase().includes(q) ||
+        (s.asset_owner_name ?? '').toLowerCase().includes(q) ||
+        (s.utility_name ?? '').toLowerCase().includes(q) ||
+        (s.next_step ?? '').toLowerCase().includes(q)
+      )
+    }
 
     if (!showArchived) {
       result = result.filter(s => !s.is_archived)
@@ -117,7 +131,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
 
     return result
-  }, [sites, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, sortKey, sortDir])
+  }, [sites, searchQuery, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, sortKey, sortDir])
 
   const totalMw = useMemo(() =>
     filteredSites.reduce((sum, s) => sum + (s.mw_current ?? 0), 0),
@@ -167,6 +181,13 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         siteCount={filteredSites.length}
         totalMw={totalMw}
         onAddSite={() => setShowAddSite(true)}
+      />
+
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder="Search sites, hubs, partners, utilities..."
+        className="max-w-xs"
       />
 
       <div className="overflow-x-auto border border-zinc-200 dark:border-[#2a2a40] rounded-lg">

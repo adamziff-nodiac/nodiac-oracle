@@ -1,13 +1,15 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { CsvUploader } from './CsvUploader'
 import { ScreeningMap } from './ScreeningMap'
-import { SiteTable } from './SiteTable'
+import { SiteTable, type NearestHub } from './SiteTable'
+import { PromoteSitesModal } from './PromoteSitesModal'
 import { usePortfolio } from '@/hooks/usePortfolio'
 import type { ProgressStep } from '@/hooks/usePortfolio'
-import { RotateCcw, Check, Loader2, Info, ArrowLeft } from 'lucide-react'
+import { RotateCcw, Check, Loader2, Info, ArrowLeft, ArrowRight } from 'lucide-react'
+import { SearchInput } from '@/components/ui/SearchInput'
 import { WEIGHT_PROFILES } from '@/lib/scoring/weight-profiles'
 import { WeightControls } from '@/components/regional-hubs/WeightControls'
 import type { SiteTier } from '@/types/screening'
@@ -15,6 +17,10 @@ import { TIER_COLORS, TIER_LABELS } from '@/types/screening'
 import { PREBUILT_PORTFOLIOS } from '@/data/portfolio-registry'
 import { useCountyScores } from '@/hooks/useCountyScores'
 import { cn } from '@/lib/utils'
+import { FullscreenToggle } from '@/components/ui/FullscreenToggle'
+import { haversineKm, kmToMiles } from '@/lib/geo/haversine'
+import type { OverlayHub } from './HubOverlayLayer'
+import type { OverlayTrackerSite } from './TrackerSiteOverlayLayer'
 
 const ALL_TIERS: SiteTier[] = ['good', 'okay', 'bad']
 
@@ -63,8 +69,67 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
     uploadCSV, reset, isPrebuilt,
   } = usePortfolio(prebuiltSlug)
   const { scores: countyScores, citationRegistry } = useCountyScores()
+  const screeningMapRef = useRef<HTMLDivElement>(null)
   const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
   const [visibleTiers, setVisibleTiers] = useState<Set<SiteTier>>(new Set(ALL_TIERS))
+
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('')
+
+  // Selection state for promote flow
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [showPromoteModal, setShowPromoteModal] = useState(false)
+  const [promotedMap, setPromotedMap] = useState<Record<string, string>>({})
+
+  // Overlay data
+  const [overlayHubs, setOverlayHubs] = useState<OverlayHub[]>([])
+  const [overlayTrackerSites, setOverlayTrackerSites] = useState<OverlayTrackerSite[]>([])
+  const [showHubs, setShowHubs] = useState(true)
+  const [showTrackerSites, setShowTrackerSites] = useState(false)
+
+  // Fetch overlay data when results are ready
+  useEffect(() => {
+    if (state !== 'done') return
+    fetch('/api/map/overlay-data')
+      .then(r => r.json())
+      .then(data => {
+        setOverlayHubs(data.hubs ?? [])
+        setOverlayTrackerSites(data.trackerSites ?? [])
+      })
+      .catch(() => {})
+  }, [state])
+
+  // Fetch promoted sites map
+  useEffect(() => {
+    if (state !== 'done' || !upload?.id || isPrebuilt) return
+    fetch(`/api/screening/promoted?upload_id=${upload.id}`)
+      .then(r => r.json())
+      .then(data => setPromotedMap(data.promoted ?? {}))
+      .catch(() => {})
+  }, [state, upload?.id, isPrebuilt])
+
+  // Compute nearest hub for each site
+  const nearestHubs = useMemo(() => {
+    if (overlayHubs.length === 0 || sites.length === 0) return undefined
+    const result: Record<string, NearestHub> = {}
+    for (const site of sites) {
+      if (site.latitude == null || site.longitude == null) continue
+      let nearest: NearestHub | null = null
+      let minDist = Infinity
+      for (const hub of overlayHubs) {
+        const dist = kmToMiles(haversineKm(
+          Number(site.latitude), Number(site.longitude),
+          hub.lat, hub.lng
+        ))
+        if (dist < minDist) {
+          minDist = dist
+          nearest = { name: hub.name, distance_miles: dist }
+        }
+      }
+      if (nearest) result[site.id] = nearest
+    }
+    return result
+  }, [sites, overlayHubs])
 
   const handleSiteSelect = useCallback((siteId: string) => {
     setSelectedSiteId(prev => prev === siteId ? null : siteId)
@@ -81,6 +146,33 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
       return next
     })
   }, [])
+
+  const handleToggleSelect = useCallback((siteId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(siteId)) next.delete(siteId)
+      else next.add(siteId)
+      return next
+    })
+  }, [])
+
+  const handleSelectAll = useCallback(() => {
+    setSelectedIds(prev => {
+      if (prev.size === sites.length) return new Set()
+      return new Set(sites.map(s => s.id))
+    })
+  }, [sites])
+
+  const handlePromoted = useCallback(() => {
+    // Re-fetch promoted map
+    if (upload?.id) {
+      fetch(`/api/screening/promoted?upload_id=${upload.id}`)
+        .then(r => r.json())
+        .then(data => setPromotedMap(data.promoted ?? {}))
+        .catch(() => {})
+    }
+    setSelectedIds(new Set())
+  }, [upload?.id])
 
   // Upload phase
   if (state === 'idle' || (state === 'error' && !isPrebuilt)) {
@@ -223,7 +315,7 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
     )
   }
 
-  // Loading phase (uploading, scoring, or loading results)
+  // Loading phase
   if (state === 'uploading' || state === 'scoring' || state === 'loading-results') {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
@@ -245,6 +337,8 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
     bad: sites.filter(s => s.tier === 'bad').length,
   }
 
+  const selectedSites = sites.filter(s => selectedIds.has(s.id))
+
   return (
     <div className="space-y-0">
       {/* Header bar */}
@@ -258,6 +352,12 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           </p>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <SearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder="Search sites..."
+            className="w-40 sm:w-52"
+          />
           <a
             href="/scoring#site-screening"
             className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -312,7 +412,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
             Advanced Controls
           </summary>
           <div className="mt-3 space-y-4">
-            {/* Scoring Mode toggle */}
             <div className="space-y-1.5">
               <div className="flex items-center gap-1.5">
                 <label className="text-xs text-gray-600 dark:text-gray-300 font-semibold tracking-wide uppercase">
@@ -350,7 +449,6 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
               </div>
             </div>
 
-            {/* Weight sliders */}
             <WeightControls
               weights={weights}
               onWeightChange={onWeightChange}
@@ -359,8 +457,8 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
         </details>
       </div>
 
-      {/* Map filter + map */}
-      <div className="px-4 sm:px-6 py-2 flex items-center gap-1.5 border-b border-gray-200 dark:border-white/10">
+      {/* Map filter + overlay toggles */}
+      <div className="px-4 sm:px-6 py-2 flex items-center gap-1.5 border-b border-gray-200 dark:border-white/10 flex-wrap">
         <span className="text-xs text-gray-400 dark:text-gray-500 mr-1">Show:</span>
         {ALL_TIERS.map((tier) => {
           const active = visibleTiers.has(tier)
@@ -387,8 +485,44 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
             </button>
           )
         })}
+
+        {/* Overlay toggles */}
+        {overlayHubs.length > 0 && (
+          <>
+            <span className="text-xs text-gray-300 dark:text-gray-600 mx-1">|</span>
+            <button
+              onClick={() => setShowHubs(v => !v)}
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                showHubs
+                  ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white'
+                  : 'bg-gray-50 dark:bg-white/[0.03] text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
+              )}
+            >
+              <svg width="8" height="8" viewBox="0 0 10 10">
+                <polygon points="5,0 10,5 5,10 0,5" fill={showHubs ? '#10b981' : '#9ca3af'} />
+              </svg>
+              Hubs
+            </button>
+            <button
+              onClick={() => setShowTrackerSites(v => !v)}
+              className={cn(
+                'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium transition-all',
+                showTrackerSites
+                  ? 'bg-gray-200 dark:bg-white/10 text-gray-900 dark:text-white'
+                  : 'bg-gray-50 dark:bg-white/[0.03] text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5'
+              )}
+            >
+              <svg width="8" height="8" viewBox="0 0 10 10">
+                <rect x="1" y="1" width="8" height="8" rx="1" fill={showTrackerSites ? '#8b5cf6' : '#9ca3af'} />
+              </svg>
+              Pipeline Sites
+            </button>
+          </>
+        )}
       </div>
-      <div className="h-[50vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
+      <div ref={screeningMapRef} className="relative h-[50vh] md:h-[40vh] border-b border-gray-200 dark:border-white/10">
+        <FullscreenToggle targetRef={screeningMapRef} className="absolute top-3 right-3 z-10" />
         <ScreeningMap
           sites={sites}
           selectedSiteId={selectedSiteId}
@@ -400,8 +534,28 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
               years: cs.grid_reliability_years ?? null,
             }])
           )}
+          overlayHubs={overlayHubs}
+          overlayTrackerSites={overlayTrackerSites}
+          showHubs={showHubs}
+          showTrackerSites={showTrackerSites}
         />
       </div>
+
+      {/* Selection action bar */}
+      {selectedIds.size > 0 && (
+        <div className="sticky bottom-0 z-40 px-4 sm:px-6 py-3 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-t border-gray-200 dark:border-white/10 flex items-center justify-between">
+          <span className="text-sm text-gray-600 dark:text-gray-300">
+            <strong>{selectedIds.size}</strong> site{selectedIds.size !== 1 ? 's' : ''} selected
+          </span>
+          <button
+            onClick={() => setShowPromoteModal(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-nodiac-secondary text-nodiac-dark text-sm font-semibold rounded-lg hover:bg-nodiac-secondary/90 transition-colors"
+          >
+            Add to Pipeline
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="px-4 sm:px-6 py-4">
@@ -411,8 +565,23 @@ export function ScreeningContainer({ prebuiltSlug }: ScreeningContainerProps) {
           onSiteSelect={handleSiteSelect}
           countyScores={countyScores}
           citationRegistry={citationRegistry}
+          selectedIds={selectedIds}
+          onToggleSelect={handleToggleSelect}
+          onSelectAll={handleSelectAll}
+          promotedMap={promotedMap}
+          nearestHubs={nearestHubs}
+          searchQuery={searchQuery}
         />
       </div>
+
+      {/* Promote Modal */}
+      {showPromoteModal && (
+        <PromoteSitesModal
+          sites={selectedSites}
+          onClose={() => setShowPromoteModal(false)}
+          onPromoted={handlePromoted}
+        />
+      )}
     </div>
   )
 }

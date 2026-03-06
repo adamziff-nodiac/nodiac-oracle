@@ -52,7 +52,7 @@ export function FilterBar({
           type="button"
           onClick={() => onPriorityChange(null)}
           className={cn(
-            'px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors duration-100 cursor-pointer',
+            'px-2.5 py-2 sm:py-1 rounded-md text-[12px] font-medium transition-colors duration-100 cursor-pointer',
             selectedPriority === null
               ? 'bg-nodiac-primary text-white'
               : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a30]'
@@ -66,7 +66,7 @@ export function FilterBar({
             type="button"
             onClick={() => onPriorityChange(selectedPriority === p ? null : p)}
             className={cn(
-              'px-2.5 py-1 rounded-md text-[12px] font-medium transition-colors duration-100 cursor-pointer',
+              'px-2.5 py-2 sm:py-1 rounded-md text-[12px] font-medium transition-colors duration-100 cursor-pointer',
               selectedPriority === p
                 ? 'bg-nodiac-primary text-white'
                 : 'text-zinc-500 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-[#1a1a30]'

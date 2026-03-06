@@ -22,6 +22,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const name = (formData.get('name') as string) || file?.name || 'Untitled Upload'
+    const partnerName = (formData.get('ipp_name') as string)?.trim() || null
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
@@ -34,14 +35,33 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No valid sites found in CSV' }, { status: 400 })
     }
 
+    // Find partner by name if provided
+    let partnerId: string | null = null
+    if (partnerName) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const sb = supabase as any
+      const { data: existing } = await sb
+        .from('tracker_power_partners')
+        .select('id')
+        .ilike('name', partnerName)
+        .maybeSingle()
+
+      if (existing) {
+        partnerId = existing.id
+      }
+    }
+
     // Create portfolio upload
-    const { data: upload, error: uploadError } = await supabase
+    const uploadRow: Record<string, unknown> = {
+      user_id: user.id,
+      name,
+      site_count: parsedSites.length,
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: upload, error: uploadError } = await (supabase as any)
       .from('portfolio_uploads')
-      .insert({
-        user_id: user.id,
-        name,
-        site_count: parsedSites.length,
-      })
+      .insert(uploadRow)
       .select()
       .single()
 
@@ -77,6 +97,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       upload_id: upload.id,
       site_count: parsedSites.length,
+      partner_id: partnerId,
     })
   } catch (err) {
     return NextResponse.json(

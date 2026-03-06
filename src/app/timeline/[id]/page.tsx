@@ -221,7 +221,7 @@ export default function TimelineEditorPage() {
             <div className="h-6 w-px bg-gray-200 dark:bg-white/10" />
             <LogoLink size="sm" />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <ThemeToggle />
             <Navigation />
           </div>
