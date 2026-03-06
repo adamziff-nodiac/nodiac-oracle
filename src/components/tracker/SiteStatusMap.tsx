@@ -4,7 +4,9 @@ import { useState, useCallback, useMemo } from 'react'
 import Map, { Marker, Popup } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { useIsDark } from '@/hooks/useIsDark'
+import { Layers } from 'lucide-react'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
+import { UtilityTerritoriesLayer } from './UtilityTerritoriesLayer'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -101,6 +103,7 @@ interface SiteStatusMapProps {
 
 export function SiteStatusMap({ sites, className }: SiteStatusMapProps) {
   const [popupSite, setPopupSite] = useState<TrackerSiteOverview | null>(null)
+  const [showTerritories, setShowTerritories] = useState(false)
   const isDark = useIsDark()
 
   const sitesWithCoords = useMemo(
@@ -197,6 +200,9 @@ export function SiteStatusMap({ sites, className }: SiteStatusMapProps) {
         mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
         onClick={() => setPopupSite(null)}
       >
+        {/* Utility territory boundaries (behind markers) */}
+        <UtilityTerritoriesLayer visible={showTerritories} />
+
         {sitesWithCoords.map((site) => {
           const category = categorizeSite(site)
           const color = STATUS_CATEGORY_CONFIG[category].color
@@ -254,6 +260,9 @@ export function SiteStatusMap({ sites, className }: SiteStatusMapProps) {
               {popupSite.hub_name && (
                 <p className="text-gray-400 mt-0.5">Hub: {popupSite.hub_name}</p>
               )}
+              {popupSite.utility_name && (
+                <p className="text-gray-400 mt-0.5">Utility: {popupSite.utility_name}</p>
+              )}
               {popupSite.asset_owner_name && (
                 <p className="text-gray-400 mt-0.5">Owner: {popupSite.asset_owner_name}</p>
               )}
@@ -261,6 +270,20 @@ export function SiteStatusMap({ sites, className }: SiteStatusMapProps) {
           </Popup>
         )}
       </Map>
+
+      {/* Territory toggle */}
+      <button
+        type="button"
+        onClick={() => setShowTerritories(prev => !prev)}
+        className={`absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium border backdrop-blur-sm transition-all cursor-pointer ${
+          showTerritories
+            ? 'bg-nodiac-secondary/20 border-nodiac-secondary/40 text-nodiac-secondary'
+            : 'bg-white/90 dark:bg-[#16162a]/90 border-zinc-200/50 dark:border-[#2a2a40]/50 text-zinc-600 dark:text-zinc-400 hover:text-nodiac-secondary hover:border-nodiac-secondary/30'
+        }`}
+      >
+        <Layers className="w-3 h-3" />
+        Utilities
+      </button>
 
       {/* Legend */}
       <div className="absolute bottom-3 left-3 bg-white/90 dark:bg-[#16162a]/90 backdrop-blur-sm rounded-lg border border-zinc-200/50 dark:border-[#2a2a40]/50 px-3 py-2 shadow-lg">

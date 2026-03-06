@@ -16,6 +16,7 @@ import {
   ACTION_ITEM_STATUS_OPTIONS, ACTION_ITEM_SOURCE_OPTIONS,
   isFinancialCheckpoint,
 } from './constants'
+import { lookupUtilityByPoint } from '@/lib/geo/utility-territories'
 
 /** Update existing record — idempotent (same input → same result) */
 const WRITE_MUTATE = { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const
@@ -66,6 +67,42 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
     async ({ name, priority, site_type, mw_current, mw_potential, regional_hub_id, utility_id, asset_owner_id, address, ahj, interconnection_voltage_kv, latitude, longitude }) => {
       const supabase = getClient()
 
+      // Auto-lookup utility if coordinates provided and no utility_id specified
+      let resolvedUtilityId = utility_id ?? null
+      if (!resolvedUtilityId && latitude != null && longitude != null) {
+        try {
+          const territory = await lookupUtilityByPoint(latitude, longitude)
+          if (territory) {
+            // Find existing partner by name (case-insensitive)
+            const { data: existing } = await supabase
+              .from('tracker_power_partners')
+              .select('id')
+              .ilike('name', territory.name)
+              .maybeSingle()
+
+            if (existing) {
+              resolvedUtilityId = (existing as { id: string }).id
+            } else {
+              // Create new partner with title-cased HIFLD name
+              const displayName = territory.name.toLowerCase().split(/\s+/).map((w, i) => {
+                const skip = ['of', 'the', 'and', 'for', 'in', 'at', 'by', 'to', 'or', 'an', 'a', 'co', 'inc', 'llc']
+                if (i > 0 && skip.includes(w)) return w
+                return w.charAt(0).toUpperCase() + w.slice(1)
+              }).join(' ')
+              const typeMap: Record<string, string> = { 'INVESTOR OWNED': 'IOU', 'COOPERATIVE': 'Distribution Co-op', 'MUNICIPAL': 'Municipal Utility' }
+              const { data: newPartner } = await supabase
+                .from('tracker_power_partners')
+                .insert({ name: displayName, type: typeMap[territory.type] ?? null })
+                .select('id')
+                .single()
+              if (newPartner) resolvedUtilityId = (newPartner as { id: string }).id
+            }
+          }
+        } catch {
+          // Non-fatal — proceed without utility
+        }
+      }
+
       const { data, error } = await supabase
         .from('tracker_sites')
         .insert({
@@ -75,7 +112,7 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
           mw_current: mw_current ?? null,
           mw_potential: mw_potential ?? null,
           regional_hub_id: regional_hub_id ?? null,
-          utility_id: utility_id ?? null,
+          utility_id: resolvedUtilityId,
           asset_owner_id: asset_owner_id ?? null,
           address: address ?? null,
           ahj: ahj ?? null,
@@ -87,8 +124,12 @@ export function registerWriteTools(server: McpServer, getClient: () => SupabaseC
         .single()
 
       if (error) return { isError: true, content: [{ type: 'text' as const, text: `Error: ${error.message}` }] }
+      const siteData = data as Record<string, unknown>
+      const msg = resolvedUtilityId && !utility_id
+        ? `Created site "${siteData.name}" (${siteData.id}) — auto-assigned utility from HIFLD territory lookup`
+        : `Created site "${siteData.name}" (${siteData.id})`
       return {
-        content: [{ type: 'text' as const, text: `Created site "${(data as Record<string, unknown>).name}" (${(data as Record<string, unknown>).id})` }],
+        content: [{ type: 'text' as const, text: msg }],
       }
     }
   )
