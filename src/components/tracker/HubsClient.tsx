@@ -242,7 +242,7 @@ export function HubsClient({ initialHubs }: HubsClientProps) {
             {filteredHubs.map(hub => (
               <tr
                 key={hub.id}
-                onClick={() => { setIsCreating(false); setSelectedHub(hub) }}
+                onClick={() => router.push(`/tracker/hubs/${hub.id}`)}
                 className="border-t border-zinc-100 dark:border-[#1e1e36] hover:bg-zinc-50 dark:hover:bg-[#1a1a30] cursor-pointer transition-colors duration-100"
               >
                 <td className="px-3 py-3 text-[13px] font-medium text-zinc-900 dark:text-zinc-100 whitespace-nowrap">
