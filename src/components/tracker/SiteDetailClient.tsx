@@ -14,6 +14,8 @@ import { PhaseCheckpointGroup } from './PhaseCheckpointGroup'
 import { SpeedMetric } from './SpeedMetric'
 import { ActivityLog } from './ActivityLog'
 import { ToastContainer, showToast } from './Toast'
+import { LandownersSection } from './LandownersSection'
+import { ParcelsSection } from './ParcelsSection'
 
 interface SiteDetailClientProps {
   initialSite: TrackerSiteOverview
@@ -244,6 +246,12 @@ export function SiteDetailClient({ initialSite, initialActivity, partners, hubs 
               )}
             </dl>
           </div>
+
+          {/* Landowners */}
+          <LandownersSection siteId={site.id} />
+
+          {/* Parcels */}
+          <ParcelsSection siteId={site.id} />
 
           {/* Activity Log */}
           <div className="p-4 bg-white dark:bg-[#16162a] border border-zinc-200 dark:border-[#2a2a40] rounded-lg">
