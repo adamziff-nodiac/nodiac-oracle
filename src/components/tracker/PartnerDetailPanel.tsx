@@ -3,24 +3,32 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import type { TrackerPartnerWithCounts, TrackerSiteOverview } from '@/lib/tracker/types'
 import { PARTNER_TYPE_OPTIONS, RELATIONSHIP_STAGE_OPTIONS } from '@/lib/tracker/constants'
+import { showToast } from './Toast'
 import { cn } from '@/lib/utils'
 
 interface PartnerDetailPanelProps {
   partner: TrackerPartnerWithCounts
   isNew: boolean
-  onSave: (partner: TrackerPartnerWithCounts) => void
+  hubs: Array<{ id: string; name: string }>
+  onSave: (partner: TrackerPartnerWithCounts, pendingHubIds?: string[]) => void
   onDelete: (partnerId: string) => void
   onClose: () => void
 }
 
-export function PartnerDetailPanel({ partner, isNew, onSave, onDelete, onClose }: PartnerDetailPanelProps) {
+export function PartnerDetailPanel({ partner, isNew, hubs, onSave, onDelete, onClose }: PartnerDetailPanelProps) {
   const [draft, setDraft] = useState(partner)
   const [sites, setSites] = useState<TrackerSiteOverview[]>([])
   const [loadingSites, setLoadingSites] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
+
+  // Hub link management
+  const [linkedHubIds, setLinkedHubIds] = useState<string[]>([])
+  const [loadingHubs, setLoadingHubs] = useState(false)
+  const [pendingHubIds, setPendingHubIds] = useState<string[]>([]) // for new partners
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (e.key === 'Escape') onClose()
@@ -55,6 +63,80 @@ export function PartnerDetailPanel({ partner, isNew, onSave, onDelete, onClose }
     }
     fetchSites()
   }, [partner.id, isNew])
+
+  // Load linked hub IDs for existing partners
+  useEffect(() => {
+    if (isNew || !partner.id) return
+    setLoadingHubs(true)
+
+    async function fetchLinkedHubs() {
+      try {
+        const supabase = createClient()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
+          .from('tracker_partner_hubs')
+          .select('hub_id')
+          .eq('partner_id', partner.id)
+
+        if (error) throw error
+        setLinkedHubIds((data ?? []).map((r: { hub_id: string }) => r.hub_id))
+      } catch {
+        // Non-critical
+      } finally {
+        setLoadingHubs(false)
+      }
+    }
+    fetchLinkedHubs()
+  }, [partner.id, isNew])
+
+  // Hub IDs to display (linked for existing, pending for new)
+  const displayedHubIds = isNew ? pendingHubIds : linkedHubIds
+  const linkedHubs = hubs.filter(h => displayedHubIds.includes(h.id))
+  const availableHubs = hubs.filter(h => !displayedHubIds.includes(h.id))
+
+  async function handleLinkHub(hubId: string) {
+    if (isNew) {
+      setPendingHubIds(prev => [...prev, hubId])
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('tracker_partner_hubs')
+        .insert({ partner_id: partner.id, hub_id: hubId })
+
+      if (error) throw error
+      setLinkedHubIds(prev => [...prev, hubId])
+      showToast('Hub linked', 'success')
+    } catch {
+      showToast('Failed to link hub', 'error')
+    }
+  }
+
+  async function handleUnlinkHub(hubId: string) {
+    if (isNew) {
+      setPendingHubIds(prev => prev.filter(id => id !== hubId))
+      return
+    }
+
+    try {
+      const supabase = createClient()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
+        .from('tracker_partner_hubs')
+        .delete()
+        .eq('partner_id', partner.id)
+        .eq('hub_id', hubId)
+
+      if (error) throw error
+      setLinkedHubIds(prev => prev.filter(id => id !== hubId))
+      showToast('Hub unlinked', 'success')
+    } catch {
+      showToast('Failed to unlink hub', 'error')
+    }
+  }
 
   function updateField<K extends keyof TrackerPartnerWithCounts>(key: K, value: TrackerPartnerWithCounts[K]) {
     setDraft(d => ({ ...d, [key]: value }))
@@ -168,6 +250,53 @@ export function PartnerDetailPanel({ partner, isNew, onSave, onDelete, onClose }
             />
           </div>
 
+          {/* Hubs */}
+          <div>
+            <div className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2">
+              Hubs
+            </div>
+            {loadingHubs ? (
+              <div className="h-6 w-32 bg-zinc-100 dark:bg-[#1a1a2e] rounded animate-pulse" />
+            ) : (
+              <div className="flex flex-wrap items-center gap-1.5">
+                {linkedHubs.map(hub => (
+                  <span
+                    key={hub.id}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-nodiac-secondary/10 text-nodiac-secondary"
+                  >
+                    {hub.name}
+                    <button
+                      type="button"
+                      onClick={() => handleUnlinkHub(hub.id)}
+                      className="ml-0.5 text-nodiac-secondary/50 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+                {availableHubs.length > 0 && (
+                  <select
+                    value=""
+                    onChange={e => {
+                      if (e.target.value) handleLinkHub(e.target.value)
+                    }}
+                    className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-zinc-50 dark:bg-[#1a1a2e] border border-zinc-200 dark:border-[#2a2a40] text-zinc-500 dark:text-zinc-400 cursor-pointer"
+                  >
+                    <option value="">+ Add Hub</option>
+                    {availableHubs.map(hub => (
+                      <option key={hub.id} value={hub.id}>{hub.name}</option>
+                    ))}
+                  </select>
+                )}
+                {linkedHubs.length === 0 && availableHubs.length === 0 && (
+                  <span className="text-[13px] text-zinc-400 dark:text-zinc-600 italic">No hubs available</span>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Linked Sites */}
           {!isNew && (
             <div>
@@ -216,7 +345,7 @@ export function PartnerDetailPanel({ partner, isNew, onSave, onDelete, onClose }
           <div className="flex items-center gap-3 pt-4 border-t border-zinc-200 dark:border-[#2a2a40]">
             <button
               type="button"
-              onClick={() => onSave(draft)}
+              onClick={() => onSave(draft, isNew && pendingHubIds.length > 0 ? pendingHubIds : undefined)}
               disabled={!draft.name.trim()}
               className={cn(
                 'px-4 py-2 rounded-md text-[13px] font-medium transition-colors cursor-pointer',
