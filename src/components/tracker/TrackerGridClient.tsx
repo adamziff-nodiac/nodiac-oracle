@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useCallback, useMemo, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { SearchInput } from '@/components/ui/SearchInput'
+import { MapPin, ChevronDown } from 'lucide-react'
 // Sites come from server component props and update via router.refresh() on realtime changes
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { TrackerSiteOverview, TrackerHub } from '@/lib/tracker/types'
@@ -11,6 +13,11 @@ import { FilterBar } from './FilterBar'
 import { SiteRow } from './SiteRow'
 import { AddSiteModal } from './AddSiteModal'
 import { ToastContainer } from './Toast'
+
+const SiteStatusMap = dynamic(
+  () => import('./SiteStatusMap').then(mod => ({ default: mod.SiteStatusMap })),
+  { ssr: false }
+)
 
 type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'asset_owner_name' | 'utility_name' | 'construction_ready' | 'next_step'
 type SortDir = 'asc' | 'desc'
@@ -42,6 +49,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   })
   const [sortDir, setSortDir] = useState<SortDir>(() => (searchParams.get('dir') as SortDir | null) ?? 'asc')
   const [showAddSite, setShowAddSite] = useState(false)
+  const [showMap, setShowMap] = useState(false)
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
   const [showAllSites, setShowAllSites] = useState(() => searchParams.get('all') === '1')
 
@@ -234,6 +242,20 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         totalMw={totalMw}
         onAddSite={() => setShowAddSite(true)}
       />
+
+      {/* Portfolio map */}
+      <button
+        type="button"
+        onClick={() => setShowMap(prev => !prev)}
+        className="flex items-center gap-1.5 text-[12px] text-zinc-500 dark:text-zinc-400 hover:text-nodiac-secondary transition-colors cursor-pointer"
+      >
+        <MapPin className="w-3.5 h-3.5" />
+        <span>{showMap ? 'Hide' : 'Show'} map</span>
+        <ChevronDown className={`w-3 h-3 transition-transform ${showMap ? 'rotate-180' : ''}`} />
+      </button>
+      {showMap && (
+        <SiteStatusMap sites={filteredSites} className="h-[50vh] min-h-[400px]" />
+      )}
 
       <SearchInput
         value={searchQuery}
