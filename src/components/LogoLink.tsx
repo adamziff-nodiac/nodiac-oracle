@@ -20,7 +20,7 @@ export function LogoLink({ size = 'md' }: LogoLinkProps) {
         priority
       />
       <Image
-        src="/logo-light.svg"
+        src="/logo-white.svg"
         alt="Nodiac"
         width={w}
         height={h}

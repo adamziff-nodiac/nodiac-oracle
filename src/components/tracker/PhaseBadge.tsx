@@ -17,7 +17,7 @@ interface PhaseBadgeProps {
 
 const STATUS_LABEL: Record<string, string> = {
   'Not Started': '--',
-  'In Progress': 'Active',
+  'In Progress': 'In Progress',
   'Complete': '✓',
   'Blocked': 'Blocked',
 }
