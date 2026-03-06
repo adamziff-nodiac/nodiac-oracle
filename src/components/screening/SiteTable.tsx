@@ -7,7 +7,6 @@ import type { PortfolioSite } from '@/types/screening'
 import type { PermittingCitation, CountyScore } from '@/types/regional-hubs'
 import { TierBadge } from './TierBadge'
 import { ScoringBreakdown } from './ScoringBreakdown'
-import { StyledCheckbox } from '@/components/ui/StyledCheckbox'
 import { cn } from '@/lib/utils'
 
 type SortKey = 'site_name' | 'county' | 'state' | 'utility_type' | 'tier' | 'site_score' | 'nearest_hub'
@@ -26,12 +25,6 @@ interface SiteTableProps {
   onSiteSelect: (siteId: string) => void
   countyScores?: CountyScore[]
   citationRegistry?: PermittingCitation[]
-  // Selection for promote flow
-  selectedIds?: Set<string>
-  onToggleSelect?: (siteId: string) => void
-  onSelectAll?: () => void
-  // Promoted sites map: portfolio_site_id → tracker_site_id
-  promotedMap?: Record<string, string>
   // Nearest hub data
   nearestHubs?: Record<string, NearestHub>
   // Search filter
@@ -53,13 +46,11 @@ function resolveCitations(
 
 export function SiteTable({
   sites, selectedSiteId, onSiteSelect, countyScores, citationRegistry,
-  selectedIds, onToggleSelect, onSelectAll, promotedMap, nearestHubs, searchQuery,
+  nearestHubs, searchQuery,
 }: SiteTableProps) {
   const [sortKey, setSortKey] = useState<SortKey>('site_score')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
   const [expandedId, setExpandedId] = useState<string | null>(null)
-
-  const hasSelection = !!onToggleSelect
 
   const filtered = useMemo(() => {
     if (!searchQuery?.trim()) return sites
@@ -122,25 +113,13 @@ export function SiteTable({
       : <ChevronDown className="w-3 h-3 inline ml-1" />
   }
 
-  const allSelected = selectedIds && sorted.length > 0 && sorted.every(s => selectedIds.has(s.id))
-  const someSelected = selectedIds && selectedIds.size > 0 && !allSelected
-
-  const colSpan = 6 + (hasSelection ? 1 : 0) + (nearestHubs ? 1 : 0)
+  const colSpan = 6 + (nearestHubs ? 1 : 0)
 
   return (
     <div className="overflow-x-auto -mx-4 sm:mx-0">
       <table className="w-full text-sm min-w-[600px]">
         <thead>
           <tr className="border-b border-gray-200 dark:border-white/10 text-left">
-            {hasSelection && (
-              <th className="px-3 py-2 w-8">
-                <StyledCheckbox
-                  checked={!!allSelected}
-                  indeterminate={!!someSelected}
-                  onChange={() => onSelectAll?.()}
-                />
-              </th>
-            )}
             <th
               className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-900 dark:hover:text-white transition-colors"
               onClick={() => toggleSort('site_name')}
@@ -196,7 +175,6 @@ export function SiteTable({
         </thead>
         <tbody>
           {sorted.map((site) => {
-            const isPromoted = promotedMap?.[site.id]
             return (
               <Fragment key={site.id}>
                 <tr
@@ -211,27 +189,17 @@ export function SiteTable({
                     setExpandedId(expandedId === site.id ? null : site.id)
                   }}
                 >
-                  {hasSelection && (
-                    <td className="px-3 py-2.5">
-                      <StyledCheckbox
-                        checked={selectedIds?.has(site.id) ?? false}
-                        onChange={() => onToggleSelect?.(site.id)}
-                      />
-                    </td>
-                  )}
                   <td className="px-3 py-2.5 text-gray-900 dark:text-white font-medium max-w-[200px]">
                     <div className="flex items-center gap-2">
                       <span className="truncate">{site.site_name}</span>
-                      {isPromoted && (
-                        <Link
-                          href={`/tracker/${isPromoted}`}
-                          onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-900/50 transition-colors flex-shrink-0"
-                        >
-                          In Pipeline
-                          <ExternalLink className="w-2.5 h-2.5" />
-                        </Link>
-                      )}
+                      <Link
+                        href={`/tracker?search=${encodeURIComponent(site.site_name)}`}
+                        onClick={e => e.stopPropagation()}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors flex-shrink-0"
+                      >
+                        Tracker
+                        <ExternalLink className="w-2.5 h-2.5" />
+                      </Link>
                     </div>
                   </td>
                   <td className="hidden md:table-cell px-3 py-2.5 text-gray-600 dark:text-gray-300">{site.county || '\u2014'}</td>

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react'
 import type { TrackerPartner, TrackerSiteOverview } from '@/lib/tracker/types'
-import type { PortfolioUpload } from '@/types/screening'
 import { cn } from '@/lib/utils'
 
 interface PartnerPortfolioViewProps {
@@ -13,7 +12,6 @@ interface PartnerPortfolioViewProps {
 
 export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
   const [partner, setPartner] = useState<TrackerPartner | null>(null)
-  const [portfolios, setPortfolios] = useState<PortfolioUpload[]>([])
   const [sites, setSites] = useState<TrackerSiteOverview[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +24,6 @@ export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
       })
       .then(data => {
         setPartner(data.partner)
-        setPortfolios(data.portfolios ?? [])
         setSites(data.sites ?? [])
       })
       .catch(err => setError(err.message))
@@ -54,7 +51,7 @@ export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
 
   const phaseCounts = (site: TrackerSiteOverview) => {
     const phases = [
-      site.site_qualification_phase, site.site_control_phase, site.power_phase,
+      site.site_control_phase, site.power_phase,
       site.permitting_phase, site.fiber_phase, site.engineering_phase, site.construction_phase,
     ]
     return phases.filter(p => p === 'Complete').length
@@ -89,30 +86,6 @@ export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
         </div>
       </div>
 
-      {/* Upload History */}
-      {portfolios.length > 0 && (
-        <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-white/10">
-          <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-            Portfolio Uploads
-          </h3>
-          <div className="space-y-2">
-            {portfolios.map(p => (
-              <div key={p.id} className="flex items-center justify-between px-3 py-2 rounded-lg bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/10">
-                <div>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">{p.name}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                    {p.site_count} sites
-                  </span>
-                </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500">
-                  {new Date(p.created_at).toLocaleDateString()}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Pipeline Sites */}
       <div className="px-4 sm:px-6 py-4">
         <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
@@ -120,7 +93,7 @@ export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
         </h3>
 
         {sites.length === 0 ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">No sites promoted to pipeline yet.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">No sites in pipeline yet.</p>
         ) : (
           <div className="overflow-x-auto -mx-4 sm:mx-0">
             <table className="w-full text-sm min-w-[600px] sm:min-w-0">
@@ -169,10 +142,10 @@ export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
                           <div className="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                             <div
                               className="h-full rounded-full bg-nodiac-secondary"
-                              style={{ width: `${(completed / 7) * 100}%` }}
+                              style={{ width: `${(completed / 6) * 100}%` }}
                             />
                           </div>
-                          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{completed}/7</span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400 tabular-nums">{completed}/6</span>
                         </div>
                       </td>
                       <td className="px-3 py-2.5 text-xs text-gray-500 dark:text-gray-400">
