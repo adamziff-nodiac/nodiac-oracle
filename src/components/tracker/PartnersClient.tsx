@@ -198,6 +198,7 @@ export function PartnersClient({ initialPartners, hubs }: PartnersClientProps) {
       rate_structure: null,
       available_capacity: null,
       attio_link: null,
+      attio_record_id: null,
       notes: null,
       created_at: '',
       updated_at: '',
