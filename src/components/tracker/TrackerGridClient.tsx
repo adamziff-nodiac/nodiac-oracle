@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useCallback, useMemo } from 'react'
+import { useState, useCallback, useMemo, useEffect } from 'react'
 import { SearchInput } from '@/components/ui/SearchInput'
 // Sites come from server component props and update via router.refresh() on realtime changes
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { TrackerSiteOverview, TrackerHub } from '@/lib/tracker/types'
 import { PHASES } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
@@ -26,22 +26,60 @@ interface TrackerGridClientProps {
 
 export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps) {
   const router = useRouter()
-  const [selectedPriority, setSelectedPriority] = useState<string | null>(null)
-  const [selectedHubs, setSelectedHubs] = useState<string[]>([])
-  const [selectedUtilities, setSelectedUtilities] = useState<string[]>([])
-  const [selectedPartners, setSelectedPartners] = useState<string[]>([])
-  const [showArchived, setShowArchived] = useState(false)
-  const [sortKey, setSortKey] = useState<SortKey>('priority')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const parseList = (key: string) => (searchParams.get(key)?.split(',').map(v => v.trim()).filter(Boolean) ?? [])
+
+  const [selectedPriority, setSelectedPriority] = useState<string | null>(() => searchParams.get('priority'))
+  const [selectedHubs, setSelectedHubs] = useState<string[]>(() => parseList('hubs'))
+  const [selectedUtilities, setSelectedUtilities] = useState<string[]>(() => parseList('utilities'))
+  const [selectedPartners, setSelectedPartners] = useState<string[]>(() => parseList('partners'))
+  const [showArchived, setShowArchived] = useState(() => searchParams.get('archived') === '1')
+  const [sortKey, setSortKey] = useState<SortKey>(() => {
+    const key = searchParams.get('sort') as SortKey | null
+    return key ?? 'priority'
+  })
+  const [sortDir, setSortDir] = useState<SortDir>(() => (searchParams.get('dir') as SortDir | null) ?? 'asc')
   const [showAddSite, setShowAddSite] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showAllSites, setShowAllSites] = useState(false)
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
+  const [showAllSites, setShowAllSites] = useState(() => searchParams.get('all') === '1')
 
   const handleRealtime = useCallback(() => {
     router.refresh()
   }, [router])
 
   useTrackerRealtime(handleRealtime)
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+
+    if (searchQuery.trim()) params.set('q', searchQuery.trim())
+    if (selectedPriority) params.set('priority', selectedPriority)
+    if (selectedHubs.length > 0) params.set('hubs', selectedHubs.join(','))
+    if (selectedUtilities.length > 0) params.set('utilities', selectedUtilities.join(','))
+    if (selectedPartners.length > 0) params.set('partners', selectedPartners.join(','))
+    if (showArchived) params.set('archived', '1')
+    if (showAllSites) params.set('all', '1')
+    if (sortKey !== 'priority') params.set('sort', sortKey)
+    if (sortDir !== 'asc') params.set('dir', sortDir)
+
+    const query = params.toString()
+    const next = query ? `${pathname}?${query}` : pathname
+    router.replace(next, { scroll: false })
+  }, [
+    pathname,
+    router,
+    searchQuery,
+    selectedPriority,
+    selectedHubs,
+    selectedUtilities,
+    selectedPartners,
+    showArchived,
+    showAllSites,
+    sortKey,
+    sortDir,
+  ])
 
   // Use initialSites directly -- server component re-passes on revalidation
   const sites = initialSites
@@ -228,13 +266,18 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
             </tr>
           </thead>
           <tbody>
-            {filteredSites.map(site => (
-              <SiteRow
-                key={site.id}
-                site={site}
-                onClick={() => router.push(`/tracker/${site.id}`)}
-              />
-            ))}
+            {filteredSites.map(site => {
+              const currentQuery = searchParams.toString()
+              const from = currentQuery ? `${pathname}?${currentQuery}` : pathname
+
+              return (
+                <SiteRow
+                  key={site.id}
+                  site={site}
+                  onClick={() => router.push(`/tracker/${site.id}?from=${encodeURIComponent(from)}`)}
+                />
+              )
+            })}
             {filteredSites.length === 0 && (
               <tr>
                 <td colSpan={15} className="px-4 py-8 text-center text-[13px] text-zinc-400 dark:text-zinc-600">
