@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Download, ChevronDown, ChevronRight, Star, Map as MapIcon } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { ArrowLeft, Download, ChevronDown, ChevronRight, Star, Map as MapIcon, ChevronsUpDown } from 'lucide-react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCenters'
@@ -241,13 +241,114 @@ function useExportCSV(dc: GoogleDataCenter | null, radiusMiles: number, pipeline
   }
 }
 
+function DCSelector({ currentDC, radiusMiles }: { currentDC: GoogleDataCenter | null; radiusMiles: number }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
+
+  const allDCs = useMemo(() => {
+    const active = googleDataCenters.filter(dc => dc.region === 'North America' && dc.status === 'active').sort((a, b) => a.name.localeCompare(b.name))
+    const dev = googleDataCenters.filter(dc => dc.region === 'North America' && dc.status === 'in_development').sort((a, b) => a.name.localeCompare(b.name))
+    return { active, dev }
+  }, [])
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase().trim()
+    if (!q) return allDCs
+    return {
+      active: allDCs.active.filter(dc => dc.name.toLowerCase().includes(q)),
+      dev: allDCs.dev.filter(dc => dc.name.toLowerCase().includes(q)),
+    }
+  }, [allDCs, search])
+
+  const handleSelect = (dc: GoogleDataCenter) => {
+    setOpen(false)
+    setSearch('')
+    router.push(`/regional-hubs/dc?name=${slugify(dc.name)}&radius=${radiusMiles}`)
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+      >
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{currentDC?.name ?? 'Select DC'}</h1>
+        <ChevronsUpDown className="w-4 h-4 text-gray-400" />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 z-40 w-72 max-h-96 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-white/10 shadow-xl flex flex-col">
+            <div className="p-2 border-b border-gray-100 dark:border-white/5">
+              <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search data centers..."
+                autoFocus
+                className="w-full px-3 py-1.5 text-sm rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-900 dark:text-white placeholder-gray-400 outline-none focus:ring-1 focus:ring-[#4285F4]"
+              />
+            </div>
+            <div className="overflow-y-auto flex-1">
+              {filtered.active.length > 0 && (
+                <>
+                  <div className="px-3 py-2 text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Active</div>
+                  {filtered.active.map(dc => (
+                    <button
+                      key={dc.name}
+                      onClick={() => handleSelect(dc)}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
+                        currentDC?.name === dc.name ? 'text-[#4285F4] font-medium' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {dc.name}
+                    </button>
+                  ))}
+                </>
+              )}
+              {filtered.dev.length > 0 && (
+                <>
+                  <div className="px-3 py-2 text-[10px] font-semibold text-amber-500 uppercase tracking-wider border-t border-gray-100 dark:border-white/5">In Development</div>
+                  {filtered.dev.map(dc => (
+                    <button
+                      key={dc.name}
+                      onClick={() => handleSelect(dc)}
+                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${
+                        currentDC?.name === dc.name ? 'text-[#4285F4] font-medium' : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      {dc.name}
+                    </button>
+                  ))}
+                </>
+              )}
+              {filtered.active.length === 0 && filtered.dev.length === 0 && (
+                <div className="px-3 py-4 text-sm text-gray-400 text-center">No matches</div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
 function DCFullPageInner() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const dcSlug = searchParams.get('name') ?? ''
   const initialRadius = parseInt(searchParams.get('radius') ?? '50', 10)
 
   const dc = useMemo(() => findDC(dcSlug), [dcSlug])
   const [radiusMiles, setRadiusMiles] = useState(initialRadius)
+
+  // Keep URL in sync with radius changes
+  const handleRadiusChange = (newRadius: number) => {
+    setRadiusMiles(newRadius)
+    window.history.replaceState(null, '', `/regional-hubs/dc?name=${dcSlug}&radius=${newRadius}`)
+  }
 
   const { pipelineSites, utilityGroups, ippSites, ippOperatorGroups, totalSites, isLoading } = useDCProximity({
     selectedDC: dc,
@@ -313,7 +414,7 @@ function DCFullPageInner() {
           <div className="flex items-center gap-3">
             <span className="text-2xl font-bold text-[#4285F4]">G</span>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900 dark:text-white">{dc.name}</h1>
+              <DCSelector currentDC={dc} radiusMiles={radiusMiles} />
               <div className="flex items-center gap-3 mt-1">
                 {dc.status === 'in_development' ? (
                   <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">In Development</span>
@@ -341,7 +442,7 @@ function DCFullPageInner() {
               max={200}
               step={25}
               value={radiusMiles}
-              onChange={(e) => setRadiusMiles(parseInt(e.target.value))}
+              onChange={(e) => handleRadiusChange(parseInt(e.target.value))}
               className="w-full h-1.5 rounded-full appearance-none cursor-pointer
                 bg-gray-200 dark:bg-white/10
                 [&::-webkit-slider-thumb]:appearance-none
