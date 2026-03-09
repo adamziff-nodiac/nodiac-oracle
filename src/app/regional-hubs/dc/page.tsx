@@ -6,6 +6,7 @@ import { ArrowLeft, Download, ChevronDown, ChevronRight, Star, Map as MapIcon, C
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCenters'
+import { PhaseProgress, getActivePhase } from '@/components/regional-hubs/PhaseProgress'
 import { useDCProximity, type UtilityGroup, type OperatorGroup, type ProximitySite, type PipelineSite } from '@/hooks/useDCProximity'
 import { LogoLink } from '@/components/LogoLink'
 import { Navigation } from '@/components/Navigation'
@@ -62,6 +63,8 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
     Deprioritized: 'bg-gray-500/20 text-gray-500',
   }
 
+  const activePhase = getActivePhase(site.phases)
+
   return (
     <div className="flex items-start gap-3 py-2.5 px-4 rounded-lg hover:bg-white/5 transition-colors">
       <div className="flex-shrink-0 mt-0.5">
@@ -76,11 +79,17 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
           <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${priorityColors[site.priority] ?? priorityColors['On Hold']}`}>
             {site.priority}
           </span>
+          {activePhase && (
+            <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400">
+              {activePhase.abbrev} {site.phases[activePhase.key] === 'Waiting' ? '(Waiting)' : ''}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-400">
           {site.partnerName && <span>{site.partnerName}</span>}
           {site.mw != null && <span>{site.mw} MW</span>}
           {site.hubName && <span className="text-[#c77dba]">{site.hubName}</span>}
+          <PhaseProgress phases={site.phases} />
         </div>
       </div>
       <span className="flex-shrink-0 text-xs tabular-nums font-mono text-[#4285F4]">

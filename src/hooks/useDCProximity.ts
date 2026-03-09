@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect, useRef } from 'react'
 import { haversineKm, kmToMiles } from '@/lib/geo/haversine'
 import type { GoogleDataCenter } from '@/data/googleDataCenters'
+import { PHASES, type PhaseKey, type PhaseStatuses } from '@/lib/tracker/constants'
 import type { IPPSiteCompact, SubstationCompact } from '@/types/prospective-sites'
 import type { DCProximityResponse, DCProximityPartner, DCProximitySite as TrackerSiteSlim } from '@/app/api/dc-proximity/route'
 
@@ -43,6 +44,7 @@ export interface PipelineSite {
   mw: number | null
   siteType: string | null
   hubName: string | null
+  phases: PhaseStatuses
 }
 
 export interface OperatorGroup {
@@ -158,6 +160,32 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
     const dcLng = selectedDC.coordinates[0]
 
     // ── Pipeline sites (tracker) ──────────────────
+    const PHASE_SCORE: Record<string, number> = {
+      'Complete': 2,
+      'In Progress': 1,
+      'Waiting': 1,
+      'Not Started': 0,
+    }
+    const PHASE_KEYS = PHASES.map(p => p.key)
+    const PRIORITY_SCORE: Record<string, number> = {
+      'Lead': 5,
+      'Active': 4,
+      'Pipeline': 3,
+      'On Hold': 1,
+      'Deprioritized': 0,
+    }
+
+    function devProgressScore(site: PipelineSite): number {
+      let score = 0
+      const phases = site.phases
+      for (const key of PHASE_KEYS) {
+        score += PHASE_SCORE[phases[key] ?? 'Not Started'] ?? 0
+      }
+      // Add priority weight so Lead/Active sites break ties
+      score += (PRIORITY_SCORE[site.priority] ?? 0) * 0.1
+      return score
+    }
+
     const pipelineSites: PipelineSite[] = []
     if (trackerCache?.sites) {
       for (const site of trackerCache.sites) {
@@ -172,10 +200,18 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
             mw: site.mw_current,
             siteType: site.site_type,
             hubName: site.hub_name,
+            phases: Object.fromEntries(
+              PHASES.map(p => [p.key, (site as Record<string, unknown>)[`${p.key}_phase`] as string | null ?? null])
+            ) as PhaseStatuses,
           })
         }
       }
-      pipelineSites.sort((a, b) => a.distanceMi - b.distanceMi)
+      // Sort by development progress (furthest along first), then by distance
+      pipelineSites.sort((a, b) => {
+        const progressDiff = devProgressScore(b) - devProgressScore(a)
+        if (Math.abs(progressDiff) > 0.01) return progressDiff
+        return a.distanceMi - b.distanceMi
+      })
     }
 
     // ── Build partner name lookup (case-insensitive) ──

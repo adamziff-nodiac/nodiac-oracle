@@ -10,6 +10,12 @@ export const PHASES = [
 
 export type PhaseKey = typeof PHASES[number]['key']
 
+/** Status of each development phase — derived from PHASES constant */
+export type PhaseStatuses = Record<PhaseKey, string | null>
+
+/** Column names for phase statuses in the tracker_site_overview view */
+export const PHASE_VIEW_COLUMNS = PHASES.map(p => `${p.key}_phase`) as readonly string[]
+
 export interface Checkpoint {
   prefix: string
   label: string

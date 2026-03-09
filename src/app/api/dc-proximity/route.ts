@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { PHASE_VIEW_COLUMNS } from '@/lib/tracker/constants'
 
 export interface DCProximityPartner {
   id: string
@@ -19,12 +20,17 @@ export interface DCProximitySite {
   mw_current: number | null
   site_type: string | null
   hub_name: string | null
+  // Phase statuses — keys derived from PHASES constant (e.g. site_control_phase, power_phase, ...)
+  [key: string]: unknown
 }
 
 export interface DCProximityResponse {
   partners: DCProximityPartner[]
   sites: DCProximitySite[]
 }
+
+const SITE_BASE_COLUMNS = 'id, name, latitude, longitude, utility_name, asset_owner_name, priority, mw_current, site_type, hub_name'
+const SITE_SELECT = [SITE_BASE_COLUMNS, ...PHASE_VIEW_COLUMNS].join(', ')
 
 export async function GET() {
   try {
@@ -37,7 +43,7 @@ export async function GET() {
         .select('id, name, type, relationship_stage'),
       (supabase as any)
         .from('tracker_site_overview')
-        .select('id, name, latitude, longitude, utility_name, asset_owner_name, priority, mw_current, site_type, hub_name')
+        .select(SITE_SELECT)
         .not('latitude', 'is', null)
         .not('longitude', 'is', null),
     ])
