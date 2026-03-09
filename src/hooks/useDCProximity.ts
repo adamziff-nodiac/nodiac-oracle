@@ -44,10 +44,20 @@ export interface PipelineSite {
   hubName: string | null
 }
 
+export interface OperatorGroup {
+  name: string
+  isPartner: boolean
+  partnerStage: string | null
+  siteCount: number
+  minDistanceMi: number
+  sites: ProximitySite[]
+}
+
 export interface DCProximityData {
   pipelineSites: PipelineSite[]
   utilityGroups: UtilityGroup[]
   ippSites: ProximitySite[]
+  ippOperatorGroups: OperatorGroup[]
   totalSites: number
   isLoading: boolean
 }
@@ -140,7 +150,7 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
 
   return useMemo(() => {
     if (!selectedDC || isLoading || (!ippDistCache && !substationCache)) {
-      return { pipelineSites: [], utilityGroups: [], ippSites: [], totalSites: 0, isLoading }
+      return { pipelineSites: [], utilityGroups: [], ippSites: [], ippOperatorGroups: [], totalSites: 0, isLoading }
     }
 
     const dcLat = selectedDC.coordinates[1]
@@ -233,14 +243,17 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
       return b.siteCount - a.siteCount
     })
 
-    // ── IPP sites within radius ──
+    // ── IPP sites within radius, grouped by operator ──
     const ippSites: ProximitySite[] = []
+    const operatorMap = new Map<string, ProximitySite[]>()
+    const ungroupedIPP: ProximitySite[] = []
+
     if (ippDistCache) {
       for (const site of ippDistCache) {
         const dist = distanceMiles(site.y, site.x, dcLat, dcLng)
         if (dist > radiusMiles) continue
 
-        ippSites.push({
+        const proxSite: ProximitySite = {
           name: site.n,
           type: classifySiteType(site.t),
           state: site.s,
@@ -248,19 +261,68 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
           voltage: site.kv,
           lat: site.y,
           lng: site.x,
-          utility: null,
+          utility: site.o || null,
           utilityType: null,
           holdingCompany: null,
           city: null,
           county: null,
-        })
+        }
+
+        ippSites.push(proxSite)
+
+        if (site.o) {
+          const existing = operatorMap.get(site.o)
+          if (existing) {
+            existing.push(proxSite)
+          } else {
+            operatorMap.set(site.o, [proxSite])
+          }
+        } else {
+          ungroupedIPP.push(proxSite)
+        }
       }
       ippSites.sort((a, b) => a.distanceMi - b.distanceMi)
     }
 
+    // Build operator groups with partner matching
+    const ippOperatorGroups: OperatorGroup[] = []
+    for (const [name, sites] of operatorMap) {
+      sites.sort((a, b) => a.distanceMi - b.distanceMi)
+      const partner = partnerLookup.get(name.toLowerCase())
+
+      ippOperatorGroups.push({
+        name,
+        isPartner: !!partner,
+        partnerStage: partner?.relationship_stage ?? null,
+        siteCount: sites.length,
+        minDistanceMi: sites[0]?.distanceMi ?? 0,
+        sites,
+      })
+    }
+
+    if (ungroupedIPP.length > 0) {
+      ungroupedIPP.sort((a, b) => a.distanceMi - b.distanceMi)
+      ippOperatorGroups.push({
+        name: 'Unknown Operator',
+        isPartner: false,
+        partnerStage: null,
+        siteCount: ungroupedIPP.length,
+        minDistanceMi: ungroupedIPP[0]?.distanceMi ?? 0,
+        sites: ungroupedIPP,
+      })
+    }
+
+    // Sort: partners first, then by site count desc, unknown last
+    ippOperatorGroups.sort((a, b) => {
+      if (a.name === 'Unknown Operator') return 1
+      if (b.name === 'Unknown Operator') return -1
+      if (a.isPartner !== b.isPartner) return a.isPartner ? -1 : 1
+      return b.siteCount - a.siteCount
+    })
+
     const totalSites = utilityGroups.reduce((sum, g) => sum + g.siteCount, 0) + ippSites.length
 
-    return { pipelineSites, utilityGroups, ippSites, totalSites, isLoading }
+    return { pipelineSites, utilityGroups, ippSites, ippOperatorGroups, totalSites, isLoading }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDC, radiusMiles, isLoading, dataVersion])
 }

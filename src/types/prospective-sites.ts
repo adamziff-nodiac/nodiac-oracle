@@ -8,6 +8,7 @@ export interface IPPSiteCompact {
   t: string    // technology_type (solar, wind, storage, etc.)
   kv: number | null  // min_kv
   vt?: string | null // voltage_tier (only in dist file)
+  o: string | null   // operator/entity name (from EIA)
 }
 
 /** Compact substation from prospective-substations.json */

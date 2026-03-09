@@ -6,14 +6,15 @@
  *   public/data/prospective-ipp-all.json   — all IPP renewable sites (~6,900)
  *
  * Compact format per site:
- *   { id, n, y, x, s, t, kv, vt }
+ *   { id, n, y, x, s, t, kv, vt, o }
  *   id = plant_code, n = plant_name, y = latitude, x = longitude,
- *   s = state, t = technology_type, kv = min_kv, vt = voltage_tier (dist only)
+ *   s = state, t = technology_type, kv = min_kv, vt = voltage_tier (dist only),
+ *   o = operator name (from EIA)
  *
  * Run: bun run scripts/prepare-ipp-sites.ts
  */
 
-import { readFileSync, writeFileSync, mkdirSync } from 'fs'
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs'
 import { resolve } from 'path'
 
 const HQ_CSV_DIR = resolve(
@@ -21,6 +22,16 @@ const HQ_CSV_DIR = resolve(
   'dev/nodiac-hq/reference/research/tam-analysis/outputs-sonnet/csv-sonnet'
 )
 const OUT_DIR = resolve(__dirname, '../public/data')
+const OPERATORS_PATH = resolve(OUT_DIR, 'eia-plant-operators.json')
+
+// Load EIA operator lookup (plantid → entityName)
+let operatorLookup: Record<string, string> = {}
+if (existsSync(OPERATORS_PATH)) {
+  operatorLookup = JSON.parse(readFileSync(OPERATORS_PATH, 'utf-8'))
+  console.log(`Loaded ${Object.keys(operatorLookup).length} plant→operator mappings from EIA data`)
+} else {
+  console.warn('Warning: eia-plant-operators.json not found. Run fetch-eia-operators.ts first. Operator field will be null.')
+}
 
 function parseCSV(text: string): Record<string, string>[] {
   const lines = text.trim().split('\n')
@@ -47,6 +58,7 @@ const allSites = allRows
     s: r.state,
     t: r.technology_type,
     kv: r.min_kv ? +parseFloat(r.min_kv).toFixed(1) : null,
+    o: operatorLookup[r.plant_code] || null,
   }))
 
 // --- Distribution-connected sites ---
@@ -64,6 +76,7 @@ const distSites = distRows
     t: r.technology_type,
     kv: r.min_kv ? +parseFloat(r.min_kv).toFixed(1) : null,
     vt: r.voltage_tier || null,
+    o: operatorLookup[r.plant_code] || null,
   }))
 
 mkdirSync(OUT_DIR, { recursive: true })
