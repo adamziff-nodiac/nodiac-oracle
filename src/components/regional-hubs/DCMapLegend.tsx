@@ -20,7 +20,7 @@ export function DCMapLegend({ siteCount, radiusMiles }: DCMapLegendProps) {
   const [open, setOpen] = useState(true)
 
   return (
-    <div className="absolute bottom-4 left-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10 select-none">
+    <div className="absolute bottom-4 right-4 bg-white/80 dark:bg-nodiac-dark/80 backdrop-blur-xl border border-gray-200 dark:border-white/10 rounded-lg px-4 py-3 z-10 select-none">
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide"
