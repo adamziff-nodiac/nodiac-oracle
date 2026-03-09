@@ -59,7 +59,7 @@ export function MapOverlayToggles({
         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
           showPortfolio
             ? 'bg-[#c77dba]/20 text-[#c77dba]'
-            : 'bg-white/5 text-gray-400 hover:text-white'
+            : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-gray-700 dark:hover:text-white'
         }`}
       >
         <span>Portfolio Sites</span>
@@ -72,7 +72,7 @@ export function MapOverlayToggles({
         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
           showGoogleDC
             ? 'bg-[#4285F4]/20 text-[#4285F4]'
-            : 'bg-white/5 text-gray-400 hover:text-white'
+            : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-gray-700 dark:hover:text-white'
         }`}
       >
         <span className="flex items-center gap-1.5">
@@ -90,7 +90,7 @@ export function MapOverlayToggles({
               className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 googleDCDisplayMode === 'logo'
                   ? 'bg-[#4285F4]/20 text-[#4285F4]'
-                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Logo only
@@ -100,7 +100,7 @@ export function MapOverlayToggles({
               className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 googleDCDisplayMode === 'logo-label'
                   ? 'bg-[#4285F4]/20 text-[#4285F4]'
-                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Logo + Name
@@ -116,7 +116,7 @@ export function MapOverlayToggles({
         className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
           showProspectiveSites
             ? 'bg-[#FFB800]/20 text-[#FFB800]'
-            : 'bg-white/5 text-gray-400 hover:text-white'
+            : 'bg-gray-100 dark:bg-white/5 text-gray-400 hover:text-gray-700 dark:hover:text-white'
         }`}
       >
         <span>Prospective Sites</span>
@@ -135,7 +135,7 @@ export function MapOverlayToggles({
               className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 showIPP
                   ? 'bg-[#FFB800]/20 text-[#FFB800]'
-                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               IPP Sites {showIPP && !prospectiveLoading && <span className="opacity-60">({ippCount.toLocaleString()})</span>}
@@ -145,7 +145,7 @@ export function MapOverlayToggles({
               className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
                 showSubstations
                   ? 'bg-[#22C55E]/20 text-[#22C55E]'
-                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                  : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
               }`}
             >
               Substations {showSubstations && !prospectiveLoading && <span className="opacity-60">({substationCount.toLocaleString()})</span>}
@@ -156,7 +156,7 @@ export function MapOverlayToggles({
             className={`w-full flex items-center justify-between px-2 py-1 rounded text-[10px] font-medium transition-colors ${
               includeTransmission
                 ? 'bg-[#FFB800]/15 text-[#FFB800]'
-                : 'bg-white/5 text-gray-500 hover:text-gray-300'
+                : 'bg-gray-100 dark:bg-white/5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
             }`}
           >
             <span>Include Transmission</span>

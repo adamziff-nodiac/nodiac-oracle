@@ -44,7 +44,7 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
   return (
     <Link
       href={`/tracker/${site.id}`}
-      className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors"
+      className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
     >
       <div className="flex-shrink-0 mt-0.5">
         <div
@@ -54,17 +54,17 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white truncate hover:text-[#4285F4] transition-colors">{site.name}</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-white truncate hover:text-[#4285F4] transition-colors">{site.name}</span>
           <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${badgeClass}`}>
             {site.priority}
           </span>
           {activePhase && (
-            <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400">
+            <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
               {activePhase.abbrev}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-400">
+        <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-500 dark:text-gray-400">
           {site.siteType && <span className="text-gray-500">{site.siteType}</span>}
           {site.assetOwnerName && <span>{site.assetOwnerName}</span>}
           {site.utilityName && site.utilityName !== site.assetOwnerName && (
@@ -91,7 +91,7 @@ function UtilityGroupRow({ group, defaultExpanded }: { group: UtilityGroup; defa
     <div>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2.5 py-2 px-3 rounded-lg hover:bg-white/5 transition-colors text-left"
+        className="w-full flex items-center gap-2.5 py-2 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-left"
       >
         {expanded
           ? <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -100,7 +100,7 @@ function UtilityGroupRow({ group, defaultExpanded }: { group: UtilityGroup; defa
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {group.isPartner && <Star className="w-3 h-3 text-[#c77dba] flex-shrink-0" fill="currentColor" />}
-            <span className={`text-sm font-medium truncate ${group.isPartner ? 'text-white' : 'text-gray-200'}`}>
+            <span className={`text-sm font-medium truncate ${group.isPartner ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>
               {group.name}
             </span>
           </div>
@@ -112,7 +112,7 @@ function UtilityGroupRow({ group, defaultExpanded }: { group: UtilityGroup; defa
           </div>
         </div>
         <div className="flex-shrink-0 text-right">
-          <div className="text-xs tabular-nums font-mono text-gray-300">
+          <div className="text-xs tabular-nums font-mono text-gray-600 dark:text-gray-300">
             {group.siteCount} {group.siteCount === 1 ? 'sub' : 'subs'}
           </div>
           <div className="text-[10px] tabular-nums font-mono text-gray-500">
@@ -122,9 +122,9 @@ function UtilityGroupRow({ group, defaultExpanded }: { group: UtilityGroup; defa
       </button>
 
       {expanded && (
-        <div className="ml-6 border-l border-white/5 pl-3 pb-1">
+        <div className="ml-6 border-l border-gray-200 dark:border-white/5 pl-3 pb-1">
           {group.sites.map((site, i) => (
-            <div key={i} className="flex items-center gap-2 py-1.5 text-[11px] text-gray-400">
+            <div key={i} className="flex items-center gap-2 py-1.5 text-[11px] text-gray-500 dark:text-gray-400">
               <span className="w-2 h-2 rounded-full bg-[#22C55E] flex-shrink-0 opacity-60" />
               <span className="truncate flex-1">{site.name}</span>
               {site.voltage != null && <span className="text-gray-500">{site.voltage}kV</span>}
@@ -144,7 +144,7 @@ function OperatorGroupRow({ group, defaultExpanded }: { group: OperatorGroup; de
     <div>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center gap-2.5 py-2 px-3 rounded-lg hover:bg-white/5 transition-colors text-left"
+        className="w-full flex items-center gap-2.5 py-2 px-3 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-left"
       >
         {expanded
           ? <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
@@ -153,7 +153,7 @@ function OperatorGroupRow({ group, defaultExpanded }: { group: OperatorGroup; de
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             {group.isPartner && <Star className="w-3 h-3 text-[#c77dba] flex-shrink-0" fill="currentColor" />}
-            <span className={`text-sm font-medium truncate ${group.isPartner ? 'text-white' : 'text-gray-200'}`}>
+            <span className={`text-sm font-medium truncate ${group.isPartner ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'}`}>
               {group.name}
             </span>
           </div>
@@ -162,7 +162,7 @@ function OperatorGroupRow({ group, defaultExpanded }: { group: OperatorGroup; de
           )}
         </div>
         <div className="flex-shrink-0 text-right">
-          <div className="text-xs tabular-nums font-mono text-gray-300">
+          <div className="text-xs tabular-nums font-mono text-gray-600 dark:text-gray-300">
             {group.siteCount} {group.siteCount === 1 ? 'site' : 'sites'}
           </div>
           <div className="text-[10px] tabular-nums font-mono text-gray-500">
@@ -172,9 +172,9 @@ function OperatorGroupRow({ group, defaultExpanded }: { group: OperatorGroup; de
       </button>
 
       {expanded && (
-        <div className="ml-6 border-l border-white/5 pl-3 pb-1">
+        <div className="ml-6 border-l border-gray-200 dark:border-white/5 pl-3 pb-1">
           {group.sites.map((site, i) => (
-            <div key={i} className="flex items-center gap-2 py-1.5 text-[11px] text-gray-400">
+            <div key={i} className="flex items-center gap-2 py-1.5 text-[11px] text-gray-500 dark:text-gray-400">
               <span
                 className="w-2 h-2 rounded-full flex-shrink-0 opacity-60"
                 style={{ backgroundColor: TYPE_COLORS[site.type] }}
@@ -293,19 +293,19 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
   if (!dc) return null
 
   return (
-    <div className="absolute top-0 right-0 bottom-0 w-[380px] max-w-[90vw] z-30 flex flex-col bg-gray-950/95 backdrop-blur-xl border-l border-white/10 shadow-2xl animate-in slide-in-from-right duration-200">
+    <div className="absolute top-0 right-0 bottom-0 w-[380px] max-w-[90vw] z-30 flex flex-col bg-white/95 dark:bg-gray-950/95 backdrop-blur-xl border-l border-gray-200 dark:border-white/10 shadow-2xl animate-in slide-in-from-right duration-200">
       {/* Header */}
-      <div className="flex-shrink-0 p-4 border-b border-white/10">
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 dark:border-white/10">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2.5 min-w-0">
             <span className="text-xl font-bold text-[#4285F4]">G</span>
             <div className="min-w-0">
-              <h2 className="text-sm font-semibold text-white truncate">{dc.name}</h2>
+              <h2 className="text-sm font-semibold text-gray-900 dark:text-white truncate">{dc.name}</h2>
               <div className="flex items-center gap-2 mt-0.5">
                 {dc.status === 'in_development' ? (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">In Development</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-300">In Development</span>
                 ) : (
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">Active</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-600 dark:text-emerald-300">Active</span>
                 )}
               </div>
             </div>
@@ -313,14 +313,14 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
           <div className="flex items-center gap-1">
             <Link
               href={`/regional-hubs/dc?name=${dc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}&radius=${radiusMiles}`}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-400 hover:text-gray-900 dark:hover:text-white"
               title="Open full page"
             >
               <Maximize2 className="w-4 h-4" />
             </Link>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors text-gray-400 hover:text-gray-900 dark:hover:text-white"
             >
               <X className="w-4 h-4" />
             </button>
@@ -330,7 +330,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
         {/* Radius slider */}
         <div className="mt-4 space-y-1.5">
           <div className="flex justify-between items-center">
-            <span className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Search Radius</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wider font-medium">Search Radius</span>
             <span className="text-xs text-[#4285F4] tabular-nums font-mono font-semibold">{radiusMiles}mi</span>
           </div>
           <input
@@ -341,7 +341,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
             value={radiusMiles}
             onChange={(e) => onRadiusChange(parseInt(e.target.value))}
             className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-              bg-white/10
+              bg-gray-200 dark:bg-white/10
               [&::-webkit-slider-thumb]:appearance-none
               [&::-webkit-slider-thumb]:w-3.5
               [&::-webkit-slider-thumb]:h-3.5
@@ -353,9 +353,9 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
 
         {/* Summary stats */}
         {!isLoading && (
-          <div className="mt-3 flex items-center gap-4 text-[11px] text-gray-400">
+          <div className="mt-3 flex items-center gap-4 text-[11px] text-gray-500 dark:text-gray-400">
             <span className="tabular-nums">
-              <span className="text-white font-medium">{totalSites.toLocaleString()}</span> total
+              <span className="text-gray-900 dark:text-white font-medium">{totalSites.toLocaleString()}</span> total
             </span>
             {pipelineSites.length > 0 && (
               <span className="tabular-nums">
@@ -363,7 +363,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
               </span>
             )}
             <span className="tabular-nums">
-              <span className="text-white font-medium">{utilityGroups.length}</span> utilities
+              <span className="text-gray-900 dark:text-white font-medium">{utilityGroups.length}</span> utilities
             </span>
             {(partnerCount > 0 || ippPartnerCount > 0) && (
               <span className="tabular-nums">
@@ -387,7 +387,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
               <div className="mb-1">
                 <button
                   onClick={() => setPipelineOpen(!pipelineOpen)}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                 >
                   {pipelineOpen ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
                   <MapPin className="w-3.5 h-3.5 text-[#c77dba]" />
@@ -409,7 +409,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
               <div className="mb-1">
                 <button
                   onClick={() => setUtilitiesOpen(!utilitiesOpen)}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                 >
                   {utilitiesOpen ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
                   <Building2 className="w-3.5 h-3.5 text-[#22C55E]" />
@@ -437,7 +437,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
               <div className="mb-1">
                 <button
                   onClick={() => setIPPOpen(!ippOpen)}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-white/5 transition-colors"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
                 >
                   {ippOpen ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
                   <Zap className="w-3.5 h-3.5 text-[#FFB800]" />
@@ -473,7 +473,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
 
       {/* Footer: Export */}
       {totalSites > 0 && !isLoading && (
-        <div className="flex-shrink-0 p-3 border-t border-white/10">
+        <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-white/10">
           <button
             onClick={exportCSV}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#4285F4]/10 hover:bg-[#4285F4]/20 border border-[#4285F4]/20 text-sm font-medium text-[#4285F4] transition-colors"
