@@ -7,7 +7,7 @@ import { MapPin, ChevronDown } from 'lucide-react'
 // Sites come from server component props and update via router.refresh() on realtime changes
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { TrackerSiteOverview, TrackerHub } from '@/lib/tracker/types'
-import { PHASES, getCurrentSubStep, getCheckpointsByPhase, type PhaseKey } from '@/lib/tracker/constants'
+import { PHASES, getCurrentSubStep, type PhaseKey } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { FilterBar } from './FilterBar'
 import { SiteRow } from './SiteRow'
@@ -36,26 +36,6 @@ function getPhaseStatus(site: TrackerSiteOverview, phaseKey: string): string {
   return (site as Record<string, unknown>)[`${phaseKey}_phase`] as string ?? 'Not Started'
 }
 
-// Check if a site matches a phase filter by looking at individual checkpoint statuses.
-// This is more accurate than the rollup because the rollup has priority ordering
-// (Waiting beats In Progress), so a phase with one Waiting + one In Progress checkpoint
-// would only show as "Waiting" in the rollup, missing "In Progress" filters.
-function siteMatchesPhaseFilter(site: TrackerSiteOverview, phaseKey: string, statuses: string[]): boolean {
-  const checkpoints = getCheckpointsByPhase(phaseKey as PhaseKey)
-  const siteData = site as Record<string, unknown>
-
-  // "Not Started" matches if the rollup phase is Not Started
-  if (statuses.includes('Not Started') && getPhaseStatus(site, phaseKey) === 'Not Started') return true
-  // "Complete" matches if the rollup phase is Complete
-  if (statuses.includes('Complete') && getPhaseStatus(site, phaseKey) === 'Complete') return true
-
-  // For "In Progress" and "Waiting", check individual checkpoints
-  for (const cp of checkpoints) {
-    const cpStatus = (siteData[`${cp.prefix}_status`] as string) ?? 'Not Started'
-    if (statuses.includes(cpStatus)) return true
-  }
-  return false
-}
 
 interface TrackerGridClientProps {
   initialSites: TrackerSiteOverview[]
@@ -193,10 +173,10 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     if (selectedPartners.length > 0) {
       result = result.filter(s => s.asset_owner_name && selectedPartners.includes(s.asset_owner_name))
     }
-    // Phase status filters — check individual checkpoint statuses for accuracy
+    // Phase status filters (uses DB view rollup)
     for (const [phaseKey, statuses] of selectedPhaseFilters) {
       if (statuses.length > 0) {
-        result = result.filter(s => siteMatchesPhaseFilter(s, phaseKey, statuses))
+        result = result.filter(s => statuses.includes(getPhaseStatus(s, phaseKey)))
       }
     }
 
