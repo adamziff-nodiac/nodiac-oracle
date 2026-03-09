@@ -79,7 +79,7 @@ export function HubMap({
   onClusters,
   showProspectiveSites = false,
   prospectiveSitesGeojson = null,
-  prospectiveRadius = 100,
+  prospectiveRadius = 50,
   selectedDC = null,
   dcSearchRadius = 50,
   onDCClick,

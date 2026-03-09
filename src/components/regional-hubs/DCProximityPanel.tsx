@@ -1,9 +1,12 @@
 'use client'
 
 import { useState, useCallback, useMemo } from 'react'
-import { X, Download, ChevronDown, ChevronRight, Star, MapPin, Zap, Building2 } from 'lucide-react'
+import { X, Download, ChevronDown, ChevronRight, Star, MapPin, Zap, Building2, Maximize2 } from 'lucide-react'
+import Link from 'next/link'
 import type { GoogleDataCenter } from '@/data/googleDataCenters'
-import { useDCProximity, type UtilityGroup, type ProximitySite, type PipelineSite } from '@/hooks/useDCProximity'
+import { PhaseProgress, getActivePhase } from './PhaseProgress'
+import { PRIORITY_COLORS, type Priority } from '@/lib/tracker/constants'
+import { useDCProximity, type UtilityGroup, type OperatorGroup, type ProximitySite, type PipelineSite } from '@/hooks/useDCProximity'
 
 const TYPE_COLORS: Record<string, string> = {
   solar: '#FFB800',
@@ -35,16 +38,14 @@ interface DCProximityPanelProps {
 }
 
 function PipelineSiteRow({ site }: { site: PipelineSite }) {
-  const priorityColors: Record<string, string> = {
-    Lead: 'bg-red-500/20 text-red-300',
-    Active: 'bg-amber-500/20 text-amber-300',
-    Pipeline: 'bg-purple-500/20 text-purple-300',
-    'On Hold': 'bg-gray-500/20 text-gray-400',
-    Deprioritized: 'bg-gray-500/20 text-gray-500',
-  }
+  const activePhase = getActivePhase(site.phases)
+  const badgeClass = PRIORITY_COLORS[site.priority as Priority]?.badge ?? 'bg-zinc-500/20 text-zinc-400'
 
   return (
-    <div className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors">
+    <Link
+      href={`/tracker/${site.id}`}
+      className="flex items-start gap-3 py-2.5 px-3 rounded-lg hover:bg-white/5 transition-colors"
+    >
       <div className="flex-shrink-0 mt-0.5">
         <div
           className="w-2.5 h-2.5 rounded-full"
@@ -53,21 +54,32 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-white truncate">{site.name}</span>
-          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${priorityColors[site.priority] ?? priorityColors['On Hold']}`}>
+          <span className="text-sm font-medium text-white truncate hover:text-[#4285F4] transition-colors">{site.name}</span>
+          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${badgeClass}`}>
             {site.priority}
           </span>
+          {activePhase && (
+            <span className="flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/10 text-amber-400">
+              {activePhase.abbrev}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-400">
-          {site.partnerName && <span>{site.partnerName}</span>}
+          {site.siteType && <span className="text-gray-500">{site.siteType}</span>}
+          {site.assetOwnerName && <span>{site.assetOwnerName}</span>}
+          {site.utilityName && site.utilityName !== site.assetOwnerName && (
+            <span className="text-gray-500">· {site.utilityName}</span>
+          )}
           {site.mw != null && <span>{site.mw} MW</span>}
+          {site.voltage != null && <span className="text-gray-500">{site.voltage}kV</span>}
           {site.hubName && <span className="text-[#c77dba]">{site.hubName}</span>}
+          <PhaseProgress phases={site.phases} />
         </div>
       </div>
       <span className="flex-shrink-0 text-xs tabular-nums font-mono text-[#4285F4]">
         {site.distanceMi}mi
       </span>
-    </div>
+    </Link>
   )
 }
 
@@ -125,36 +137,76 @@ function UtilityGroupRow({ group, defaultExpanded }: { group: UtilityGroup; defa
   )
 }
 
-function IPPSiteRow({ site }: { site: ProximitySite }) {
+function OperatorGroupRow({ group, defaultExpanded }: { group: OperatorGroup; defaultExpanded: boolean }) {
+  const [expanded, setExpanded] = useState(defaultExpanded)
+
   return (
-    <div className="flex items-center gap-2.5 py-1.5 px-3 text-[11px]">
-      <span
-        className="w-2 h-2 rounded-full flex-shrink-0"
-        style={{ backgroundColor: TYPE_COLORS[site.type] }}
-      />
-      <span className="text-gray-300 truncate flex-1">{site.name}</span>
-      <span className="text-gray-500 capitalize flex-shrink-0">{site.type}</span>
-      {site.voltage != null && <span className="text-gray-500">{site.voltage}kV</span>}
-      <span className="text-gray-500">{site.state}</span>
-      <span className="tabular-nums font-mono text-[#4285F4]">{site.distanceMi}mi</span>
+    <div>
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="w-full flex items-center gap-2.5 py-2 px-3 rounded-lg hover:bg-white/5 transition-colors text-left"
+      >
+        {expanded
+          ? <ChevronDown className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+          : <ChevronRight className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" />
+        }
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            {group.isPartner && <Star className="w-3 h-3 text-[#c77dba] flex-shrink-0" fill="currentColor" />}
+            <span className={`text-sm font-medium truncate ${group.isPartner ? 'text-white' : 'text-gray-200'}`}>
+              {group.name}
+            </span>
+          </div>
+          {group.isPartner && group.partnerStage && (
+            <div className="mt-0.5 text-[11px] text-[#c77dba]">{group.partnerStage}</div>
+          )}
+        </div>
+        <div className="flex-shrink-0 text-right">
+          <div className="text-xs tabular-nums font-mono text-gray-300">
+            {group.siteCount} {group.siteCount === 1 ? 'site' : 'sites'}
+          </div>
+          <div className="text-[10px] tabular-nums font-mono text-gray-500">
+            {group.minDistanceMi}mi closest
+          </div>
+        </div>
+      </button>
+
+      {expanded && (
+        <div className="ml-6 border-l border-white/5 pl-3 pb-1">
+          {group.sites.map((site, i) => (
+            <div key={i} className="flex items-center gap-2 py-1.5 text-[11px] text-gray-400">
+              <span
+                className="w-2 h-2 rounded-full flex-shrink-0 opacity-60"
+                style={{ backgroundColor: TYPE_COLORS[site.type] }}
+              />
+              <div className="truncate flex-1">
+                <span>{site.name}</span>
+                {site.utility && (
+                  <span className="text-gray-600 ml-1">· {site.utility}</span>
+                )}
+              </div>
+              <span className="text-gray-500 capitalize flex-shrink-0">{site.type}</span>
+              {site.voltage != null && <span className="text-gray-500">{site.voltage}kV</span>}
+              <span className="tabular-nums font-mono text-[#4285F4]">{site.distanceMi}mi</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
 
 export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: DCProximityPanelProps) {
-  const { pipelineSites, utilityGroups, ippSites, totalSites, isLoading } = useDCProximity({
+  const { pipelineSites, utilityGroups, ippSites, ippOperatorGroups, totalSites, isLoading } = useDCProximity({
     selectedDC: dc,
     radiusMiles,
   })
-
-  const [showAllIPP, setShowAllIPP] = useState(false)
-  const visibleIPP = showAllIPP ? ippSites : ippSites.slice(0, 20)
 
   const exportCSV = useCallback(() => {
     if (!dc) return
 
     const rows: string[][] = [
-      ['Name', 'Type', 'Category', 'Distance (mi)', 'State', 'City', 'County', 'Utility', 'Utility Type', 'Holding Company', 'Voltage (kV)', 'Partner Status', 'Partner Stage'],
+      ['Name', 'Type', 'Category', 'Distance (mi)', 'State', 'City', 'County', 'Site Owner', 'Utility', 'Utility Type', 'Holding Company', 'Voltage (kV)', 'Partner Status', 'Partner Stage'],
     ]
 
     // Pipeline sites first
@@ -164,12 +216,13 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
         site.siteType || '',
         'Pipeline',
         String(site.distanceMi),
-        '', '', '',
-        site.partnerName || '',
+        '', '', site.ahj || '',
+        site.assetOwnerName || '',
+        site.utilityName || '',
         '', '',
-        '',
-        'Active Partner',
-        '',
+        site.voltage != null ? String(site.voltage) : '',
+        'Pipeline',
+        site.priority,
       ])
     }
 
@@ -184,6 +237,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
           site.state,
           site.city || '',
           site.county || '',
+          site.owner || '',
           site.utility || '',
           site.utilityType || '',
           site.holdingCompany || '',
@@ -194,19 +248,24 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
       }
     }
 
-    // IPP sites
-    for (const site of ippSites) {
-      rows.push([
-        site.name,
-        site.type,
-        'Renewable',
-        String(site.distanceMi),
-        site.state,
-        '', '', '', '', '',
-        site.voltage != null ? String(site.voltage) : '',
-        '',
-        '',
-      ])
+    // IPP sites (grouped by operator)
+    for (const group of ippOperatorGroups) {
+      for (const site of group.sites) {
+        rows.push([
+          site.name,
+          site.type,
+          'Renewable',
+          String(site.distanceMi),
+          site.state,
+          '', '',
+          site.owner || '',
+          site.utility || '',
+          '', '',
+          site.voltage != null ? String(site.voltage) : '',
+          group.isPartner ? 'Existing Partner' : '',
+          group.partnerStage || '',
+        ])
+      }
     }
 
     const csvContent = rows.map(row =>
@@ -220,7 +279,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
     a.download = `${dc.name.replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}-${radiusMiles}mi-proximity.csv`
     a.click()
     URL.revokeObjectURL(url)
-  }, [dc, radiusMiles, pipelineSites, utilityGroups, ippSites])
+  }, [dc, radiusMiles, pipelineSites, utilityGroups, ippOperatorGroups])
 
   // Section collapse states
   const [pipelineOpen, setPipelineOpen] = useState(true)
@@ -229,6 +288,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
 
   const partnerCount = useMemo(() => utilityGroups.filter(g => g.isPartner).length, [utilityGroups])
   const substationCount = useMemo(() => utilityGroups.reduce((s, g) => s + g.siteCount, 0), [utilityGroups])
+  const ippPartnerCount = useMemo(() => ippOperatorGroups.filter(g => g.isPartner).length, [ippOperatorGroups])
 
   if (!dc) return null
 
@@ -250,12 +310,21 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
               </div>
             </div>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <Link
+              href={`/regional-hubs/dc?name=${dc.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}&radius=${radiusMiles}`}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+              title="Open full page"
+            >
+              <Maximize2 className="w-4 h-4" />
+            </Link>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Radius slider */}
@@ -286,14 +355,19 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
         {!isLoading && (
           <div className="mt-3 flex items-center gap-4 text-[11px] text-gray-400">
             <span className="tabular-nums">
-              <span className="text-white font-medium">{totalSites.toLocaleString()}</span> sites
+              <span className="text-white font-medium">{totalSites.toLocaleString()}</span> total
             </span>
+            {pipelineSites.length > 0 && (
+              <span className="tabular-nums">
+                <span className="text-[#c77dba] font-medium">{pipelineSites.length}</span> pipeline
+              </span>
+            )}
             <span className="tabular-nums">
               <span className="text-white font-medium">{utilityGroups.length}</span> utilities
             </span>
-            {partnerCount > 0 && (
+            {(partnerCount > 0 || ippPartnerCount > 0) && (
               <span className="tabular-nums">
-                <span className="text-[#c77dba] font-medium">{partnerCount}</span> partners
+                <span className="text-[#c77dba] font-medium">{partnerCount + ippPartnerCount}</span> partners
               </span>
             )}
           </div>
@@ -358,8 +432,8 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
               </div>
             )}
 
-            {/* Section: IPP / Renewable Sites */}
-            {ippSites.length > 0 && (
+            {/* Section: IPP / Renewable Sites (grouped by operator) */}
+            {ippOperatorGroups.length > 0 && (
               <div className="mb-1">
                 <button
                   onClick={() => setIPPOpen(!ippOpen)}
@@ -368,29 +442,19 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
                   {ippOpen ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
                   <Zap className="w-3.5 h-3.5 text-[#FFB800]" />
                   <span className="text-xs font-semibold text-[#FFB800] uppercase tracking-wider">Renewable Sites</span>
-                  <span className="text-[10px] text-gray-500 tabular-nums ml-auto">{ippSites.length.toLocaleString()}</span>
+                  <span className="text-[10px] text-gray-500 tabular-nums ml-auto">
+                    {ippOperatorGroups.length} operators &middot; {ippSites.length.toLocaleString()} sites
+                  </span>
                 </button>
                 {ippOpen && (
-                  <div>
-                    {visibleIPP.map((site, i) => (
-                      <IPPSiteRow key={i} site={site} />
+                  <div className="px-1">
+                    {ippOperatorGroups.map(group => (
+                      <OperatorGroupRow
+                        key={group.name}
+                        group={group}
+                        defaultExpanded={group.isPartner && group.siteCount <= 10}
+                      />
                     ))}
-                    {ippSites.length > 20 && !showAllIPP && (
-                      <button
-                        onClick={() => setShowAllIPP(true)}
-                        className="w-full py-2 text-center text-[11px] text-[#FFB800] hover:bg-white/5 transition-colors"
-                      >
-                        Show all {ippSites.length.toLocaleString()} sites
-                      </button>
-                    )}
-                    {showAllIPP && ippSites.length > 20 && (
-                      <button
-                        onClick={() => setShowAllIPP(false)}
-                        className="w-full py-2 text-center text-[11px] text-gray-500 hover:bg-white/5 transition-colors"
-                      >
-                        Collapse
-                      </button>
-                    )}
                   </div>
                 )}
               </div>

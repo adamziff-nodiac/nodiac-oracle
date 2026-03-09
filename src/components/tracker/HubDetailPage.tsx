@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { TrackerHub, TrackerPartner, TrackerSiteOverview } from '@/lib/tracker/types'
-import { HUB_STATUS_OPTIONS } from '@/lib/tracker/constants'
+import { HUB_STATUS_OPTIONS, PRIORITY_COLORS, type Priority } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { categorizeSite, STATUS_CATEGORY_CONFIG, type SiteStatusCategory } from './SiteStatusMap'
 import { ToastContainer, showToast } from './Toast'
@@ -302,10 +302,7 @@ export function HubDetailPage({ hub: initialHub, initialSites, initialPartners }
                       <td className="px-3 py-3">
                         <span className={cn(
                           'px-1.5 py-0.5 rounded text-[10px] font-medium',
-                          site.priority === 'Lead' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                          site.priority === 'Active' ? 'bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400' :
-                          site.priority === 'Pipeline' ? 'bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400' :
-                          'bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400'
+                          PRIORITY_COLORS[site.priority as Priority]?.badge ?? 'bg-zinc-500/20 text-zinc-400'
                         )}>
                           {site.priority}
                         </span>

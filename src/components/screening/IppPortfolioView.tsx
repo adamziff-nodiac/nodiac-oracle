@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, ExternalLink } from 'lucide-react'
 import type { TrackerPartner, TrackerSiteOverview } from '@/lib/tracker/types'
+import { PRIORITY_COLORS, type Priority } from '@/lib/tracker/constants'
 import { cn } from '@/lib/utils'
 
 interface PartnerPortfolioViewProps {
@@ -123,10 +124,7 @@ export function IppPortfolioView({ partnerId }: PartnerPortfolioViewProps) {
                       <td className="px-3 py-2.5">
                         <span className={cn(
                           'inline-flex px-2 py-0.5 rounded-full text-xs font-medium',
-                          site.priority === 'Lead' && 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400',
-                          site.priority === 'Active' && 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-                          site.priority === 'Pipeline' && 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400',
-                          (site.priority === 'On Hold' || site.priority === 'Deprioritized') && 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400',
+                          PRIORITY_COLORS[site.priority as Priority]?.badge ?? 'bg-zinc-500/20 text-zinc-400'
                         )}>
                           {site.priority}
                         </span>

@@ -10,6 +10,12 @@ export const PHASES = [
 
 export type PhaseKey = typeof PHASES[number]['key']
 
+/** Status of each development phase — derived from PHASES constant */
+export type PhaseStatuses = Record<PhaseKey, string | null>
+
+/** Column names for phase statuses in the tracker_site_overview view */
+export const PHASE_VIEW_COLUMNS = PHASES.map(p => `${p.key}_phase`) as readonly string[]
+
 export interface Checkpoint {
   prefix: string
   label: string
@@ -50,6 +56,19 @@ export type AmountStatus = typeof AMOUNT_STATUS_OPTIONS[number]
 
 export const PRIORITY_OPTIONS = ['Lead', 'Active', 'Pipeline', 'On Hold', 'Deprioritized'] as const
 export type Priority = typeof PRIORITY_OPTIONS[number]
+
+/** Priority colors — single source of truth for all UI surfaces.
+ *  dot: Tailwind class for solid dot/indicator (matches PriorityIndicator component)
+ *  text: Tailwind class for label text
+ *  badge: Tailwind classes for pill/badge (bg + text) used in lists and panels
+ */
+export const PRIORITY_COLORS: Record<Priority, { dot: string; text: string; badge: string }> = {
+  'Lead':           { dot: 'bg-nodiac-secondary',  text: 'text-nodiac-secondary',                badge: 'bg-nodiac-secondary/20 text-nodiac-secondary' },
+  'Active':         { dot: 'bg-emerald-500',        text: 'text-emerald-500 dark:text-emerald-400', badge: 'bg-emerald-500/20 text-emerald-400' },
+  'Pipeline':       { dot: 'bg-zinc-400',           text: 'text-zinc-500 dark:text-zinc-400',       badge: 'bg-zinc-500/20 text-zinc-400' },
+  'On Hold':        { dot: 'bg-amber-500',          text: 'text-amber-500 dark:text-amber-400',     badge: 'bg-amber-500/20 text-amber-400' },
+  'Deprioritized':  { dot: 'bg-zinc-400',           text: 'text-zinc-400 dark:text-zinc-500',       badge: 'bg-zinc-500/20 text-zinc-500' },
+}
 
 export const OWNER_OPTIONS = ['Eric', 'Josh', 'Stratton', 'Evan', 'Ziff', 'Sara', 'Ken'] as const
 
