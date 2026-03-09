@@ -254,3 +254,87 @@ CREATE INDEX IF NOT EXISTS idx_partner_hubs_hub_id ON tracker_partner_hubs(hub_i
 CREATE INDEX IF NOT EXISTS idx_site_landowners_landowner_id ON tracker_site_landowners(landowner_id);
 CREATE INDEX IF NOT EXISTS idx_sites_utility_id ON tracker_sites(utility_id);
 CREATE INDEX IF NOT EXISTS idx_sites_asset_owner_id ON tracker_sites(asset_owner_id);
+
+-- ---------------------------------------------------------------------------
+-- 5. Replace USING (true) policies with @nodiac.ai email domain check
+--    Browser clients carry the user's session JWT via @supabase/ssr.
+--    auth.jwt()->>'email' resolves to the logged-in user's email.
+--    Service role key (used in token-store.ts, API routes) bypasses RLS.
+-- ---------------------------------------------------------------------------
+
+-- tracker_regional_hubs
+DROP POLICY IF EXISTS "tracker_hubs_all" ON tracker_regional_hubs;
+CREATE POLICY "tracker_hubs_nodiac" ON tracker_regional_hubs
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_power_partners
+DROP POLICY IF EXISTS "tracker_partners_all" ON tracker_power_partners;
+CREATE POLICY "tracker_partners_nodiac" ON tracker_power_partners
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_partner_hubs
+DROP POLICY IF EXISTS "tracker_partner_hubs_all" ON tracker_partner_hubs;
+CREATE POLICY "tracker_partner_hubs_nodiac" ON tracker_partner_hubs
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_landowners
+DROP POLICY IF EXISTS "tracker_landowners_all" ON tracker_landowners;
+CREATE POLICY "tracker_landowners_nodiac" ON tracker_landowners
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_sites
+DROP POLICY IF EXISTS "tracker_sites_all" ON tracker_sites;
+CREATE POLICY "tracker_sites_nodiac" ON tracker_sites
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_parcels
+DROP POLICY IF EXISTS "tracker_parcels_all" ON tracker_parcels;
+CREATE POLICY "tracker_parcels_nodiac" ON tracker_parcels
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_site_landowners
+DROP POLICY IF EXISTS "tracker_site_landowners_all" ON tracker_site_landowners;
+CREATE POLICY "tracker_site_landowners_nodiac" ON tracker_site_landowners
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_activity_log
+DROP POLICY IF EXISTS "tracker_activity_all" ON tracker_activity_log;
+CREATE POLICY "tracker_activity_nodiac" ON tracker_activity_log
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_ipps
+DROP POLICY IF EXISTS "tracker_ipps_all" ON tracker_ipps;
+CREATE POLICY "tracker_ipps_nodiac" ON tracker_ipps
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- tracker_action_items
+DROP POLICY IF EXISTS "Authenticated users can manage action items" ON tracker_action_items;
+CREATE POLICY "tracker_action_items_nodiac" ON tracker_action_items
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
+
+-- team_members (keep separate SELECT policy, replace the FOR ALL one)
+DROP POLICY IF EXISTS "Authenticated users can manage team members" ON team_members;
+CREATE POLICY "team_members_nodiac" ON team_members
+  FOR ALL TO authenticated
+  USING (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai')
+  WITH CHECK (split_part(auth.jwt()->>'email', '@', 2) = 'nodiac.ai');
