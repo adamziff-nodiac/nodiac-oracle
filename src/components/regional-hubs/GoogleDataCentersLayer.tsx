@@ -9,6 +9,8 @@ export type GoogleDCDisplayMode = 'logo' | 'logo-label'
 interface GoogleDataCentersLayerProps {
   visible?: boolean
   displayMode?: GoogleDCDisplayMode
+  selectedDC?: GoogleDataCenter | null
+  onDCClick?: (dc: GoogleDataCenter) => void
 }
 
 /**
@@ -19,6 +21,8 @@ interface GoogleDataCentersLayerProps {
 export function GoogleDataCentersLayer({
   visible = true,
   displayMode = 'logo',
+  selectedDC,
+  onDCClick,
 }: GoogleDataCentersLayerProps) {
   const { current: map } = useMap()
   const [hovered, setHovered] = useState<{ dc: GoogleDataCenter; lngLat: [number, number] } | null>(null)
@@ -162,6 +166,46 @@ export function GoogleDataCentersLayer({
         if (m.getLayer('google-dc-points')) {
           m.off('mouseenter', 'google-dc-points', handleEnter)
           m.off('mouseleave', 'google-dc-points', handleLeave)
+        }
+      } catch { /* style may be undefined during cleanup */ }
+    }
+  }, [map])
+
+  // Click handler — open DC proximity panel
+  const onDCClickRef = useRef(onDCClick)
+  onDCClickRef.current = onDCClick
+
+  useEffect(() => {
+    if (!map) return
+    const m = map.getMap()
+
+    const handleClick = (e: mapboxgl.MapLayerMouseEvent) => {
+      if (!e.features?.length || !onDCClickRef.current) return
+      const f = e.features[0]
+      const props = f.properties as Record<string, string>
+      if (!props.name) return
+
+      // Find the DC in our data array
+      const dc = googleDataCenters.find(d => d.name === props.name)
+      if (dc) {
+        e.originalEvent.stopPropagation()
+        onDCClickRef.current(dc)
+      }
+    }
+
+    const attach = () => {
+      if (!m.isStyleLoaded() || !m.getLayer('google-dc-points')) {
+        setTimeout(attach, 200)
+        return
+      }
+      m.on('click', 'google-dc-points', handleClick)
+    }
+    attach()
+
+    return () => {
+      try {
+        if (m.getLayer('google-dc-points')) {
+          m.off('click', 'google-dc-points', handleClick)
         }
       } catch { /* style may be undefined during cleanup */ }
     }
