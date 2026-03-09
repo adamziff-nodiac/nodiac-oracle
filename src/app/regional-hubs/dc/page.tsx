@@ -7,6 +7,7 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCenters'
 import { PhaseProgress, getActivePhase } from '@/components/regional-hubs/PhaseProgress'
+import { PRIORITY_COLORS, type Priority } from '@/lib/tracker/constants'
 import { useDCProximity, type UtilityGroup, type OperatorGroup, type ProximitySite, type PipelineSite } from '@/hooks/useDCProximity'
 import { LogoLink } from '@/components/LogoLink'
 import { Navigation } from '@/components/Navigation'
@@ -55,15 +56,8 @@ function findDC(slug: string): GoogleDataCenter | null {
 }
 
 function PipelineSiteRow({ site }: { site: PipelineSite }) {
-  const priorityColors: Record<string, string> = {
-    Lead: 'bg-nodiac-secondary/20 text-nodiac-secondary',
-    Active: 'bg-emerald-500/20 text-emerald-400',
-    Pipeline: 'bg-zinc-500/20 text-zinc-400',
-    'On Hold': 'bg-amber-500/20 text-amber-400',
-    Deprioritized: 'bg-zinc-500/20 text-zinc-500',
-  }
-
   const activePhase = getActivePhase(site.phases)
+  const badgeClass = PRIORITY_COLORS[site.priority as Priority]?.badge ?? 'bg-zinc-500/20 text-zinc-400'
 
   return (
     <Link
@@ -79,7 +73,7 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-white truncate hover:text-[#4285F4] transition-colors">{site.name}</span>
-          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${priorityColors[site.priority] ?? priorityColors['On Hold']}`}>
+          <span className={`flex-shrink-0 px-1.5 py-0.5 rounded text-[10px] font-medium ${badgeClass}`}>
             {site.priority}
           </span>
           {activePhase && (
