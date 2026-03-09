@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ArrowLeft, Download, ChevronDown, ChevronRight, Star, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
@@ -228,7 +228,7 @@ function useExportCSV(dc: GoogleDataCenter | null, radiusMiles: number, pipeline
   }
 }
 
-export default function DCFullPage() {
+function DCFullPageInner() {
   const searchParams = useSearchParams()
   const dcSlug = searchParams.get('name') ?? ''
   const initialRadius = parseInt(searchParams.get('radius') ?? '50', 10)
@@ -452,5 +452,17 @@ export default function DCFullPage() {
         )}
       </main>
     </div>
+  )
+}
+
+export default function DCFullPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-white dark:bg-gray-950 flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-[#4285F4] border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <DCFullPageInner />
+    </Suspense>
   )
 }
