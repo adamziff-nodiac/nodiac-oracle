@@ -2,13 +2,26 @@
 
 import { useState, useMemo, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ArrowLeft, Download, ChevronDown, ChevronRight, Star, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Download, ChevronDown, ChevronRight, Star, Map as MapIcon } from 'lucide-react'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCenters'
 import { useDCProximity, type UtilityGroup, type OperatorGroup, type ProximitySite, type PipelineSite } from '@/hooks/useDCProximity'
 import { LogoLink } from '@/components/LogoLink'
 import { Navigation } from '@/components/Navigation'
 import { ThemeToggle } from '@/components/ThemeToggle'
+
+const DCProximityMap = dynamic(
+  () => import('@/components/regional-hubs/DCProximityMap').then(mod => ({ default: mod.DCProximityMap })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="w-6 h-6 border-2 border-[#4285F4] border-t-transparent rounded-full animate-spin" />
+      </div>
+    ),
+  }
+)
 
 const TYPE_COLORS: Record<string, string> = {
   solar: '#FFB800',
@@ -247,9 +260,18 @@ function DCFullPageInner() {
   const substationCount = useMemo(() => utilityGroups.reduce((s, g) => s + g.siteCount, 0), [utilityGroups])
   const ippPartnerCount = useMemo(() => ippOperatorGroups.filter(g => g.isPartner).length, [ippOperatorGroups])
 
+  const [mapOpen, setMapOpen] = useState(true)
   const [pipelineOpen, setPipelineOpen] = useState(true)
   const [utilitiesOpen, setUtilitiesOpen] = useState(true)
   const [ippOpen, setIPPOpen] = useState(true)
+
+  // Combine all sites for the map
+  const allSites = useMemo(() => {
+    const sites: ProximitySite[] = []
+    for (const g of utilityGroups) sites.push(...g.sites)
+    sites.push(...ippSites)
+    return sites
+  }, [utilityGroups, ippSites])
 
   if (!dc) {
     return (
@@ -359,6 +381,28 @@ function DCFullPageInner() {
             Export CSV
           </button>
         </div>
+
+        {/* Collapsible Map */}
+        <section className="rounded-xl border border-gray-200 dark:border-white/10 overflow-hidden mb-6">
+          <button
+            onClick={() => setMapOpen(!mapOpen)}
+            className="w-full flex items-center gap-2 px-5 py-3 bg-gray-50 dark:bg-white/5 text-left hover:bg-gray-100 dark:hover:bg-white/8 transition-colors"
+          >
+            {mapOpen ? <ChevronDown className="w-3.5 h-3.5 text-gray-500" /> : <ChevronRight className="w-3.5 h-3.5 text-gray-500" />}
+            <MapIcon className="w-3.5 h-3.5 text-[#4285F4]" />
+            <span className="text-xs font-semibold text-[#4285F4] uppercase tracking-wider">Map</span>
+            {!isLoading && (
+              <span className="text-[10px] text-gray-500 tabular-nums ml-auto">
+                {totalSites.toLocaleString()} sites within {radiusMiles}mi
+              </span>
+            )}
+          </button>
+          {mapOpen && (
+            <div className="h-[400px]">
+              {dc && <DCProximityMap dc={dc} radiusMiles={radiusMiles} sites={allSites} />}
+            </div>
+          )}
+        </section>
 
         {/* Content */}
         {isLoading ? (

@@ -74,7 +74,7 @@ export default function RegionalHubsPage() {
   const [showIPP, setShowIPP] = useState(true)
   const [showSubstations, setShowSubstations] = useState(true)
   const [includeTransmission, setIncludeTransmission] = useState(false)
-  const [prospectiveRadius, setProspectiveRadius] = useState(100)
+  const [prospectiveRadius, setProspectiveRadius] = useState(50)
   const [selectedDC, setSelectedDC] = useState<GoogleDataCenter | null>(null)
   const [dcSearchRadius, setDCSearchRadius] = useState(50)
 
