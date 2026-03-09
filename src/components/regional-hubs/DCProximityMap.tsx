@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useRef, useEffect, useState, useCallback } from 'react'
-import Map, { Source, Layer, Popup, type MapRef } from 'react-map-gl/mapbox'
+import Map, { Source, Layer, Popup, type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { SelectedDCRadiusLayer } from './SelectedDCRadiusLayer'
 import { GoogleGIcon } from './GoogleGIcon'
@@ -96,20 +96,18 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
     )
   }, [dc, radiusMiles])
 
-  // Hover handlers
-  const handleMouseEnter = useCallback((e: mapboxgl.MapLayerMouseEvent) => {
-    const map = mapRef.current?.getMap()
-    if (!map || !e.features?.length) return
-    map.getCanvas().style.cursor = 'pointer'
+  const str = (v: string | number | null | undefined) =>
+    v != null && String(v) !== '' && String(v) !== 'null' ? String(v) : null
+  const num = (v: string | number | null | undefined) =>
+    v != null && String(v) !== '' && String(v) !== 'null' ? Number(v) : null
 
+  const onMouseEnter = useCallback((e: MapMouseEvent) => {
+    if (!e.features?.length) return
     const f = e.features[0]
     if (f.geometry.type !== 'Point') return
+
     const coords = f.geometry.coordinates as [number, number]
     const p = f.properties as Record<string, string | number | null>
-    const str = (v: string | number | null | undefined) =>
-      v != null && String(v) !== '' && String(v) !== 'null' ? String(v) : null
-    const num = (v: string | number | null | undefined) =>
-      v != null && String(v) !== '' && String(v) !== 'null' ? Number(v) : null
 
     setHovered({
       site: {
@@ -129,40 +127,9 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
     })
   }, [])
 
-  const handleMouseLeave = useCallback(() => {
-    const map = mapRef.current?.getMap()
-    if (map) map.getCanvas().style.cursor = ''
+  const onMouseLeave = useCallback(() => {
     setHovered(null)
   }, [])
-
-  // Attach hover events once map + layer are ready
-  const attachHoverEvents = useCallback(() => {
-    const map = mapRef.current?.getMap()
-    if (!map) return
-
-    const attach = () => {
-      if (!map.getLayer(LAYER_ID)) {
-        setTimeout(attach, 200)
-        return
-      }
-      map.on('mouseenter', LAYER_ID, handleMouseEnter)
-      map.on('mouseleave', LAYER_ID, handleMouseLeave)
-    }
-    attach()
-  }, [handleMouseEnter, handleMouseLeave])
-
-  // Clean up hover events on unmount
-  useEffect(() => {
-    return () => {
-      try {
-        const map = mapRef.current?.getMap()
-        if (map?.getLayer(LAYER_ID)) {
-          map.off('mouseenter', LAYER_ID, handleMouseEnter)
-          map.off('mouseleave', LAYER_ID, handleMouseLeave)
-        }
-      } catch { /* style may be undefined during cleanup */ }
-    }
-  }, [handleMouseEnter, handleMouseLeave])
 
   const circleColor: mapboxgl.Expression = [
     'match',
@@ -188,7 +155,9 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
       attributionControl={false}
       interactiveLayerIds={[LAYER_ID]}
-      onLoad={attachHoverEvents}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      cursor={hovered ? 'pointer' : undefined}
     >
       <GoogleGIcon />
       <SelectedDCRadiusLayer dc={dc} radiusMiles={radiusMiles} />
