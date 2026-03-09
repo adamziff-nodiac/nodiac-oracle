@@ -37,6 +37,8 @@ export const googleDataCenters: GoogleDataCenter[] = [
   { name: 'West Memphis, Arkansas', region: 'North America', status: 'in_development', coordinates: [-90.18, 35.15] },
   { name: 'Red Oak, Texas', region: 'North America', status: 'in_development', coordinates: [-96.81, 32.52] },
   { name: 'Stillwater, Oklahoma', region: 'North America', status: 'in_development', coordinates: [-97.06, 36.12] },
+  { name: 'Pine Island, Minnesota', region: 'North America', status: 'in_development', coordinates: [-92.65, 44.20] },
+  { name: 'Hermantown, Minnesota', region: 'North America', status: 'in_development', coordinates: [-92.23, 46.76] },
 
   // Europe — Active
   { name: 'Dublin, Ireland', region: 'Europe', status: 'active', coordinates: [-6.26, 53.35] },

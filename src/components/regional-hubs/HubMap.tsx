@@ -14,6 +14,8 @@ import { PortfolioOverlay } from './PortfolioOverlay'
 import { GoogleDataCentersLayer, type GoogleDCDisplayMode } from './GoogleDataCentersLayer'
 import { RadiusCirclesLayer } from './RadiusCirclesLayer'
 import { ProspectiveSitesLayer } from './ProspectiveSitesLayer'
+import { SelectedDCRadiusLayer } from './SelectedDCRadiusLayer'
+import type { GoogleDataCenter } from '@/data/googleDataCenters'
 import { useIsDark } from '@/hooks/useIsDark'
 import { useCountyGeoJson } from '@/hooks/useCountyGeoJson'
 import { useHubClusters } from '@/hooks/useHubClusters'
@@ -49,6 +51,9 @@ interface HubMapProps {
   showProspectiveSites?: boolean
   prospectiveSitesGeojson?: GeoJSON.FeatureCollection<GeoJSON.Point, ProspectiveSiteProperties> | null
   prospectiveRadius?: number
+  selectedDC?: GoogleDataCenter | null
+  dcSearchRadius?: number
+  onDCClick?: (dc: GoogleDataCenter) => void
 }
 
 export function HubMap({
@@ -75,6 +80,9 @@ export function HubMap({
   showProspectiveSites = false,
   prospectiveSitesGeojson = null,
   prospectiveRadius = 100,
+  selectedDC = null,
+  dcSearchRadius = 50,
+  onDCClick,
 }: HubMapProps) {
   const internalRef = useRef<MapRef>(null)
   const ref = externalRef || internalRef
@@ -371,10 +379,15 @@ export function HubMap({
       <RadiusCirclesLayer radiusMiles={prospectiveRadius} visible={showProspectiveSites} />
       <ProspectiveSitesLayer geojson={prospectiveSitesGeojson} visible={showProspectiveSites} />
 
+      {/* Selected DC radius circle */}
+      <SelectedDCRadiusLayer dc={selectedDC} radiusMiles={dcSearchRadius} />
+
       {/* Google data center overlay — rendered last so logos appear above prospective dots */}
       <GoogleDataCentersLayer
         visible={showGoogleDC}
         displayMode={googleDCDisplayMode}
+        selectedDC={selectedDC}
+        onDCClick={onDCClick}
       />
     </Map>
   )

@@ -38,6 +38,9 @@ import { useProspectiveSites } from '@/hooks/useProspectiveSites'
 import type { GoogleDCDisplayMode } from '@/components/regional-hubs/GoogleDataCentersLayer'
 import type { HubCluster } from '@/lib/geo/cluster-hubs'
 import type { CriterionKey, WeightedCountyScore } from '@/types/regional-hubs'
+import type { GoogleDataCenter } from '@/data/googleDataCenters'
+import { MapOverlayToggles } from '@/components/regional-hubs/MapOverlayToggles'
+import { DCProximityPanel } from '@/components/regional-hubs/DCProximityPanel'
 
 export default function RegionalHubsPage() {
   const { scores, citationRegistry, isLoading: scoresLoading } = useCountyScores()
@@ -72,6 +75,8 @@ export default function RegionalHubsPage() {
   const [showSubstations, setShowSubstations] = useState(true)
   const [includeTransmission, setIncludeTransmission] = useState(false)
   const [prospectiveRadius, setProspectiveRadius] = useState(100)
+  const [selectedDC, setSelectedDC] = useState<GoogleDataCenter | null>(null)
+  const [dcSearchRadius, setDCSearchRadius] = useState(50)
 
   const { sites: portfolioSites } = usePortfolioSites()
   const { geojson: prospectiveSitesGeojson, ippCount, substationCount, isLoading: prospectiveLoading } = useProspectiveSites({
@@ -124,6 +129,16 @@ export default function RegionalHubsPage() {
 
   const handleCloseDetail = useCallback(() => {
     setSelectedCounty(null)
+  }, [])
+
+  const handleDCClick = useCallback((dc: GoogleDataCenter) => {
+    setSelectedDC(dc)
+    // Auto-enable Google DC layer when clicking a DC
+    if (!showGoogleDC) setShowGoogleDC(true)
+  }, [showGoogleDC])
+
+  const handleCloseDCPanel = useCallback(() => {
+    setSelectedDC(null)
   }, [])
 
   return (
@@ -224,6 +239,9 @@ export default function RegionalHubsPage() {
                   showProspectiveSites={showProspectiveSites}
                   prospectiveSitesGeojson={prospectiveSitesGeojson}
                   prospectiveRadius={prospectiveRadius}
+                  selectedDC={selectedDC}
+                  dcSearchRadius={dcSearchRadius}
+                  onDCClick={handleDCClick}
                 />
 
                 {/* Mobile weight toggle */}
@@ -432,140 +450,29 @@ export default function RegionalHubsPage() {
                         )}
                       </div>
                     )}
-                    {/* Overlay toggles — always visible */}
-                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-white/10 space-y-1.5">
-                      <button
-                        onClick={() => setShowPortfolio(!showPortfolio)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                          showPortfolio
-                            ? 'bg-[#c77dba]/20 text-[#c77dba]'
-                            : 'bg-white/5 text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        <span>Portfolio Sites</span>
-                        <span className="tabular-nums font-mono text-[10px]">
-                          {portfolioSites.length} sites
-                        </span>
-                      </button>
-                      <button
-                        onClick={() => setShowGoogleDC(!showGoogleDC)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                          showGoogleDC
-                            ? 'bg-[#4285F4]/20 text-[#4285F4]'
-                            : 'bg-white/5 text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <span className="font-bold text-[#4285F4]">G</span>
-                          Google DCs
-                        </span>
-                        <span className="tabular-nums font-mono text-[10px]">47</span>
-                      </button>
-                      {showGoogleDC && (
-                        <div className="flex gap-1">
-                          <button
-                            onClick={() => setGoogleDCDisplayMode('logo')}
-                            className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                              googleDCDisplayMode === 'logo'
-                                ? 'bg-[#4285F4]/20 text-[#4285F4]'
-                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                            }`}
-                          >
-                            Logo only
-                          </button>
-                          <button
-                            onClick={() => setGoogleDCDisplayMode('logo-label')}
-                            className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                              googleDCDisplayMode === 'logo-label'
-                                ? 'bg-[#4285F4]/20 text-[#4285F4]'
-                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                            }`}
-                          >
-                            Logo + Name
-                          </button>
-                        </div>
-                      )}
-                      {/* Prospective Sites */}
-                      <button
-                        onClick={() => setShowProspectiveSites(!showProspectiveSites)}
-                        className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                          showProspectiveSites
-                            ? 'bg-[#FFB800]/20 text-[#FFB800]'
-                            : 'bg-white/5 text-gray-400 hover:text-white'
-                        }`}
-                      >
-                        <span>Prospective Sites</span>
-                        {showProspectiveSites && (
-                          <span className="tabular-nums font-mono text-[10px]">
-                            {prospectiveLoading ? '...' : `${(ippCount + substationCount).toLocaleString()}`}
-                          </span>
-                        )}
-                      </button>
-                      {showProspectiveSites && (
-                        <div className="space-y-2 pl-1">
-                          {/* Sub-toggles */}
-                          <div className="flex gap-1">
-                            <button
-                              onClick={() => setShowIPP(!showIPP)}
-                              className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                                showIPP
-                                  ? 'bg-[#FFB800]/20 text-[#FFB800]'
-                                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                              }`}
-                            >
-                              IPP Sites {showIPP && !prospectiveLoading && <span className="opacity-60">({ippCount.toLocaleString()})</span>}
-                            </button>
-                            <button
-                              onClick={() => setShowSubstations(!showSubstations)}
-                              className={`flex-1 px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                                showSubstations
-                                  ? 'bg-[#22C55E]/20 text-[#22C55E]'
-                                  : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                              }`}
-                            >
-                              Substations {showSubstations && !prospectiveLoading && <span className="opacity-60">({substationCount.toLocaleString()})</span>}
-                            </button>
-                          </div>
-                          {/* Include Transmission toggle */}
-                          <button
-                            onClick={() => setIncludeTransmission(!includeTransmission)}
-                            className={`w-full flex items-center justify-between px-2 py-1 rounded text-[10px] font-medium transition-colors ${
-                              includeTransmission
-                                ? 'bg-[#FFB800]/15 text-[#FFB800]'
-                                : 'bg-white/5 text-gray-500 hover:text-gray-300'
-                            }`}
-                          >
-                            <span>Include Transmission</span>
-                            <span className="text-gray-500">{includeTransmission ? 'All IPP' : 'Dist. only'}</span>
-                          </button>
-                          {/* Radius slider */}
-                          <div className="space-y-1">
-                            <div className="flex justify-between items-center">
-                              <span className="text-[10px] text-gray-500 dark:text-gray-400">Radius</span>
-                              <span className="text-xs text-[#FFB800] tabular-nums font-mono font-semibold">
-                                {prospectiveRadius}mi
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min={25}
-                              max={300}
-                              step={25}
-                              value={prospectiveRadius}
-                              onChange={(e) => setProspectiveRadius(parseInt(e.target.value))}
-                              className="w-full h-1.5 rounded-full appearance-none cursor-pointer
-                                bg-gray-200 dark:bg-white/10
-                                [&::-webkit-slider-thumb]:appearance-none
-                                [&::-webkit-slider-thumb]:w-3.5
-                                [&::-webkit-slider-thumb]:h-3.5
-                                [&::-webkit-slider-thumb]:rounded-full
-                                [&::-webkit-slider-thumb]:bg-[#FFB800]
-                                [&::-webkit-slider-thumb]:shadow-[0_0_6px_rgba(255,184,0,0.4)]"
-                            />
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                    {/* Overlay toggles — extracted component */}
+                    <MapOverlayToggles
+                      showPortfolio={showPortfolio}
+                      onTogglePortfolio={() => setShowPortfolio(!showPortfolio)}
+                      portfolioCount={portfolioSites.length}
+                      showGoogleDC={showGoogleDC}
+                      onToggleGoogleDC={() => setShowGoogleDC(!showGoogleDC)}
+                      googleDCDisplayMode={googleDCDisplayMode}
+                      onGoogleDCDisplayMode={setGoogleDCDisplayMode}
+                      showProspectiveSites={showProspectiveSites}
+                      onToggleProspectiveSites={() => setShowProspectiveSites(!showProspectiveSites)}
+                      showIPP={showIPP}
+                      onToggleIPP={() => setShowIPP(!showIPP)}
+                      showSubstations={showSubstations}
+                      onToggleSubstations={() => setShowSubstations(!showSubstations)}
+                      includeTransmission={includeTransmission}
+                      onToggleTransmission={() => setIncludeTransmission(!includeTransmission)}
+                      prospectiveRadius={prospectiveRadius}
+                      onProspectiveRadiusChange={setProspectiveRadius}
+                      prospectiveLoading={prospectiveLoading}
+                      ippCount={ippCount}
+                      substationCount={substationCount}
+                    />
                   </div>
 
                   <PresetProfiles
@@ -728,6 +635,14 @@ export default function RegionalHubsPage() {
                   county={selectedCounty}
                   citationRegistry={citationRegistry}
                   onClose={handleCloseDetail}
+                />
+
+                {/* DC Proximity panel */}
+                <DCProximityPanel
+                  dc={selectedDC}
+                  radiusMiles={dcSearchRadius}
+                  onRadiusChange={setDCSearchRadius}
+                  onClose={handleCloseDCPanel}
                 />
               </>
             )}
