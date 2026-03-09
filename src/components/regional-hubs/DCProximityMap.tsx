@@ -9,6 +9,7 @@ import { SitePopupContent, POPUP_CLASS, type SitePopupData } from './SitePopupCo
 import type { GoogleDataCenter } from '@/data/googleDataCenters'
 import type { ProximitySite } from '@/hooks/useDCProximity'
 import { useIsDark } from '@/hooks/useIsDark'
+import { DCMapLegend } from './DCMapLegend'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -143,6 +144,7 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
   ]
 
   return (
+    <div className="relative w-full h-full">
     <Map
       ref={mapRef}
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -204,5 +206,7 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
         </Popup>
       )}
     </Map>
+    <DCMapLegend siteCount={sites.length} radiusMiles={radiusMiles} />
+    </div>
   )
 }
