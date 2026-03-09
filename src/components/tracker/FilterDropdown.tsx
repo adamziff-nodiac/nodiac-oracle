@@ -10,9 +10,16 @@ interface FilterDropdownProps {
   onChange: (selected: string[]) => void
 }
 
+function pluralize(word: string): string {
+  if (word.endsWith('y') && !/[aeiou]y$/i.test(word)) return word.slice(0, -1) + 'ies'
+  if (word.endsWith('s') || word.endsWith('x') || word.endsWith('z') || word.endsWith('ch') || word.endsWith('sh')) return word + 'es'
+  return word + 's'
+}
+
 export function FilterDropdown({ label, options, selected, onChange }: FilterDropdownProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const plural = pluralize(label)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -28,10 +35,10 @@ export function FilterDropdown({ label, options, selected, onChange }: FilterDro
 
   const allSelected = selected.length === 0
   const buttonLabel = allSelected
-    ? `All ${label}s`
+    ? `All ${plural}`
     : selected.length === 1
       ? selected[0]
-      : `${selected.length} ${label}s`
+      : `${selected.length} ${plural}`
 
   function toggle(option: string) {
     if (selected.includes(option)) {
@@ -98,7 +105,7 @@ export function FilterDropdown({ label, options, selected, onChange }: FilterDro
                 </svg>
               )}
             </span>
-            All {label}s
+            All {plural}
           </button>
 
           <div className="h-px bg-zinc-100 dark:bg-[#2a2a40]" />
