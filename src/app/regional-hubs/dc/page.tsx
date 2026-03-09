@@ -231,7 +231,7 @@ function useExportCSV(dc: GoogleDataCenter | null, radiusMiles: number, pipeline
 export default function DCFullPage() {
   const searchParams = useSearchParams()
   const dcSlug = searchParams.get('name') ?? ''
-  const initialRadius = parseInt(searchParams.get('radius') ?? '100', 10)
+  const initialRadius = parseInt(searchParams.get('radius') ?? '50', 10)
 
   const dc = useMemo(() => findDC(dcSlug), [dcSlug])
   const [radiusMiles, setRadiusMiles] = useState(initialRadius)
