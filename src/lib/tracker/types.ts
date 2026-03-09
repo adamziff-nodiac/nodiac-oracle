@@ -28,7 +28,7 @@ export interface TrackerSite {
   site_type: 'Solar' | 'Wind' | 'Solar + BESS' | 'Substation' | 'Other' | 'Rooftop Solar' | null
   interconnection_voltage_kv: number | null
   interested_offtakers: string[] | null
-  portfolio_site_id: string | null
+
   // Screening
   screening_score: number | null
   screening_tier: string | null
