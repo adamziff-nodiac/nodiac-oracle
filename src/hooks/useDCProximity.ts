@@ -39,11 +39,15 @@ export interface PipelineSite {
   id: string
   name: string
   distanceMi: number
-  partnerName: string | null
   priority: string
   mw: number | null
   siteType: string | null
   hubName: string | null
+  utilityName: string | null
+  assetOwnerName: string | null
+  address: string | null
+  ahj: string | null
+  voltage: number | null
   phases: PhaseStatuses
 }
 
@@ -191,15 +195,20 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
       for (const site of trackerCache.sites) {
         const dist = distanceMiles(site.latitude, site.longitude, dcLat, dcLng)
         if (dist <= radiusMiles) {
+          const siteAny = site as Record<string, unknown>
           pipelineSites.push({
             id: site.id,
             name: site.name,
             distanceMi: Math.round(dist),
-            partnerName: site.utility_name || site.asset_owner_name || null,
             priority: site.priority,
             mw: site.mw_current,
             siteType: site.site_type,
             hubName: site.hub_name,
+            utilityName: site.utility_name || null,
+            assetOwnerName: site.asset_owner_name || null,
+            address: (siteAny.address as string) || null,
+            ahj: (siteAny.ahj as string) || null,
+            voltage: (siteAny.interconnection_voltage_kv as number) ?? null,
             phases: Object.fromEntries(
               PHASES.map(p => [p.key, (site as Record<string, unknown>)[`${p.key}_phase`] as string | null ?? null])
             ) as PhaseStatuses,

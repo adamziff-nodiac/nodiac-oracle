@@ -29,7 +29,7 @@ export interface DCProximityResponse {
   sites: DCProximitySite[]
 }
 
-const SITE_BASE_COLUMNS = 'id, name, latitude, longitude, utility_name, asset_owner_name, priority, mw_current, site_type, hub_name'
+const SITE_BASE_COLUMNS = 'id, name, latitude, longitude, utility_name, asset_owner_name, priority, mw_current, site_type, hub_name, address, ahj, interconnection_voltage_kv'
 const SITE_SELECT = [SITE_BASE_COLUMNS, ...PHASE_VIEW_COLUMNS].join(', ')
 
 export async function GET() {

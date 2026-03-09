@@ -71,8 +71,13 @@ function PipelineSiteRow({ site }: { site: PipelineSite }) {
           )}
         </div>
         <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-400">
-          {site.partnerName && <span>{site.partnerName}</span>}
+          {site.siteType && <span className="text-gray-500">{site.siteType}</span>}
+          {site.assetOwnerName && <span>{site.assetOwnerName}</span>}
+          {site.utilityName && site.utilityName !== site.assetOwnerName && (
+            <span className="text-gray-500">· {site.utilityName}</span>
+          )}
           {site.mw != null && <span>{site.mw} MW</span>}
+          {site.voltage != null && <span className="text-gray-500">{site.voltage}kV</span>}
           {site.hubName && <span className="text-[#c77dba]">{site.hubName}</span>}
           <PhaseProgress phases={site.phases} />
         </div>
@@ -217,13 +222,13 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
         site.siteType || '',
         'Pipeline',
         String(site.distanceMi),
-        '', '', '',
-        site.partnerName || '',
-        '',
+        '', '', site.ahj || '',
+        site.assetOwnerName || '',
+        site.utilityName || '',
         '', '',
-        '',
-        'Active Partner',
-        '',
+        site.voltage != null ? String(site.voltage) : '',
+        'Pipeline',
+        site.priority,
       ])
     }
 
