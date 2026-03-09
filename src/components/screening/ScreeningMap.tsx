@@ -155,7 +155,6 @@ export function ScreeningMap({
         <Popup
           longitude={Number(popupSite.longitude)}
           latitude={Number(popupSite.latitude)}
-          anchor="top"
           offset={14}
           closeButton={true}
           closeOnClick={false}

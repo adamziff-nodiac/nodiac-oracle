@@ -7,7 +7,7 @@ const DOT_COLORS: Record<string, string> = {
   'Complete': 'bg-emerald-400',
   'In Progress': 'bg-amber-400',
   'Waiting': 'bg-red-400',
-  'Not Started': 'bg-gray-600',
+  'Not Started': 'bg-gray-300 dark:bg-gray-600',
 }
 
 /**

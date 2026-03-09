@@ -1,13 +1,15 @@
 'use client'
 
-import { useMemo, useRef, useEffect } from 'react'
-import Map, { Source, Layer, type MapRef } from 'react-map-gl/mapbox'
+import { useMemo, useRef, useEffect, useState, useCallback } from 'react'
+import Map, { Source, Layer, Popup, type MapRef, type MapMouseEvent } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { SelectedDCRadiusLayer } from './SelectedDCRadiusLayer'
 import { GoogleGIcon } from './GoogleGIcon'
+import { SitePopupContent, POPUP_CLASS, type SitePopupData } from './SitePopupContent'
 import type { GoogleDataCenter } from '@/data/googleDataCenters'
 import type { ProximitySite } from '@/hooks/useDCProximity'
 import { useIsDark } from '@/hooks/useIsDark'
+import { DCMapLegend } from './DCMapLegend'
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN
 
@@ -20,6 +22,8 @@ const TYPE_COLORS: Record<string, string> = {
   substation: '#22C55E',
 }
 
+const LAYER_ID = 'dc-sites-dots'
+
 interface DCProximityMapProps {
   dc: GoogleDataCenter
   radiusMiles: number
@@ -29,8 +33,12 @@ interface DCProximityMapProps {
 export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) {
   const mapRef = useRef<MapRef>(null)
   const isDark = useIsDark()
+  const [hovered, setHovered] = useState<{
+    site: SitePopupData
+    lngLat: [number, number]
+  } | null>(null)
 
-  // Build GeoJSON for sites
+  // Build GeoJSON for sites — include all properties for popups
   const sitesGeojson = useMemo<GeoJSON.FeatureCollection>(() => ({
     type: 'FeatureCollection',
     features: sites.map((site, i) => ({
@@ -43,7 +51,15 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       properties: {
         name: site.name,
         type: site.type,
+        state: site.state,
         distanceMi: site.distanceMi,
+        voltage: site.voltage,
+        owner: site.owner,
+        utility: site.utility,
+        utilityType: site.utilityType,
+        holdingCompany: site.holdingCompany,
+        city: site.city,
+        county: site.county,
       },
     })),
   }), [sites])
@@ -81,6 +97,41 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
     )
   }, [dc, radiusMiles])
 
+  const str = (v: string | number | null | undefined) =>
+    v != null && String(v) !== '' && String(v) !== 'null' ? String(v) : null
+  const num = (v: string | number | null | undefined) =>
+    v != null && String(v) !== '' && String(v) !== 'null' ? Number(v) : null
+
+  const onMouseEnter = useCallback((e: MapMouseEvent) => {
+    if (!e.features?.length) return
+    const f = e.features[0]
+    if (f.geometry.type !== 'Point') return
+
+    const coords = f.geometry.coordinates as [number, number]
+    const p = f.properties as Record<string, string | number | null>
+
+    setHovered({
+      site: {
+        name: String(p.name || ''),
+        siteType: String(p.type || 'other') as SitePopupData['siteType'],
+        state: String(p.state || ''),
+        voltage: num(p.voltage),
+        distanceMi: Number(p.distanceMi || 0),
+        owner: str(p.owner),
+        utility: str(p.utility),
+        utilityType: str(p.utilityType),
+        holdingCompany: str(p.holdingCompany),
+        city: str(p.city),
+        county: str(p.county),
+      },
+      lngLat: coords,
+    })
+  }, [])
+
+  const onMouseLeave = useCallback(() => {
+    setHovered(null)
+  }, [])
+
   const circleColor: mapboxgl.Expression = [
     'match',
     ['get', 'type'],
@@ -93,6 +144,7 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
   ]
 
   return (
+    <div className="relative w-full h-full">
     <Map
       ref={mapRef}
       mapboxAccessToken={MAPBOX_TOKEN}
@@ -104,6 +156,10 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       style={{ width: '100%', height: '100%' }}
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
       attributionControl={false}
+      interactiveLayerIds={[LAYER_ID]}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      cursor={hovered ? 'pointer' : undefined}
     >
       <GoogleGIcon />
       <SelectedDCRadiusLayer dc={dc} radiusMiles={radiusMiles} />
@@ -111,7 +167,7 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       {/* Site markers */}
       <Source id="dc-sites-source" type="geojson" data={sitesGeojson}>
         <Layer
-          id="dc-sites-dots"
+          id={LAYER_ID}
           type="circle"
           paint={{
             'circle-radius': 3.5,
@@ -135,6 +191,22 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
           }}
         />
       </Source>
+
+      {/* Hover popup */}
+      {hovered && (
+        <Popup
+          longitude={hovered.lngLat[0]}
+          latitude={hovered.lngLat[1]}
+          closeButton={false}
+          closeOnClick={false}
+          offset={12}
+          className={POPUP_CLASS}
+        >
+          <SitePopupContent site={hovered.site} />
+        </Popup>
+      )}
     </Map>
+    <DCMapLegend siteCount={sites.length} radiusMiles={radiusMiles} />
+    </div>
   )
 }
