@@ -135,13 +135,13 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
     setHovered(null)
   }, [])
 
-  // Attach hover events after layer is ready
-  useEffect(() => {
+  // Attach hover events once map + layer are ready
+  const attachHoverEvents = useCallback(() => {
     const map = mapRef.current?.getMap()
     if (!map) return
 
     const attach = () => {
-      if (!map.isStyleLoaded() || !map.getLayer(LAYER_ID)) {
+      if (!map.getLayer(LAYER_ID)) {
         setTimeout(attach, 200)
         return
       }
@@ -149,10 +149,14 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       map.on('mouseleave', LAYER_ID, handleMouseLeave)
     }
     attach()
+  }, [handleMouseEnter, handleMouseLeave])
 
+  // Clean up hover events on unmount
+  useEffect(() => {
     return () => {
       try {
-        if (map.getLayer(LAYER_ID)) {
+        const map = mapRef.current?.getMap()
+        if (map?.getLayer(LAYER_ID)) {
           map.off('mouseenter', LAYER_ID, handleMouseEnter)
           map.off('mouseleave', LAYER_ID, handleMouseLeave)
         }
@@ -183,6 +187,8 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       style={{ width: '100%', height: '100%' }}
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
       attributionControl={false}
+      interactiveLayerIds={[LAYER_ID]}
+      onLoad={attachHoverEvents}
     >
       <GoogleGIcon />
       <SelectedDCRadiusLayer dc={dc} radiusMiles={radiusMiles} />
