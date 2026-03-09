@@ -117,7 +117,11 @@ export function SiteDetailClient({ initialSite, initialActivity, partners, hubs,
 
   return (
     <div className="flex flex-col gap-6">
-      <SiteHeader site={site} backHref={backHref} />
+      <SiteHeader
+        site={site}
+        backHref={backHref}
+        onPriorityChange={(p) => handleSiteFieldUpdate('priority', p)}
+      />
 
       {site.is_archived && site.archived_at && (
         <ArchiveBanner
