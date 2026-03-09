@@ -4,6 +4,7 @@ import { useMemo, useRef, useEffect } from 'react'
 import Map, { Source, Layer, type MapRef } from 'react-map-gl/mapbox'
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { SelectedDCRadiusLayer } from './SelectedDCRadiusLayer'
+import { GoogleGIcon } from './GoogleGIcon'
 import type { GoogleDataCenter } from '@/data/googleDataCenters'
 import type { ProximitySite } from '@/hooks/useDCProximity'
 import { useIsDark } from '@/hooks/useIsDark'
@@ -66,7 +67,6 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
     const map = mapRef.current
     if (!map) return
 
-    // Approximate bounding box from radius
     const latRad = (dc.coordinates[1] * Math.PI) / 180
     const radiusKm = radiusMiles * 1.60934
     const dLat = radiusKm / 111.32
@@ -81,7 +81,6 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
     )
   }, [dc, radiusMiles])
 
-  // Color expression for site type dots
   const circleColor: mapboxgl.Expression = [
     'match',
     ['get', 'type'],
@@ -106,6 +105,7 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
       mapStyle={isDark ? 'mapbox://styles/mapbox/dark-v11' : 'mapbox://styles/mapbox/light-v11'}
       attributionControl={false}
     >
+      <GoogleGIcon />
       <SelectedDCRadiusLayer dc={dc} radiusMiles={radiusMiles} />
 
       {/* Site markers */}
@@ -123,29 +123,15 @@ export function DCProximityMap({ dc, radiusMiles, sites }: DCProximityMapProps) 
         />
       </Source>
 
-      {/* DC marker — rendered last to appear on top */}
+      {/* DC marker — Google G icon */}
       <Source id="dc-marker-source" type="geojson" data={dcGeojson}>
         <Layer
-          id="dc-marker-circle"
-          type="circle"
-          paint={{
-            'circle-radius': 8,
-            'circle-color': '#4285F4',
-            'circle-stroke-width': 2,
-            'circle-stroke-color': '#ffffff',
-          }}
-        />
-        <Layer
-          id="dc-marker-label"
+          id="dc-marker-icon"
           type="symbol"
           layout={{
-            'text-field': 'G',
-            'text-size': 10,
-            'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-            'text-allow-overlap': true,
-          }}
-          paint={{
-            'text-color': '#ffffff',
+            'icon-image': 'google-g-icon',
+            'icon-size': 1,
+            'icon-allow-overlap': true,
           }}
         />
       </Source>
