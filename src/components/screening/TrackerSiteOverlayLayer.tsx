@@ -72,7 +72,6 @@ export function TrackerSiteOverlayLayer({ sites }: TrackerSiteOverlayLayerProps)
         <Popup
           longitude={popupSite.lng}
           latitude={popupSite.lat}
-          anchor="top"
           offset={14}
           closeButton={true}
           closeOnClick={false}

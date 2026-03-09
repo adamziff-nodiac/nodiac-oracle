@@ -68,7 +68,6 @@ export function HubOverlayLayer({ hubs }: HubOverlayLayerProps) {
         <Popup
           longitude={popupHub.lng}
           latitude={popupHub.lat}
-          anchor="top"
           offset={14}
           closeButton={true}
           closeOnClick={false}

@@ -178,7 +178,6 @@ export function UtilityTerritoriesLayer({ visible = true }: UtilityTerritoriesLa
         <Popup
           longitude={popup.lng}
           latitude={popup.lat}
-          anchor="top"
           offset={8}
           closeButton={true}
           closeOnClick={false}
