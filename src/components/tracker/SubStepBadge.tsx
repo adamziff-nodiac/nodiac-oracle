@@ -15,7 +15,7 @@ const DOT_COLORS: Record<string, string> = {
   'Not Started': 'bg-zinc-400',
   'In Progress': 'bg-amber-500',
   'Complete': 'bg-emerald-500',
-  'Waiting': 'bg-amber-500',
+  'Waiting': 'bg-red-500',
   'N/A': 'bg-zinc-300 dark:bg-zinc-600',
 }
 
@@ -94,8 +94,9 @@ export function SubStepBadge({ phase, subStep, site }: SubStepBadgeProps) {
       ref={badgeRef}
       className={cn(
         'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] truncate transition-colors duration-150',
-        'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-        isWaiting && 'border-l-2 border-amber-500'
+        isWaiting
+          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-l-2 border-red-500'
+          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
       )}
       onMouseEnter={() => setShowTooltip(true)}
       onMouseLeave={() => setShowTooltip(false)}

@@ -40,7 +40,7 @@ export function TodoHeroWidget({ compact = false }: { compact?: boolean } = {}) 
           {stats.next}
         </span>
         <span className="flex items-center gap-1">
-          <Clock className="w-3 h-3 text-amber-500" />
+          <Clock className="w-3 h-3 text-red-500" />
           {stats.waiting}
         </span>
         {stats.stalled > 0 && (
@@ -88,7 +88,7 @@ export function TodoHeroWidget({ compact = false }: { compact?: boolean } = {}) 
           {stats.next} action{stats.next !== 1 ? 's' : ''}
         </span>
         <span className="flex items-center gap-1.5">
-          <Clock className="w-3.5 h-3.5 text-amber-500" />
+          <Clock className="w-3.5 h-3.5 text-red-500" />
           {stats.waiting} waiting
         </span>
         {stats.stalled > 0 && (

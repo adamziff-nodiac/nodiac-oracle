@@ -7,7 +7,7 @@ import { MapPin, ChevronDown } from 'lucide-react'
 // Sites come from server component props and update via router.refresh() on realtime changes
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 import type { TrackerSiteOverview, TrackerHub } from '@/lib/tracker/types'
-import { PHASES } from '@/lib/tracker/constants'
+import { PHASES, getCurrentSubStep, type PhaseKey } from '@/lib/tracker/constants'
 import { useTrackerRealtime } from '@/lib/tracker/realtime'
 import { FilterBar } from './FilterBar'
 import { SiteRow } from './SiteRow'
@@ -19,12 +19,23 @@ const SiteStatusMap = dynamic(
   { ssr: false }
 )
 
-type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'asset_owner_name' | 'utility_name' | 'construction_ready' | 'next_step'
+type SortKey = 'name' | 'hub_name' | 'mw_current' | 'priority' | 'asset_owner_name' | 'utility_name' | 'construction_ready' | 'next_step' | 'phase_site_control' | 'phase_power' | 'phase_permitting' | 'phase_fiber' | 'phase_engineering' | 'phase_construction'
 type SortDir = 'asc' | 'desc'
 
 const PRIORITY_ORDER: Record<string, number> = {
   'Lead': 0, 'Active': 1, 'Pipeline': 2, 'On Hold': 3, 'Deprioritized': 4,
 }
+
+// Phase status ordering for sort: higher = more progressed
+const PHASE_STATUS_ORDER: Record<string, number> = {
+  'Not Started': 0, 'Waiting': 1, 'In Progress': 2, 'Complete': 3, 'N/A': -1,
+}
+
+// Get phase rollup status for a site (from the DB view)
+function getPhaseStatus(site: TrackerSiteOverview, phaseKey: string): string {
+  return (site as Record<string, unknown>)[`${phaseKey}_phase`] as string ?? 'Not Started'
+}
+
 
 interface TrackerGridClientProps {
   initialSites: TrackerSiteOverview[]
@@ -52,6 +63,15 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
   const [showMap, setShowMap] = useState(false)
   const [searchQuery, setSearchQuery] = useState(() => searchParams.get('q') ?? '')
   const [showAllSites, setShowAllSites] = useState(() => searchParams.get('all') === '1')
+  // Phase status filters: Map<phaseKey, selectedStatuses[]>
+  const [selectedPhaseFilters, setSelectedPhaseFilters] = useState<Map<string, string[]>>(() => {
+    const map = new Map<string, string[]>()
+    for (const phase of PHASES) {
+      const val = searchParams.get(`phase_${phase.key}`)
+      if (val) map.set(phase.key, val.split(',').filter(Boolean))
+    }
+    return map
+  })
 
   const handleRealtime = useCallback(() => {
     router.refresh()
@@ -59,6 +79,9 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
 
   useTrackerRealtime(handleRealtime)
 
+  // Sync filter state to URL for bookmarking/sharing.
+  // Use window.history.replaceState (not router.replace) to avoid triggering
+  // server re-renders that cause filter dropdowns to glitch/close.
   useEffect(() => {
     const params = new URLSearchParams()
 
@@ -71,13 +94,17 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     if (showAllSites) params.set('all', '1')
     if (sortKey !== 'priority') params.set('sort', sortKey)
     if (sortDir !== 'asc') params.set('dir', sortDir)
+    if (selectedPhaseFilters.size > 0) {
+      for (const [phase, statuses] of selectedPhaseFilters) {
+        params.set(`phase_${phase}`, statuses.join(','))
+      }
+    }
 
     const query = params.toString()
     const next = query ? `${pathname}?${query}` : pathname
-    router.replace(next, { scroll: false })
+    window.history.replaceState(null, '', next)
   }, [
     pathname,
-    router,
     searchQuery,
     selectedPriority,
     selectedHubs,
@@ -87,6 +114,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     showAllSites,
     sortKey,
     sortDir,
+    selectedPhaseFilters,
   ])
 
   // Use initialSites directly -- server component re-passes on revalidation
@@ -145,6 +173,12 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     if (selectedPartners.length > 0) {
       result = result.filter(s => s.asset_owner_name && selectedPartners.includes(s.asset_owner_name))
     }
+    // Phase status filters (uses DB view rollup)
+    for (const [phaseKey, statuses] of selectedPhaseFilters) {
+      if (statuses.length > 0) {
+        result = result.filter(s => statuses.includes(getPhaseStatus(s, phaseKey)))
+      }
+    }
 
     // Sort
     result = [...result].sort((a, b) => {
@@ -175,6 +209,22 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         case 'next_step':
           cmp = (a.next_step ?? '').localeCompare(b.next_step ?? '')
           break
+        case 'phase_site_control':
+        case 'phase_power':
+        case 'phase_permitting':
+        case 'phase_fiber':
+        case 'phase_engineering':
+        case 'phase_construction': {
+          const phaseKey = sortKey.replace('phase_', '')
+          const aSubStep = getCurrentSubStep(phaseKey as PhaseKey, a as Record<string, unknown>)
+          const bSubStep = getCurrentSubStep(phaseKey as PhaseKey, b as Record<string, unknown>)
+          const aStatusOrder = PHASE_STATUS_ORDER[getPhaseStatus(a, phaseKey)] ?? 0
+          const bStatusOrder = PHASE_STATUS_ORDER[getPhaseStatus(b, phaseKey)] ?? 0
+          cmp = aStatusOrder - bStatusOrder
+          // Within same status, sort by sub-step progress
+          if (cmp === 0) cmp = aSubStep.ordinal - bSubStep.ordinal
+          break
+        }
       }
       return sortDir === 'asc' ? cmp : -cmp
     })
@@ -187,7 +237,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
     }
 
     return result
-  }, [sites, searchQuery, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, showArchived, showAllSites, sortKey, sortDir])
+  }, [sites, searchQuery, selectedPriority, selectedHubs, selectedUtilities, selectedPartners, selectedPhaseFilters, showArchived, showAllSites, sortKey, sortDir])
 
   const totalMw = useMemo(() =>
     filteredSites.reduce((sum, s) => sum + (s.mw_current ?? 0), 0),
@@ -228,6 +278,7 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         selectedHubs={selectedHubs}
         selectedUtilities={selectedUtilities}
         selectedPartners={selectedPartners}
+        selectedPhaseFilters={selectedPhaseFilters}
         showArchived={showArchived}
         showAllSites={showAllSites}
         activeSiteCount={activeSiteCount}
@@ -236,6 +287,14 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         onHubsChange={setSelectedHubs}
         onUtilitiesChange={setSelectedUtilities}
         onPartnersChange={setSelectedPartners}
+        onPhaseFilterChange={(phaseKey, statuses) => {
+          setSelectedPhaseFilters(prev => {
+            const next = new Map(prev)
+            if (statuses.length === 0) next.delete(phaseKey)
+            else next.set(phaseKey, statuses)
+            return next
+          })
+        }}
         onArchiveToggle={() => setShowArchived(!showArchived)}
         onShowAllSitesToggle={() => setShowAllSites(!showAllSites)}
         siteCount={filteredSites.length}
@@ -274,15 +333,25 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
               <SortHeader label="Priority" sortId="priority" />
               <SortHeader label="Partner" sortId="asset_owner_name" />
               <SortHeader label="Utility" sortId="utility_name" />
-              {PHASES.map(p => (
-                <th
-                  key={p.key}
-                  className="px-1 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400 whitespace-nowrap text-center"
-                  title={p.label}
-                >
-                  {p.abbrev}
-                </th>
-              ))}
+              {PHASES.map(p => {
+                const phaseSortKey = `phase_${p.key}` as SortKey
+                const phaseFilterActive = (selectedPhaseFilters.get(p.key)?.length ?? 0) > 0
+                return (
+                  <th
+                    key={p.key}
+                    onClick={() => handleSort(phaseSortKey)}
+                    className={`px-1 py-2.5 text-[11px] font-semibold uppercase tracking-wide whitespace-nowrap text-center cursor-pointer select-none hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors ${
+                      phaseFilterActive ? 'text-nodiac-secondary' : 'text-zinc-500 dark:text-zinc-400'
+                    }`}
+                    title={`${p.label} — click to sort`}
+                  >
+                    {p.abbrev}
+                    {sortKey === phaseSortKey && (
+                      <span className="ml-0.5">{sortDir === 'asc' ? '\u2191' : '\u2193'}</span>
+                    )}
+                  </th>
+                )
+              })}
               <SortHeader label="Ready" sortId="construction_ready" className="text-center" />
               <SortHeader label="Next Step" sortId="next_step" className="hidden lg:table-cell" />
             </tr>

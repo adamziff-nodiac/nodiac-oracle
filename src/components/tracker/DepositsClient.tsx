@@ -323,7 +323,7 @@ function DepositGroup({
   muted?: boolean
 }) {
   return (
-    <div className={`${accent ? 'border-l-2 border-nodiac-secondary pl-4' : ''} ${waiting ? 'border-l-2 border-amber-400 dark:border-amber-500 pl-4' : ''} ${muted ? 'opacity-70' : ''}`}>
+    <div className={`${accent ? 'border-l-2 border-nodiac-secondary pl-4' : ''} ${waiting ? 'border-l-2 border-red-400 dark:border-red-500 pl-4' : ''} ${muted ? 'opacity-70' : ''}`}>
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
         <span className="text-sm font-medium tabular-nums text-zinc-500 dark:text-zinc-400">

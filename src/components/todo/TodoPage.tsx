@@ -227,7 +227,7 @@ export function TodoPage({ initialItems, teamMembers, currentMemberId, sites }: 
       {waitingGroups.size > 0 && (
         <section>
           <div className="flex items-center gap-2 mb-2">
-            <Clock className="w-3.5 h-3.5 text-amber-500" />
+            <Clock className="w-3.5 h-3.5 text-red-500" />
             <h2 className="text-[11px] font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
               Waiting For
             </h2>

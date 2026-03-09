@@ -102,7 +102,7 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Waiting badge (inline) */}
           {isWaiting && item.waiting_on && (
-            <span className="hidden sm:flex items-center gap-1 text-[10px] text-amber-500/80 truncate max-w-[100px]">
+            <span className="hidden sm:flex items-center gap-1 text-[10px] text-red-500/80 truncate max-w-[100px]">
               <Clock className="w-3 h-3 flex-shrink-0" />
               {item.waiting_on}
             </span>
@@ -193,7 +193,7 @@ export function ActionItemRow({ item, teamMembers, isSaving, onToggleDone, onTog
                   onChange={(e) => onUpdate(item.id, { waiting_on: e.target.value || null })}
                   onClick={(e) => e.stopPropagation()}
                   placeholder="Who?"
-                  className="text-[11px] bg-transparent text-amber-500 dark:text-amber-400 border-0 border-b border-dashed border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-nodiac-secondary px-0 py-0 w-[120px]"
+                  className="text-[11px] bg-transparent text-red-500 dark:text-red-400 border-0 border-b border-dashed border-zinc-300 dark:border-zinc-600 focus:outline-none focus:border-nodiac-secondary px-0 py-0 w-[120px]"
                 />
               </div>
             )}
