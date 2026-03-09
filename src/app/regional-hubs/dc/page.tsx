@@ -56,11 +56,11 @@ function findDC(slug: string): GoogleDataCenter | null {
 
 function PipelineSiteRow({ site }: { site: PipelineSite }) {
   const priorityColors: Record<string, string> = {
-    Lead: 'bg-red-500/20 text-red-300',
-    Active: 'bg-amber-500/20 text-amber-300',
-    Pipeline: 'bg-purple-500/20 text-purple-300',
-    'On Hold': 'bg-gray-500/20 text-gray-400',
-    Deprioritized: 'bg-gray-500/20 text-gray-500',
+    Lead: 'bg-nodiac-secondary/20 text-nodiac-secondary',
+    Active: 'bg-emerald-500/20 text-emerald-400',
+    Pipeline: 'bg-zinc-500/20 text-zinc-400',
+    'On Hold': 'bg-amber-500/20 text-amber-400',
+    Deprioritized: 'bg-zinc-500/20 text-zinc-500',
   }
 
   const activePhase = getActivePhase(site.phases)
