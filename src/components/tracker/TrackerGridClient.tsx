@@ -180,7 +180,17 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
       }
     }
 
-    // Sort
+    // Sort — pre-compute phase ordinals to avoid repeated getCurrentSubStep calls
+    const isPhaseSort = sortKey.startsWith('phase_')
+    let phaseOrdinals: Map<string, number> | null = null
+    if (isPhaseSort) {
+      const phaseKey = sortKey.replace('phase_', '') as PhaseKey
+      phaseOrdinals = new Map()
+      for (const s of result) {
+        phaseOrdinals.set(s.id, getCurrentSubStep(phaseKey, s as Record<string, unknown>).ordinal)
+      }
+    }
+
     result = [...result].sort((a, b) => {
       let cmp = 0
       switch (sortKey) {
@@ -216,13 +226,10 @@ export function TrackerGridClient({ initialSites, hubs }: TrackerGridClientProps
         case 'phase_engineering':
         case 'phase_construction': {
           const phaseKey = sortKey.replace('phase_', '')
-          const aSubStep = getCurrentSubStep(phaseKey as PhaseKey, a as Record<string, unknown>)
-          const bSubStep = getCurrentSubStep(phaseKey as PhaseKey, b as Record<string, unknown>)
           const aStatusOrder = PHASE_STATUS_ORDER[getPhaseStatus(a, phaseKey)] ?? 0
           const bStatusOrder = PHASE_STATUS_ORDER[getPhaseStatus(b, phaseKey)] ?? 0
           cmp = aStatusOrder - bStatusOrder
-          // Within same status, sort by sub-step progress
-          if (cmp === 0) cmp = aSubStep.ordinal - bSubStep.ordinal
+          if (cmp === 0) cmp = (phaseOrdinals!.get(a.id) ?? 0) - (phaseOrdinals!.get(b.id) ?? 0)
           break
         }
       }

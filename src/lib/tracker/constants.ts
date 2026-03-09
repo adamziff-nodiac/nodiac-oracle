@@ -75,9 +75,15 @@ export function getCheckpointValue(site: Record<string, unknown>, prefix: string
   return site[`${prefix}_${suffix}`]
 }
 
-// Helper: group checkpoints by phase
+// Helper: group checkpoints by phase (cached)
+const _checkpointsByPhase = new Map<PhaseKey, Checkpoint[]>()
 export function getCheckpointsByPhase(phase: PhaseKey): Checkpoint[] {
-  return CHECKPOINTS.filter(c => c.phase === phase)
+  let cached = _checkpointsByPhase.get(phase)
+  if (!cached) {
+    cached = CHECKPOINTS.filter(c => c.phase === phase)
+    _checkpointsByPhase.set(phase, cached)
+  }
+  return cached
 }
 
 // Sub-step granularity: identify the current checkpoint within a phase
@@ -100,4 +106,13 @@ export function getCurrentSubStep(phase: PhaseKey, site: Record<string, unknown>
 
   // All checkpoints are Complete or N/A
   return { checkpoint: null, status: 'Complete', ordinal: checkpoints.length }
+}
+
+// Check if any checkpoint in a phase has Waiting status (for the red flag indicator)
+export function phaseHasWaiting(phase: PhaseKey, site: Record<string, unknown>): boolean {
+  const checkpoints = getCheckpointsByPhase(phase)
+  return checkpoints.some(cp => {
+    const status = getCheckpointValue(site, cp.prefix, 'status') as string
+    return status === 'Waiting'
+  })
 }
