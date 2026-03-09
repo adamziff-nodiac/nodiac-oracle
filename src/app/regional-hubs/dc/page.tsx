@@ -474,8 +474,13 @@ function DCFullPageInner() {
           {!isLoading && (
             <div className="flex items-center gap-5 text-[11px] text-gray-500 dark:text-gray-400">
               <span className="tabular-nums">
-                <span className="text-gray-900 dark:text-white font-medium">{totalSites.toLocaleString()}</span> sites
+                <span className="text-gray-900 dark:text-white font-medium">{totalSites.toLocaleString()}</span> total
               </span>
+              {pipelineSites.length > 0 && (
+                <span className="tabular-nums">
+                  <span className="text-[#c77dba] font-medium">{pipelineSites.length}</span> pipeline
+                </span>
+              )}
               <span className="tabular-nums">
                 <span className="text-gray-900 dark:text-white font-medium">{utilityGroups.length}</span> utilities
               </span>

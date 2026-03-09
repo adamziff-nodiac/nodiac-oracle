@@ -368,7 +368,7 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
       return b.siteCount - a.siteCount
     })
 
-    const totalSites = utilityGroups.reduce((sum, g) => sum + g.siteCount, 0) + ippSites.length
+    const totalSites = pipelineSites.length + utilityGroups.reduce((sum, g) => sum + g.siteCount, 0) + ippSites.length
 
     return { pipelineSites, utilityGroups, ippSites, ippOperatorGroups, totalSites, isLoading }
     // eslint-disable-next-line react-hooks/exhaustive-deps
