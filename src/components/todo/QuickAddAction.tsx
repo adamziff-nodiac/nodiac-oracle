@@ -79,7 +79,7 @@ export function QuickAddAction({ sites, teamMembers, defaultStatus = 'next', onA
           onKeyDown={(e) => { if (e.key === 'Escape' && !saving) setActive(false) }}
           placeholder="Waiting on..."
           disabled={saving}
-          className="text-[12px] bg-transparent text-amber-500 dark:text-amber-400 placeholder:text-amber-400/40 border-0 focus:outline-none disabled:opacity-50 w-[100px]"
+          className="text-[12px] bg-transparent text-red-500 dark:text-red-400 placeholder:text-red-400/40 border-0 focus:outline-none disabled:opacity-50 w-[100px]"
         />
       )}
       <input
