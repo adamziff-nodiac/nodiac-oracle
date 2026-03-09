@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { PRIORITY_OPTIONS } from '@/lib/tracker/constants'
+import { PRIORITY_OPTIONS, PHASES, STATUS_OPTIONS } from '@/lib/tracker/constants'
 import { FilterDropdown } from './FilterDropdown'
 
 interface FilterBarProps {
@@ -13,6 +13,7 @@ interface FilterBarProps {
   selectedHubs: string[]
   selectedUtilities: string[]
   selectedPartners: string[]
+  selectedPhaseFilters?: Map<string, string[]>
   showArchived: boolean
   showAllSites?: boolean
   activeSiteCount?: number
@@ -21,12 +22,15 @@ interface FilterBarProps {
   onHubsChange: (h: string[]) => void
   onUtilitiesChange: (u: string[]) => void
   onPartnersChange: (p: string[]) => void
+  onPhaseFilterChange?: (phaseKey: string, statuses: string[]) => void
   onArchiveToggle: () => void
   onShowAllSitesToggle?: () => void
   siteCount: number
   totalMw: number
   onAddSite?: () => void
 }
+
+const PHASE_STATUS_FILTER_OPTIONS = STATUS_OPTIONS.filter(s => s !== 'N/A') as unknown as string[]
 
 export function FilterBar({
   hubs,
@@ -36,6 +40,7 @@ export function FilterBar({
   selectedHubs,
   selectedUtilities,
   selectedPartners,
+  selectedPhaseFilters,
   showArchived,
   showAllSites,
   activeSiteCount,
@@ -44,6 +49,7 @@ export function FilterBar({
   onHubsChange,
   onUtilitiesChange,
   onPartnersChange,
+  onPhaseFilterChange,
   onArchiveToggle,
   onShowAllSitesToggle,
   siteCount,
@@ -86,7 +92,7 @@ export function FilterBar({
         ))}
       </div>
 
-      {/* Row 2: Dropdowns, archive, scope toggle, stats */}
+      {/* Row 2: Entity dropdowns + phase status filters */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none min-w-0">
           <FilterDropdown
@@ -107,6 +113,21 @@ export function FilterBar({
             selected={selectedPartners}
             onChange={onPartnersChange}
           />
+
+          {onPhaseFilterChange && (
+            <>
+              <div className="hidden sm:block w-px h-4 bg-zinc-200 dark:bg-[#2a2a40] mx-0.5 flex-shrink-0" />
+              {PHASES.map(p => (
+                <FilterDropdown
+                  key={p.key}
+                  label={p.abbrev}
+                  options={PHASE_STATUS_FILTER_OPTIONS}
+                  selected={selectedPhaseFilters?.get(p.key) ?? []}
+                  onChange={(statuses) => onPhaseFilterChange(p.key, statuses)}
+                />
+              ))}
+            </>
+          )}
 
           <div className="hidden sm:block w-px h-4 bg-zinc-200 dark:bg-[#2a2a40] mx-0.5 flex-shrink-0" />
 
