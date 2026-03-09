@@ -316,9 +316,8 @@ export function GoogleDataCentersLayer({
           latitude={hovered.lngLat[1]}
           closeButton={false}
           closeOnClick={false}
-          anchor="bottom"
           offset={20}
-          className="[&_.mapboxgl-popup-content]:!bg-gray-900 [&_.mapboxgl-popup-content]:!rounded-lg [&_.mapboxgl-popup-content]:!shadow-xl [&_.mapboxgl-popup-content]:!p-3 [&_.mapboxgl-popup-content]:!border [&_.mapboxgl-popup-content]:!border-white/10 [&_.mapboxgl-popup-tip]:!border-t-gray-900"
+          className="[&_.mapboxgl-popup-content]:!bg-gray-900 [&_.mapboxgl-popup-content]:!rounded-lg [&_.mapboxgl-popup-content]:!shadow-xl [&_.mapboxgl-popup-content]:!p-3 [&_.mapboxgl-popup-content]:!border [&_.mapboxgl-popup-content]:!border-white/10 [&_.mapboxgl-popup-tip]:!border-t-gray-900 [&_.mapboxgl-popup-tip]:!border-b-gray-900"
         >
           <div className="text-xs text-gray-200 space-y-1">
             <div className="flex items-center gap-1.5">

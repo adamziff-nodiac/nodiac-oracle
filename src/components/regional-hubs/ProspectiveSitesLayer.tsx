@@ -142,7 +142,6 @@ export function ProspectiveSitesLayer({ geojson, visible = true }: ProspectiveSi
           latitude={hovered.lngLat[1]}
           closeButton={false}
           closeOnClick={false}
-          anchor="bottom"
           offset={12}
           className={POPUP_CLASS}
         >
