@@ -6,7 +6,7 @@ const STATUS_COLORS: Record<string, string> = {
   'Not Started': 'bg-zinc-200 text-zinc-600 dark:bg-zinc-700 dark:text-zinc-400',
   'In Progress': 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
   'Complete': 'bg-emerald-200 text-emerald-800 dark:bg-emerald-700/50 dark:text-emerald-200',
-  'Waiting': 'bg-amber-200 text-amber-800 dark:bg-amber-700/50 dark:text-amber-200',
+  'Waiting': 'bg-red-200 text-red-800 dark:bg-red-700/50 dark:text-red-200',
   'N/A': '',
 }
 
