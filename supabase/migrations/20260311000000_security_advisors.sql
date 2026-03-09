@@ -232,9 +232,18 @@ LEFT JOIN tracker_ipps ipp ON s.ipp_id = ipp.id;
 
 -- ---------------------------------------------------------------------------
 -- 3. Fix mutable search_path on trigger functions
+--    update_updated_at: safe to just SET search_path (no table references)
+--    update_chat_timestamp: must redefine with fully-qualified public.chats
 -- ---------------------------------------------------------------------------
 ALTER FUNCTION update_updated_at() SET search_path = '';
-ALTER FUNCTION update_chat_timestamp() SET search_path = '';
+
+CREATE OR REPLACE FUNCTION update_chat_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE public.chats SET updated_at = NOW() WHERE id = NEW.chat_id;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SET search_path = '';
 
 -- ---------------------------------------------------------------------------
 -- 4. Add missing indexes on foreign keys
