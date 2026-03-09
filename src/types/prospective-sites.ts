@@ -9,6 +9,7 @@ export interface IPPSiteCompact {
   kv: number | null  // min_kv
   vt?: string | null // voltage_tier (only in dist file)
   o: string | null   // operator/entity name (from EIA)
+  su: string | null  // service utility name (from HIFLD territory lookup)
 }
 
 /** Compact substation from prospective-substations.json */

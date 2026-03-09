@@ -16,6 +16,7 @@ export interface ProximitySite {
   voltage: number | null
   lat: number
   lng: number
+  owner: string | null
   utility: string | null
   utilityType: string | null
   holdingCompany: string | null
@@ -203,7 +204,8 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
           voltage: sub.mv,
           lat: sub.y,
           lng: sub.x,
-          utility: sub.u,
+          owner: sub.u || null,
+          utility: sub.u || null,
           utilityType: sub.ut,
           holdingCompany: sub.hc,
           city: sub.c || null,
@@ -261,7 +263,8 @@ export function useDCProximity({ selectedDC, radiusMiles }: UseDCProximityParams
           voltage: site.kv,
           lat: site.y,
           lng: site.x,
-          utility: site.o || null,
+          owner: site.o || null,
+          utility: site.su || null,
           utilityType: null,
           holdingCompany: null,
           city: null,

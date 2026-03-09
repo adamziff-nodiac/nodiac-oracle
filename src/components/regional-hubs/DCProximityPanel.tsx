@@ -167,7 +167,12 @@ function OperatorGroupRow({ group, defaultExpanded }: { group: OperatorGroup; de
                 className="w-2 h-2 rounded-full flex-shrink-0 opacity-60"
                 style={{ backgroundColor: TYPE_COLORS[site.type] }}
               />
-              <span className="truncate flex-1">{site.name}</span>
+              <div className="truncate flex-1">
+                <span>{site.name}</span>
+                {site.utility && (
+                  <span className="text-gray-600 ml-1">· {site.utility}</span>
+                )}
+              </div>
               <span className="text-gray-500 capitalize flex-shrink-0">{site.type}</span>
               {site.voltage != null && <span className="text-gray-500">{site.voltage}kV</span>}
               <span className="tabular-nums font-mono text-[#4285F4]">{site.distanceMi}mi</span>
@@ -189,7 +194,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
     if (!dc) return
 
     const rows: string[][] = [
-      ['Name', 'Type', 'Category', 'Distance (mi)', 'State', 'City', 'County', 'Utility / Operator', 'Utility Type', 'Holding Company', 'Voltage (kV)', 'Partner Status', 'Partner Stage'],
+      ['Name', 'Type', 'Category', 'Distance (mi)', 'State', 'City', 'County', 'Site Owner', 'Utility', 'Utility Type', 'Holding Company', 'Voltage (kV)', 'Partner Status', 'Partner Stage'],
     ]
 
     // Pipeline sites first
@@ -201,6 +206,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
         String(site.distanceMi),
         '', '', '',
         site.partnerName || '',
+        '',
         '', '',
         '',
         'Active Partner',
@@ -219,6 +225,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
           site.state,
           site.city || '',
           site.county || '',
+          site.owner || '',
           site.utility || '',
           site.utilityType || '',
           site.holdingCompany || '',
@@ -239,6 +246,7 @@ export function DCProximityPanel({ dc, radiusMiles, onRadiusChange, onClose }: D
           String(site.distanceMi),
           site.state,
           '', '',
+          site.owner || '',
           site.utility || '',
           '', '',
           site.voltage != null ? String(site.voltage) : '',
