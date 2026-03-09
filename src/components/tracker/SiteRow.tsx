@@ -1,7 +1,8 @@
 'use client'
 
+import { memo } from 'react'
 import { cn } from '@/lib/utils'
-import { PHASES, getCurrentSubStep, type PhaseKey } from '@/lib/tracker/constants'
+import { PHASES, getCurrentSubStep, phaseHasWaiting, type PhaseKey } from '@/lib/tracker/constants'
 import type { TrackerSiteOverview } from '@/lib/tracker/types'
 import { SubStepBadge } from './SubStepBadge'
 import { PriorityIndicator } from './PriorityIndicator'
@@ -12,7 +13,7 @@ interface SiteRowProps {
   onClick: () => void
 }
 
-export function SiteRow({ site, onClick }: SiteRowProps) {
+export const SiteRow = memo(function SiteRow({ site, onClick }: SiteRowProps) {
   return (
     <tr
       onClick={onClick}
@@ -49,13 +50,16 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
         </span>
       </td>
       {PHASES.map(phase => {
-        const subStep = getCurrentSubStep(phase.key as PhaseKey, site as Record<string, unknown>)
+        const siteRecord = site as Record<string, unknown>
+        const subStep = getCurrentSubStep(phase.key as PhaseKey, siteRecord)
+        const hasWaiting = phaseHasWaiting(phase.key as PhaseKey, siteRecord)
         return (
           <td key={phase.key} className="px-1 py-2 whitespace-nowrap text-center">
             <SubStepBadge
               phase={phase.key as PhaseKey}
               subStep={subStep}
-              site={site as Record<string, unknown>}
+              site={siteRecord}
+              hasWaiting={hasWaiting}
             />
           </td>
         )
@@ -72,4 +76,4 @@ export function SiteRow({ site, onClick }: SiteRowProps) {
       </td>
     </tr>
   )
-}
+})

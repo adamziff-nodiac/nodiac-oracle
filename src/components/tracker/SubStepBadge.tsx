@@ -23,9 +23,10 @@ interface SubStepBadgeProps {
   phase: PhaseKey
   subStep: SubStepInfo
   site: Record<string, unknown>
+  hasWaiting?: boolean
 }
 
-export function SubStepBadge({ phase, subStep, site }: SubStepBadgeProps) {
+export function SubStepBadge({ phase, subStep, site, hasWaiting }: SubStepBadgeProps) {
   const [showTooltip, setShowTooltip] = useState(false)
   const badgeRef = useRef<HTMLSpanElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
@@ -52,17 +53,21 @@ export function SubStepBadge({ phase, subStep, site }: SubStepBadgeProps) {
     }
   }, [showTooltip, updatePosition])
 
+  // Show waiting indicator when a different checkpoint in the phase is Waiting
+  // (don't show if the current sub-step IS the waiting one — it's already red)
+  const showWaitingFlag = hasWaiting && subStep.status !== 'Waiting'
+
   // Not Started: all checkpoints are Not Started
   if (subStep.status === 'Not Started' && subStep.ordinal === 0) {
-    // Check if truly not started (first checkpoint is Not Started)
     return (
       <span
         ref={badgeRef}
-        className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] text-zinc-400 dark:text-zinc-600"
+        className="relative inline-flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] text-zinc-400 dark:text-zinc-600"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         --
+        {showWaitingFlag && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-[#16162a]" />}
         {showTooltip && <SubStepTooltip phase={phase} site={site} subStep={subStep} pos={pos} tooltipRef={tooltipRef} />}
       </span>
     )
@@ -73,13 +78,14 @@ export function SubStepBadge({ phase, subStep, site }: SubStepBadgeProps) {
     return (
       <span
         ref={badgeRef}
-        className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+        className="relative inline-flex items-center justify-center px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
       >
         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
         </svg>
+        {showWaitingFlag && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-[#16162a]" />}
         {showTooltip && <SubStepTooltip phase={phase} site={site} subStep={subStep} pos={pos} tooltipRef={tooltipRef} />}
       </span>
     )
@@ -93,7 +99,7 @@ export function SubStepBadge({ phase, subStep, site }: SubStepBadgeProps) {
     <span
       ref={badgeRef}
       className={cn(
-        'inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] truncate transition-colors duration-150',
+        'relative inline-flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium min-w-[56px] max-w-[84px] truncate transition-colors duration-150',
         isWaiting
           ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-l-2 border-red-500'
           : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
@@ -106,6 +112,7 @@ export function SubStepBadge({ phase, subStep, site }: SubStepBadgeProps) {
         {isFinancial && <span className="text-amber-500/70 dark:text-amber-400/70 mr-0.5">$</span>}
         {subStep.checkpoint?.gridLabel}
       </span>
+      {showWaitingFlag && <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-red-500 ring-1 ring-white dark:ring-[#16162a]" />}
       {showTooltip && <SubStepTooltip phase={phase} site={site} subStep={subStep} pos={pos} tooltipRef={tooltipRef} />}
     </span>
   )
