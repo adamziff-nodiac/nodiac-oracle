@@ -9,9 +9,7 @@ import { googleDataCenters, type GoogleDataCenter } from '@/data/googleDataCente
 import { PhaseProgress, getActivePhase } from '@/components/regional-hubs/PhaseProgress'
 import { PRIORITY_COLORS, type Priority } from '@/lib/tracker/constants'
 import { useDCProximity, type UtilityGroup, type OperatorGroup, type ProximitySite, type PipelineSite } from '@/hooks/useDCProximity'
-import { LogoLink } from '@/components/LogoLink'
-import { Navigation } from '@/components/Navigation'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { AppHeader } from '@/components/AppHeader'
 
 const DCProximityMap = dynamic(
   () => import('@/components/regional-hubs/DCProximityMap').then(mod => ({ default: mod.DCProximityMap })),
@@ -400,18 +398,9 @@ function DCFullPageInner() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950">
-      {/* Top nav */}
-      <header className="border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 sticky top-0 z-20">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 flex items-center justify-between h-14">
-          <div className="flex items-center gap-4">
-            <LogoLink />
-            <Navigation />
-          </div>
-          <ThemeToggle />
-        </div>
-      </header>
+      <AppHeader />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-6">
         {/* Breadcrumb + header */}
         <div className="mb-6">
           <Link

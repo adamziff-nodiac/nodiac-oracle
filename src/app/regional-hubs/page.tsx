@@ -3,9 +3,7 @@
 import { useState, useCallback, useRef, useMemo, type RefObject } from 'react'
 import Link from 'next/link'
 import { SlidersHorizontal, X, Info, Pencil, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react'
-import { LogoLink } from '@/components/LogoLink'
-import { Navigation } from '@/components/Navigation'
-import { ThemeToggle } from '@/components/ThemeToggle'
+import { AppHeader } from '@/components/AppHeader'
 import dynamic from 'next/dynamic'
 
 const HubMap = dynamic(() => import('@/components/regional-hubs/HubMap').then(mod => ({ default: mod.HubMap })), {
@@ -143,16 +141,7 @@ export default function RegionalHubsPage() {
 
   return (
     <div className="min-h-screen bg-nodiac-light dark:bg-[#0f0f1a]">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 dark:bg-transparent backdrop-blur-sm">
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center">
-          <LogoLink />
-          <div className="flex items-center gap-2 min-w-0">
-            <ThemeToggle />
-            <Navigation />
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       {/* Editorial Intro */}
       <section className="pt-28 pb-10 px-6">
