@@ -168,9 +168,9 @@ Approve all? Reply "approve" or click through individual items.
 
 1. Set up GitHub branch protection ruleset (see above)
 2. Fix Supabase redirect URLs for preview deployments (see above)
-3. Set up OpenClaw with access to the nodiac-oracle GitHub repo
+3. Set up OpenClaw with access to the nodiac-nora GitHub repo
 4. Configure it to watch for build failures
-5. Create `#oracle-ops` Slack channel
+5. Create `#nora-ops` Slack channel
 
 ### Short Term (Next 2 Weeks)
 

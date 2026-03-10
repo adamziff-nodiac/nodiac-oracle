@@ -1,4 +1,4 @@
-# Nodiac Oracle - Claude Code Instructions
+# NORA - Claude Code Instructions
 
 ## Package Manager
 

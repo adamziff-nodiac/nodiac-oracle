@@ -1,6 +1,6 @@
 # Tracker Design Spec
 
-Detailed design specification for the 5 tracker pages in nodiac-oracle. Written for a Frontend Engineer to implement without making design decisions.
+Detailed design specification for the 5 tracker pages in nodiac-nora. Written for a Frontend Engineer to implement without making design decisions.
 
 ---
 
